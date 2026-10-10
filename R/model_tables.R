@@ -46,10 +46,6 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   # CHECK SEGMENTS AND DATA #
   ###########################
 
-  # Check segment 1: change point not possible here
-  if (!is.na(segments$cp_group_col[1]))
-    stop("Change point defined in first segment. This should not be possible. Submit bug report in the GitHub repo.")
-
   # Response variables
   derived_y = unique(stats::na.omit(segments$y))
   if (length(derived_y) != 1)
@@ -62,8 +58,6 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   if (!is.null(data)) {
     # Check y
     y_col = segments$y[1]
-    if (is.logical(data[[y_col]]))
-      data[[y_col]] = as.numeric(data[[y_col]])
     if (any(is.na(data[[y_col]]))) {
       has_weights = "weights" %in% names(segments) && any(!is.na(segments$weights))
       if (has_weights && isTRUE(family$response$is_discrete))
@@ -106,8 +100,7 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
       group_name = ifelse(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA)
     ) %>%
     dplyr::mutate(
-      code = ifelse(!is.na(.data$group_name), yes = paste0(.data$name, " + ", .data$group_name, "CP_", .data$segment, "_INDEX"), no = .data$name),
-      code = format_code(.data$code, na_col = .data$name)
+      code = ifelse(!is.na(.data$group_name), yes = paste0("(", .data$name, " + ", .data$group_name, "CP_", .data$segment, "_INDEX)"), no = .data$name)
     )
 
   if (length(cp_group_cols) > 1) {
@@ -348,8 +341,7 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       matrix_data = list(),
       next_segment = integer(),
       definition_name = character(),
-      definition_segment = integer(),
-      occurrence_segment = integer()
+      definition_segment = integer()
     )
   }
 
@@ -362,7 +354,9 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       group_col = as.character(.data$group_col),
       segment = .data$segment,
       dpar = "cp",
-      sd_name = as.character(.data$sd_name)
+      sd_name = as.character(.data$sd_name),
+      definition_name = .data$name,
+      definition_segment = .data$segment
     )
 
   dplyr::bind_rows(cp_group_effects, predictor_group_effects)
@@ -372,34 +366,5 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
 # Get model metadata tables from a fitted model
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)
-  tables = fit$.internal$model_tables
-
-  # Fits saved before sharing have one definition per occurrence.
-  if (is.null(tables$predictor_definitions))
-    tables$predictor_definitions = tables$predictors
-  if (is.null(tables$group_definitions))
-    tables$group_definitions = tables$group_effects
-  tables
-}
-
-
-
-#' Format code with one or multiple terms
-#'
-#' Take a value like "a + b" and
-#' (1) replace it with NA if na_col == NA.
-#' (2) Change to "(a + b)" if there is a "+"
-#' (3) Return itself otherwise, e.g., "a" --> "a".
-#'
-#' @param col A column
-#' @param na_col If this column is NA, return NA
-#' @return string
-#' @noRd
-format_code = function(col, na_col) {
-  # Replace with NA
-  col = ifelse(is.na(na_col), NA, col)
-
-  # Add parenthesis if this is an equation
-  col = ifelse(stringr::str_detect(col, "\\+"), paste0("(", col, ")"), col)
-  col
+  fit$.internal$model_tables
 }

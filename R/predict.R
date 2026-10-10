@@ -134,10 +134,6 @@ pp_eval = function(
   fit = object
   checkmate::assert_class(fit, "mcpfit")
   warn_custom_jags_code(fit)
-  if (!is.mcpfamily(fit$family))
-    fit$family = mcpfamily(fit$family)
-  if (is.null(fit$family$r$cdf))
-    fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   dpar = assert_dpar(dpar, fit = fit, type = type)
   assert_typescale(type, scale)
   value_col = get_value_col(type, dpar, scale)

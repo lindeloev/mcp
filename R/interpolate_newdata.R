@@ -158,12 +158,10 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
     return(tibble::as_tibble(newdata))
   }
 
+  # Get x-values before `by` is standardized below. Otherwise an absent grouping
+  # argument becomes character(0), which selects the denser grouped grid.
   if (is.null(x_values))
     x_values = get_x_values(fit, by = by, arma = arma)
-  # Evaluate the default before `by` is standardized below. Otherwise an absent
-  # grouping argument becomes character(0), which selects the denser grouped
-  # grid in get_x_values().
-  x_values = force(x_values)
 
   # Get unique predictors
   data_columns = mcp_columns(fit)
@@ -188,7 +186,6 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)
 
-  auxiliary_cols = unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))]))
   auxiliary_cols = setdiff(
     unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))])),
     data_columns$par_x  # Don't remove par_x when it is also a rhs parameter, e.g.: y | trials(N) ~ N

@@ -467,11 +467,6 @@ get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
 }
 
 
-# Backwards-compatible internal wrapper for pure AR code generation.
-get_ar_jagscode = function(ar_order, x_name, series = FALSE) {
-  get_garma_jagscode(ar_order, NA, x_name, series)
-}
-
 
 # Build the observation-threshold formula used by GARMA terms
 #
@@ -572,67 +567,5 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
     resid_garma = resid_garma,
     resid_abs = resid_abs,
     resid_ma = resid_ma
-  )
-}
-
-
-#' Simulate/evaluate autoregressive residuals
-#'
-#' Developer note: some of the eval(parse(text = ...)) here could probably be replaced with inner products (%*%).
-#'
-#' @param sigma_ Numeric vector of innovations
-#' @param ar_list List with numerical vectors, list(ar1_ = c(...), ar2_ = c(...))
-#' @param resid_abs NULL or numerical vector of observed minus fitted residuals
-#'   on the GARMA link scale.
-#' @param series_id Optional vector identifying independent series. Lagged
-#'   residuals never cross from one series to another.
-#' @return List with
-#'   * `resid_ar`: the autoregressive part of the residuals
-#'   * `resid_sigma`: the innovations.
-#'
-#'   Note that `resid_abs = resid_ar + resid_sigma`.
-#' @seealso get_ar_jagscode
-#' @noRd
-simulate_ar = function(sigma_, ar_list, resid_abs = NULL, series_id = NULL) {
-  # Check inputs
-  checkmate::assert_numeric(sigma_, any.missing = FALSE)
-  checkmate::assert_list(ar_list)
-  checkmate::assert_numeric(resid_abs, any.missing = FALSE, null.ok = TRUE)
-  if (length(grep("^ar[0-9]+_$", names(ar_list))) != length(ar_list))
-    stop_github("Not all names(ar_list) are arx_.")
-  if (is.null(series_id))
-    series_id = rep(1, length(sigma_))
-  if (length(series_id) != length(sigma_) || anyNA(series_id))
-    stop_github("series_id must have one non-missing value per residual.")
-  if (length(resid_abs) > 0 && length(resid_abs) != length(sigma_))
-    stop_github("resid_abs and sigma_ must have the same length.")
-
-  ar_order = length(ar_list)
-
-  # resid_ is the observed residual from y_
-  # resid_ is split into the innovation and AR() part. So resid_ = resid_ar + resid_sigma
-  resid_sigma = stats::rnorm(length(sigma_), 0, sigma_)
-  generate_residuals = length(resid_abs) == 0
-  if (generate_residuals)
-    resid_abs = numeric(length(sigma_))
-
-  resid_ar = numeric(length(resid_abs))
-  for (rows in split(seq_along(resid_abs), series_id)) {
-    for (position in seq_along(rows)) {
-      row = rows[position]
-      available_lags = seq_len(min(ar_order, position - 1))
-      for (lag in available_lags) {
-        resid_ar[row] = resid_ar[row] +
-          ar_list[[paste0("ar", lag, "_")]][row] * resid_abs[rows[position - lag]]
-      }
-      if (generate_residuals)
-        resid_abs[row] = resid_sigma[row] + resid_ar[row]
-    }
-  }
-
-  # Return
-  list(
-    resid_ar = resid_ar,
-    resid_sigma = resid_sigma
   )
 }

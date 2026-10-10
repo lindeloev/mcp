@@ -219,26 +219,16 @@ remove_terms = function(form, remove) {
 #' @return char formula with the content inside the brackets.
 #' @noRd
 get_term_content = function(term, env = parent.frame()) {
-  # Handle cases of no input or several inputs
-  if (length(term) == 0) {
-    return(NA)
-  } else if (length(term) > 1) {
-    stop("Only one ", term, " allowed in each formula.")
-  } else if (is.na(term)) {
-    return(NA)
-  } else if (length(term) == 1) {
-    # Get formula inside wrapper
-    content_start = stringr::str_locate(term, "\\(") + 1  # Location of first character in contents
-    content_end = stringr::str_length(term) - 1  # Location of last character in contents
-    content = substr(term, content_start, content_end)
+  if (length(term) > 1)
+    stop("Only one ", sub("\\(.*", "()", term[1]), " allowed in each formula. Got ", and_collapse(term), ".")
 
-    # To formula
-    if (content == "")
-      stop("Empty terms not allowed in the formulas. Found '", term, "'.")
-    # Wrapper terms are strings, so carry their source formula environment explicitly.
-    form = stats::as.formula(paste0("~", content), env = env)
-    return(form)
-  }
+  # Get formula inside wrapper
+  content = sub("^[^(]*\\((.*)\\)$", "\\1", term)
+  if (content == "")
+    stop("Empty terms not allowed in the formulas. Found '", term, "'.")
+
+  # Wrapper terms are strings, so carry their source formula environment explicitly.
+  stats::as.formula(paste0("~", content), env = env)
 }
 
 

@@ -113,7 +113,6 @@ plot_pars = function(fit,
   checkmate::assert_flag(prior)
   if (any(c("hex", "scatter") %in% type) && nvariables < 2)
     stop("`nvariables` must be at least 2 for `type = 'hex'` or `type = 'scatter'`.")
-  bayesplot::available_mcmc()  # Quick fix to make R CMD Check happy that bayesplot is imported
 
   # Get posterior/prior draws
   draws = posterior_draws(fit, prior = prior)

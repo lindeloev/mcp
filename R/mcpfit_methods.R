@@ -281,11 +281,8 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   checkmate::assert_flag(verbose)
   rlang::check_dots_empty()
 
-  if (is.null(diagnostics)) {
-    diagnostics = .subset2(fit, ".internal")[["diagnostics"]]
-    if (is.null(diagnostics))
-      diagnostics = list()
-  }
+  if (is.null(diagnostics))
+    diagnostics = fit$.internal$diagnostics
   diagnostics = resolve_diagnostics(diagnostics)
 
   draws = mcmclist_draws(fit, prior = prior, error = FALSE)
@@ -335,7 +332,8 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
     check_rhat = !is.null(diagnostics$rhat) && coda::nchain(draws) >= 2
-    conv = check_convergence(all_res, diagnostics, fixed_pars = get_fixed_pars(fit), check_rhat = check_rhat)
+    fixed_pars = fit$.internal$prior_table$parameter[prior_table$kind == "constant"]
+    conv = check_convergence(all_res, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
     if (conv$n_bad > 0) {
       param_str = if (conv$n_bad == 1) "1 parameter shows" else paste0(conv$n_bad, " parameters show")
       cat("\nWarning: ", param_str, " poor convergence (", conv$thresholds, ").\n", sep = "")

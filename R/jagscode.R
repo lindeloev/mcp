@@ -34,28 +34,17 @@ get_jags_family_context = function(segments) {
 #' @return String. A JAGS model.
 #' @noRd
 get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
-                          prior_table = NULL, series = FALSE) {
-  prior_description = if (is.null(prior_table)) {
-    stats::setNames(rep("Prior", length(prior)), names(prior))
-  } else {
-    stats::setNames(prior_table$description, prior_table$parameter)
-  }
-  prior_kind_ = if (is.null(prior_table)) {
-    NULL
-  } else {
-    stats::setNames(prior_table$kind, prior_table$parameter)
-  }
+                          prior_table, series = FALSE) {
+  prior_description = stats::setNames(prior_table$description, prior_table$parameter)
+  prior_kind_ = stats::setNames(prior_table$kind, prior_table$parameter)
   # For default segment-1 intercept priors placed at min(x): the value of that segment's
   # x-terms at min(x), e.g., "x_1 * 101". NA for all other parameters.
-  prior_reference = if (is.null(prior_table$reference)) list() else
-    as.list(stats::setNames(prior_table$reference, prior_table$parameter))
+  prior_reference = as.list(stats::setNames(prior_table$reference, prior_table$parameter))
   # Segment anchors (see add_segment_anchors()): for slopes sampled as the rise over their
   # segment, the segment width, e.g., "(cp_2 - cp_1)"; for intercepts sampled as the level
   # at the segment end, the change over the segment, e.g., "x_2 * (cp_2 - cp_1)". NA otherwise.
-  prior_rise_width = if (is.null(prior_table$rise_width)) list() else
-    as.list(stats::setNames(prior_table$rise_width, prior_table$parameter))
-  prior_end_change = if (is.null(prior_table$end_change)) list() else
-    as.list(stats::setNames(prior_table$end_change, prior_table$parameter))
+  prior_rise_width = as.list(stats::setNames(prior_table$rise_width, prior_table$parameter))
+  prior_end_change = as.list(stats::setNames(prior_table$end_change, prior_table$parameter))
 
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
@@ -90,7 +79,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     get_prior_str(
       prior, match(name, names(prior)),
       description = prior_description[[name]],
-      kind = if (is.null(prior_kind_)) NULL else prior_kind_[[name]], ...
+      kind = prior_kind_[[name]], ...
     )
   }
   cp_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
@@ -134,7 +123,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     mm = paste0(mm, get_prior_str(
       prior_pop, i,
       description = prior_description[[name]],
-      kind = if (is.null(prior_kind_)) NULL else prior_kind_[[name]],
+      kind = prior_kind_[[name]],
       reference = prior_reference[[name]],
       rise_width = prior_rise_width[[name]],
       end_change = prior_end_change[[name]]
@@ -154,7 +143,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
         i = i,
         group_col = effect$group_col,
         description = prior_description[[names(prior_group)[i]]],
-        kind = if (is.null(prior_kind_)) NULL else prior_kind_[[names(prior_group)[i]]]
+        kind = prior_kind_[[names(prior_group)[i]]]
       ))
     }
   }

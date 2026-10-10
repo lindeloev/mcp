@@ -131,10 +131,9 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
     tables$group_effects,
     c(
       "population_name", "name", "part", "group_col", "segment", "dpar",
-      "sd_name", "par_type", "matrix_name", "display_name", "order",
-      "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
-      "next_segment", "definition_name", "definition_segment",
-      "occurrence_segment"
+      "sd_name", "definition_name", "definition_segment", "par_type",
+      "matrix_name", "display_name", "order", "x_factor", "design_id",
+      "design_col", "matrix_col", "matrix_data", "next_segment"
     )
   )
   expect_named(
@@ -147,7 +146,6 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   expect_equal(mcp_pars(fit), tables$parameters)
   expect_equal(tables$predictor_definitions$definition_name, tables$predictor_definitions$code_name)
   expect_equal(tables$predictors$definition_name, tables$predictors$code_name)
-  expect_equal(tables$predictors$occurrence_segment, tables$predictors$segment)
   expect_equal(tables$group_definitions$definition_name, tables$group_definitions$name)
   expect_equal(tables$group_effects$definition_name, tables$group_effects$name)
   group = mcp_pars(fit, scope = "group")$name
@@ -547,7 +545,7 @@ test_that("PPC and LOO draws stay aligned", {
 
   loo_result = suppressWarnings(loo(fit, ndraws = 10, save_psis = TRUE))
   expect_equal(dim(loo_result$psis_object), dim(loglik))
-  expect_equal(attr(loo_result, "mcp_settings")$ndraws, 10L)
+  expect_equal(attr(loo_result, "dims")[1], 10)
 
   # Disallow component-selective LOO and WAIC
   expect_error(suppressWarnings(loo(fit, ndraws = 10, group_effects = FALSE)), "must be used", fixed = TRUE)
@@ -564,14 +562,14 @@ test_that("PPC and LOO draws stay aligned", {
 
   # loo(ndraws = ...) preserves MCMC chains and recomputes relative_eff
   loo_sub = suppressWarnings(loo(fit, ndraws = 50, save_psis = TRUE))
-  expect_equal(attr(loo_sub, "mcp_settings")$ndraws, 50L)
+  expect_equal(attr(loo_sub, "dims")[1], 50)
   expect_false(all(attr(loo_sub$psis_object, "r_eff") == 1))
   expect_true(is.numeric(attr(loo_sub$psis_object, "r_eff")))
 
   # loo(ndraws = ...) balances draws across chains and records the actual count.
   loo_odd = suppressWarnings(loo(fit, ndraws = 59, save_psis = TRUE))
   expect_equal(nrow(loo_odd$psis_object), 60)
-  expect_equal(attr(loo_odd, "mcp_settings")$ndraws, 60L)
+  expect_equal(attr(loo_odd, "dims")[1], 60)
 
   expect_s3_class(
     suppressWarnings(suppressMessages(pp_check(

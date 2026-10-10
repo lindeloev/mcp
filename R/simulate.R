@@ -253,10 +253,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # ASSERTS #
   ###########
   checkmate::assert_class(fit, "mcpfit")
-  if (!is.mcpfamily(fit$family))
-    fit$family = mcpfamily(fit$family)
-  if (is.null(fit$family$r$cdf))
-    fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   model_tables = get_fit_model_tables(fit)
   predictor_definitions = model_tables$predictor_definitions
   group_definitions = model_tables$group_definitions
@@ -304,9 +300,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # EVALUATE MODEL AND RETURN VIA FAMILY AND .TYPE #
   ##################################################
   dpar_values = evaluate_model_dpars(fit, args, pred_pars)
-  uses_link_dpars = "link_mu_" %in% names(dpar_values)
-  if (uses_link_dpars)
-    dpar_values = add_response_dpars(dpar_values, fit$family)
+  dpar_values = add_response_dpars(dpar_values, fit$family)
 
   # Prepare for stuff needing .ydata
   has_ydata = is.null(args[[data_columns$response]]) == FALSE
@@ -316,9 +310,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     stop(".ydata must be non-NULL for .type = 'loglik'.")
   .dpar = paste0(.dpar, "_")
 
-  if (!uses_link_dpars && .scale == "response" && .dpar %in% c("epred_", "mu_"))
-    dpar_values$mu_ = fit$family$linkinv(dpar_values$mu_)
-
   response_data = get_family_response_data(fit$family, model_tables$segments, args)
   dpars = stats::setNames(lapply(fit$family$dpars, function(dpar) {
     dpar_values[[paste0(dpar, "_")]]
@@ -327,7 +318,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # Simply return for fitted dpars
   if (.dpar %notin% c("epred_", "mu_") && .type == "fitted") {
     link_dpar = paste0("link_", .dpar)
-    if (uses_link_dpars && .scale == "linear" && link_dpar %in% names(dpar_values))
+    if (.scale == "linear" && link_dpar %in% names(dpar_values))
       return(dpar_values[[link_dpar]])
     return(dpar_values[[.dpar]])
   }
@@ -335,7 +326,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   # GARMA is defined on the link scale. The observed response is clipped only
   # where needed to keep log and logit transformations finite.
   if (has_arma_terms && .arma == TRUE) {
-    base_link_mu = if (uses_link_dpars) dpar_values$link_mu_ else fit$family$linkfun(dpar_values$mu_)
+    base_link_mu = dpar_values$link_mu_
     ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
     ma_list = dplyr::select(dpar_values, dplyr::matches("^ma[0-9]+_$"))
     threshold = dpar_values$garma_threshold_
@@ -365,11 +356,8 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     dpars$mu = garma_result$mu
   }
 
-  if (.type == "fitted" && .scale == "linear") {
-    if (uses_link_dpars)
-      return(dpar_values$link_mu_)
-    return(dpar_values$mu_)
-  }
+  if (.type == "fitted" && .scale == "linear")
+    return(dpar_values$link_mu_)
 
   if (.type == "fitted") {
     if (.dpar == "mu_")

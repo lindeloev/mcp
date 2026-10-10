@@ -54,7 +54,7 @@ get_categorical_levels = function(df) {
 }
 
 
-# Collapse vector into comma-separated list with 'and' before the last item
+# Collapse vector into a string joined by " and "
 and_collapse = function(x) {
   checkmate::assert_character(x)
   paste0(x, collapse = " and ")
@@ -82,19 +82,6 @@ resolve_diagnostics = function(diagnostics = list()) {
     stop("Unknown diagnostic(s): ", and_collapse(unknown), ".")
   defaults[names(diagnostics)] = diagnostics
   defaults
-}
-
-
-# Extract parameter names for constant params (e.g. "x_2" for x_2 = 5)
-get_fixed_pars = function(fit) {
-  table = .subset2(fit, ".internal")[["prior_table"]]
-  if (is.null(table))
-    table = attr(fit$prior, "prior_table")
-  if (!is.null(table$parameter) && !is.null(table$kind)) {
-    table$parameter[table$kind == "constant"]
-  } else {
-    character()
-  }
 }
 
 

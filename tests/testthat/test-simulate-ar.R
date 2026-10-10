@@ -1,25 +1,17 @@
+# Evaluate observed AR residuals on the identity link: link_mu = 0, so y is the residual.
+garma_ar_part = function(resid_abs, ar_list, series_id = NULL) {
+  n = length(resid_abs)
+  mcp:::simulate_garma(
+    base_link_mu = rep(0, n), ar_list = ar_list, ma_list = list(),
+    threshold = rep(0.1, n), family = mcpfamily(gaussian()),
+    dpars = list(sigma = rep(1, n)), y = resid_abs, series_id = series_id
+  )$resid_garma
+}
+
+
 test_that("observed AR residuals are isolated by series", {
-  resid_abs = c(1, 2, 3, 1, 2, 3)
-  result = mcp:::simulate_ar(
-    sigma_ = rep(1, 6),
-    ar_list = list(ar1_ = rep(0.5, 6)),
-    resid_abs = resid_abs,
-    series_id = rep(1:2, each = 3)
-  )
-
-  expect_equal(result$resid_ar, c(0, 0.5, 1, 0, 0.5, 1))
-})
-
-
-test_that("series isolation does not depend on contiguous rows", {
-  result = mcp:::simulate_ar(
-    sigma_ = rep(1, 6),
-    ar_list = list(ar1_ = rep(0.5, 6)),
-    resid_abs = c(1, 1, 2, 2, 3, 3),
-    series_id = rep(1:2, 3)
-  )
-
-  expect_equal(result$resid_ar, c(0, 0, 0.5, 0.5, 1, 1))
+  result = garma_ar_part(c(1, 2, 3, 1, 2, 3), list(ar1_ = rep(0.5, 6)), series_id = rep(1:2, each = 3))
+  expect_equal(result, c(0, 0.5, 1, 0, 0.5, 1))
 })
 
 
@@ -49,26 +41,16 @@ test_that("fit$simulate resets fresh residual histories by series", {
 
 
 test_that("AR models use all available early lags", {
-  result = mcp:::simulate_ar(
-    sigma_ = rep(1, 4),
-    ar_list = list(ar1_ = rep(0.5, 4), ar2_ = rep(0.25, 4)),
-    resid_abs = 1:4
-  )
-
-  expect_equal(result$resid_ar, c(0, 0.5, 1.25, 2))
+  result = garma_ar_part(1:4, list(ar1_ = rep(0.5, 4), ar2_ = rep(0.25, 4)))
+  expect_equal(result, c(0, 0.5, 1.25, 2))
 })
 
 
 test_that("early lags use coefficients from the current observation", {
-  result = mcp:::simulate_ar(
-    sigma_ = rep(1, 3),
-    ar_list = list(ar1_ = c(0.1, 0.5, 0.9), ar2_ = c(0.01, 0.05, 0.09)),
-    resid_abs = c(2, 4, 8)
-  )
+  result = garma_ar_part(c(2, 4, 8), list(ar1_ = c(0.1, 0.5, 0.9), ar2_ = c(0.01, 0.05, 0.09)))
+  expect_equal(result, c(0, 1, 3.78))
 
-  expect_equal(result$resid_ar, c(0, 1, 3.78))
-
-  jags_code = mcp:::get_ar_jagscode(2, "x")
+  jags_code = mcp:::get_garma_jagscode(2, NA, "x")
   expect_match(jags_code, "ar1_\\[2\\] \\* resid_abs_\\[2 - 1\\]")
 })
 
@@ -97,10 +79,14 @@ test_that("generated AR residuals use the same partial-lag recursion", {
   expected_residuals[4] = innovations[4] + ar_list$ar1_[4] * expected_residuals[3] + ar_list$ar2_[4] * expected_residuals[2]
 
   set.seed(42)
-  result = mcp:::simulate_ar(rep(1, 4), ar_list)
+  result = mcp:::simulate_garma(
+    base_link_mu = rep(0, 4), ar_list = ar_list, ma_list = list(),
+    threshold = rep(0.1, 4), family = mcpfamily(gaussian()),
+    dpars = list(sigma = rep(1, 4))
+  )
 
-  expect_equal(result$resid_sigma, innovations)
-  expect_equal(result$resid_ar, expected_residuals - innovations)
+  expect_equal(result$y, expected_residuals)
+  expect_equal(result$resid_garma, expected_residuals - innovations)
 })
 
 

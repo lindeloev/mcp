@@ -101,14 +101,13 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 
     n_draws = n_chains * iter_per_chain
     chain_id = rep(seq_len(n_chains), each = iter_per_chain)
-    settings = get_loglik_settings(fit, n_draws)
   } else {
     n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
     chain_id = rep(seq_along(mcmc_post), vapply(mcmc_post, nrow, integer(1)))
-    settings = get_loglik_settings(fit, ndraws)
   }
 
-  if (length(settings$observed_rows) == 0)
+  observed_rows = which(!is.na(fit$data[, mcp_columns(fit)$response]))
+  if (length(observed_rows) == 0)
     stop("LOO requires at least one observed response.")
 
   # Matrix: Fast but memory-greedy matrix-based computation
@@ -120,7 +119,6 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 
   # Pointwise: per-data-row computation
   } else {
-    n_eval = n_draws
     predictors = get_fit_model_tables(fit)$predictors
     ar_order = get_arma_order(predictors, "ar")
     ma_order = get_arma_order(predictors, "ma")
@@ -150,20 +148,19 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
       link_fun(loglik)
     }
 
-    loo_data = data.frame(.mcp_original_row = settings$observed_rows)
+    loo_data = data.frame(.mcp_original_row = observed_rows)
 
     r_eff = loo::relative_eff(
       llfun, data = loo_data, chain_id = chain_id,
       link_fun = function(x) { m = max(x); exp(if (is.finite(m)) x - m else x) },
-      draws = seq_len(n_eval)
+      draws = seq_len(n_draws)
     )
     result = loo::loo.function(
       llfun, data = loo_data, r_eff = r_eff,
-      draws = seq_len(n_eval), ...
+      draws = seq_len(n_draws), ...
     )
   }
 
-  attr(result, "mcp_settings") = settings
   result
 }
 
@@ -200,16 +197,6 @@ validate_loglik_ndraws = function(fit, ndraws) {
   as.integer(ndraws)
 }
 
-
-# Extract and validate evaluation settings for log-likelihood
-get_loglik_settings = function(fit, ndraws) {
-  if (!is.null(ndraws))
-    ndraws = as.integer(ndraws)
-  list(
-    ndraws = ndraws,
-    observed_rows = which(!is.na(fit$data[, mcp_columns(fit)$response]))
-  )
-}
 
 
 #' Test Hypotheses Concerning Individual Parameters
@@ -411,9 +398,6 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
           )
         }
 
-        prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
-        post_values = get_hypothesis_values(posterior_draws(fit), LHS)
-
         if (is_sparse_tail(prior_values, 0) || is_sparse_tail(post_values, 0)) {
           warning(
             "The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.",
@@ -560,28 +544,4 @@ get_hypothesis_values = function(draws, LHS) {
 # Is the tested value outside the central 98% of draws?
 is_sparse_tail = function(x, value) {
   mean(x <= value) < 0.01 || mean(x >= value) < 0.01
-}
-
-
-# Add loo if not already present
-#
-# - fit: An mcpfit object
-# - save_psis: Logical. See documentation of loo::loo
-# - info: Optional message if adding loo
-# Returns: An mcpfit object with loo.
-with_loo = function(fit, save_psis = FALSE, info = NULL) {
-  checkmate::assert_class(fit, "mcpfit")
-  settings = get_loglik_settings(fit, ndraws = NULL)
-  settings_match = identical(attr(fit$loo, "mcp_settings"), settings)
-  needs_psis = save_psis == TRUE &&
-    loo::is.loo(fit$loo) && is.null(fit$loo$psis_object)
-
-  # Add loo if absent or needs psis
-  if (is.null(fit$loo) || !settings_match || needs_psis) {
-    if (is.character(info))
-      message(info)
-    fit$loo = loo(fit, save_psis = save_psis)
-  }
-
-  fit
 }

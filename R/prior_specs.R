@@ -55,18 +55,9 @@ default_cp_specs = function(cps, context) {
       source = "default"
     )
 
-    previous_cp = if (j == 1) "min(.x)" else cps$code[j - 1]
-    previous_cp = stringr::str_replace(
-      previous_cp, "CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]")
-    )
-    later_population = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))
-    next_cp = if (length(later_population) == 0) "max(.x)" else
-      cps$name[later_population[1]]
-    lower = paste0(previous_cp, " - ", cps$name[j])
-    upper = paste0(next_cp, " - ", cps$name[j])
     specs[[group_name]] = tibble::tibble(
       parameter = group_name,
-      code = paste0("dnorm(0, ", sd_name, ") T(", lower, ", ", upper, ")"),
+      code = paste0("dnorm(0, ", sd_name, ") ", group_cp_truncation(cps, j, "min(.x)", "max(.x)")),
       description = "Ordered group-level change-point deviations from the population location",
       source = "default"
     )
@@ -106,20 +97,27 @@ get_segment_offset = function(design_specs, dpar, segment) {
 }
 
 
-default_predictor_specs = function(predictors, family, design_specs = list()) {
-  defaults = dplyr::bind_rows(family$default_prior, default_arma_specs())
-
-  modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
-  for (dpar in modeled_dpars) {
-    is_modeled = get_dpar_spec(family, dpar)$modeled
-    condition = if (is_modeled) "modeled" else "constant"
-    defaults = defaults %>%
-      dplyr::filter(
-        .data$dpar != .env$dpar |
-          .data$condition == "always" |
-          .data$condition == .env$condition
-      )
+# Keep default-prior rows whose `condition` applies: "always", or "modeled"/"constant"
+# depending on whether the model includes a formula for that dpar, e.g., sigma(1 + x).
+filter_default_conditions = function(defaults, family) {
+  for (dpar in unique(defaults$dpar[defaults$condition == "modeled"])) {
+    condition = if (get_dpar_spec(family, dpar)$modeled) "modeled" else "constant"
+    defaults = defaults[defaults$dpar != dpar | defaults$condition %in% c("always", condition), ]
   }
+  defaults
+}
+
+
+# Replace predictor_scale() in default prior strings with each coefficient's scale.
+fill_predictor_scale = function(prior, matrix_data, x_factor) {
+  vapply(seq_along(prior), function(i) {
+    gsub("predictor_scale()", default_predictor_scale(matrix_data[[i]], x_factor[i]), prior[i], fixed = TRUE)
+  }, character(1))
+}
+
+
+default_predictor_specs = function(predictors, family, design_specs = list()) {
+  defaults = filter_default_conditions(dplyr::bind_rows(family$default_prior, default_arma_specs()), family)
 
   keys = paste(defaults$dpar, defaults$par_type)
   if (anyDuplicated(keys))
@@ -148,15 +146,7 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
     }
   }
 
-  scaled = grepl("predictor_scale()", joined$prior, fixed = TRUE)
-  joined$prior[scaled] = vapply(which(scaled), function(i) {
-    gsub(
-      "predictor_scale()",
-      default_predictor_scale(joined$matrix_data[[i]], joined$x_factor[i]),
-      joined$prior[i],
-      fixed = TRUE
-    )
-  }, character(1))
+  joined$prior = fill_predictor_scale(joined$prior, joined$matrix_data, joined$x_factor)
 
   tibble::tibble(
     parameter = joined$code_name,
@@ -173,19 +163,7 @@ default_group_specs = function(group_effects, family) {
   if (nrow(effects) == 0)
     return(empty_prior_specs())
 
-  defaults = family$default_prior
-  modeled_dpars = unique(defaults$dpar[defaults$condition == "modeled"])
-  for (dpar in modeled_dpars) {
-    is_modeled = get_dpar_spec(family, dpar)$modeled
-    condition = if (is_modeled) "modeled" else "constant"
-    defaults = defaults %>%
-      dplyr::filter(
-        .data$dpar != .env$dpar |
-          .data$condition == "always" |
-          .data$condition == .env$condition
-      )
-  }
-
+  defaults = filter_default_conditions(family$default_prior, family)
   joined = effects %>%
     dplyr::left_join(
       dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
@@ -198,15 +176,7 @@ default_group_specs = function(group_effects, family) {
     )
   }
 
-  scaled = grepl("predictor_scale()", joined$group_sd_prior, fixed = TRUE)
-  joined$group_sd_prior[scaled] = vapply(which(scaled), function(i) {
-    gsub(
-      "predictor_scale()",
-      default_predictor_scale(joined$matrix_data[[i]], joined$x_factor[i]),
-      joined$group_sd_prior[i],
-      fixed = TRUE
-    )
-  }, character(1))
+  joined$group_sd_prior = fill_predictor_scale(joined$group_sd_prior, joined$matrix_data, joined$x_factor)
   coefficient_description = ifelse(
     joined$par_type == "Intercept",
     "intercept",
@@ -233,6 +203,16 @@ default_group_specs = function(group_effects, family) {
       source = "default"
     )
   )
+}
+
+
+# Truncation keeping group-level change point j between the previous realized change point
+# (or `x_min`) and the next population-level change point (or `x_max`), as deviations from cp_j.
+group_cp_truncation = function(cps, j, x_min, x_max) {
+  previous_cp = if (j == 1) x_min else sub("CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]"), cps$code[j - 1])
+  later_population = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))
+  next_cp = if (length(later_population) == 0) x_max else cps$name[later_population[1]]
+  paste0("T(", previous_cp, " - ", cps$name[j], ", ", next_cp, " - ", cps$name[j], ")")
 }
 
 
@@ -344,18 +324,9 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
         original, "^\\s*dunif\\s*\\(|T\\s*\\("
       )
       if (is.character(original) && !is_bounded) {
-        previous_cp = if (j == 1) paste0("min(", context$x_display, ")") else cps$code[j - 1]
-        previous_cp = stringr::str_replace(
-          previous_cp, "CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]"))
-        later_population = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))
-        next_cp = if (length(later_population) == 0) {
-          paste0("max(", context$x_display, ")")
-        } else {
-          cps$name[later_population[1]]
-        }
+        x_display = context$x_display
         prior[[group_name]] = paste0(
-          original, " T(", previous_cp, " - ", cps$name[j], ", ",
-          next_cp, " - ", cps$name[j], ")"
+          original, " ", group_cp_truncation(cps, j, paste0("min(", x_display, ")"), paste0("max(", x_display, ")"))
         )
         auto_truncated = c(auto_truncated, group_name)
       }

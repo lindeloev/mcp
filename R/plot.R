@@ -271,7 +271,6 @@ get_plot = function(x,
   ###############################
   # PREP RESPONSE DATA FOR PLOT #
   ###############################
-  data_columns = mcp_columns(fit)
   ydata = fit$data[, data_columns$response]  # Convenient shortname
   response_data = get_family_response_data(fit$family, model_tables$segments, fit$data)
 

@@ -82,18 +82,6 @@ run_jags = function(jags_code,
     draws
   }
 
-  # Equispaced default inits for sequential beta change points
-  cp_frac_nodes = unique(stringr::str_extract_all(jags_code, "cp_[0-9]+_frac_")[[1]])
-  if (length(cp_frac_nodes) > 0) {
-    N = length(cp_frac_nodes)
-    defaults = stats::setNames(as.list(1 / (N - seq_len(N) + 2)), cp_frac_nodes)
-    if (is.list(inits) && length(inits) > 0 && is.list(inits[[1]])) {
-      inits = lapply(inits, function(ch) c(ch, defaults[setdiff(names(defaults), names(ch))]))
-    } else {
-      inits = c(inits, defaults[setdiff(names(defaults), names(inits))])
-    }
-  }
-
   # Use JAGS directly under a sequential future plan. This compiles the model
   # only once for all chains and preserves JAGS's progress output.
   n_workers = future::nbrOfWorkers()
@@ -102,9 +90,13 @@ run_jags = function(jags_code,
     seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
 
-  # Start other nodes at the prior medians, e.g., away from the zero bound of SDs.
-  medians = get_jags_median_inits(jags_code)
-  inits = lapply(inits, function(ch) c(ch, medians[setdiff(names(medians), names(ch))]))
+  # Default inits where users supplied none: equispaced change points for the sequential
+  # beta chain and prior medians for other nodes, e.g., away from the zero bound of SDs.
+  cp_frac_nodes = unique(stringr::str_extract_all(jags_code, "cp_[0-9]+_frac_")[[1]])
+  N = length(cp_frac_nodes)
+  defaults = c(stats::setNames(as.list(1 / (N - seq_len(N) + 2)), cp_frac_nodes), get_jags_median_inits(jags_code))
+  defaults = defaults[!duplicated(names(defaults))]
+  inits = lapply(inits, function(ch) c(ch, defaults[setdiff(names(defaults), names(ch))]))
 
   if (n_workers == 1) {
     draws = do_sampling(
@@ -230,7 +222,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     paste0("n_unique_", group_cols), paste0(group_cols, "_"),
     if (generated) c(
       "i_", "garma_threshold_", "garma_y_", "garma_link_y_",
-      "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_", "nb_log_rate_",
+      "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_",
       paste0("cp_", seq_len(nrow(segments) - 1L), "_frac_"),
       paste0("x_local_", seq_len(nrow(segments)), "_"),
       paste0("link_", dpars, "_"), paste0(dpars, "_"),

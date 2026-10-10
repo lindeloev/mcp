@@ -1017,13 +1017,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     predictor_group_effects = tibble::tibble(name = character(), segment = integer(),
       definition_name = character(), definition_segment = integer())
 
-  # Attach occurrence segment and definition metadata
-  predictors = predictors %>%
-    dplyr::mutate(occurrence_segment = .data$segment)
+  # Only the defining occurrence introduces a parameter and prior
   group_definitions = predictor_group_effects %>%
     dplyr::filter(.data$segment == .data$definition_segment)
-  predictor_group_effects = predictor_group_effects %>%
-    dplyr::mutate(occurrence_segment = .data$segment)
 
   list(
     predictors = predictors,

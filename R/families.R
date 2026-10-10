@@ -137,9 +137,6 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   missing_aux = setdiff(names(response_defaults$auxiliary), names(response$auxiliary))
   response$auxiliary[missing_aux] = response_defaults$auxiliary[missing_aux]
 
-  if (is.null(response$point_size))
-    response$point_size = response_defaults$point_size
-
   # Each family will define a validate(); this applies that.
   response$validate = make_weighted_validate(response$validate)
 
@@ -156,10 +153,8 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
 
   family$linkfun_str = get_link_str(family$link)
   family$linkinv_str = get_link_str(family$link, inverse = TRUE)
-  if (!rlang::has_name(family, "linkfun"))
-    family$linkfun = get_link_function(family$link)
-  if (!rlang::has_name(family, "linkinv"))
-    family$linkinv = get_link_function(family$link, inverse = TRUE)
+  family$linkfun = get_link_function(family$link)
+  family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   class(family) = c("mcpfamily", "family")
   family
@@ -246,13 +241,6 @@ mcpfamily_gaussian = function(family) {
 
   default_prior = dplyr::bind_rows(mu_prior, sigma_prior)
 
-  response = list(
-    auxiliary = list(weights = list(
-      required = FALSE,
-      operations = "log_lik"
-    )),
-    point_size = "weights"
-  )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     log_lik = function(y, dpars, data) stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE),
@@ -297,9 +285,6 @@ mcpfamily_gaussian = function(family) {
     )
   }
 
-  family$linkfun = get_link_function(family$link)
-  family$linkinv = get_link_function(family$link, inverse = TRUE)
-
   # Return
   new_mcpfamily(
     family,
@@ -308,7 +293,7 @@ mcpfamily_gaussian = function(family) {
       new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 1e-5)
     ),
     default_prior = default_prior,
-    response = response,
+    response = list(),
     r = r,
     backends = list(jags = jags),
     garma = garma
@@ -407,9 +392,6 @@ mcpfamily_binomial = function(family) {
     )
   }
 
-  family$linkfun = get_link_function(family$link)
-  family$linkinv = get_link_function(family$link, inverse = TRUE)
-
   new_mcpfamily(
     family,
     dpar_specs = new_dpar_spec("mu", family$link),
@@ -492,9 +474,6 @@ mcpfamily_bernoulli = function(family) {
     )
   }
 
-  family$linkfun = get_link_function(family$link)
-  family$linkinv = get_link_function(family$link, inverse = TRUE)
-
   new_mcpfamily(
     family,
     dpar_specs = new_dpar_spec("mu", family$link),
@@ -575,9 +554,6 @@ mcpfamily_poisson = function(family) {
       observed_jags = function(context) paste0("max(", context$y, ", ", context$threshold, ")")
     )
   }
-
-  family$linkfun = get_link_function(family$link)
-  family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   new_mcpfamily(
     family,
@@ -696,7 +672,6 @@ known_dpar_wrappers = function() {
 
 # Standardize and expose a family's distributional-parameter metadata.
 add_dpar_specs = function(family) {
-  family$dpar_specs = standardize_dpar_specs(family$dpar_specs)
   assert_dpar_specs(family$dpar_specs)
   family$dpars = family$dpar_specs$dpar
   family$links = stats::setNames(family$dpar_specs$link, family$dpar_specs$dpar)
@@ -736,24 +711,9 @@ resolve_dpar_specs = function(family, predictors, model = NULL) {
 }
 
 
-# Add conditional-link fields missing from older dpar specifications.
-standardize_dpar_specs = function(x) {
-  checkmate::assert_data_frame(x)
-  if ("link_constant" %notin% names(x))
-    x$link_constant = x$link
-  if ("link_modeled" %notin% names(x))
-    x$link_modeled = x$link
-  if ("modeled" %notin% names(x))
-    x$modeled = FALSE
-  if ("require_initial_predictor" %notin% names(x))
-    x$require_initial_predictor = FALSE
-  x
-}
-
-
 # Validate distributional-parameter metadata and supported links.
 assert_dpar_specs = function(x) {
-  x = standardize_dpar_specs(x)
+  checkmate::assert_data_frame(x)
   required = c(
     "dpar", "link", "link_constant", "link_modeled", "modeled",
     "implicit", "require_initial_predictor", "lower"
@@ -854,15 +814,7 @@ mcplink = function(name, linkfun, linkinv, jags_link = name, jags_linkinv = "") 
 )
 
 get_mcplink = function(link) {
-  if (inherits(link, "mcplink"))
-    return(link)
-  checkmate::assert_string(link)
-  if (link %in% names(.mcplinks)) {
-    .mcplinks[[link]]
-  } else {
-    link_obj = stats::make.link(link)
-    mcplink(link, link_obj$linkfun, link_obj$linkinv, jags_link = link, jags_linkinv = link)
-  }
+  .mcplinks[[rlang::arg_match0(link, names(.mcplinks))]]
 }
 
 

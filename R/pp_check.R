@@ -104,15 +104,23 @@ pp_check.mcpfit = function(
     draws_format = "tidy",
     .garma_replicate = TRUE
   )
+
+  # LOO weights are computed once for all observed rows and subset per plot below.
+  if (is_loo) {
+    message("Computing `loo(fit, save_psis = TRUE)`...")
+    psis_object = loo(fit, save_psis = TRUE)$psis_object
+    if (nrow(psis_object$log_weights) != length(unique(draws$.draw)))
+      stop_github("Could not align PPC draws with the LOO weights.")
+  }
+  get_psis_object = function(observations) {
+    if (is_loo) subset_psis_object(psis_object, match(observations, observed_rows)) else NULL
+  }
+
   # Return plot with or without facets
   if (is.null(facet_by)) {
     y = y_all[observed_rows]
     yrep = tidy_to_matrix(draws, type = ".prediction", data_rows = observed_rows)
-    plot_return = get_ppc_plot(
-      fit, type, y, yrep, ndraws,
-      observations = observed_rows,
-      ...
-    )
+    plot_return = get_ppc_plot(type, y, yrep, ndraws, get_psis_object(observed_rows), ...)
     return(plot_return)
   } else {
     facet_levels = unique(facet_data[observed_rows])
@@ -125,9 +133,7 @@ pp_check.mcpfit = function(
 
       # Add plot to list
       all_plots[[as.character(facet_level)]] = get_ppc_plot(
-        fit, type, y_this, yrep_this, ndraws,
-        observations = observations_this,
-        ...
+        type, y_this, yrep_this, ndraws, get_psis_object(observations_this), ...
       ) +
         ggplot2::ggtitle(facet_level)
     }
@@ -139,18 +145,16 @@ pp_check.mcpfit = function(
 }
 
 
-#' pp_check for loo statistics
+#' Call one bayesplot::ppc_*() function
 #'
 #' @inheritParams pp_check
 #' @param y Response vector
 #' @param yrep S X N matrix of predicted responses
-#' @param observations (required for loo-type plots) Original data-row indices.
+#' @param psis_object A PSIS object for the columns of `yrep`. Required for loo-type plots.
 #' @param ... Arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @return A `ggplot2` object returned by `bayesplot::ppc_*(y, yrep, ...)`.
 #' @noRd
-get_ppc_plot = function(fit, type, y, yrep, ndraws, observations = NULL, ...) {
-  is_loo = stringr::str_detect(type, "loo")
-
+get_ppc_plot = function(type, y, yrep, ndraws, psis_object = NULL, ...) {
   func_name = paste0("ppc_", type)
   func_obj = utils::getFromNamespace(func_name, "bayesplot")
   plot_formals = names(formals(func_obj))
@@ -160,41 +164,20 @@ get_ppc_plot = function(fit, type, y, yrep, ndraws, observations = NULL, ...) {
     .var.name = "names of arguments in `...`"
   )
 
-  if (is_loo == FALSE) {
+  if (is.null(psis_object))
     return(suppressWarnings(rlang::exec(func_obj, y, yrep, ...)))
-  } else if (is_loo == TRUE) {
-    # Compute loo if missing
-    fit = with_loo(
-      fit,
-      save_psis = TRUE,
-      info = "Computing `fit$loo = loo(fit, save_psis = TRUE)`..."
-    )
 
-    # Align PSIS columns with the observations shown in this plot. Posterior
-    # draws are deliberately left intact so the PSIS object remains valid.
-    loo_settings = attr(fit$loo, "mcp_settings")
-    loo_observed_rows = loo_settings$observed_rows
-    observation_cols = match(observations, loo_observed_rows)
-    if (nrow(fit$loo$psis_object$log_weights) != nrow(yrep) ||
-        anyNA(observation_cols))
-      stop_github("Could not align PPC observations with the LOO weights.")
-
-    psis_object = fit$loo$psis_object
-    psis_object = subset_psis_object(psis_object, observation_cols)
-    lw = loo::weights.importance_sampling(psis_object)
-
-    plot_args = list(y = y, yrep = yrep)
-    if ("psis_object" %in% plot_formals) {
-      plot_args$psis_object = psis_object
-    } else if ("lw" %in% plot_formals) {
-      plot_args$lw = lw
-    }
-    if ("samples" %in% plot_formals && !is.null(ndraws) &&
-        "samples" %notin% names(list(...)))
-      plot_args$samples = ndraws
-
-    return(suppressWarnings(rlang::exec(func_obj, !!!plot_args, ...)))
+  plot_args = list(y = y, yrep = yrep)
+  if ("psis_object" %in% plot_formals) {
+    plot_args$psis_object = psis_object
+  } else if ("lw" %in% plot_formals) {
+    plot_args$lw = loo::weights.importance_sampling(psis_object)
   }
+  if ("samples" %in% plot_formals && !is.null(ndraws) &&
+      "samples" %notin% names(list(...)))
+    plot_args$samples = ndraws
+
+  suppressWarnings(rlang::exec(func_obj, !!!plot_args, ...))
 }
 
 

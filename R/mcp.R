@@ -299,17 +299,8 @@ mcp = function(model,
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictor_definitions = predictor_tables$predictor_definitions
   predictor_occurrences = predictor_tables$predictors
-  group_definitions = get_group_effects(cps, predictor_tables$group_definitions) %>%
-    dplyr::mutate(
-      definition_name = dplyr::coalesce(.data$definition_name, .data$name),
-      definition_segment = dplyr::coalesce(.data$definition_segment, .data$segment)
-    )
-  group_occurrences = get_group_effects(cps, predictor_tables$group_effects) %>%
-    dplyr::mutate(
-      definition_name = dplyr::coalesce(.data$definition_name, .data$name),
-      definition_segment = dplyr::coalesce(.data$definition_segment, .data$segment),
-      occurrence_segment = dplyr::coalesce(.data$occurrence_segment, .data$segment)
-    )
+  group_definitions = get_group_effects(cps, predictor_tables$group_definitions)
+  group_occurrences = get_group_effects(cps, predictor_tables$group_effects)
   family = resolve_dpar_specs(family, predictor_definitions, model)
 
   if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
@@ -429,13 +420,12 @@ mcp = function(model,
   use_glm = identical(glm_module, "always") ||
     (identical(glm_module, "group_effects") && any(group_definitions$part != "cp"))
 
-  # Sample posterior
-  if (sample %in% c("post", "both")) {
-    mcmc_post = run_jags(
+  sample_draws = function(jags_data, pars, sample) {
+    draws = run_jags(
       jags_code = jags_code,
       jags_data = jags_data,
-      pars = c(all_pars, imputed_response_nodes),
-      sample = "post",
+      pars = pars,
+      sample = sample,
       n.chains = chains,
       n.iter = iter,
       n.adapt = warmup,
@@ -446,8 +436,14 @@ mcp = function(model,
     ) %>%
       recover_levels(data, group_definitions)
 
-    class(mcmc_post) = "mcmc.list"
-    assert_ordered_cp_draws(mcmc_post, cps)
+    class(draws) = "mcmc.list"
+    assert_ordered_cp_draws(draws, cps)
+    draws
+  }
+
+  # Sample posterior
+  if (sample %in% c("post", "both")) {
+    mcmc_post = sample_draws(jags_data, c(all_pars, imputed_response_nodes), "post")
 
     # Handle missing data
     if (length(imputed_response_nodes) > 0) {
@@ -460,8 +456,7 @@ mcp = function(model,
 
 
     # Diagnostics check - also for single-chain fits
-    fixed_pars = if (!is.null(prior_table$parameter) && !is.null(prior_table$kind))
-      prior_table$parameter[prior_table$kind == "constant"] else character()
+    fixed_pars = prior_table$parameter[prior_table$kind == "constant"]
     warn_nonconvergence(mcmc_post, diagnostics, fixed_pars = fixed_pars)
   } else {
     mcmc_post = NULL
@@ -482,24 +477,7 @@ mcp = function(model,
     if (!is.null(jags_data_prior$response_observed_))
       jags_data_prior$response_observed_[] = 0L
 
-    # Run sampling
-    mcmc_prior = run_jags(
-      jags_code = jags_code,
-      jags_data = jags_data_prior,
-      pars = all_pars,
-      sample = "prior",
-      n.chains = chains,
-      n.iter = iter,
-      n.adapt = warmup,
-      inits = inits,
-      seed = seed,
-      quiet = quiet,
-      use_glm = use_glm
-    ) %>%
-      recover_levels(data, group_definitions)
-
-    class(mcmc_prior) = "mcmc.list"
-    assert_ordered_cp_draws(mcmc_prior, cps)
+    mcmc_prior = sample_draws(jags_data_prior, all_pars, "prior")
   } else {
     mcmc_prior = NULL
   }

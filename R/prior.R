@@ -84,22 +84,15 @@ prior_summary = function(fit, verbose = FALSE) {
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_flag(verbose)
   table = fit$.internal$prior_table
-  if (is.null(table))
-    table = attr(fit$prior, "prior_table")
-  if (is.null(table))
-    stop("This `mcpfit` object does not contain a resolved prior table. Please re-fit the model using mcp >= 0.4.0.")
 
   pars = mcp_pars(fit)
-  if (!is.null(pars)) {
-    match_idx = match(table$parameter, pars$name)
-    table$segment = pars$segment[match_idx]
-    table$dpar = pars$dpar[match_idx]
-    table = table[order(match_idx), ]
-  }
+  match_idx = match(table$parameter, pars$name)
+  table$segment = pars$segment[match_idx]
+  table$dpar = pars$dpar[match_idx]
+  table = table[order(match_idx), ]
 
   public = c("parameter", "segment", "dpar", "prior", "bounds")
   if (verbose)
     public = c(public, "rule", "description", "source", "kind")
-  public = intersect(public, names(table))
   table[, public, drop = FALSE]
 }
