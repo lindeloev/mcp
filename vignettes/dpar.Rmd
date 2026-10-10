@@ -118,9 +118,9 @@ df$y = empty$simulate(
   Intercept_1 = -20, Intercept_2 = 0,
   sigma_1 = log(1), sigma_x_1 = log(2) / 15,
   sigma_2 = log(4),
-  sigma_x_3 = 0.02,
+  sigma_x_3 = 0.03,
   sigma_xE2_3 = 0.00015,
-  x_3 = 1.2
+  x_3 = 0.8
 )
 ```
 
@@ -129,7 +129,7 @@ df$y = empty$simulate(
 Fit it:
 
 ```{r, results = FALSE, warning=FALSE, message=FALSE}
-fit = mcp(model, data = df, iter = 10000, diagnostics = FALSE)
+fit = mcp(model, data = df, diagnostics = FALSE)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how the residual standard deviation is estimated:
@@ -151,7 +151,9 @@ summary(fit)
 pp_check(fit)
 ```
 
-Parameters almost converge well ($\hat{R} \le 1.01$ and $\text{ESS} > 400$), but I set `diagnostics = FALSE` to quiet warnings since this is just a demonstration. Notice that `cp_3` and the quadratic `sigma` parameters have lower effective sample sizes than the others, reflecting greater uncertainty in detecting subtle changes in variance curvature. Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
+The low ESS for sigma in segment 3 reveal some unidentifiability concerning whether the variance increase is driven by a linear (`sigma_x_3`) or quadratic term (`sigma_xE2_3`). This spills over to a lower ESS for `cp_3` too. Other coefficients seem to be reasonably recovered. This is why I set `diagnostics = FALSE` to quiet warnings since this is just a demonstration. 
+
+Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
 ```{r, fig.height=7, fig.width = 6}
 plot_pars(fit, regex_pars = "sigma_")

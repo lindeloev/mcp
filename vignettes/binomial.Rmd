@@ -66,7 +66,7 @@ mcp_pars(empty)
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
-  Intercept_1 = 2, Intercept_3 = -1, 
+  Intercept_1 = 2, Intercept_3 = -0.5, 
   year_2 = -0.1, year_3 = 0.1)
 
 head(df)
@@ -83,7 +83,7 @@ plot(df$year, df$y)
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE}
-fit = mcp(model, data = df, family = binomial(), iter = 6000)
+fit = mcp(model, data = df, family = binomial(), iter = 10000)
 ```
 
 

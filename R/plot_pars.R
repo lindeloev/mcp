@@ -17,8 +17,8 @@
 #' @param type String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
 #'   Common calls are "combo", "trace", and "dens_overlay". Current options are
 #'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
-#'   'dens_overlay', 'hist', 'intervals', 'rank_hist', 'rank_overlay', 'trace',
-#'   'trace_highlight', and 'violin".
+#'   'dens_overlay', 'hex', 'hist', 'intervals', 'pairs', 'rank_hist', 'rank_overlay', 
+#'   'trace', 'trace_highlight', and 'violin".
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
 #' @param nvariables Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
@@ -54,6 +54,7 @@
 #' plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
 #' plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters
 #' plot_pars(demo_fit, type = c("trace", "violin"), regex_pars = "^cp_")  # Combine plots
+#' 
 #' # Some plots only take pairs. hex is good to assess identifiability
 #' plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 #'
