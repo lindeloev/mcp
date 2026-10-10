@@ -111,6 +111,8 @@ test_that("built-in families implement the shared internal contract", {
     expect_true(is.function(family$r$epred))
     expect_true(is.function(family$r$log_lik))
     expect_true(is.function(family$r$rng))
+    expect_true(is.function(family$r$quantile))
+    expect_true(all(family$dpars %in% known_dpar_wrappers()))  # Informative errors for wrappers used with other families
     expect_true(is.function(family$backends$jags$likelihood))
     expect_true(is.list(family$response$auxiliary))
     expect_true(is.function(family$response$observed))

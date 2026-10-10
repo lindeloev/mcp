@@ -221,7 +221,7 @@ add_response_dpars = function(dpar_values, family) {
 
     response = get_link_function(spec$link, inverse = TRUE)(dpar_values[[link_name]])
     if (!is.na(spec$lower))
-      response = pmax(spec$lower, response)
+      response = pmax(spec$lower + 1e-5, response)
     dpar_values[[response_name]] = response
   }
 

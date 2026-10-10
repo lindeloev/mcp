@@ -336,7 +336,7 @@ mcp = function(model,
   prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
   attr(prior, "prior_context") = NULL
-  assert_fixed_sigma(prior_table, predictor_definitions, family)
+  assert_fixed_dpars(prior_table, predictor_definitions, family)
 
   # Assemble model metadata used by fitted-model methods
   parameters = get_pars_table(predictor_definitions, cps, group_definitions, family)

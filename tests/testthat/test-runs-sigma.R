@@ -16,7 +16,7 @@ test_that("fixed residual SDs must be positive", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
     ),
-    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
+    "Fixed `sigma` parameter(s) must be greater than 0: sigma_1.",
     fixed = TRUE
   )
   expect_error(
@@ -24,7 +24,7 @@ test_that("fixed residual SDs must be positive", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = -1), sample = FALSE
     ),
-    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
+    "Fixed `sigma` parameter(s) must be greater than 0: sigma_1.",
     fixed = TRUE
   )
   expect_silent(
@@ -72,7 +72,7 @@ test_that("distribution priors for fixed residual SDs are truncated at zero", {
   # Uniform prior without positive values errors
   expect_error(
     mcp(list(y ~ 1), data, par_x = "x", prior = list(sigma_1 = "dunif(-2, 0)"), sample = FALSE),
-    "must allow positive values"
+    "must allow values above 0"
   )
 
   # Deterministic expressions are not treated as distributions

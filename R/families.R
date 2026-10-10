@@ -249,9 +249,8 @@ mcpfamily_gaussian = function(family) {
     rng = function(n, dpars, data, rate = FALSE) {
       stats::rnorm(n, dpars$mu, dpars$sigma)
     },
-    cdf = function(q, dpars, data, rate = FALSE) {
-      stats::pnorm(q, dpars$mu, dpars$sigma)
-    }
+    cdf = function(q, dpars, data) stats::pnorm(q, dpars$mu, dpars$sigma),
+    quantile = function(p, dpars, data) stats::qnorm(p, dpars$mu, dpars$sigma)
   )
   jags = list(
     glm_module = "always",  # JAGS glm module: see run_jags()
@@ -292,7 +291,7 @@ mcpfamily_gaussian = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 1e-5)
+      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 0)
     ),
     default_prior = default_prior,
     response = list(),
@@ -353,10 +352,8 @@ mcpfamily_binomial = function(family) {
       y = stats::rbinom(n, data$trials, dpars$mu)
       if (rate) y / data$trials else y
     },
-    cdf = function(q, dpars, data, rate = FALSE) {
-      if (rate) q = round(q * data$trials)
-      stats::pbinom(q, data$trials, dpars$mu)
-    }
+    cdf = function(q, dpars, data) stats::pbinom(q, data$trials, dpars$mu),
+    quantile = function(p, dpars, data) stats::qbinom(p, data$trials, dpars$mu)
   )
   jags = list(
     glm_module = "group_effects",  # JAGS glm module: see run_jags()
@@ -442,7 +439,8 @@ mcpfamily_bernoulli = function(family) {
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     log_lik = function(y, dpars, data) stats::dbinom(y, 1, dpars$mu, log = TRUE),
     rng = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu),
-    cdf = function(q, dpars, data, rate = FALSE) stats::pbinom(q, 1, dpars$mu)
+    cdf = function(q, dpars, data) stats::pbinom(q, 1, dpars$mu),
+    quantile = function(p, dpars, data) stats::qbinom(p, 1, dpars$mu)
   )
   jags = list(
     glm_module = "group_effects",  # JAGS glm module: see run_jags()
@@ -526,9 +524,13 @@ mcpfamily_poisson = function(family) {
       validate_count_mean(dpars$mu)
       stats::rpois(n, dpars$mu)
     },
-    cdf = function(q, dpars, data, rate = FALSE) {
+    cdf = function(q, dpars, data) {
       validate_count_mean(dpars$mu)
       stats::ppois(q, dpars$mu)
+    },
+    quantile = function(p, dpars, data) {
+      validate_count_mean(dpars$mu)
+      stats::qpois(p, dpars$mu)
     }
   )
   jags = list(
@@ -601,9 +603,13 @@ mcpfamily_negbinomial = function(family) {
       validate_count_mean(dpars$mu)
       stats::rnbinom(n, mu = dpars$mu, size = dpars$shape)
     },
-    cdf = function(q, dpars, data, rate = FALSE) {
+    cdf = function(q, dpars, data) {
       validate_count_mean(dpars$mu)
       stats::pnbinom(q, mu = dpars$mu, size = dpars$shape)
+    },
+    quantile = function(p, dpars, data) {
+      validate_count_mean(dpars$mu)
+      stats::qnbinom(p, mu = dpars$mu, size = dpars$shape)
     }
   )
   jags = list(
@@ -650,7 +656,8 @@ mcpfamily_negbinomial = function(family) {
 }
 
 
-# Describe a distributional parameter
+# Describe a distributional parameter. `lower` is the exclusive lower bound of its
+# support (e.g., 0 for sigma). It bounds constant priors and floors observation-level values.
 new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor = FALSE, lower = NA_real_,
                           link_modeled = link) {
   tibble::tibble(
@@ -666,9 +673,20 @@ new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor
 }
 
 
-# Distributional parameter wrapper names recognized across families
+# Distributional parameter wrapper names of the built-in families. A family's own dpars
+# are always recognized; this list only gives informative errors when, e.g., `sigma()`
+# is used with a family that lacks it.
 known_dpar_wrappers = function() {
   c("mu", "sigma", "shape")
+}
+
+
+# Lower bounds of constant (unmodeled) dpars on their parameter scale, e.g., c(sigma = 0).
+# Bounds that the link already enforces (e.g., log(0) = -Inf) are omitted.
+get_constant_dpar_bounds = function(family) {
+  specs = family$dpar_specs[!family$dpar_specs$modeled & !is.na(family$dpar_specs$lower), ]
+  bounds = vapply(seq_len(nrow(specs)), function(i) get_link_function(specs$link[i])(specs$lower[i]), numeric(1))
+  stats::setNames(bounds, specs$dpar)[is.finite(bounds)]
 }
 
 
@@ -900,6 +918,8 @@ assert_mcpfamily = function(x) {
   checkmate::assert_function(x$r$epred)
   checkmate::assert_function(x$r$log_lik)
   checkmate::assert_function(x$r$rng)
+  checkmate::assert_function(x$r$cdf, null.ok = TRUE)
+  checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf))
   checkmate::assert_function(x$backends$jags$likelihood)
   if (!is.null(x$garma)) {
     checkmate::assert_function(x$garma$observed_r)

@@ -152,23 +152,20 @@ assert_response_data = function(family, segments, data, response_required = TRUE
 }
 
 
-# Fixed residual standard deviations must be valid without relying on the
-# numerical lower bound used for observation-level calculations.
-assert_fixed_sigma = function(prior_table, predictors, family) {
-  sigma_parameters = predictors$code_name[predictors$dpar == "sigma"]
-  if (length(sigma_parameters) == 0)
-    return(invisible(TRUE))
-  if (get_dpar_spec(family, "sigma")$modeled)
-    return(invisible(TRUE))
-
-  fixed_sigma = prior_table$parameter %in% sigma_parameters & prior_table$kind == "constant"
-  sigma_values = suppressWarnings(as.numeric(prior_table$value[fixed_sigma]))
-  if (any(sigma_values <= 0)) {
-    bad_parameters = prior_table$parameter[fixed_sigma][sigma_values <= 0]
-    stop(
-      "Fixed residual standard deviation parameter(s) must be positive: ",
-      and_collapse(bad_parameters), "."
-    )
+# Fixed constant dpars must be within their support (e.g., sigma > 0) without relying
+# on the numerical floor used for observation-level calculations.
+assert_fixed_dpars = function(prior_table, predictors, family) {
+  bounds = get_constant_dpar_bounds(family)
+  for (dpar in names(bounds)) {
+    fixed = prior_table$parameter %in% predictors$code_name[predictors$dpar == dpar] & prior_table$kind == "constant"
+    values = suppressWarnings(as.numeric(prior_table$value[fixed]))
+    if (any(values <= bounds[[dpar]])) {
+      bad_parameters = prior_table$parameter[fixed][values <= bounds[[dpar]]]
+      stop(
+        "Fixed `", dpar, "` parameter(s) must be greater than ", bounds[[dpar]], ": ",
+        and_collapse(bad_parameters), "."
+      )
+    }
   }
 
   invisible(TRUE)

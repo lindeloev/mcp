@@ -233,7 +233,7 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
 }
 
 
-truncate_sigma_prior = function(prior_value, name = NULL) {
+truncate_lower_prior = function(prior_value, lower, name = NULL) {
   # Leave non-string priors (e.g. numeric constants) unchanged
   if (!is.character(prior_value))
     return(prior_value)
@@ -250,15 +250,15 @@ truncate_sigma_prior = function(prior_value, name = NULL) {
   if (call$name == "dunif" && length(call$args) == 2) {
     lower_val = suppressWarnings(as.numeric(call$args[1]))
     upper_val = suppressWarnings(as.numeric(call$args[2]))
-    if (!is.na(upper_val) && upper_val <= 0)
-      stop("Prior", if (!is.null(name)) paste0(" for '", name, "'"), " must allow positive values.")
-    if (!is.na(lower_val) && lower_val < 0)
-      return(paste0("dunif(0, ", call$args[2], ")"))
+    if (!is.na(upper_val) && upper_val <= lower)
+      stop("Prior", if (!is.null(name)) paste0(" for '", name, "'"), " must allow values above ", lower, ".")
+    if (!is.na(lower_val) && lower_val < lower)
+      return(paste0("dunif(", lower, ", ", call$args[2], ")"))
     return(prior_value)
   }
 
-  # Truncate unbounded distributions at zero
-  paste0(prior_value, " T(0, )")
+  # Truncate unbounded distributions at the lower bound
+  paste0(prior_value, " T(", lower, ", )")
 }
 
 
@@ -333,15 +333,14 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     }
   }
 
-  # Enforce positive support on unmodeled residual standard deviation priors
-  sigma_pars = predictors$code_name[predictors$dpar == "sigma"]
-  if (length(sigma_pars) > 0 && !get_dpar_spec(family, "sigma")$modeled) {
-    for (name in intersect(names(prior), sigma_pars)) {
-      original = prior[[name]]
-      prior[[name]] = truncate_sigma_prior(original, name)
-      if (!identical(prior[[name]], original))
-        auto_truncated = c(auto_truncated, name)
-    }
+  # Enforce the support of constant dpars, e.g., sigma > 0
+  bounds = get_constant_dpar_bounds(family)
+  for (name in intersect(names(prior), predictors$code_name[predictors$dpar %in% names(bounds)])) {
+    dpar = predictors$dpar[match(name, predictors$code_name)]
+    original = prior[[name]]
+    prior[[name]] = truncate_lower_prior(original, bounds[[dpar]], name)
+    if (!identical(prior[[name]], original))
+      auto_truncated = c(auto_truncated, name)
   }
 
   for (name in names(prior)) {

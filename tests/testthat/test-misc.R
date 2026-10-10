@@ -776,10 +776,11 @@ test_that("loo supports by_row and soft-deprecates pointwise", {
 
 
 test_that("find_mixture_quantile handles large count means without integer overflow", {
-  cdf_fn = function(q, dpars, data, rate = FALSE) stats::ppois(q, dpars$mu)
+  family = mcpfamily(poisson())
   dpars = list(mu = c(1e8, 1.5e9))
-  res = mcp:::find_mixture_quantile(cdf_fn, dpars, data = NULL, p = 0.975, is_discrete = TRUE)
+  res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = 0.975)
   expect_true(is.numeric(res) && is.finite(res) && res > 1.5e9)
+  expect_true(mean(stats::ppois(res, dpars$mu)) >= 0.975 && mean(stats::ppois(res - 1, dpars$mu)) < 0.975)
 })
 
 

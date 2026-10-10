@@ -94,7 +94,7 @@ test_that("interpolate_newdata() does not invent response auxiliaries", {
   plot_median = plot(fit, lines = 0, q_fit = 0.5, cp_dens = FALSE)
   expect_gt(length(plot_median$layers), length(plot_none$layers))
   expect_identical(plot_none$labels$y, "Success probability")
-  expect_error(plot(fit, rate = FALSE), "requires an explicit binomial trial design")
+  expect_error(plot(fit, rate = FALSE), "requires explicit values for N")
   expect_s3_class(plot(fit, rate = FALSE, at = list(N = 4), cp_dens = FALSE), "ggplot")
   expect_error(
     predict(fit, newdata, summary = FALSE, rate = FALSE),

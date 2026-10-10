@@ -311,47 +311,30 @@ get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
 }
 
 
-# Invert a mixture CDF for a single quantile probability
-find_mixture_quantile = function(cdf_fn, dpars, data, p, rate = FALSE, is_discrete = FALSE, lower = -Inf, upper = Inf) {
-  # Empirical mixture CDF across all posterior parameter draws
-  mix_cdf = function(y) mean(cdf_fn(y, dpars, data, rate = rate))
+# Invert the posterior predictive mixture CDF for a single quantile probability `p`.
+# The mixture quantile lies between the smallest and largest per-draw quantiles.
+find_mixture_quantile = function(family, dpars, data, p) {
+  mix_cdf = function(y) mean(family$r$cdf(y, dpars, data))
+  bracket = range(family$r$quantile(p, dpars, data))
+  if (bracket[1] == bracket[2])
+    return(bracket[1])
 
-  if (!is_discrete) {
-    # Continuous: bracketed 1D root-finding on [lo, hi]
-    sigma_max = if (!is.null(dpars$sigma)) max(dpars$sigma) else 1
-    lo = max(lower, min(dpars$mu) - 6 * sigma_max)
-    hi = min(upper, max(dpars$mu) + 6 * sigma_max)
+  # Continuous: root-finding. extendInt guards against rounding at the bracket ends.
+  if (!isTRUE(family$response$is_discrete))
+    return(stats::uniroot(function(y) mix_cdf(y) - p, bracket, extendInt = "upX", tol = 1e-4)$root)
 
-    # Expand search bracket if bounds are finite or posterior uncertainty is wide
-    while (mix_cdf(lo) > p && is.infinite(lower)) lo = lo - 2 * sigma_max
-    while (mix_cdf(hi) < p && is.infinite(upper)) hi = hi + 2 * sigma_max
-
-    # Clamp to theoretical bounds if root lies outside
-    if (mix_cdf(lo) > p) return(lower)
-    if (mix_cdf(hi) < p) return(upper)
-
-    return(stats::uniroot(function(y) mix_cdf(y) - p, c(lo, hi), tol = 1e-4)$root)
-  } else {
-    # Discrete: exponential bracket expansion --> binary search for integer threshold
-    trials = if (!is.null(data$trials)) data$trials[1] else Inf
-    eval_cdf = function(v) mix_cdf(if (rate && is.finite(trials)) v / trials else v)
-
-    lo = 0
-    hi = max(1, round(mean(dpars$mu) * (if (rate && is.finite(trials)) trials else 1)))
-    if (is.finite(trials)) hi = min(trials, hi)
-
-    while (eval_cdf(hi) < p && hi < trials) hi = if (is.finite(trials)) min(trials, hi * 2) else hi * 2
-
-    while (lo < hi) {
-      mid = floor((lo + hi) / 2)
-      if (eval_cdf(mid) >= p) {
-        hi = mid
-      } else {
-        lo = mid + 1
-      }
+  # Discrete: binary search for the smallest integer with mix_cdf(y) >= p
+  lo = bracket[1]
+  hi = bracket[2]
+  while (lo < hi) {
+    mid = floor((lo + hi) / 2)
+    if (mix_cdf(mid) >= p) {
+      hi = mid
+    } else {
+      lo = mid + 1
     }
-    return(if (rate && is.finite(trials)) lo / trials else lo)
   }
+  lo
 }
 
 
@@ -364,11 +347,8 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
   keep = unique(keep)
   grid = draws %>% dplyr::select(dplyr::all_of(c(".data_row", keep))) %>% dplyr::distinct()
 
-  is_discrete = isTRUE(family$response$is_discrete)
-  cdf_fn = family$r$cdf
-
   # Fallback to empirical quantiles if no cdf method or dpars available
-  if (is.null(cdf_fn) || is.null(dpars)) {
+  if (is.null(family$r$cdf) || is.null(dpars)) {
     return(dplyr::rename(
       get_quantiles(draws, quantiles, ".prediction", keep = keep),
       .predicted = ".prediction"
@@ -387,10 +367,9 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
     dp_slice = lapply(dpars, function(v) v[idx])
     rd_slice = if (!is.null(response_data)) lapply(response_data, function(v) v[idx]) else NULL
 
-    # Invert the mixture CDF for each requested quantile probability
-    q_vals = vapply(quantiles, function(q) {
-      find_mixture_quantile(cdf_fn, dp_slice, rd_slice, q, rate = rate, is_discrete = is_discrete)
-    }, numeric(1))
+    # Invert the mixture CDF for each requested quantile probability and convert to the rate scale
+    q_vals = vapply(quantiles, function(q) find_mixture_quantile(family, dp_slice, rd_slice, q), numeric(1))
+    q_vals = family$response$observed(q_vals, lapply(rd_slice, `[`, 1), rate)
 
     df_res = data.frame(
       quantile = quantiles,

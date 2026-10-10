@@ -87,12 +87,13 @@ get_plot = function(x,
   check_mcpfit_version(fit)
   checkmate::assert_flag(rate)
 
-  trials_col = mcp_columns(fit)$trials
-  if (!rate && fit$family$family == "binomial" &&
-      (is.null(at) || trials_col %notin% names(at))) {
+  # Counts scale with auxiliary response columns such as trials(N), so they must be explicit
+  epred_aux = names(Filter(function(aux) "epred" %in% aux$operations, fit$family$response$auxiliary))
+  missing_cols = setdiff(unlist(mcp_columns(fit)[epred_aux]), names(at))
+  if (!rate && length(missing_cols) > 0) {
     stop(
-      "`plot(..., rate = FALSE)` requires an explicit binomial trial design. ",
-      "Supply it as `at = list(", trials_col, " = ...)`.",
+      "`plot(..., rate = FALSE)` requires explicit values for ", and_collapse(missing_cols), ". ",
+      "Supply them as `at = list(", missing_cols[1], " = ...)`.",
       call. = FALSE
     )
   }
