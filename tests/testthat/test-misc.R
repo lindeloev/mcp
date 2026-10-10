@@ -173,8 +173,9 @@ test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", 
   expect_equal(mcp_columns(fit)$par_x, "x")
   expect_equal(mcp_columns(fit)$response, "y")
   expect_false("pars" %in% names(fit))
-  expect_warning(expect_null(fit$pars), "deprecated")
-  expect_warning(expect_null(fit[["pars"]]), "deprecated")
+  expect_error(fit$pars, "mcp_pars(fit)", fixed = TRUE)
+  expect_error(fit[["pars"]], "mcp_pars(fit)", fixed = TRUE)
+  expect_error(fit$mcmc_loglik, "log_lik(fit)", fixed = TRUE)
 
   binomial_fit = mcp(
     list(y | trials(N) ~ 1),

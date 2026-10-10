@@ -325,14 +325,3 @@ imputed_draws = function(object, ndraws = NULL) {
   tidyr::pivot_longer_spec(draws, spec) %>%
     dplyr::relocate(".chain", ".iteration", ".draw")
 }
-
-
-# Deprecated internal helper for MCMC draw extraction
-tidy_samples = function(...) {
-  lifecycle::deprecate_soft(
-    when = "0.4.0",
-    what = "tidy_samples()",
-    with = "as_draws_df() or tidybayes::spread_draws()"
-  )
-  mcp_draws(...)
-}

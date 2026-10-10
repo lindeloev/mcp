@@ -202,3 +202,50 @@ warn_binomial_rate = function(fit, newdata, what) {
     )
   }
 }
+
+
+# Signal deprecated and removed mcpfit fields from v0.3.4
+#' @export
+`$.mcpfit` = function(x, name) {
+  if (name == "fit" && is.null(.subset2(x, "fit"))) {
+    warning("`mcp_example()` now returns an `mcpfit` object directly instead of a list with `$fit`. Returning the object itself.", call. = FALSE)
+    return(x)
+  }
+  if (name %in% c("mcmc_post", "mcmc_prior")) {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I(paste0("fit$", name)),
+      with = I("as_draws(fit) or coda::as.mcmc(fit)")
+    )
+  }
+  stop_removed_mcpfit_field(name)
+  .subset2(x, name)
+}
+
+#' @export
+`[[.mcpfit` = function(x, i, exact = TRUE) {
+  if (is.character(i) && i %in% c("mcmc_post", "mcmc_prior")) {
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = I(paste0("fit$", i)),
+      with = I("as_draws(fit) or coda::as.mcmc(fit)")
+    )
+  }
+  if (is.character(i))
+    stop_removed_mcpfit_field(i)
+  .subset2(x, i)
+}
+
+
+# Stop with a pointer to the replacement when accessing mcpfit fields removed after v0.3.4
+stop_removed_mcpfit_field = function(name) {
+  removed = c(pars = "mcp_pars(fit) and mcp_columns(fit)", mcmc_loglik = "log_lik(fit)")
+  if (name %in% names(removed))
+    lifecycle::deprecate_stop("0.4.0", I(paste0("fit$", name)), I(removed[[name]]))
+}
+
+
+# Defunct internal helper for MCMC draw extraction, advertised as `mcp:::tidy_samples()` in v0.3.4
+tidy_samples = function(...) {
+  lifecycle::deprecate_stop("0.4.0", "tidy_samples()", I("as_draws_df() or tidybayes::spread_draws()"))
+}
