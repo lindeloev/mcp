@@ -125,6 +125,28 @@ Plotting differs from `fitted()` and `predict()` in one respect: The smooth curv
 The imputation markers above are different: `predict(fit)` evaluates the original data, so every missing row uses its own predictor values. If another continuous predictor is especially important, an imputation may therefore lie away from a curve drawn at that predictor's mean. This is expected, just as an observed response with unusual predictor values may lie away from that curve. Use `plot(fit, at = ...)` or `interpolate_newdata(fit, at = ...)` or make separate plots when those differences deserve emphasis.
 
 
+# Missing data around change points
+
+Sometimes the interest is not in recovering individual missing responses, but in how gaps in the data affect inference about the change points. To demonstrate this, `mcp_example("void")` takes the data from `mcp_example("demo")` and removes the responses near both change points (`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to the full data and the bottom panel the fit with the voids:
+
+```{r, results=FALSE, warning=FALSE, message=FALSE, fig.height=7}
+fit_void = mcp_example("void")
+```
+
+Notice that `mcp` can infer change points in regions with no missing data. The greater uncertainty in the change point location between segment 1 and 2 comes mostly from linear extrapolation between the segments and less data. In principle, it could be known to great precision if the segments' trends were very well defined. 
+
+The location of the disjoined change between segment 2 and 3 is different: the location is unknowable for disjoined segments in a void, and the change point posterior reflects that. Any distance between data is a void for disjoined segments. This can be seen in the uniform-like change point posterior both for the large void (bottom panel) and the simple between-datapoints void (top panel).
+
+We can quantify how much of the change point posteriors is within each actual void using `hypothesis()`:
+
+```{r, R.options = list(width = 9999)}
+hypothesis(fit_void, c(
+  "cp_1 > 25 & cp_1 < 42",
+  "cp_2 > 70 & cp_2 < 80"
+))
+```
+
+
 # What else can be modeled?
 
 Missing responses work with the usual `mcp` model features. For example, you can:
