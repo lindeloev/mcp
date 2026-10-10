@@ -43,13 +43,12 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 #' @param facet_by Character vector. Names of categorical data columns to split to facets.
 #'   Can be grouping-factor or categorical predictor columns.
 #' @param color_by A character vector naming categorical predictor or grouping columns to color by.
-#'   If both `color_by` and `facet_by` are omitted, a sole categorical predictor is colored automatically. Set `color_by = NULL` explicitly to disable this.
 #'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
+#'   `"auto"` colors by the categorical predictor if the model has exactly one and it is not in `facet_by`. `NULL` disables color.
 #' @param at Named list setting additional continuous predictors to fixed values.
 #'   They default to their observed means. Family-specific response auxiliaries
 #'   can be supplied as explicit scalar design values. Passed to
 #'   `interpolate_newdata()`.
-#' @param .grouping Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
 #'   Note that lines always plot fitted values - not predicted.
@@ -68,7 +67,7 @@ get_plot = function(x,
                        q_fit = FALSE,
                        q_predict = FALSE,
                        facet_by = NULL,
-                       color_by = NULL,
+                       color_by = "auto",
                        lines = 25,
                        geom_data = "point",
                        cp_dens = TRUE,
@@ -78,8 +77,7 @@ get_plot = function(x,
                        arma = TRUE,
                        ndraws = 500,
                        scale = "response",
-                       at = NULL,
-                       .grouping = "auto") {
+                       at = NULL) {
   # Just for consistent naming in mcp
   fit = x
 
@@ -152,11 +150,10 @@ get_plot = function(x,
   all_categorical_cols = names(get_categorical_levels(fit$data))
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   categorical_cols = intersect(all_categorical_cols, get_predictor_cols(fit))
+  check_unmapped = !is.null(color_by)  # `color_by = NULL` allows unidentified curves
+  if (identical(color_by, "auto"))
+    color_by = if (length(categorical_cols) == 1) logical0_to_null(setdiff(categorical_cols, facet_by)) else NULL
   plot_by = unique(c(facet_by, color_by))
-  if (.grouping == "auto" && length(categorical_cols) == 1) {
-    color_by = categorical_cols
-    plot_by = unique(c(facet_by, color_by))
-  }
   curve_by = unique(c(categorical_cols, data_columns$series, intersect(group_cols, plot_by)))
   valid_group_cols = unique(c(categorical_cols, group_cols, data_columns$series))
 
@@ -180,10 +177,10 @@ get_plot = function(x,
 
   unmapped = setdiff(categorical_cols, plot_by)
   if ((show_q_fit || show_q_predict) && length(categorical_cols) > 1 &&
-      .grouping != "none" && length(unmapped) > 0) {
+      check_unmapped && length(unmapped) > 0) {
     stop(
       "Unmapped categorical predictors: '", paste(unmapped, collapse = "', '"), "'. ",
-      "Use `color_by` and/or `facet_by` to identify all fitted curves, or set `color_by = NULL` explicitly."
+      "Use `color_by` and/or `facet_by` to identify all fitted curves, or set `color_by = NULL`."
     )
   }
 
@@ -453,7 +450,7 @@ plot.mcpfit = function(x,
                     q_fit = FALSE,
                     q_predict = FALSE,
                     facet_by = NULL,
-                    color_by = NULL,
+                    color_by = "auto",
                     lines = 25,
                     geom_data = "point",
                     cp_dens = TRUE,
@@ -465,9 +462,6 @@ plot.mcpfit = function(x,
                     at = NULL,
                     nsamples = lifecycle::deprecated(),
                     ...) {
-  grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
-  if (!missing(color_by) && is.null(color_by)) grouping = "none"
-
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
   dots = list(...)
   which_y = warn_which_y(dots, "plot")
@@ -490,8 +484,7 @@ plot.mcpfit = function(x,
     dpar = if (is.null(which_y)) "epred" else which_y,
     arma = arma,
     ndraws = ndraws,
-    scale = scale,
-    .grouping = grouping
+    scale = scale
   )
 }
 
@@ -503,7 +496,7 @@ plot_dpar = function(x,
                      dpar = "epred",
                      q_fit = FALSE,
                      facet_by = NULL,
-                     color_by = NULL,
+                     color_by = "auto",
                      lines = 25,
                      cp_dens = TRUE,
                      prior = FALSE,
@@ -512,8 +505,6 @@ plot_dpar = function(x,
                      scale = "response",
                      at = NULL,
                      ...) {
-  grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
-  if (!missing(color_by) && is.null(color_by)) grouping = "none"
   rlang::check_dots_empty()
 
   get_plot(
@@ -531,8 +522,7 @@ plot_dpar = function(x,
     dpar = dpar,
     arma = arma,
     ndraws = ndraws,
-    scale = scale,
-    .grouping = grouping
+    scale = scale
   )
 }
 

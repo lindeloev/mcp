@@ -60,7 +60,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Functions, plotting, and workflow:**
 
-  - `plot()` is now split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. See `mcp_example("group_mu")` for a worked example.
+  - `plot()` is now split into `plot()` for plotting full fits while `plot_dpar()` plots one distributional parameter (`mu`, `sigma`, `shape`, `ar1`, etc.). The argument order was changed too. The new coloring function (`plot(fit, color_by = "column")`) is particularly useful when models include categorical predictors or rhs group-level effects. The default `color_by = "auto"` colors by a sole categorical predictor. See `mcp_example("group_mu")` for a worked example.
 
   - Parallel sampling is now controlled exclusively through the active `{future}` plan. The `cores` argument to `mcp()` is deprecated and ignored, but remains available for backwards compatibility. Use `future::plan(future::multisession, workers = 3)` before calling `mcp()` to sample chains in parallel, and `future::plan(future::sequential)` to shut down those workers. Without a parallel future plan, chains are sampled sequentially. Chain-specific initial values (`inits = list(list(...), list(...))`) are now supported under parallel execution and when supplying an explicit `seed`.
 

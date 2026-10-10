@@ -179,8 +179,8 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, facet_by = 'id', color_by = 'state') +
-      ggplot2::labs(title = 'plot(fit, facet_by = \"id\", color_by = \"state\")'))
+  print(plot(fit, facet_by = 'id') + 
+      ggplot2::labs(title = 'plot(fit, facet_by = \"id\")'))
 }",
     intercepts = "# Define model
 model = list(
@@ -244,8 +244,8 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE, color_by = 'state') +
-      ggplot2::labs(title = 'plot(fit, q_fit = TRUE, color_by = \"state\")'))
+  print(plot(fit, q_fit = TRUE) + 
+      ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
 }",
     multiple = "# Define model
 model = list(
@@ -291,7 +291,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, color_by = 'state') + ggplot2::labs(title = 'plot(fit, color_by = \"state\")'))
+  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
 }",
     sigma = "# Define model
 model = list(

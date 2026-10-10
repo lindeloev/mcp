@@ -761,6 +761,16 @@ test_that("integer grouping factors can control plot color", {
   expect_equal(length(unique(grouped_quantiles$PANEL)), 2)
   expect_equal(length(unique(grouped_quantiles$colour)), 2)
   expect_equal(length(unique(grouped_quantiles$group)), 8)
+
+  # color_by = "auto" still colors the sole categorical predictor when faceting by another column
+  auto_grouped = plot(fit, facet_by = "id", lines = 0, q_fit = c(0.25, 0.75), cp_dens = FALSE)
+  expect_equal(auto_grouped$labels$colour, "state")
+  expect_equal(ggplot2::ggplot_build(auto_grouped)$data[[2]], grouped_quantiles)
+  expect_equal(plot_dpar(fit, dpar = "sigma", facet_by = "id", lines = 0, cp_dens = FALSE)$labels$colour, "state")
+
+  # ... but not when it is already faceted
+  auto_faceted = plot(fit, facet_by = "state", lines = 0, cp_dens = FALSE)
+  expect_null(auto_faceted$labels$colour)
 })
 
 
