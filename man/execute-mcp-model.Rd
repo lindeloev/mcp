@@ -17,7 +17,7 @@
   object,
   newdata = NULL,
   summary = TRUE,
-  probs = TRUE,
+  width = 0.95,
   rate = FALSE,
   prior = FALSE,
   group_effects = TRUE,
@@ -27,6 +27,7 @@
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   conditional = TRUE,
   ...
 )
@@ -35,7 +36,7 @@
   object,
   newdata = NULL,
   summary = TRUE,
-  probs = TRUE,
+  width = 0.95,
   rate = FALSE,
   prior = FALSE,
   dpar = "epred",
@@ -47,6 +48,7 @@
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   ...
 )
 
@@ -56,7 +58,7 @@ log_lik(object, ...)
   object,
   newdata = NULL,
   summary = FALSE,
-  probs = TRUE,
+  width = 0.95,
   rate = TRUE,
   prior = FALSE,
   group_effects = TRUE,
@@ -66,6 +68,7 @@ log_lik(object, ...)
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   ...
 )
 
@@ -73,13 +76,14 @@ log_lik(object, ...)
   object,
   newdata = NULL,
   summary = TRUE,
-  probs = TRUE,
+  width = 0.95,
   prior = FALSE,
   group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   ...
 )
 }
@@ -104,7 +108,10 @@ is unavailable when a missing response enters a later observed history.
 
 \item{summary}{Summarise at each x-value}
 
-\item{probs}{Vector of quantiles (strictly between 0 and 1). Only in effect when \code{summary == TRUE}.}
+\item{width}{Width of the central interval (strictly between 0 and 1),
+returned in the \code{.lower} and \code{.upper} columns. \code{FALSE} omits the interval.
+Only in effect when \code{summary == TRUE}. To get custom quantiles, summarise the draws from
+\code{summary = FALSE}, e.g., using \code{dplyr::reframe()} (see examples).}
 
 \item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
@@ -150,6 +157,8 @@ See more under "value"}
 
 \item{varying}{Deprecated. Use \code{group_effects} instead.}
 
+\item{probs}{Deprecated. Use \code{width} instead.}
+
 \item{conditional}{Logical. For AR/MA models, condition on observed response
 histories (\code{TRUE}, default) or generate fresh histories recursively (\code{FALSE}).
 Applies equally to prior and posterior draws. Predictive checks
@@ -176,11 +185,18 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 }
 \value{
 \itemize{
-\item If \code{summary = TRUE}: A data frame with the draw mean and SD (\code{sd}) for
-each row in \code{newdata}. With posterior draws (the default), \code{sd} is the
+\item If \code{summary = TRUE}: A data frame with the columns of \code{newdata} (or
+\code{fit$data} if \code{newdata} is \code{NULL}), followed by summaries for each row:
+\itemize{
+\item \code{.mean}: The mean of the draws.
+\item \code{.sd}: The SD of the draws. With posterior draws (the default), this is the
 posterior predictive SD for \code{type = "predict"} and the posterior SD of the
-evaluated quantity otherwise. With \code{prior = TRUE}, these are the analogous
-prior summaries. If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.
+evaluated quantity otherwise.
+\item \code{.lower} and \code{.upper}: The bounds of the central interval given in \code{width}.
+}
+
+With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
+columns are dot-prefixed to avoid collisions with data columns.
 \item If \code{summary = FALSE} and \code{draws_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
 draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows. If there are
 group-level effects, the returned data is expanded with the relevant levels for each row.
@@ -188,7 +204,7 @@ group-level effects, the returned data is expanded with the relevant levels for 
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}, plus its response column when supplied.
-\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{data_row}, the row number in the evaluated \code{newdata}.
+\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{.data_row}, the row number in the evaluated \code{newdata}.
 \item Draw values: one column for each parameter in the model.
 \item The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
 }
@@ -247,14 +263,21 @@ log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 # All of the above take a range of arguments. E.g.,:
 \donttest{
 head(predict(demo_fit))  # Pointwise posterior predictive
-head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80\% posterior predictive interval.
+head(predict(demo_fit, width = 0.8))  # 80\% posterior predictive interval
 head(predict(demo_fit, prior = TRUE))  # Prior predictive
 head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 
+# Custom quantiles from the draws, here for fitted().
+# Note that for predict(), this adds more Monte Carlo error than `width`.
+fitted(demo_fit, summary = FALSE) |>
+  dplyr::group_by(.data_row, time) |>
+  dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .epred = quantile(.epred, quantile)) |>
+  head()
+
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
-head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
+head(predict(demo_fit, newdata = novel_data))
 
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)

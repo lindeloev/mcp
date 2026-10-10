@@ -253,7 +253,7 @@ test_that("posterior prediction and likelihood reuse fitted and new group deviat
   for (id in c("a", "new")) {
     nd = data.frame(x = c(2, 17), id = id)
     pred = fitted(fit, newdata = nd, summary = FALSE)
-    expect_equal(pred$.epred[pred$data_row == 1], pred$.epred[pred$data_row == 2])
+    expect_equal(pred$.epred[pred$.data_row == 1], pred$.epred[pred$.data_row == 2])
   }
 })
 

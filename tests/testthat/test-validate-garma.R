@@ -180,7 +180,7 @@ test_that("prediction interfaces share conditional and replicated GARMA behavior
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(fixed_draws))
 
   set.seed(42)
-  conditional = predict(fit, summary = FALSE, probs = FALSE)
+  conditional = predict(fit, summary = FALSE, width = FALSE)
   set.seed(42)
   conditional_matrix = posterior_predict.mcpfit(fit)
   expect_equal(conditional_matrix, tidy_to_matrix(conditional, ".prediction"))
@@ -232,7 +232,7 @@ test_that("prior predict uses the same explicit replication setting", {
   conditional = predict(fit, prior = TRUE, summary = FALSE)
   expect_equal(conditional$.prediction, rep(c(0, 5, 10), 2), tolerance = 0.01)
   set.seed(42)
-  predicted = predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, probs = FALSE)
+  predicted = predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, width = FALSE)
   set.seed(42)
   predictor_only = predict(
     fit,
@@ -240,7 +240,7 @@ test_that("prior predict uses the same explicit replication setting", {
     prior = TRUE,
     conditional = FALSE,
     summary = FALSE,
-    probs = FALSE
+    width = FALSE
   )
 
   expect_equal(predicted$.prediction, rep(0, 6), tolerance = 0.01)
@@ -302,22 +302,22 @@ test_that("missing GARMA responses stay paired with posterior draws", {
   expect_equal(ncol(fit$.internal$imputed_response[[1]]), 1L)
   expect_false("y[2]" %in% colnames(.subset2(fit, "mcmc_post")[[1]]))
 
-  fitted_draws = fitted(fit, summary = FALSE, probs = FALSE)
-  fitted_again = fitted(fit, summary = FALSE, probs = FALSE)
-  prediction_draws = predict(fit, summary = FALSE, probs = FALSE)
+  fitted_draws = fitted(fit, summary = FALSE, width = FALSE)
+  fitted_again = fitted(fit, summary = FALSE, width = FALSE)
+  prediction_draws = predict(fit, summary = FALSE, width = FALSE)
   imputed = get_imputed_response_draws(fit, prediction_draws)
 
   expect_equal(fitted_draws$.epred, fitted_again$.epred)
-  expect_true(all(is.na(fitted_draws$y[fitted_draws$data_row == 2])))
+  expect_true(all(is.na(fitted_draws$y[fitted_draws$.data_row == 2])))
   expect_false(isTRUE(all.equal(
-    prediction_draws$.prediction[prediction_draws$data_row == 2],
-    imputed[prediction_draws$data_row == 2]
+    prediction_draws$.prediction[prediction_draws$.data_row == 2],
+    imputed[prediction_draws$.data_row == 2]
   )))
 
-  row3 = fitted_draws$data_row == 3
-  imputed_by_draw = imputed[prediction_draws$data_row == 2][match(
+  row3 = fitted_draws$.data_row == 3
+  imputed_by_draw = imputed[prediction_draws$.data_row == 2][match(
     fitted_draws$.draw[row3],
-    prediction_draws$.draw[prediction_draws$data_row == 2]
+    prediction_draws$.draw[prediction_draws$.data_row == 2]
   )]
   expected_row3 = fitted_draws$Intercept_1[row3] +
     fitted_draws$ar1_1[row3] * (imputed_by_draw - fitted_draws$Intercept_1[row3])
@@ -325,9 +325,9 @@ test_that("missing GARMA responses stay paired with posterior draws", {
 
   fitted_summary = fitted(fit)
   prediction_summary = predict(fit)
-  expect_false(is.na(fitted_summary$fitted[2]))
-  expect_false(is.na(prediction_summary$predict[2]))
-  expect_true(is.na(residuals(fit)$residuals[2]))
+  expect_false(is.na(fitted_summary$.mean[2]))
+  expect_false(is.na(prediction_summary$.mean[2]))
+  expect_true(is.na(residuals(fit)$.mean[2]))
 
   expect_error(log_lik(fit), "missing response occurs in the history")
   expect_error(loo(fit), "missing response occurs in the history")

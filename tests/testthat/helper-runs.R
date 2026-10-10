@@ -351,7 +351,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     group_cols,
     columns$response,
     if (length(columns$weights) > 0) columns$weights else NULL,
-    colname, "sd", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
+    ".mean", ".sd", ".lower", ".upper"
   )
 
   # `log_lik()` follows the conventional draws-by-observation matrix default.
@@ -402,7 +402,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
         colnames(result)
       )
       testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
-      testthat::expect_false(all(is.na(result[, colname])))
+      testthat::expect_false(all(is.na(result$.mean)))
     } else {
       testthat::expect_false(anyNA(result))
     }
@@ -412,10 +412,10 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     if (colname == "residuals") {
       fitted_result = fitted(fit, rate = FALSE, prior = prior)  # residuals are on response scale
       observed = fit$data[[columns$response]]
-      testthat::expect_equal(result$residuals, observed - fitted_result$fitted)
-      testthat::expect_equal(result$sd, fitted_result$sd)
-      testthat::expect_equal(result$Q2.5, observed - fitted_result$Q97.5)
-      testthat::expect_equal(result$Q97.5, observed - fitted_result$Q2.5)
+      testthat::expect_equal(result$.mean, observed - fitted_result$.mean)
+      testthat::expect_equal(result$.sd, fitted_result$.sd)
+      testthat::expect_equal(result$.lower, observed - fitted_result$.upper)
+      testthat::expect_equal(result$.upper, observed - fitted_result$.lower)
     }
   }
 }
@@ -429,20 +429,20 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
   if (length(columns$weights) == 0)
     return(invisible(NULL))
 
-  loglik = log_lik(fit, summary = FALSE, probs = FALSE, prior = prior, draws_format = "tidy")
-  weights = fit$data[[columns$weights]][loglik$data_row]
+  loglik = log_lik(fit, summary = FALSE, width = FALSE, prior = prior, draws_format = "tidy")
+  weights = fit$data[[columns$weights]][loglik$.data_row]
 
   # Log-likelihood and fitted() should be evaluated at the same predictions
-  mu = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "mu")
-  keys = c(".chain", ".iteration", ".draw", "data_row")
+  mu = fitted(fit, summary = FALSE, width = FALSE, prior = prior, dpar = "mu")
+  keys = c(".chain", ".iteration", ".draw", ".data_row")
   testthat::expect_equal(loglik[, keys], mu[, keys])
 
   # Gaussian is the easiest case to check that likelihood weights are applied correctly
   if (fit$family$family == "gaussian") {
-    sigma = fitted(fit, summary = FALSE, probs = FALSE, prior = prior, dpar = "sigma")
+    sigma = fitted(fit, summary = FALSE, width = FALSE, prior = prior, dpar = "sigma")
     testthat::expect_equal(loglik[, keys], sigma[, keys])
 
-    observed = fit$data[[columns$response]][loglik$data_row]
+    observed = fit$data[[columns$response]][loglik$.data_row]
     testthat::expect_equal(
       loglik$.loglik,
       weights * stats::dnorm(observed, mu$.epred, sigma$.epred, log = TRUE)
@@ -487,7 +487,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     fit,
     newdata = fit$data[sample(nrow(fit$data), 3), ],
     summary = FALSE,
-    probs = c(0.1, 0.5, 0.999),
+    width = 0.8,
     rate = FALSE,
     prior = prior,
     group_effects = "cp",
@@ -520,7 +520,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       selected_cp$cols,
       columns$response,
       if (length(columns$weights) > 0) columns$weights else NULL,
-      "data_row",
+      ".data_row",
       ".epred"  # dot-prefixed for summary = FALSE
     )
 
@@ -537,7 +537,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       newdata = population_newdata,
       rate = FALSE,
       summary = FALSE,
-      probs = FALSE,
+      width = FALSE,
       prior = prior,
       group_effects = FALSE,
       arma = FALSE,
@@ -545,7 +545,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     )
 
     testthat::expect_equal(
-      sort(unique(population_result$data_row)),
+      sort(unique(population_result$.data_row)),
       seq_len(nrow(population_newdata))
     )
     testthat::expect_false(any(group_cols %in% colnames(population_result)))

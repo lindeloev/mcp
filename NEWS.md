@@ -30,13 +30,13 @@
 
 mcp v0.4 is a major breaking change with the aim of remaining relatively stable going forward towards version 1.0. Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). Deprecation detections have been added until we reach 1.0.
 
-- **Renamed parameters and column names** to align with `{brms}` and `{posterior}`:
+- **Renamed parameters and column names** to align with `{brms}`: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, `cp_1_sd` --\> `cp_1_id_sd` (for `(1 | id)`), etc.
 
-  - Renamed parameters to be more consistent with brms: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, `cp_1_sd` --\> `cp_1_id_sd` (for `(1 | id)`), etc.
+- **Renamed return column names** to align with `{posterior}` and others:
 
   - `summary()`, `fixef()`, and `ranef()` now name the parameter identifier column `variable` instead of `name`, directly matching `{posterior}` and `posterior::summarise_draws()`.
 
-  - `fitted()`, `predict()`, `residuals()`, and `pp_eval()` with `summary = TRUE` now return `sd` instead of `error` for posterior standard deviation (and posterior predictive standard deviation), avoiding ambiguity and data column collisions.
+  - `fitted()`, `predict()`, `residuals()`, and `log_lik()` with `summary = TRUE` now take `width = 0.95` instead of `probs` (deprecated with warning) and return the columns `.mean`, `.sd`, `.lower`, and `.upper` instead of `fitted`/`predict`/`residuals`/`loglik`, `error`, `Q2.5`, and `Q97.5`. This matches `summary()` (`width`, `mean`, `sd`, `lower`, `upper`), while the dot prefix prevents collisions with data columns, as in `broom::augment()`. Consequently, data columns named `sd`, `fitted`, `predict`, etc. are no longer rejected. For other quantiles, summarise the draws from `summary = FALSE`. The evaluation-row key `data_row` is now `.data_row`.
 
   - `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
 

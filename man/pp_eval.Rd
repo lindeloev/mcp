@@ -9,7 +9,7 @@ pp_eval(
   newdata = NULL,
   summary = TRUE,
   type = "fitted",
-  probs = TRUE,
+  width = 0.95,
   rate = TRUE,
   prior = FALSE,
   dpar = "epred",
@@ -58,7 +58,10 @@ See also \code{predict()}.
 Requires \code{scale = "response"}.
 }}
 
-\item{probs}{Vector of quantiles (strictly between 0 and 1). Only in effect when \code{summary == TRUE}.}
+\item{width}{Width of the central interval (strictly between 0 and 1),
+returned in the \code{.lower} and \code{.upper} columns. \code{FALSE} omits the interval.
+Only in effect when \code{summary == TRUE}. To get custom quantiles, summarise the draws from
+\code{summary = FALSE}, e.g., using \code{dplyr::reframe()} (see examples).}
 
 \item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
@@ -128,11 +131,18 @@ See more under "value"}
 }
 \value{
 \itemize{
-\item If \code{summary = TRUE}: A data frame with the draw mean and SD (\code{sd}) for
-each row in \code{newdata}. With posterior draws (the default), \code{sd} is the
+\item If \code{summary = TRUE}: A data frame with the columns of \code{newdata} (or
+\code{fit$data} if \code{newdata} is \code{NULL}), followed by summaries for each row:
+\itemize{
+\item \code{.mean}: The mean of the draws.
+\item \code{.sd}: The SD of the draws. With posterior draws (the default), this is the
 posterior predictive SD for \code{type = "predict"} and the posterior SD of the
-evaluated quantity otherwise. With \code{prior = TRUE}, these are the analogous
-prior summaries. If \code{newdata} is \code{NULL}, the data in \code{fit$data} is used.
+evaluated quantity otherwise.
+\item \code{.lower} and \code{.upper}: The bounds of the central interval given in \code{width}.
+}
+
+With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
+columns are dot-prefixed to avoid collisions with data columns.
 \item If \code{summary = FALSE} and \code{draws_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
 draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows. If there are
 group-level effects, the returned data is expanded with the relevant levels for each row.
@@ -140,7 +150,7 @@ group-level effects, the returned data is expanded with the relevant levels for 
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}, plus its response column when supplied.
-\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{data_row}, the row number in the evaluated \code{newdata}.
+\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{.data_row}, the row number in the evaluated \code{newdata}.
 \item Draw values: one column for each parameter in the model.
 \item The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
 }

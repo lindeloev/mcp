@@ -65,9 +65,9 @@ head(prediction)
 
 # Custom plot
 library(ggplot2)
-plotdata = fitted(demo_fit, newdata)
-ggplot(plotdata, aes(x = time, y = fitted)) +
-  geom_ribbon(aes(ymin = `Q2.5`, ymax = `Q97.5`), alpha = 0.3) +
+plotdata = fitted(demo_fit, newdata)  # `width = .95` by default 
+ggplot(plotdata, aes(x = time, y = .mean)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper), alpha = 0.3) +
   geom_line(lwd = 2) +
   geom_point(aes(y = response), data = demo_fit$data)
 }

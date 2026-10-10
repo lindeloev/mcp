@@ -38,7 +38,10 @@
 #'   - `"residuals"`: observed y-values minus the fitted values. See also `residuals()`.
 #'   - `"loglik"`: return the log-likelihood for each draw for each data point. See also `log_lik()`.
 #'     Requires `scale = "response"`.
-#' @param probs Vector of quantiles (strictly between 0 and 1). Only in effect when `summary == TRUE`.
+#' @param width Width of the central interval (strictly between 0 and 1),
+#'   returned in the `.lower` and `.upper` columns. `FALSE` omits the interval.
+#'   Only in effect when `summary == TRUE`. To get custom quantiles, summarise the draws from
+#'   `summary = FALSE`, e.g., using `dplyr::reframe()` (see examples).
 #' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`, the default for `fitted()` and `predict()`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
@@ -76,11 +79,17 @@
 #' @param .garma_replicate Internal. For GARMA predictions, generate each
 #'   response history recursively instead of conditioning on observed responses.
 #' @return
-#'   * If `summary = TRUE`: A data frame with the draw mean and SD (`sd`) for
-#'     each row in `newdata`. With posterior draws (the default), `sd` is the
-#'     posterior predictive SD for `type = "predict"` and the posterior SD of the
-#'     evaluated quantity otherwise. With `prior = TRUE`, these are the analogous
-#'     prior summaries. If `newdata` is `NULL`, the data in `fit$data` is used.
+#'   * If `summary = TRUE`: A data frame with the columns of `newdata` (or
+#'     `fit$data` if `newdata` is `NULL`), followed by summaries for each row:
+#'
+#'      - `.mean`: The mean of the draws.
+#'      - `.sd`: The SD of the draws. With posterior draws (the default), this is the
+#'        posterior predictive SD for `type = "predict"` and the posterior SD of the
+#'        evaluated quantity otherwise.
+#'      - `.lower` and `.upper`: The bounds of the central interval given in `width`.
+#'
+#'     With `prior = TRUE`, these are the analogous prior summaries. mcp's own
+#'     columns are dot-prefixed to avoid collisions with data columns.
 #'
 #'   * If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
 #'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are
@@ -89,7 +98,7 @@
 #'     The return columns are:
 #'
 #'      - Predictors from `newdata`, plus its response column when supplied.
-#'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `data_row`, the row number in the evaluated `newdata`.
+#'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `.data_row`, the row number in the evaluated `newdata`.
 #'      - Draw values: one column for each parameter in the model.
 #'      - The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
 #'
@@ -102,7 +111,7 @@ pp_eval = function(
   newdata = NULL,
   summary = TRUE,
   type = "fitted",
-  probs = TRUE,
+  width = 0.95,
   rate = TRUE,
   prior = FALSE,
   dpar = "epred",
@@ -217,7 +226,7 @@ pp_eval = function(
   if (replicate_garma)
     kept_cols = kept_cols[kept_cols != data_columns$response]
   newdata = data.frame(newdata[, kept_cols, drop = FALSE])
-  newdata$data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
+  newdata$.data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
   newdata_return = newdata
   if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))
     newdata_return[[data_columns$response]] = response_return[[data_columns$response]]
@@ -227,18 +236,11 @@ pp_eval = function(
   ########################
   checkmate::assert_flag(summary)
   assert_typescale(type, scale)
-  checkmate::assert(
-    checkmate::check_flag(probs),
-    checkmate::check_numeric(probs, any.missing = FALSE),
-    .var.name = "probs"
-  )
-  if (is.numeric(probs)) {
-    checkmate::assert_numeric(probs, min.len = 1, any.missing = FALSE)
-    if (any(probs <= 0 | probs >= 1))
-      stop("`probs` must be strictly between 0 and 1.")
+  if (!isFALSE(width)) {
+    checkmate::assert_number(width)
+    if (width <= 0 || width >= 1)
+      stop("`width` must be strictly between 0 and 1, or `FALSE`.")
   }
-  if (is.logical(probs) && all(probs == TRUE))
-    probs = c(0.025, 0.975)
   checkmate::assert_flag(rate)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(arma)
@@ -257,6 +259,12 @@ pp_eval = function(
   # GET FITS/PREDICTIONS #
   ########################
   simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
+  value_col = switch(type,
+    fitted = ".epred",
+    predict = ".prediction",
+    residuals = ".residual",
+    loglik = ".loglik"
+  )
   if (length(group_info$cols) > 0) {
     # Match group-level draws to each row of data.
     draws = dplyr::left_join(
@@ -303,7 +311,7 @@ pp_eval = function(
   # draw's data rows to be contiguous. Evaluate in draw/data order, then
   # restore the public row order below.
   evaluation_order = if (evaluating_arma) {
-    order(draws$.draw, draws$data_row)
+    order(draws$.draw, draws$.data_row)
   } else {
     seq_len(nrow(draws))
   }
@@ -323,15 +331,15 @@ pp_eval = function(
     if (!is.null(dpars_values)) dpars_values = lapply(dpars_values, function(v) v[restore_order])
     if (!is.null(response_data_values)) response_data_values = lapply(response_data_values, function(v) v[restore_order])
   }
-  draws[[type]] = evaluated
+  draws[[value_col]] = evaluated
 
   # Plotting can request fitted and predicted values from the same evaluated
   # parameter rows and model evaluation.
   if (.return_fitted)
-    draws$fitted = fitted_values
+    draws$.epred = fitted_values
 
   if (!is.null(response_return))
-    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$data_row]
+    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$.data_row]
 
   draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"))
 
@@ -342,72 +350,62 @@ pp_eval = function(
     observed_rows = which(!is.na(newdata[, data_columns$response]))
     if (length(observed_rows) == 0)
       stop("Log-likelihood evaluation requires at least one observed response.")
-    draws = dplyr::filter(draws, .data$data_row %in% observed_rows)
+    draws = dplyr::filter(draws, .data$.data_row %in% observed_rows)
     newdata_return = dplyr::filter(
       newdata_return,
-      .data$data_row %in% observed_rows
+      .data$.data_row %in% observed_rows
     )
   }
 
 
   # Optionally compute residuals
   if (type == "residuals")
-    draws = dplyr::mutate(draws, !!type := .data[[data_columns$response]] - .data[[type]])
+    draws = dplyr::mutate(draws, !!value_col := .data[[data_columns$response]] - .data[[value_col]])
 
   # Fail early if group-level joins or another evaluation step duplicated
   # or dropped any joint draw/evaluation-row combinations.
-  validate_eval_draws(draws, type)
+  validate_eval_draws(draws, value_col)
 
   # Optionally summarise
   if (summary == TRUE) {
     df_return = draws %>%
       # Summarise for each row in newdata
-      dplyr::group_by(.data$data_row) %>%
+      dplyr::group_by(.data$.data_row) %>%
       dplyr::summarise(.groups = "drop",
-                       sd = stats::sd(.data[[type]]),
-                       !!type := mean(.data[[type]])
+                       .mean = mean(.data[[value_col]]),
+                       .sd = stats::sd(.data[[value_col]])
       ) %>%
 
       # Apply original order and put newdata as the first columns
-      dplyr::arrange(.data$data_row) %>%
-      dplyr::left_join(newdata_return, by = "data_row", relationship = "one-to-one") %>%
-      dplyr::select(dplyr::one_of(colnames(newdata_return)), dplyr::all_of(type), "sd")
+      dplyr::arrange(.data$.data_row) %>%
+      dplyr::left_join(newdata_return, by = ".data_row", relationship = "one-to-one") %>%
+      dplyr::select(dplyr::one_of(colnames(newdata_return)), ".mean", ".sd")
 
 
-    # Quantiles
-    if (!isFALSE(probs)) {
-      val_col = if (type == "predict" && !is.null(fit$family$r$cdf)) ".predicted" else type
+    # Central interval
+    if (!isFALSE(width)) {
+      probs = c((1 - width) / 2, (1 + width) / 2)
+      val_col = if (type == "predict" && !is.null(fit$family$r$cdf)) ".predicted" else value_col
       quantiles = if (type == "predict" && !is.null(fit$family$r$cdf)) {
         get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
       } else {
-        get_quantiles(draws, probs, type, na.rm = type == "residuals")
+        get_quantiles(draws, probs, value_col, na.rm = type == "residuals")
       }
       quantiles = quantiles %>%
-        dplyr::mutate(quantile = 100 * .data$quantile) %>%
-        tidyr::pivot_wider(names_from = "quantile", names_prefix = "Q", values_from = dplyr::all_of(val_col))
+        dplyr::mutate(quantile = ifelse(.data$quantile < 0.5, ".lower", ".upper")) %>%
+        tidyr::pivot_wider(names_from = "quantile", values_from = dplyr::all_of(val_col))
 
-      df_return = dplyr::left_join(df_return, quantiles, by = "data_row", relationship = "one-to-one")
+      df_return = dplyr::left_join(df_return, quantiles, by = ".data_row", relationship = "one-to-one")
     }
-    return(data.frame(dplyr::select(df_return, -"data_row")))
+    return(data.frame(dplyr::select(df_return, -".data_row")))
   } else if (draws_format == "tidy") {
-    value_col = switch(type,
-      fitted = ".epred",
-      predict = ".prediction",
-      residuals = ".residual",
-      loglik = ".loglik",
-      type
-    )
-    if (.return_fitted && "fitted" %in% colnames(draws)) {
-      draws = dplyr::rename(draws, .epred = "fitted")
-    }
-    draws = dplyr::rename(draws, !!value_col := dplyr::all_of(type))
     if (.return_dpars) {
       if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
       if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
     }
     return(draws)
   } else if (draws_format == "matrix") {
-    df_return = tidy_to_matrix(draws, type)
+    df_return = tidy_to_matrix(draws, value_col)
     return(df_return)
   }
 }
@@ -448,6 +446,7 @@ pp_eval = function(
 #'
 #' @inheritParams pp_eval
 #' @param varying Deprecated. Use `group_effects` instead.
+#' @param probs Deprecated. Use `width` instead.
 #' @param ... Must be empty. Reserved for future use.
 #' @inherit pp_eval return
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
@@ -461,14 +460,21 @@ pp_eval = function(
 #' # All of the above take a range of arguments. E.g.,:
 #' \donttest{
 #' head(predict(demo_fit))  # Pointwise posterior predictive
-#' head(predict(demo_fit, probs = c(0.1, 0.5, 0.9)))  # Median and 80% posterior predictive interval.
+#' head(predict(demo_fit, width = 0.8))  # 80% posterior predictive interval
 #' head(predict(demo_fit, prior = TRUE))  # Prior predictive
 #' head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 #' head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 #'
+#' # Custom quantiles from the draws, here for fitted().
+#' # Note that for predict(), this adds more Monte Carlo error than `width`.
+#' fitted(demo_fit, summary = FALSE) |>
+#'   dplyr::group_by(.data_row, time) |>
+#'   dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .epred = quantile(.epred, quantile)) |>
+#'   head()
+#'
 #' # Evaluate at novel data
 #' novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
-#' head(predict(demo_fit, newdata = novel_data, probs = c(0.025, 0.5, 0.975)))
+#' head(predict(demo_fit, newdata = novel_data))
 #'
 #' # Work with missing responses
 #' missing_fit = mcp_example("missing", plot = FALSE)
@@ -491,7 +497,7 @@ predict.mcpfit = function(
   object,
   newdata = NULL,
   summary = TRUE,
-  probs = TRUE,
+  width = 0.95,
   rate = FALSE,
   prior = FALSE,
   group_effects = TRUE,
@@ -501,11 +507,13 @@ predict.mcpfit = function(
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   conditional = TRUE,
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
   group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "predict.mcpfit")
+  width = resolve_width(width, probs, missing(width), "predict.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "predict.mcpfit")
   dots = list(...)
   warn_which_y(dots, "predict")
@@ -522,7 +530,7 @@ predict.mcpfit = function(
     newdata = newdata,
     summary = summary,
     type = "predict",
-    probs = probs,
+    width = width,
     rate = rate,
     prior = prior,
     dpar = NULL,
@@ -542,7 +550,7 @@ fitted.mcpfit = function(
   object,
   newdata = NULL,
   summary = TRUE,
-  probs = TRUE,
+  width = 0.95,
   rate = FALSE,
   prior = FALSE,
   dpar = "epred",
@@ -554,10 +562,12 @@ fitted.mcpfit = function(
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
   group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "fitted.mcpfit")
+  width = resolve_width(width, probs, missing(width), "fitted.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "fitted.mcpfit")
   dots = list(...)
   warn_which_y(dots, "fitted")
@@ -575,7 +585,7 @@ fitted.mcpfit = function(
     newdata = newdata,
     summary = summary,
     type = "fitted",
-    probs = probs,
+    width = width,
     rate = rate,
     prior = prior,
     dpar = dpar,
@@ -760,7 +770,7 @@ posterior_prediction_matrix = function(
     newdata = newdata,
     summary = FALSE,
     type = type,
-    probs = FALSE,
+    width = FALSE,
     rate = rate,
     prior = FALSE,
     dpar = if (type == "fitted") dpar else NULL,
@@ -798,7 +808,7 @@ log_lik.mcpfit = function(
   object,
   newdata = NULL,
   summary = FALSE,
-  probs = TRUE,
+  width = 0.95,
   rate = TRUE,
   prior = FALSE,
   group_effects = TRUE,
@@ -808,10 +818,12 @@ log_lik.mcpfit = function(
   nsamples = lifecycle::deprecated(),
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
   group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "log_lik.mcpfit")
+  width = resolve_width(width, probs, missing(width), "log_lik.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "log_lik.mcpfit")
   dots = list(...)
   warn_which_y(dots, "log_lik")
@@ -824,7 +836,7 @@ log_lik.mcpfit = function(
     newdata = newdata,
     summary = summary,
     type = "loglik",
-    probs = probs,
+    width = width,
     rate = rate,
     prior = prior,
     dpar = NULL,
@@ -844,17 +856,19 @@ residuals.mcpfit = function(
   object,
   newdata = NULL,
   summary = TRUE,
-  probs = TRUE,
+  width = 0.95,
   prior = FALSE,
   group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
+  probs = lifecycle::deprecated(),
   ...
 ) {
   ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "residuals.mcpfit")
   group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "residuals.mcpfit")
+  width = resolve_width(width, probs, missing(width), "residuals.mcpfit")
   dots = list(...)
   warn_which_y(dots, "residuals")
   dots$which_y = NULL
@@ -866,7 +880,7 @@ residuals.mcpfit = function(
     newdata = newdata,
     summary = summary,
     type = "residuals",
-    probs = probs,
+    width = width,
     rate = FALSE,
     prior = prior,
     dpar = NULL,

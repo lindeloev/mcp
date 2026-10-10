@@ -369,7 +369,7 @@ imputed_draws = function(object, ndraws = NULL) {
   spec = tibble::tibble(
     .name = paste0(mcp_columns(object)$response, "[", rows, "]"),
     .value = ".imputed",
-    data_row = rows
+    .data_row = rows
   )
   tidyr::pivot_longer_spec(draws, spec) %>%
     dplyr::relocate(".chain", ".iteration", ".draw")

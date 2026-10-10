@@ -7,7 +7,6 @@
 #' more in \code{\link[loo]{loo}}.
 #'
 #' @aliases loo LOO loo.mcpfit
-#' @inheritParams pp_eval
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @param by_row `TRUE` calls \code{\link[loo]{loo.function}} to compute log-likelihood
@@ -142,7 +141,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
         lldata = fit$data[data_rows, ]
         loglik_samples = fit %>%
           pp_eval(newdata = lldata, summary = FALSE, type = "loglik") %>%
-          dplyr::filter(.data$data_row == max(.data$data_row))  # last observed row
+          dplyr::filter(.data$.data_row == max(.data$.data_row))  # last observed row
       }
 
       # Matrix conversion validates and explicitly orders the joint draws, so
@@ -171,7 +170,6 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 
 #' @aliases waic WAIC waic.mcpfit
 #' @describeIn loo.mcpfit Computes WAIC on mcpfit objects
-#' @inheritParams loo.mcpfit
 #' @param ... Must be empty. Reserved for future use.
 #' @export waic
 #' @export

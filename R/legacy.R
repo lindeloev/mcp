@@ -114,6 +114,35 @@ resolve_group_effects = function(group_effects, varying, group_effects_missing, 
 }
 
 
+# Resolve deprecated `probs` (from v0.3.4) to `width`. Only a single central interval can be translated.
+resolve_width = function(width, probs, width_missing, what,
+                         env = rlang::caller_env(),
+                         user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(probs)) {
+    lifecycle::deprecate_warn(
+      "0.4.0",
+      paste0(what, "(probs)"),
+      paste0(what, "(width)"),
+      details = "The interval columns are now `.lower` and `.upper`. For other quantiles, summarise the draws from `summary = FALSE`.",
+      env = env,
+      user_env = user_env
+    )
+    if (!width_missing)
+      stop("Use only one of `width` and deprecated `probs`.")
+    if (isTRUE(probs)) {
+      width = 0.95
+    } else if (isFALSE(probs)) {
+      width = FALSE
+    } else if (is.numeric(probs) && length(probs) == 2 && isTRUE(all.equal(sum(probs), 1))) {
+      width = abs(diff(probs))
+    } else {
+      stop("Deprecated `probs` can only be translated to a central interval, e.g., `probs = c(0.025, 0.975)`. Use `width` instead, or summarise the draws from `summary = FALSE` for other quantiles.", call. = FALSE)
+    }
+  }
+  width
+}
+
+
 # Warn when a binomial prediction relies on the pre-v0.4 proportion default.
 warn_binomial_rate = function(fit, newdata, what) {
   if (fit$family$family != "binomial")

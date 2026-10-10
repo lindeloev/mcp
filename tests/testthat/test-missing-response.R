@@ -13,24 +13,24 @@ test_that("missing response draws follow covariates and group-level effects", {
     "NA values detected in 'y'"
   )
 
-  fitted_draws = fitted(fit, summary = FALSE, probs = FALSE)
-  prediction_draws = predict(fit, summary = FALSE, probs = FALSE)
-  missing_row = prediction_draws$data_row == 10
+  fitted_draws = fitted(fit, summary = FALSE, width = FALSE)
+  prediction_draws = predict(fit, summary = FALSE, width = FALSE)
+  missing_row = prediction_draws$.data_row == 10
   imputed = get_imputed_response_draws(fit, prediction_draws)
 
   expect_equal(fit$.internal$imputed_response_rows, 10L)
   expect_false(isTRUE(all.equal(prediction_draws$.prediction[missing_row], imputed[missing_row])))
   retained = imputed_draws(fit)
-  expect_named(retained, c(".chain", ".iteration", ".draw", "data_row", ".imputed"))
+  expect_named(retained, c(".chain", ".iteration", ".draw", ".data_row", ".imputed"))
   expect_equal(retained$.imputed, imputed[missing_row])
-  expect_equal(unique(retained$data_row), 10L)
+  expect_equal(unique(retained$.data_row), 10L)
   expect_equal(nrow(imputed_draws(fit, ndraws = 2)), 2L)
   expect_error(imputed_draws(list()), "Must inherit from class 'mcpfit'")
   expect_error(imputed_draws(fit, ndraws = 0), "Element 1 is not >= 1")
   expect_true(all(is.na(prediction_draws$y[missing_row])))
   expect_true(all(prediction_draws$id[missing_row] == "b"))
   expect_gt(
-    mean(fitted_draws$.epred[fitted_draws$data_row == 10]),
+    mean(fitted_draws$.epred[fitted_draws$.data_row == 10]),
     mean(data$y, na.rm = TRUE) + 50
   )
   expect_gt(
@@ -38,7 +38,7 @@ test_that("missing response draws follow covariates and group-level effects", {
     mean(data$y, na.rm = TRUE) + 50
   )
   prediction_summary = predict(fit)
-  expect_true(all(is.finite(unlist(prediction_summary[10, c("Q2.5", "Q97.5")]))))
+  expect_true(all(is.finite(unlist(prediction_summary[10, c(".lower", ".upper")]))))
   expect_no_warning(ggplot2::ggplot_build(plot(fit, lines = 0, cp_dens = FALSE)))
 })
 
@@ -66,7 +66,7 @@ test_that("missing-response predictions target the conditional response distribu
 
   # Mixture intervals use the same conditional distribution at missing rows.
   pred_sum = predict(fit)
-  expect_equal(unname(unlist(pred_sum[2, c("Q2.5", "Q97.5")])), qnorm(c(0.025, 0.975)), tolerance = 1e-5)
+  expect_equal(unname(unlist(pred_sum[2, c(".lower", ".upper")])), qnorm(c(0.025, 0.975)), tolerance = 1e-5)
   expect_error(imputed_draws(demo_fit), "No retained posterior imputations")
 })
 
@@ -107,14 +107,14 @@ test_that("completed histories stay paired across draws, groups, series, and seg
   for (draw in c(1, nrow(raw))) {
     completed = data
     use = imputed$.draw == raw$.draw[draw]
-    completed$y[imputed$data_row[use]] = imputed$.imputed[use]
+    completed$y[imputed$.data_row[use]] = imputed$.imputed[use]
     single = fit
     single$mcmc_post = coda::mcmc.list(coda::mcmc(as.matrix(raw[draw, parameter_names])))
     expect_equal(unname(posterior_epred.mcpfit(single, newdata = completed)[1, ]), unname(expected[draw, ]))
   }
   set.seed(42)
   selected = fitted(fit, summary = FALSE, ndraws = 2)
-  expect_equal(selected$.epred, unname(expected[cbind(match(selected$.draw, raw$.draw), selected$data_row)]))
+  expect_equal(selected$.epred, unname(expected[cbind(match(selected$.draw, raw$.draw), selected$.data_row)]))
   expect_error(fitted(fit, group_effects = FALSE), "requires `group_effects = TRUE`", fixed = TRUE)
   fit$mcmc_prior = .subset2(fit, "mcmc_post")
   expect_error(predict(fit, prior = TRUE), "Missing GARMA histories require posterior draws", fixed = TRUE)

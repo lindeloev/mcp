@@ -55,7 +55,7 @@ test_that("simulation validates required response auxiliaries", {
 
 
 test_that("data columns colliding with reserved output namespace are rejected early", {
-  reserved = c("sd", "fitted", "predict", "residuals", "loglik", ".draw", ".chain", ".iteration", "data_row")
+  reserved = c(".mean", ".sd", ".lower", ".upper", ".epred", ".prediction", ".residual", ".loglik", ".draw", ".chain", ".iteration", ".data_row")
   for (name in reserved) {
     bad_data = data.frame(x = 1:4, y = 1:4)
     bad_data[[name]] = c(1, 2, 1, 2)
@@ -72,13 +72,21 @@ test_that("newdata columns colliding with reserved output namespace are rejected
   fit = mcp(list(y ~ 1, ~ 1), data = data, par_x = "x", sample = FALSE)
 
   expect_error(
-    fitted(fit, newdata = data.frame(x = 1:2, sd = 1:2)),
+    fitted(fit, newdata = data.frame(x = 1:2, .sd = 1:2)),
     "reserved output namespace"
   )
   expect_error(
-    predict(fit, newdata = data.frame(x = 1:2, data_row = 1:2)),
+    predict(fit, newdata = data.frame(x = 1:2, .data_row = 1:2)),
     "reserved output namespace"
   )
+})
+
+
+test_that("data columns with summary names are returned unchanged", {
+  newdata = data.frame(time = c(10, 50), mean = 1:2, sd = 3:4, lower = 5:6, upper = 7:8, fitted = 9:10)
+  result = fitted(demo_fit, newdata = newdata)
+  expect_equal(result[, colnames(newdata)], newdata)
+  expect_named(result, c(colnames(newdata), ".mean", ".sd", ".lower", ".upper"))
 })
 
 
@@ -197,15 +205,16 @@ test_that("zero and negative weights are rejected with informative error", {
 })
 
 
-test_that("probs and quantiles must be strictly between 0 and 1", {
-  expect_error(fitted(demo_fit, probs = 0), "strictly between 0 and 1")
-  expect_error(fitted(demo_fit, probs = 1), "strictly between 0 and 1")
-  expect_error(fitted(demo_fit, probs = -0.1), "strictly between 0 and 1")
-  expect_error(fitted(demo_fit, probs = 1.1), "strictly between 0 and 1")
-  expect_error(predict(demo_fit, probs = 0), "strictly between 0 and 1")
-  expect_error(predict(demo_fit, probs = 1), "strictly between 0 and 1")
-  expect_error(residuals(demo_fit, probs = 0), "strictly between 0 and 1")
-  expect_error(residuals(demo_fit, probs = 1), "strictly between 0 and 1")
+test_that("width and quantiles must be strictly between 0 and 1", {
+  expect_error(fitted(demo_fit, width = 0), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, width = 1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, width = -0.1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, width = 1.1), "strictly between 0 and 1")
+  expect_error(predict(demo_fit, width = 0), "strictly between 0 and 1")
+  expect_error(predict(demo_fit, width = 1), "strictly between 0 and 1")
+  expect_error(residuals(demo_fit, width = 0), "strictly between 0 and 1")
+  expect_error(residuals(demo_fit, width = 1), "strictly between 0 and 1")
+  expect_error(fitted(demo_fit, width = TRUE), "width")
 
   expect_error(plot(demo_fit, q_fit = 0), "strictly between 0 and 1")
   expect_error(plot(demo_fit, q_fit = 1), "strictly between 0 and 1")

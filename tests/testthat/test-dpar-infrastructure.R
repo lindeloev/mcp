@@ -357,20 +357,20 @@ test_that("R-side dpar evaluation supports link and response scales", {
 
 test_that("evaluated-draw helpers enforce draw and data-row identity", {
   samples = expand.grid(
-    data_row = 1:2,
+    .data_row = 1:2,
     .draw = 1:3
   )
   samples$.chain = 1L
   samples$.iteration = samples$.draw
   samples$x = 5
-  samples$group = factor(c("A", "B")[samples$data_row])
-  samples$`.epred` = 10 * samples$data_row + samples$.draw
+  samples$group = factor(c("A", "B")[samples$.data_row])
+  samples$`.epred` = 10 * samples$.data_row + samples$.draw
   samples = samples[c(6, 1, 4, 2, 5, 3), ]
 
   expect_silent(validate_eval_draws(samples, ".epred"))
 
   # Equal x values do not define the evaluation unit. Quantiles stay separate
-  # by data_row and receive plotting metadata only after summarisation.
+  # by .data_row and receive plotting metadata only after summarisation.
   quantiles = get_quantiles(
     samples,
     c(0.25, 0.75),
@@ -378,8 +378,8 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
     keep = c("x", "group")
   )
   expect_equal(nrow(quantiles), 4)
-  expect_equal(unique(quantiles$.epred[quantiles$data_row == 1]), c(11.5, 12.5))
-  expect_equal(unique(quantiles$.epred[quantiles$data_row == 2]), c(21.5, 22.5))
+  expect_equal(unique(quantiles$.epred[quantiles$.data_row == 1]), c(11.5, 12.5))
+  expect_equal(unique(quantiles$.epred[quantiles$.data_row == 2]), c(21.5, 22.5))
 
   fitted_matrix = tidy_to_matrix(samples, type = ".epred", data_rows = c(2, 1))
   expect_equal(colnames(fitted_matrix), c("2", "1"))
@@ -390,7 +390,7 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
 
   expect_error(
     validate_eval_draws(rbind(samples, samples[1, ]), ".epred"),
-    "one `.epred` value per `.draw` and `data_row`",
+    "one `.epred` value per `.draw` and `.data_row`",
     fixed = TRUE
   )
   expect_error(
@@ -444,16 +444,16 @@ test_that("distributional parameters use the same evaluation identity", {
     newdata = newdata,
     dpar = "mu",
     summary = FALSE,
-    probs = FALSE
+    width = FALSE
   )
   sigma = fitted(
     fit,
     newdata = newdata,
     dpar = "sigma",
     summary = FALSE,
-    probs = FALSE
+    width = FALSE
   )
-  keys = c(".chain", ".iteration", ".draw", "data_row")
+  keys = c(".chain", ".iteration", ".draw", ".data_row")
 
   expect_equal(mu[, keys], sigma[, keys])
   expect_silent(validate_eval_draws(mu, ".epred"))
@@ -463,11 +463,11 @@ test_that("distributional parameters use the same evaluation identity", {
     fit,
     newdata = newdata,
     dpar = "sigma",
-    probs = c(0.25, 0.75)
+    width = 0.5
   )
-  expect_equal(sigma_summary$fitted, c(1, 3))
-  expect_equal(sigma_summary$Q25, c(1, 3))
-  expect_equal(sigma_summary$Q75, c(1, 3))
+  expect_equal(sigma_summary$.mean, c(1, 3))
+  expect_equal(sigma_summary$.lower, c(1, 3))
+  expect_equal(sigma_summary$.upper, c(1, 3))
 
   predicted = pp_eval(
     fit,
@@ -496,12 +496,12 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
   newdata = data.frame(x = c(2, 2), group = c("A", "B"))
 
-  summary = fitted(fit, newdata = newdata, probs = c(0.25, 0.75))
-  expect_equal(summary$fitted, c(0, 10))
-  expect_equal(summary$Q25, c(0, 10))
-  expect_equal(summary$Q75, c(0, 10))
+  summary = fitted(fit, newdata = newdata, width = 0.5)
+  expect_equal(summary$.mean, c(0, 10))
+  expect_equal(summary$.lower, c(0, 10))
+  expect_equal(summary$.upper, c(0, 10))
 
-  samples = fitted(fit, newdata = newdata, summary = FALSE, probs = FALSE) %>% add_plot_groups()
+  samples = fitted(fit, newdata = newdata, summary = FALSE, width = FALSE) %>% add_plot_groups()
   quantiles = get_quantiles(samples, c(0.25, 0.75), ".epred", c("x", ".group", ".color"))
   quantile_layer = geom_quantiles(
     quantiles,
@@ -793,16 +793,16 @@ test_that("fitted() intervals differ across group levels and contain the fitted 
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
   newdata = data.frame(x = c(2.5, 2.5), id = c(1, 2))
-  result = fitted(fit, newdata = newdata, probs = c(0.025, 0.975))
+  result = fitted(fit, newdata = newdata, width = 0.95)
 
   # The interval must reflect each row's own group level rather than being
   # identical (or pooled) across levels.
-  expect_false(isTRUE(all.equal(result$Q2.5[1], result$Q2.5[2])))
-  expect_false(isTRUE(all.equal(result$Q97.5[1], result$Q97.5[2])))
+  expect_false(isTRUE(all.equal(result$.lower[1], result$.lower[2])))
+  expect_false(isTRUE(all.equal(result$.upper[1], result$.upper[2])))
 
   # The fitted point estimate must fall within its own reported interval.
-  expect_true(all(result$fitted >= result$Q2.5))
-  expect_true(all(result$fitted <= result$Q97.5))
+  expect_true(all(result$.mean >= result$.lower))
+  expect_true(all(result$.mean <= result$.upper))
 })
 
 

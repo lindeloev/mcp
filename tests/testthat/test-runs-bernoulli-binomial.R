@@ -85,7 +85,7 @@ test_that("binomial prediction defaults agree with posterior methods and warn on
   ))
 
   expect_warning((counts = fitted(fit)), "Set `rate = TRUE`")
-  expect_equal(counts$fitted, data$N / 2)
+  expect_equal(counts$.mean, data$N / 2)
   expect_warning(predict(fit), "Set `rate = TRUE`")
   expect_no_warning(fitted(fit, rate = FALSE))
   expect_no_warning(fitted(fit, rate = TRUE))
@@ -96,7 +96,7 @@ test_that("binomial prediction defaults agree with posterior methods and warn on
   expect_no_warning(fitted(fit, newdata = transform(data, N = 1)))
   expect_no_warning(predict(fit, newdata = transform(data, N = 1)))
   expect_warning(fitted(fit, dpar = NULL), "Set `rate = TRUE`")
-  expect_equal(residuals(fit)$residuals, data$y - counts$fitted)
+  expect_equal(residuals(fit)$.mean, data$y - counts$.mean)
 
   for (rate in c(FALSE, TRUE)) {
     expected = fitted(fit, rate = rate, summary = FALSE, draws_format = "matrix")

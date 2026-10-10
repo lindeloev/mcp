@@ -12,10 +12,10 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 
     # Evaluated draws repeat the same plotting metadata for every posterior
     # draw. Build the interaction once per evaluation row, then expand it.
-    if ("data_row" %in% names(df)) {
-      first = !duplicated(df$data_row)
+    if (".data_row" %in% names(df)) {
+      first = !duplicated(df$.data_row)
       group = interaction(df[first, cols, drop = FALSE], drop = TRUE, sep = ":")
-      return(group[match(df$data_row, df$data_row[first])])
+      return(group[match(df$.data_row, df$.data_row[first])])
     } else {
       interaction(df[, cols, drop = FALSE], drop = TRUE, sep = ":")
     }

@@ -74,11 +74,13 @@ In general, this output contains:
 
  * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). Models with [group-level effects](../articles/group_effects.html) additionally have the relevant grouping columns, `binomial()` models have the number of trials, etc.
  
- * **fitted:** The fitted value (posterior mean). When `summary = TRUE` (default), the column is called `fitted`. When `summary = FALSE`, the column is named `.epred`, matching `tidybayes::add_epred_draws()` conventions.
+ * **.mean:** The fitted value (posterior mean). When `summary = FALSE`, you instead get one row per draw with the value in `.epred`, matching `tidybayes::add_epred_draws()` conventions.
  
- * **sd:** The posterior standard deviation of the expected response corresponding to `fitted`. In `predict()` output, `sd` is instead the posterior predictive standard deviation.
+ * **.sd:** The posterior standard deviation of the expected response. In `predict()` output, `.sd` is instead the posterior predictive standard deviation.
  
- * **Q[some number]:** The quantiles of the fitted distribution. You can set the quantiles using `fitted(fit, probs = c(0.1, 0.5, 0.9))`.
+ * **.lower** and **.upper:** The bounds of the central interval. It is 95% by default, but you can set it using, e.g., `fitted(fit, width = 0.8)`. Use `summary = FALSE` to compute other quantiles from the draws.
+ 
+The columns computed by `mcp` are prefixed with a dot, so they never collide with columns in your data.
  
 If you compare these values to the plot, you will see that they correspond. `plot()` merely calls `fitted()` behind the scenes.
 
@@ -109,10 +111,19 @@ If you look at the documentation for `predict()`, `fitted()`, and `residuals()`,
 
 ```{r, R.options = list(width = 9999)}
 set.seed(42)
-head(predict(fit, probs = c(0.1, 0.9)))
+head(predict(fit, width = 0.8))
 ```
 
-Note that `predict()` uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using `set.seed()` as above. In general, the more posterior draws, the less the call-to-call variance will be. Conversely, fewer draws means more call-to-call variation, e.g., if you do `predict(fit, ndraws = 10)`.
+Note that `predict()` uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using `set.seed()` as above. In general, the more posterior draws, the less the call-to-call variance will be. Conversely, fewer draws means more call-to-call variation, e.g., if you do `predict(fit, ndraws = 10)`. The interval (`.lower` and `.upper`) is the exception: It is computed exactly from the posterior predictive distribution, so it is deterministic for a given set of posterior draws.
+
+To get custom quantiles, get the draws using `summary = FALSE` and summarise them yourself. These quantiles are computed from simulated responses, so they are subject to the call-to-call variation described above:
+
+```{r}
+predict(fit, summary = FALSE) |>
+  dplyr::group_by(.data_row, time) |>
+  dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .prediction = quantile(.prediction, quantile)) |>
+  head()
+```
 
 
 # Residuals
@@ -165,10 +176,10 @@ fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
 
 ## Step 3: predict!
 
-We can now compute 50% and 80% posterior predictive intervals at `time = 125`:
+We can now compute the 80% posterior predictive interval at `time = 125`:
 
 ```{r}
-predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
+predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
 ```
 
 To really understand what's going on here, it may be helpful to visualize the model. For now, we will have to hack this a bit too, manually doing our plot:

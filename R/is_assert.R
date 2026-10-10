@@ -92,8 +92,9 @@ assert_model_data = function(data, par_x, rhs_vars = character(), group_cols = c
 # Assert that column names do not collide with reserved mcp output names
 assert_reserved_output_namespace = function(col_names, context = "data") {
   reserved_output = c(
-    "sd", "fitted", "predict", "residuals", "loglik",
-    ".draw", ".chain", ".iteration", "data_row"
+    ".mean", ".sd", ".lower", ".upper",
+    ".epred", ".prediction", ".residual", ".loglik",
+    ".draw", ".chain", ".iteration", ".data_row"
   )
   collisions = intersect(col_names, reserved_output)
   if (length(collisions) > 0) {

@@ -606,6 +606,21 @@ test_that("nsamples is a soft-deprecated alias for ndraws", {
 })
 
 
+test_that("probs is a deprecated alias for central intervals", {
+  lifecycle::expect_deprecated({
+    result = fitted(demo_fit, probs = c(0.1, 0.9))
+  })
+  expect_equal(result, fitted(demo_fit, width = 0.8))
+  expect_named(suppressWarnings(residuals(demo_fit, probs = FALSE)), c(colnames(demo_fit$data), ".mean", ".sd"))
+  expect_error(suppressWarnings(fitted(demo_fit, probs = c(0.1, 0.5, 0.9))), "central interval")
+  expect_error(
+    suppressWarnings(predict(demo_fit, width = 0.8, probs = c(0.1, 0.9))),
+    "Use only one of `width` and deprecated `probs`.",
+    fixed = TRUE
+  )
+})
+
+
 test_that("diagnostic settings control fit warnings and summary footers", {
   defaults = resolve_diagnostics()
   expect_equal(defaults, list(rhat = 1.01, ess_bulk = 400, ess_tail = 400, ar = 0.1, ma = 0.1))
@@ -707,17 +722,17 @@ test_that("posterior_linpred evaluates binomial models on probability scale when
   expect_equal(unname(epred_counts), matrix(c(2.5, 2.5, 2.5), nrow = 1))
 
   # dpar = "mu" always returns the probability parameter regardless of rate
-  expect_equal(fitted(fit, dpar = "mu", rate = FALSE)$fitted, c(0.5, 0.5, 0.5))
-  expect_equal(fitted(fit, dpar = "mu", rate = TRUE)$fitted, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, dpar = "mu", rate = FALSE)$.mean, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, dpar = "mu", rate = TRUE)$.mean, c(0.5, 0.5, 0.5))
   expect_equal(unname(rstantools::posterior_epred(fit, dpar = "mu")), matrix(c(0.5, 0.5, 0.5), nrow = 1))
 
   # dpar = "epred" returns counts when rate = FALSE and proportions when rate = TRUE
-  expect_equal(fitted(fit, dpar = "epred", rate = FALSE)$fitted, c(2.5, 2.5, 2.5))
-  expect_equal(fitted(fit, dpar = "epred", rate = TRUE)$fitted, c(0.5, 0.5, 0.5))
-  expect_equal(fitted(fit, rate = FALSE)$fitted, c(2.5, 2.5, 2.5))
+  expect_equal(fitted(fit, dpar = "epred", rate = FALSE)$.mean, c(2.5, 2.5, 2.5))
+  expect_equal(fitted(fit, dpar = "epred", rate = TRUE)$.mean, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, rate = FALSE)$.mean, c(2.5, 2.5, 2.5))
 
   # dpar = "mu" does not require trials column in newdata
-  expect_equal(fitted(fit, newdata = data.frame(x = 1:3), dpar = "mu", rate = FALSE)$fitted, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, newdata = data.frame(x = 1:3), dpar = "mu", rate = FALSE)$.mean, c(0.5, 0.5, 0.5))
   expect_error(fitted(fit, newdata = data.frame(x = 1:3), dpar = "epred", rate = FALSE), "missing from the data: N")
 
   # prediction data family validation fails for invalid trials

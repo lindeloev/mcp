@@ -571,7 +571,7 @@ test_that("grouping columns that also serve as predictors are retained when grou
   # Check that fixed effect differences are preserved when group deviations are excluded
   f_novary = fitted(fit, prior = TRUE, group_effects = FALSE)
   expect_equal(nrow(f_novary), 10)
-  expect_true(all(c("x", "id", "fitted") %in% names(f_novary)))
+  expect_true(all(c("x", "id", ".mean") %in% names(f_novary)))
 })
 
 
