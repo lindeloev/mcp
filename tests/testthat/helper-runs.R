@@ -341,7 +341,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     get_fit_model_tables(fit)$group_effects$group_col
   ))
   rhs_cols = intersect(
-    setdiff(get_rhs_vars(fit$model), group_cols),
+    setdiff(unlist(get_formula_vars(fit$model)[c("predictor", "group", "offset", "series")]), group_cols),
     colnames(fit$data)
   )
   expected_colnames = c(
@@ -502,7 +502,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     all_group_cols = unique(stats::na.omit(group_effects$group_col))
     selected_cp = unpack_group_effects(fit, pars = "cp")
     rhs_cols = intersect(
-      setdiff(get_rhs_vars(fit$model), all_group_cols),
+      setdiff(unlist(get_formula_vars(fit$model)[c("predictor", "group", "offset", "series")]), all_group_cols),
       colnames(fit$data)
     )
     expected_colnames_more = c(

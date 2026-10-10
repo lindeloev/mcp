@@ -182,10 +182,10 @@ make_code_name = function(x) {
 #' Detects par_x and verifies model-data fit
 #'
 #' @inheritParams mcp
+#' @param vars Model variables by role, returned by `get_formula_vars()`.
 #' @return The column name of par_x.
 #' @noRd
-get_par_x = function(model, data, par_x = NULL) {
-  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
+get_par_x = function(vars, data, par_x = NULL) {
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x, null.ok = TRUE)
 
@@ -197,8 +197,8 @@ get_par_x = function(model, data, par_x = NULL) {
       stop("par_x = '", par_x, "' has to be continuous. Is it binary or categorical?")
   }
 
-  # Check for exactly one continuous predictor; exclude grouping and offset variables
-  rhs_vars = setdiff(get_rhs_non_offset_vars(model), get_rhs_group_vars(model))
+  # Check for exactly one continuous predictor; exclude grouping, offset, and series variables
+  rhs_vars = setdiff(vars$predictor, vars$group)
   data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
   continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
   par_x_candidates = names(continuous_cols)[continuous_cols]
@@ -223,8 +223,7 @@ get_par_x = function(model, data, par_x = NULL) {
   }
 
   # Warn if par_x is used in offset()
-  offset_vars = get_rhs_offset_vars(model)
-  if (!is.null(resolved_par_x) && resolved_par_x %in% offset_vars) {
+  if (!is.null(resolved_par_x) && resolved_par_x %in% vars$offset) {
     warning(
       "The change-point predictor '", resolved_par_x, "' is also used in offset().\n",
       "If '", resolved_par_x, "' represents cumulative exposure/duration from time 0, note that mcp applies ",

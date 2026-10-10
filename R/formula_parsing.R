@@ -85,86 +85,60 @@ split_cp = function(rhs) {
 
 
 
-# Returns all variables in the predictor parts of an mcpmodel
-get_rhs_vars = function(model) {
+# Classify the variables in segment formulas by their role in the model. Returns a list with
+# `response` and its `auxiliary` columns (e.g., `trials(N)`), and the right-hand-side
+# `predictor`, `group` (grouping factors, including in `cp()`), `offset`, and `series` variables.
+# E.g., `y ~ 1 + x + offset(log(t)) + (1 | id)` gives response = "y", predictor = "x",
+# group = "id", and offset = "t".
+get_formula_vars = function(model) {
   checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
+  vars = list(response = character(), auxiliary = character(), predictor = character(),
+              group = character(), offset = character(), series = character())
+  add = function(role, x) vars[[role]] <<- union(vars[[role]], x)
 
-  vars = model %>%
-    lapply(get_rhs) %>%
-    lapply(all.vars) %>%
-    unlist() %>%
-    unique()
-
-  unique(c(vars, get_arma_series(model)))
-}
-
-
-# Returns grouping-factor variables in predictor group-level terms
-get_rhs_group_vars = function(model) {
-  find_groups = function(expr) {
-    if (!is.call(expr))
-      return(character())
-    if (as.character(expr[[1]])[1] %in% c("|", "||"))
-      return(all.vars(expr[[3]]))
-    nested_groups = lapply(rlang::call_args(expr), find_groups)
-    unique(unlist(nested_groups))
+  # Add variables to `role`, except in grouping, offset, and AR/MA-argument positions.
+  # `role = NULL` collects only those special positions.
+  walk = function(expr, role) {
+    if (!is.call(expr)) {
+      if (!is.null(role))
+        add(role, all.vars(expr))
+      return(invisible(NULL))
+    }
+    fun = deparse1(expr[[1]])
+    if (fun %in% c("offset", "stats::offset")) {
+      add("offset", all.vars(expr))
+    } else if (fun %in% c("|", "||")) {
+      walk(expr[[2]], role)
+      add("group", all.vars(expr[[3]]))
+    } else if (fun %in% c("ar", "ma")) {
+      arma = unpack_arma(deparse1(expr))
+      if (!is.na(arma$series))
+        add("series", arma$series)
+      walk(str2lang(arma$form_str)[[2]], role)
+    } else {
+      for (arg in as.list(expr)[-1])
+        walk(arg, role)
+    }
   }
 
-  model %>%
-    lapply(get_rhs) %>%
-    lapply(function(form) find_groups(form[[2]])) %>%
-    unlist() %>%
-    unique()
-}
-
-
-# Returns variables appearing inside offset() calls
-get_rhs_offset_vars = function(model) {
-  find_offsets = function(expr) {
-    if (!is.call(expr))
-      return(character())
-    if (deparse1(expr[[1]]) %in% c("offset", "stats::offset"))
-      return(all.vars(expr))
-    unique(unlist(lapply(rlang::call_args(expr), find_offsets)))
+  for (i in seq_along(model)) {
+    form = model[[i]]
+    lhs = if (length(form) == 3) form[[2]] else NULL
+    if (i == 1 && is.call(lhs) && identical(lhs[[1]], as.name("|"))) {
+      add("response", all.vars(lhs[[2]]))
+      add("auxiliary", all.vars(lhs[[3]]))
+    } else if (i == 1) {
+      add("response", all.vars(lhs))
+    } else {
+      walk(lhs, role = NULL)  # Deprecated change point on the left-hand side, e.g., `1 + (1 | id) ~ 0 + x`
+    }
+    walk(form[[length(form)]], role = "predictor")
   }
 
-  unique(unlist(lapply(model, function(m) find_offsets(get_rhs(m)[[2]]))))
-}
+  if (length(vars$series) > 1)
+    stop("Only one `series` column can be specified across all ar() and ma() terms.")
 
-
-# Returns variables appearing in RHS outside offset() calls
-get_rhs_non_offset_vars = function(model) {
-  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
-
-  find_non_offset = function(expr) {
-    if (!is.call(expr))
-      return(all.vars(expr))
-    if (deparse1(expr[[1]]) %in% c("offset", "stats::offset"))
-      return(character())
-    if (deparse1(expr[[1]]) %in% c("|", "||"))
-      return(find_non_offset(expr[[2]]))
-    unique(unlist(lapply(rlang::call_args(expr), find_non_offset)))
-  }
-
-  vars = model %>%
-    lapply(get_rhs) %>%
-    lapply(function(form) find_non_offset(form[[2]])) %>%
-    unlist() %>%
-    unique()
-
-  unique(c(vars, get_arma_series(model)))
-}
-
-# Returns all variables in the predictor parts of an mcpmodel
-get_model_vars = function(model) {
-  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
-
-  vars = model %>%
-    lapply(all.vars) %>%
-    unlist() %>%
-    unique()
-
-  unique(c(vars, get_arma_series(model)))
+  vars
 }
 
 #' Remove group-level or population-level terms from a formula

@@ -203,19 +203,19 @@ mcp = function(model,
       call. = FALSE
     )
   data = data.frame(data)
-  series = get_arma_series(model)
+  vars = get_formula_vars(model)
+  series = logical0_to_null(vars$series)
   assert_arma_series(data, series)
 
   checkmate::assert_string(par_x, null.ok = TRUE)
-  par_x = get_par_x(model, data, par_x)
-  rhs_vars = get_rhs_vars(model)
-  model_vars = unique(c(get_model_vars(model), par_x, series))
-  assert_model_data(data, par_x, rhs_vars)
+  par_x = get_par_x(vars, data, par_x)
+  model_vars = unique(c(unlist(lapply(model, all.vars)), par_x, series))  # In formula order
+  assert_model_data(data, par_x, unlist(vars[c("predictor", "group", "offset", "series")]))
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
-  response_var = get_model_vars(model)[1]
-  if (response_var %in% names(data) && is.logical(data[[response_var]]))
-    data[[response_var]] = as.numeric(data[[response_var]])
+  for (col in vars$response)
+    if (is.logical(data[[col]]))
+      data[[col]] = as.numeric(data[[col]])
 
   # Plain named lists are the v0.4 JAGS-string prior format. Future classed
   # sampler-agnostic prior objects can dispatch before this legacy path.

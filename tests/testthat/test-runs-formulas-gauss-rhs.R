@@ -224,6 +224,26 @@ test_that("formula offsets work in mcp formulas", {
   )
 })
 
+test_that("formula variables are classified by role for par_x detection", {
+  vars = get_formula_vars(list(
+    y | weights(w) ~ 1 + x + offset(log(t)) + sigma(1 + z) + (1 + u || id),
+    ~ cp((1 | id)) + 0 + ar(2, 1 + v, series = s)
+  ))
+  expect_equal(vars, list(
+    response = "y", auxiliary = "w", predictor = c("x", "z", "u", "v"),
+    group = "id", offset = "t", series = "s"
+  ))
+
+  # Numeric series columns are not change-point candidates
+  data = data.frame(x = 1:12, id = rep(1:3, each = 4), y = sin(1:12))
+  fit = mcp(list(y ~ 1 + x + ar(1, series = id)), data, sample = FALSE)
+  expect_equal(mcp_columns(fit)$par_x, "x")
+  expect_error(
+    mcp(list(y ~ 1 + ar(1, series = id)), data, sample = FALSE),
+    "No continuous column for change points"
+  )
+})
+
 test_that("transformations use the original par_x while segment bases stay local", {
   data = data.frame(x = 0:10, y = 0)
   fit = mcp(

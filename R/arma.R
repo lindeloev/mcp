@@ -102,25 +102,6 @@ unpack_arma = function(form_str_in) {
 }
 
 
-# Return the single independent-series column across all AR/MA terms, or NULL.
-get_arma_series = function(model) {
-  rhs = lapply(model, get_rhs)
-  series_vec = unique(stats::na.omit(unlist(lapply(rhs, function(form) {
-    term_labels = attributes(stats::terms(form))$term.labels
-    lapply(c("ar", "ma"), function(component) {
-      term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
-      if (length(term) == 0) return(NA_character_)
-      unpack_arma(term)$series
-    })
-  }))))
-
-  if (length(series_vec) > 1)
-    stop("Only one `series` column can be specified across all ar() and ma() terms.")
-
-  if (length(series_vec) == 1) series_vec else NULL
-}
-
-
 # Returns the requested AR/MA order, or NA if the term is absent
 get_arma_order = function(predictors, term) {
   term = rlang::arg_match0(term, c("ar", "ma"))
