@@ -271,8 +271,11 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
 #'       For "=" it is the Savage-Dickey density ratio.
 #'       For directional hypotheses, it is the posterior odds divided by the
-#'       prior odds. It is `NA` when `prior = TRUE` or when prior draws are
-#'       not available (e.g., `sample = "post"`).
+#'       prior odds. It is `Inf` (or `0`) when all (or no) posterior draws satisfy
+#'       the hypothesis, i.e., the evidence exceeds what the number of draws can
+#'       resolve; increase `iter` for a finite estimate. It is `NA` when `prior = TRUE`,
+#'       when prior draws are not available (e.g., `sample = "post"`), or when all
+#'       or no prior draws satisfy the hypothesis.
 #'
 #' @export
 #' @examples
@@ -427,9 +430,14 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
         prior_prob = mean(prior_result == TRUE)
 
         # A Bayes factor is the update from prior odds to posterior odds.
-        posterior_odds = prob / (1 - prob)
-        prior_odds = prior_prob / (1 - prior_prob)
-        BF = posterior_odds / prior_odds
+        # It is undefined if the prior already implies or excludes the hypothesis.
+        if (prior_prob %in% c(0, 1)) {
+          warning("No prior draws ", if (prior_prob == 1) "violate" else "satisfy", " `", expression,
+            "`, so its Bayes factor is undefined. Is it implied or excluded by the model?", call. = FALSE)
+          BF = NA_real_
+        } else {
+          BF = (prob / (1 - prob)) / (prior_prob / (1 - prior_prob))
+        }
       } else {
         BF = NA_real_
       }

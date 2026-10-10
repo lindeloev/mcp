@@ -51,6 +51,12 @@ test_that("hypothesis()", {
   expect_equal(actual_directional$prob, p_post)
   expect_equal(actual_directional$BF, expected_BF)
 
+  # Hypotheses implied or excluded by the prior have no Bayes factor
+  expect_warning(implied <- hypothesis(demo_fit, "cp_2 > cp_1"), "Bayes factor is undefined")
+  expect_equal(implied$prob, 1)
+  expect_true(is.na(implied$BF))
+  expect_equal(hypothesis(demo_fit, "cp_1 > 10")$BF, Inf)
+
   prior_directional = hypothesis(fit_asymmetric, directional, prior = TRUE)
   expect_equal(prior_directional$prob, p_prior)
   expect_true(is.na(prior_directional$BF))
