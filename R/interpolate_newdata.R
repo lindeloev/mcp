@@ -27,9 +27,9 @@ get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
   # If there are AR/MA terms and arma == TRUE, evaluate at the data
   if (isTRUE(arma)) {
     x_values = xdata
-  } else if (!is.null(by) || is.null(.subset2(fit, "mcmc_post"))) {
-    # Just give up for grouped and prior evaluations (usually very distributed change points)
-    # and return a reasonable resolution
+  } else if (!is.null(by) || is.null(mcmclist_draws(fit, prior = prior, error = FALSE))) {
+    # Just give up for grouped evaluations (usually very distributed change points)
+    # and fits without the requested draws, and return a reasonable resolution
     x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_GROUPED)
   } else if (nrow(get_fit_model_tables(fit)$cps) == 0) {
     # No change points. Use default resolution for the whole plot
@@ -104,6 +104,8 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' @param arma Logical. If `TRUE`, preserve the observed response history for
 #'   conditional AR/MA evaluation. Defaults to `TRUE` when the fit includes
 #'   `ar()` or `ma()` terms. Set to `FALSE` to interpolate unconditional trends.
+#' @param prior Logical. Increase the resolution around the change points of the
+#'   prior draws (`TRUE`) instead of the posterior draws (`FALSE`, default).
 #' @details
 #' The `par_x` variable will be interpolated with higher resolution around the
 #' change points where the values can change abruptly, but lower resolution in
@@ -143,7 +145,8 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #'   geom_line(lwd = 2) +
 #'   geom_point(aes(y = response), data = demo_fit$data)
 #' }
-interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL) {
+interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL, prior = FALSE) {
+  checkmate::assert_flag(prior)
   if (is.null(arma))
     arma = is_arma(fit)
 
@@ -161,7 +164,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
   # Get x-values before `by` is standardized below. Otherwise an absent grouping
   # argument becomes character(0), which selects the denser grouped grid.
   if (is.null(x_values))
-    x_values = get_x_values(fit, by = by, arma = arma)
+    x_values = get_x_values(fit, by = by, prior = prior, arma = arma)
 
   # Get unique predictors
   data_columns = mcp_columns(fit)

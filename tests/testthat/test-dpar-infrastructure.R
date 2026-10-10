@@ -780,6 +780,12 @@ test_that("interpolate_newdata uses the ungrouped adaptive grid by default", {
     interpolate_newdata(demo_fit)[[mcp_columns(demo_fit)$par_x]],
     get_x_values(demo_fit)
   )
+
+  # The prior grid is refined around the prior change points
+  prior_x = interpolate_newdata(demo_fit, prior = TRUE)[[mcp_columns(demo_fit)$par_x]]
+  expect_equal(prior_x, get_x_values(demo_fit, prior = TRUE))
+  prior_cps = as_draws_df(demo_fit, prior = TRUE)$cp_1
+  expect_true(all(stats::quantile(prior_cps, c(0, 1)) %in% prior_x))
 })
 
 
