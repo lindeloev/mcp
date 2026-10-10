@@ -38,7 +38,7 @@ run_jags = function(jags_code,
         on.exit(rjags::unload.module("glm", quiet = TRUE), add = TRUE)
       }
 
-      # Compile model
+      # Compile model silently. Adapt separately to keep the progress bar.
       jags_connection = textConnection(jags_code)
       on.exit(close(jags_connection), add = TRUE)
       jm = rjags::jags.model(
@@ -46,9 +46,12 @@ run_jags = function(jags_code,
         data = jags_data,
         inits = inits,
         n.chains = n.chains,
-        n.adapt = n.adapt,
-        quiet = quiet
+        n.adapt = 0,
+        quiet = TRUE
       )
+      progress_bar = if (quiet) "none" else getOption("jags.pb")
+      if (!rjags::adapt(jm, n.iter = n.adapt, end.adaptation = TRUE, progress.bar = progress_bar))
+        warning("Adaptation incomplete")
 
       # Ensure requested warmup iterations are discarded even if JAGS skips adaptation
       burnin = n.adapt - jm$iter()
@@ -56,7 +59,7 @@ run_jags = function(jags_code,
         stats::update(
           object = jm,
           n.iter = burnin,
-          progress.bar = if (quiet) "none" else getOption("jags.pb")
+          progress.bar = progress_bar
         )
       }
 

@@ -115,7 +115,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Use `mcp(..., seed = 42)` or `set.seed(42)` before `mcp()` for reproducible JAGS sampling, whether chains run sequentially or in parallel. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
 
-  - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors.
+  - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors. The JAGS model-compilation text is no longer printed by default.
 
   - Added `mcp(..., series = "data_column")` to identify independent series in models with AR/MA terms.
 
