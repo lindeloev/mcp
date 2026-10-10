@@ -409,7 +409,7 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   # Sigma_1 uses response-scale half-Student-t
   sig_row = ps[ps$parameter == "sigma_1", ]
   testthat::expect_match(sig_row$prior, "^student_t\\(df = 3, location = 0, scale = [0-9.]+\\)$")
-  testthat::expect_equal(sig_row$bounds, "[0.001, Inf]")
+  testthat::expect_equal(sig_row$bounds, "[0, Inf]")
 })
 
 
@@ -444,7 +444,7 @@ test_that("priors are resolved without changing their parameterization", {
       x_1 = slope,
       Intercept_2 = intercept,
       x_2 = slope,
-      sigma_1 = "dt(0, 3.7, 3) T(0.001, )"
+      sigma_1 = "dt(0, 3.7, 3) T(0, )"
     )
   )
 
@@ -534,7 +534,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
   # Non-positive responses are valid: the log link applies to mu, not y.
   expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6, 2.5)")
   expect_equal(log_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(log_data$x)), ")"))
-  expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0.001, )")
+  expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0, )")
   expect_false(grepl("log\\(y\\)", log_fit$jags_code))
 
   rules = prior_summary(log_fit, verbose = TRUE)
@@ -549,7 +549,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
   )
   expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5, 7.1)")
   expect_equal(wide_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(wide_data$x)), ")"))
-  expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0.001, )")
+  expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0, )")
 
   zero_data = data.frame(x = 1:6, y = 0:5)
   zero_fit = mcp(
@@ -561,7 +561,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
   expect_equal(small_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(small_data$y)), ", ", format_prior_number(2.5 * stats::sd(small_data$y)), ")"))
-  expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0.001, )")
+  expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 })
 
 
@@ -597,7 +597,7 @@ test_that("the prior on the level at min(x) matches the default intercept prior"
   data = data.frame(x = 101:130, y = 1:30)
   fit = suppressWarnings(mcp(
     list(y ~ 1 + x), data, sample = "prior",
-    chains = 1, iter = 4000, warmup = 100, seed = 1, quiet = TRUE
+    chains = 1, iter = 4000, warmup = 100, seed = 42, quiet = TRUE
   ))
   draws = as_draws_df(fit, prior = TRUE)
   level = draws$Intercept_1 + draws$x_1 * 101
@@ -638,7 +638,7 @@ test_that("segment anchors imply the default priors", {
   data = data.frame(x = 1:100, y = rnorm(100))
   fit = suppressWarnings(mcp(
     list(y ~ 1, ~ 0 + x, ~ 1 + x), data, par_x = "x", sample = "prior",
-    chains = 1, iter = 4000, warmup = 100, seed = 1, quiet = TRUE
+    chains = 1, iter = 4000, warmup = 100, seed = 42, quiet = TRUE
   ))
   draws = as_draws_df(fit, prior = TRUE)
   for (name in c("x_2", "Intercept_3")) {

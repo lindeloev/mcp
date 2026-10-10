@@ -221,6 +221,23 @@ human_prior_call = function(x) {
 }
 
 
+# Quantile of a prior in mcp's parameterization (scale, not precision) with numeric
+# arguments `a` and truncation `bounds`. Returns NULL for unsupported distributions.
+prior_quantile = function(dist, a, bounds, prob) {
+  q_p = switch(dist,
+    dnorm = list(function(p) stats::qnorm(p, a[1], a[2]), function(x) stats::pnorm(x, a[1], a[2])),
+    dt = list(function(p) a[1] + a[2] * stats::qt(p, a[3]), function(x) stats::pt((x - a[1]) / a[2], a[3])),
+    dbeta = list(function(p) stats::qbeta(p, a[1], a[2]), function(x) stats::pbeta(x, a[1], a[2])),
+    dgamma = list(function(p) stats::qgamma(p, a[1], a[2]), function(x) stats::pgamma(x, a[1], a[2])),
+    dunif = list(function(p) stats::qunif(p, a[1], a[2]), function(x) stats::punif(x, a[1], a[2]))
+  )
+  if (is.null(q_p))
+    return(NULL)
+  prob_bounds = q_p[[2]](bounds)
+  q_p[[1]](prob_bounds[1] + prob * diff(prob_bounds))
+}
+
+
 # Summarize the support implied by a prior distribution or truncation.
 prior_bounds = function(x, parameter = NULL, all_names = character(), context = list()) {
   parts = split_prior_truncation(x)

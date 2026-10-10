@@ -99,6 +99,10 @@ run_jags = function(jags_code,
     seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
 
+  # Start other nodes at the prior medians, e.g., away from the zero bound of SDs.
+  medians = get_jags_median_inits(jags_code)
+  inits = lapply(inits, function(ch) c(ch, medians[setdiff(names(medians), names(ch))]))
+
   if (n_workers == 1) {
     draws = do_sampling(
       inits = inits,
@@ -153,6 +157,43 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
     ch[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
     c(ch, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = rng_seed[i]))
   })
+}
+
+
+#' Initial values at the prior medians
+#'
+#' Covers scalar stochastic nodes in JAGS code whose prior arguments and
+#' truncation bounds are numbers. JAGS initializes the remaining nodes.
+#'
+#' @param jags_code A string. JAGS model.
+#' @return A named list of initial values.
+#' @noRd
+get_jags_median_inits = function(jags_code) {
+  nodes = stringr::str_match_all(jags_code, "\\n\\s*([A-Za-z0-9_.]+) ~ ([^\\n#]+)")[[1]]
+  as_number = function(x) tryCatch(as.numeric(eval(str2lang(x), baseenv())), error = function(e) NA_real_)
+
+  inits = list()
+  for (i in seq_len(nrow(nodes))) {
+    parts = split_prior_truncation(nodes[i, 3])
+    call = parse_prior_call(parts$distribution)
+    if (is.null(call))
+      next
+
+    # Numeric arguments with JAGS precision converted back to scale
+    a = vapply(call$args, as_number, numeric(1), USE.NAMES = FALSE)
+    exponent = jags_scale_exponent(call$name)
+    if (!is.null(exponent))
+      a[2] = a[2]^(-1 / exponent)
+
+    bounds = c(-Inf, Inf)
+    if (!is.null(parts$truncation)) {
+      trunc_args = parse_prior_call(parts$truncation)$args
+      bounds[nzchar(trunc_args)] = vapply(trunc_args[nzchar(trunc_args)], as_number, numeric(1), USE.NAMES = FALSE)
+    }
+    if (!anyNA(a) && !anyNA(bounds))
+      inits[[nodes[i, 2]]] = prior_quantile(call$name, a, bounds, 0.5)
+  }
+  inits
 }
 
 

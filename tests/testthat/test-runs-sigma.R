@@ -8,7 +8,7 @@ bad_sigma = list(
 test_bad(bad_sigma)
 
 
-test_that("fixed residual SDs must meet the family floor", {
+test_that("fixed residual SDs must be positive", {
   data = data.frame(x = 1:4, y = 0)
 
   expect_error(
@@ -16,15 +16,7 @@ test_that("fixed residual SDs must meet the family floor", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
     ),
-    "Fixed residual standard deviation parameter(s) must be at least 0.001: sigma_1.",
-    fixed = TRUE
-  )
-  expect_error(
-    mcp(
-      list(y ~ 1), data,
-      par_x = "x", prior = list(sigma_1 = 0.0001), sample = FALSE
-    ),
-    "Fixed residual standard deviation parameter(s) must be at least 0.001: sigma_1.",
+    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
     fixed = TRUE
   )
   expect_error(
@@ -32,13 +24,13 @@ test_that("fixed residual SDs must meet the family floor", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = -1), sample = FALSE
     ),
-    "Fixed residual standard deviation parameter(s) must be at least 0.001: sigma_1.",
+    "Fixed residual standard deviation parameter(s) must be positive: sigma_1.",
     fixed = TRUE
   )
   expect_silent(
     mcp(
       list(y ~ 1), data,
-      par_x = "x", prior = list(sigma_1 = 0.001), sample = FALSE
+      par_x = "x", prior = list(sigma_1 = 0.0001), sample = FALSE
     )
   )
   expect_silent(
@@ -50,15 +42,15 @@ test_that("fixed residual SDs must meet the family floor", {
 })
 
 
-test_that("distribution priors for fixed residual SDs use the likelihood lower bound", {
+test_that("distribution priors for fixed residual SDs are truncated at zero", {
   data = data.frame(x = 1:4, y = 0)
   fit = mcp(
     list(y ~ 1), data,
     par_x = "x", prior = list(sigma_1 = "dnorm(0, 1)"), sample = FALSE
   )
 
-  expect_equal(fit$prior$sigma_1, "dnorm(0, 1) T(0.001, )")
-  expect_match(fit$jags_code, "sigma_1 ~ dnorm(0, 1/(1)^2) T(0.001,)", fixed = TRUE)
+  expect_equal(fit$prior$sigma_1, "dnorm(0, 1) T(0, )")
+  expect_match(fit$jags_code, "sigma_1 ~ dnorm(0, 1/(1)^2) T(0,)", fixed = TRUE)
 
   # Already bounded uniform prior is preserved without T()
   fit_unif_ok = mcp(
@@ -69,18 +61,18 @@ test_that("distribution priors for fixed residual SDs use the likelihood lower b
   expect_match(fit_unif_ok$jags_code, "sigma_1 ~ dunif(1, 2)", fixed = TRUE)
   expect_false(grepl("sigma_1 ~ dunif.*T\\(", fit_unif_ok$jags_code))
 
-  # Uniform prior reaching below floor has lower bound adjusted
-  fit_unif_floor = mcp(
+  # Uniform prior reaching below zero has lower bound adjusted
+  fit_unif_zero = mcp(
     list(y ~ 1), data,
-    par_x = "x", prior = list(sigma_1 = "dunif(0, 2)"), sample = FALSE
+    par_x = "x", prior = list(sigma_1 = "dunif(-1, 2)"), sample = FALSE
   )
-  expect_equal(fit_unif_floor$prior$sigma_1, "dunif(0.001, 2)")
-  expect_match(fit_unif_floor$jags_code, "sigma_1 ~ dunif(0.001, 2)", fixed = TRUE)
+  expect_equal(fit_unif_zero$prior$sigma_1, "dunif(0, 2)")
+  expect_match(fit_unif_zero$jags_code, "sigma_1 ~ dunif(0, 2)", fixed = TRUE)
 
-  # Uniform prior with upper bound not exceeding floor errors
+  # Uniform prior without positive values errors
   expect_error(
     mcp(list(y ~ 1), data, par_x = "x", prior = list(sigma_1 = "dunif(-2, 0)"), sample = FALSE),
-    "must allow values of at least 0.001"
+    "must allow positive values"
   )
 
   # Deterministic expressions are not treated as distributions

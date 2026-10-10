@@ -8,7 +8,7 @@ test_that("missing response draws follow covariates and group-level effects", {
     fit <- suppressWarnings(mcp(
       list(y ~ 1 + x + (1 | id)), data, par_x = "x",
       chains = 1, iter = 40, warmup = 20, quiet = TRUE,
-      seed = 8, diagnostics = FALSE
+      seed = 42, diagnostics = FALSE
     )),
     "NA values detected in 'y'"
   )
@@ -96,7 +96,7 @@ test_that("completed histories stay paired across draws, groups, series, and seg
     fit <- suppressWarnings(mcp(
       list(y ~ 1 + (1 | id) + ar(2, series = id) + ma(1), ~ 1 + ar(1, series = id) + ma(2)),
       data, par_x = "x", prior = list(cp_1 = 3.5),
-      chains = 2, iter = 30, warmup = 20, seed = 51, quiet = TRUE, diagnostics = FALSE
+      chains = 2, iter = 30, warmup = 20, seed = 42, quiet = TRUE, diagnostics = FALSE
     )),
     "NA values detected"
   )

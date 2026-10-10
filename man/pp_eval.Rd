@@ -152,7 +152,8 @@ The return columns are:
 \item Predictors from \code{newdata}, plus its response column when supplied.
 \item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{.data_row}, the row number in the evaluated \code{newdata}.
 \item Draw values: one column for each parameter in the model.
-\item The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
+\item The estimate (matching tidybayes conventions): \code{.epred} for expected responses, \code{.linpred} with \code{scale = "linear"},
+the \code{.dpar} for other dpars (e.g., \code{.mu} or \code{.sigma}), \code{.prediction}, \code{.residual}, or \code{.loglik}.
 }
 \item If \code{summary = FALSE} and \code{draws_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted
 values (depending on \code{type}). This format is used by \code{brms} and it's useful as \code{yrep} in

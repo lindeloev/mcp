@@ -45,14 +45,15 @@
 #' @param adapt Deprecated; use `warmup` instead.
 #' @param inits A list of initial values for the parameters. This can be useful
 #'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
-#'   Defaults to `NULL`, i.e., no inits.
+#'   Defaults to `NULL` where all chains start at equispaced change points and the prior medians.
+#'   User-provided `inits` take precedence.
 #' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
 #'   framework. R-side simulation and prediction methods continue to use the
 #'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
-#'   so `set.seed()` before `mcp()` also makes sampling reproducible.
+#'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
 #' @param diagnostics Named list of diagnostic warning thresholds. Available
 #'   elements are `rhat = 1.01`, `ess_bulk = 400`, `ess_tail = 400`,
 #'   `ar = 0.10`, and `ma = 0.10`. An empty list uses these defaults; a partial

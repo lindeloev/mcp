@@ -15,8 +15,8 @@ models_group_effects = list(
       sigma_1_id_sd = 0.35
     ),
     chains = 2,
-    warmup = 1000,
-    iter = 1500,
+    warmup = 500,
+    iter = 1000,
     min_ess = 50
   )
 )

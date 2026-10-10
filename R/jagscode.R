@@ -403,15 +403,7 @@ prior_to_jags = function(prior_str) {
   if (call$name == "dcauchy")
     stop("JAGS does not support `dcauchy()`; use `dt(location, scale, 1)` instead.")
 
-  exponent = switch(
-    call$name,
-    dnorm = 2,
-    dt = 2,
-    dlnorm = 2,
-    ddexp = 1,
-    dlogis = 1,
-    NULL
-  )
+  exponent = jags_scale_exponent(call$name)
   if (is.null(exponent))
     return(prior_str)
   if (length(call$args) < 2)
@@ -425,6 +417,12 @@ prior_to_jags = function(prior_str) {
   if (!is.null(parts$truncation))
     converted = paste0(converted, gsub("\\s+", "", parts$truncation))
   converted
+}
+
+
+# JAGS precision is scale^-exponent for these distributions.
+jags_scale_exponent = function(dist) {
+  switch(dist, dnorm = 2, dt = 2, dlnorm = 2, ddexp = 1, dlogis = 1, NULL)
 }
 
 

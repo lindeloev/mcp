@@ -44,28 +44,27 @@ mcp_example = function(name, sample = "post", plot = TRUE) {
     ar = "# Define model
 model = list(
   price ~ 1 + ar(2),
-  ~ 0 + time + ar(1)
+  ~ 0 + ar(1)
 )
 
 # Simulate data
 set.seed(42)
 data = data.frame(
-  time = 1:120,
+  time = 1:150,
   price = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
-empty = mcp(model, data, sample = FALSE)
+empty = mcp(model, data, par_x = 'time', sample = FALSE)
 data$price = empty$simulate(empty, data,
-  cp_1 = 74.5,
+  cp_1 = 90,
   Intercept_1 = 20,
-  time_2 = 0.5,
   sigma_1 = 5,
-  ar1_1 = 0.4,
-  ar2_1 = 0.15,
+  ar1_1 = 0.7,
+  ar2_1 = 0.2,
   ar1_2 = -0.3
 )
 
 # Run sampling
-fit = mcp(model, data, sample = sample, seed = 42)
+fit = mcp(model, data, par_x = 'time', sample = sample, seed = 42)
 
 # Illustrative plot
 if (plot) {
@@ -132,7 +131,7 @@ data$response = empty$simulate(empty, data,
   cp_2 = 70,
   Intercept_1 = 10,
   time_2 = 0.5,
-  Intercept_3 = 20,
+  Intercept_3 = 15,
   time_3 = -0.3,
   sigma_1 = 3.5
 )
@@ -315,7 +314,7 @@ data$y = empty$simulate(empty, data,
     x_3 = 1,
     sigma_1 = log(4),
     sigma_2 = log(25),
-    sigma_x_2 = log(2.5 / 25) / (75 - 24.5)
+    sigma_x_2 = log(3.5 / 25) / (75 - 24.5)
   )
 
 # Run sampling
@@ -364,8 +363,8 @@ if (plot) {
 
     void = "# demo_fit, with data removed near change points
 data = demo_fit$data
-data$response[data$time > 25 & data$time < 45] = NA
-data$response[data$time > 70 & data$time < 78] = NA
+data$response[data$time > 25 & data$time < 42] = NA
+data$response[data$time > 70 & data$time < 80] = NA
 
 # Run sampling
 fit = mcp(demo_fit$model, data, sample = sample, seed = 42)

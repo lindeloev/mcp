@@ -43,9 +43,6 @@ At least for now, fit$simulate() will not support novel categorical levels.
 # 2026-09-03: keep mcp priors for sigma
 The prior for intercept-sigma and for `sigma(1)` (still Intercept, but on log-scale) are quite different. But since these are brms-defaults, this behavior is kept.
 
-# 2026-09-06: JAGS sigma > 0.001
-This committed by a JAGS developer to support the upcoming JAGS 5.0. It is therefore respected. It will be kept until further clarified whether it can be lowered, e.g., to machine precision.
-
 # 2026-09-07: There will be no support for 0-parameter models
 Fitting a model like `y ~ 0` (only one segment) is not what mcp is for, and it would add a lot of code complexity to support it.
 
@@ -57,3 +54,9 @@ Users can specify non-ordered change points (`prior = list(cp_1 = 20, cp_2 = 10)
 
 # 2026-09-23: Do not warn on negative support for group-SD
 Users overriding default priors can specify priors that result in negative sigma. E.g. `prior = list(Intercept_1_id_sd = "dnorm(0, 1)")`. Checking this complicates too much compared to the relatively infrequent use case and will fail during sampling. For now, we trust users to be informed. Similarly, users specifying negative SD (`dnorm(0, -1)`) will not get an error because mcp squares SD in conversion to JAGS precision.
+
+# 2026-10-10: Residual SD floor of 1e-5 and median inits
+The `sigma` prior is truncated at zero (`T(0, )`), but the residual SD in the likelihood is floored at `max(1e-5, sigma)` in JAGS and mirrored R-side in `fit$simulate()`. Lower floors (1e-6 and below) break the JAGS glm module (CHOLMOD "not positive definite") when the residual SD approaches zero.
+
+# 2026-10-10: No init dispersion
+JAGS 5.0 inits bounded parameters near the prior mode (zero for half-t SDs). mcp initializes all scalar nodes with numeric priors at their prior medians, keeping equispaced change points. Dispersed inits (prior quantiles per chain) were tried, but started on impossible values in too many cases (extreme scales; identity-link; etc.).

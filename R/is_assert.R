@@ -161,27 +161,14 @@ assert_fixed_sigma = function(prior_table, predictors, family) {
   if (get_dpar_spec(family, "sigma")$modeled)
     return(invisible(TRUE))
 
-  # JAGS has a lower bound of 0.001. Do that in R too.
-  spec = get_dpar_spec(family, "sigma")
-  floor = if (!is.null(spec$lower) && !is.na(spec$lower)) spec$lower else 0
   fixed_sigma = prior_table$parameter %in% sigma_parameters & prior_table$kind == "constant"
   sigma_values = suppressWarnings(as.numeric(prior_table$value[fixed_sigma]))
-  if (floor > 0) {
-    if (any(sigma_values < floor)) {
-      bad_parameters = prior_table$parameter[fixed_sigma][sigma_values < floor]
-      stop(
-        "Fixed residual standard deviation parameter(s) must be at least ",
-        floor, ": ", and_collapse(bad_parameters), "."
-      )
-    }
-  } else {
-    if (any(sigma_values <= 0)) {
-      bad_parameters = prior_table$parameter[fixed_sigma][sigma_values <= 0]
-      stop(
-        "Fixed residual standard deviation parameter(s) must be positive: ",
-        and_collapse(bad_parameters), "."
-      )
-    }
+  if (any(sigma_values <= 0)) {
+    bad_parameters = prior_table$parameter[fixed_sigma][sigma_values <= 0]
+    stop(
+      "Fixed residual standard deviation parameter(s) must be positive: ",
+      and_collapse(bad_parameters), "."
+    )
   }
 
   invisible(TRUE)

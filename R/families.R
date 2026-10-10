@@ -238,7 +238,7 @@ mcpfamily_gaussian = function(family) {
 
   sigma_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0.001, )"), paste0("dt(0, ", response_scale, ", 3) T(0.001, )"), "Positive residual SD calibrated on the response scale", "constant",
+    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "constant",
     "sigma", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-SD intercept", "modeled",
     "sigma", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing log-SD contrast", "always",
     "sigma", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-SD coefficient scaled by the predictor SD", "always"
@@ -306,7 +306,7 @@ mcpfamily_gaussian = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 0.001)
+      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 1e-5)
     ),
     default_prior = default_prior,
     response = response,

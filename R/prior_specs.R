@@ -253,7 +253,7 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
 }
 
 
-truncate_sigma_prior = function(prior_value, lower_floor, name = NULL) {
+truncate_sigma_prior = function(prior_value, name = NULL) {
   # Leave non-string priors (e.g. numeric constants) unchanged
   if (!is.character(prior_value))
     return(prior_value)
@@ -270,15 +270,15 @@ truncate_sigma_prior = function(prior_value, lower_floor, name = NULL) {
   if (call$name == "dunif" && length(call$args) == 2) {
     lower_val = suppressWarnings(as.numeric(call$args[1]))
     upper_val = suppressWarnings(as.numeric(call$args[2]))
-    if (!is.na(upper_val) && upper_val <= lower_floor)
-      stop("Prior", if (!is.null(name)) paste0(" for '", name, "'"), " must allow values of at least ", format_prior_number(lower_floor), ".")
-    if (!is.na(lower_val) && lower_val < lower_floor)
-      return(paste0("dunif(", format_prior_number(lower_floor), ", ", call$args[2], ")"))
+    if (!is.na(upper_val) && upper_val <= 0)
+      stop("Prior", if (!is.null(name)) paste0(" for '", name, "'"), " must allow positive values.")
+    if (!is.na(lower_val) && lower_val < 0)
+      return(paste0("dunif(0, ", call$args[2], ")"))
     return(prior_value)
   }
 
-  # Truncate unbounded distributions at the family floor
-  paste0(prior_value, " T(", format_prior_number(lower_floor), ", )")
+  # Truncate unbounded distributions at zero
+  paste0(prior_value, " T(0, )")
 }
 
 
@@ -362,13 +362,12 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     }
   }
 
-  # Enforce positive floor on unmodeled residual standard deviation priors
+  # Enforce positive support on unmodeled residual standard deviation priors
   sigma_pars = predictors$code_name[predictors$dpar == "sigma"]
   if (length(sigma_pars) > 0 && !get_dpar_spec(family, "sigma")$modeled) {
-    floor = get_dpar_spec(family, "sigma")$lower
     for (name in intersect(names(prior), sigma_pars)) {
       original = prior[[name]]
-      prior[[name]] = truncate_sigma_prior(original, floor, name)
+      prior[[name]] = truncate_sigma_prior(original, name)
       if (!identical(prior[[name]], original))
         auto_truncated = c(auto_truncated, name)
     }

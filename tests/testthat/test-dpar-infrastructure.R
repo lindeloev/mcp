@@ -159,18 +159,18 @@ test_that("generated code separates link and distribution scales", {
     sample = FALSE
   )
 
-  expect_match(constant_fit$jags_code, "sigma_\\[i_\\] = max\\(1e-03, link_sigma_\\[i_\\]\\)")
+  expect_match(constant_fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, link_sigma_\\[i_\\]\\)")
   expect_false(grepl("max\\(1e-09, link_sigma_", constant_fit$jags_code))
   expect_equal(constant_fit$family$links["sigma"], c(sigma = "identity"))
   expect_false(constant_fit$family$dpar_specs$modeled[
     constant_fit$family$dpar_specs$dpar == "sigma"
   ])
-  expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0.001, )")
+  expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 
   expect_match(fit$.internal$formula_jags, "link_mu_\\[i_\\] =")
   expect_match(fit$.internal$formula_jags, "link_sigma_\\[i_\\] =")
   expect_match(fit$jags_code, "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
-  expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-03, exp\\(link_sigma_\\[i_\\]\\)\\)")
+  expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
   expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
   expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
   expect_equal(fit$prior$sigma_1, "dt(0, 2.5, 3)")

@@ -78,7 +78,8 @@ use diagnostics to assess convergence.}
 
 \item{inits}{A list of initial values for the parameters. This can be useful
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
-Defaults to \code{NULL}, i.e., no inits.}
+Defaults to \code{NULL} where all chains start at equispaced change points and the prior medians.
+User-provided \code{inits} take precedence.}
 
 \item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}

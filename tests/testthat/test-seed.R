@@ -21,6 +21,21 @@ test_that("get_jags_inits creates separate reproducible streams", {
 })
 
 
+test_that("get_jags_median_inits uses numeric priors and truncation", {
+  jags_code = "model {
+  a ~ dnorm(1, 1/(2)^2)
+  b ~ dt(0, 1/(3)^2, 3) T(0,)  # Comment
+  c ~ dbeta(1, 3)
+  d ~ dnorm(0, 1/b^2)
+  y[i_] ~ dnorm(a, 1)
+}"
+  expect_equal(
+    get_jags_median_inits(jags_code),
+    list(a = 1, b = 3 * stats::qt(0.75, 3), c = stats::qbeta(0.5, 1, 3))
+  )
+})
+
+
 test_that("get_jags_inits handles shared and chain-specific initial values", {
   inits = list(
     Intercept_1 = -1,
