@@ -125,7 +125,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Added `log_lik(fit)` which returns a draws-by-observation matrix by default. This is the usual `{brms}` return shape and is accepted directly by `{loo}`. `log_lik()` supports the same arguments as e.g. `fitted()`.
 
-  - Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Other new arguments include the usual from `fitted()` etc.: `loo(fit, ndraws = 1000)`.
+  - Several new arguments to `loo`. `loo(fit, by_row = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Use `loo(fit, ndraws = 1000)` to compute LOO on a subset of draws.
 
   - Methods like `fitted()` and `predict()` now select group-level effects using `group_effects` (previously `varying`). `group_effects = FALSE` or `NA` gives population-level predictions, `"cp"` and `"predictor"` select all group-level effects in that formula part, and parameter names accept `*` wildcards, e.g., `fitted(fit, group_effects = c("cp_*", "state*_1_id"))`. `ranef()` continues to return all group-level effects.
 
@@ -179,7 +179,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Removed `which_y` argument from `predict()`.
 
-  - Disallowed non-default `group_effects` and `arma = FALSE` in `loo()` and `waic()`. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
+  - `loo()` and `waic()` always evaluate the fitted model, including all group-level effects and AR/MA terms. Use `log_lik(fit, group_effects = FALSE)` or `log_lik(fit, arma = FALSE)` for conditional log-likelihoods. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 
