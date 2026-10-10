@@ -85,7 +85,7 @@ test_that("newdata columns colliding with reserved output namespace are rejected
 test_that("data columns with summary names are returned unchanged", {
   newdata = data.frame(time = c(10, 50), mean = 1:2, sd = 3:4, lower = 5:6, upper = 7:8, fitted = 9:10)
   result = fitted(demo_fit, newdata = newdata)
-  expect_equal(result[, colnames(newdata)], newdata)
+  expect_equal(result[, colnames(newdata)], tibble::as_tibble(newdata))
   expect_named(result, c(colnames(newdata), ".mean", ".sd", ".lower", ".upper"))
 })
 

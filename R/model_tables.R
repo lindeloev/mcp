@@ -260,7 +260,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.
 #' @param role Optional parameter role(s), such as `"fixed_effect"`,
 #'   `"dpar_effect"`, `"arma"`, `"group_sd"`, or `"group_deviation"`.
-#' @return A data frame with one row per parameter definition. `name` is the
+#' @return A tibble with one row per parameter definition. `name` is the
 #'   model parameter name; `dpar` identifies its distributional parameter or
 #'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
 #'   `group_col` and `population_name` describe group-level effects.

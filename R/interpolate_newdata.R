@@ -85,7 +85,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 }
 
 
-#' Returns a data.frame with all combos of predictors
+#' Returns a tibble with all combos of predictors
 #'
 #' \lifecycle{experimental}
 #'
@@ -116,7 +116,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' 
 #' Likelihood weights are needed only when evaluating `log_lik()` and
 #' therefore need not be supplied here.
-#' @return `data.frame` with
+#' @return A tibble with
 #'  * Cols for par_x
 #'  * unique levels combos of factorial vars
 #'  * fixed values for additional continuous predictors
@@ -155,7 +155,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
       for (col in intersect(names(at), names(newdata)))
         newdata[[col]] = at[[col]]
     }
-    return(as.data.frame(newdata))
+    return(tibble::as_tibble(newdata))
   }
 
   if (is.null(x_values))
@@ -215,5 +215,5 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
     newdata[, data_columns$response] = fit$data[, data_columns$response]
   }
 
-  as.data.frame(newdata)
+  tibble::as_tibble(newdata)
 }

@@ -269,7 +269,7 @@ get_loglik_settings = function(fit, ndraws) {
 #'       continuous alternative.
 #'   * `"Intercept_1 - Intercept_2 = 0"`: compare equal segment intercepts
 #'       with the continuous alternative.
-#' @return A data.frame with a row per hypothesis and the following columns:
+#' @return A tibble with a row per hypothesis and the following columns:
 #'
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis, or
@@ -321,7 +321,7 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
   checkmate::assert_flag(prior)
 
   # Loop through hypotheses and populate df_result
-  df_result = data.frame()
+  df_result = tibble::tibble()
   for (expression in hypotheses) {
     ####################
     # PREPARE FOR TEST #
@@ -452,14 +452,13 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
     }
 
     # Add to list
-    new_row = data.frame(
+    new_row = tibble::tibble(
       hypothesis = stringr::str_trim(expression),
       mean = estimate$effect,
       lower = estimate$.lower,
       upper = estimate$.upper,
       prob = prob,
-      BF = BF,
-      stringsAsFactors = FALSE
+      BF = BF
     )
     df_result = dplyr::bind_rows(df_result, new_row)
   }

@@ -54,6 +54,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `summary()`, `fixef()`, and `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order; `ranef()` orders group levels following the grouping factor's levels in the fitting data. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
+  - Tibbles are generally returned instead of data.frame() for readability. Tibbles are data frames, but `x[, "col"]` now returns a one-column tibble instead of a vector. Use `x$col` or `x[["col"]]` to get a vector. This change involves `summary()`, `fixef()`, `ranef()`, `fitted()`, `predict()`, `residuals()`, `hypothesis()`, and `interpolate_newdata()`. 
+
   - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 
 - **Functions, plotting, and workflow:**

@@ -37,7 +37,7 @@ NULL
 #   or group-level deviations.
 # - role: Optional parameter role to select within `scope`.
 # - verbose: Logical. Include the `segment` and `dpar` columns.
-# Returns: A data.frame with summaries for each model parameter. With
+# Returns: A tibble with summaries for each model parameter. With
 #   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
 #   `summary.mcpfit`).
 get_summary = function(fit, width, scope = c("population", "group"), role = NULL,
@@ -80,7 +80,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   # A model such as `y ~ 0` has no primary-response fixed effects. Return a
   # regular empty summary instead of asking posterior to summarise no draws.
   if (length(get_cols) == 0) {
-    estimates = data.frame(
+    estimates = tibble::tibble(
       variable = character(), mean = numeric(), sd = numeric(), lower = numeric(),
       upper = numeric(), rhat = numeric(), ess_bulk = numeric(), ess_tail = numeric()
     )
@@ -191,7 +191,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     ))
   )
 
-  data.frame(estimates, row.names = NULL)
+  tibble::as_tibble(estimates)
 }
 
 
@@ -204,7 +204,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @param width Float. The width of the central posterior interval (between 0
 #'   and 1).
 #' @param digits Non-negative integer. Number of significant digits used when
-#'   printing the summary. Defaults to 2. The invisibly returned data frame
+#'   printing the summary. Defaults to 2. The invisibly returned tibble
 #'   retains the unrounded values.
 #' @param prior Logical. Summarise prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
@@ -212,7 +212,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @inheritParams mcp
 #' @param ... Must be empty. Reserved for future use.
 #'
-#' @return A data frame with parameter estimates and MCMC diagnostics. Rows
+#' @return A tibble with parameter estimates and MCMC diagnostics. Rows
 #'   are ordered by change point first, then `mu`, then the other
 #'   distributional parameters, then `ar`/`ma` components - each ascending by
 #'   segment. OBS: The change point distributions are often not unimodal and
@@ -257,7 +257,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' summary(demo_fit)
 #' summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #'
-#' # Get the results as a data frame
+#' # Get the results as a tibble
 #' results = summary(demo_fit)
 #'
 #' # Group-level deviations (random effects)

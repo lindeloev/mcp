@@ -79,7 +79,7 @@
 #' @param .garma_replicate Internal. For GARMA predictions, generate each
 #'   response history recursively instead of conditioning on observed responses.
 #' @return
-#'   * If `summary = TRUE`: A data frame with the columns of `newdata` (or
+#'   * If `summary = TRUE`: A tibble with the columns of `newdata` (or
 #'     `fit$data` if `newdata` is `NULL`), followed by summaries for each row:
 #'
 #'      - `.mean`: The mean of the draws.
@@ -264,7 +264,7 @@ pp_eval = function(
   if (length(group_info$cols) > 0) {
     # Match group-level draws to each row of data.
     draws = dplyr::left_join(
-      add_rhs_predictors(newdata, fit),
+      tibble::as_tibble(add_rhs_predictors(newdata, fit)),
       mcp_draws(fit, population = TRUE, group = group_effects, prior = prior, ndraws = ndraws, newdata = newdata),
       by = unique(group_info$cols),
       relationship = "many-to-many"
@@ -393,7 +393,7 @@ pp_eval = function(
 
       df_return = dplyr::left_join(df_return, quantiles, by = ".data_row", relationship = "one-to-one")
     }
-    return(data.frame(dplyr::select(df_return, -".data_row")))
+    return(dplyr::select(df_return, -".data_row"))
   } else if (draws_format == "tidy") {
     if (.return_dpars) {
       if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
