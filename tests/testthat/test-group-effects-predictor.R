@@ -65,7 +65,6 @@ test_that("predictor group intercepts apply only where included, replace, and tu
     dplyr::filter(.data$part == "predictor")
   expect_equal(effects$name, c("Intercept_1_id", "Intercept_2_id"))
   expect_equal(effects$next_segment, c(2L, NA_integer_))
-  expect_equal(effects$correlated, c(TRUE, FALSE))
 })
 
 
@@ -144,7 +143,6 @@ test_that("double-bar terms expand into independent group coefficients", {
   )
   expect_equal(effects$par_type, c("Intercept", "dummy", "dummy"))
   expect_equal(effects$next_segment, rep(2L, 3))
-  expect_false(any(effects$correlated))
   expect_true(all(effects$sd_name %in% names(fit$prior)))
   expect_match(fit$jags_code, "stateB_1_id\\[id_\\] ~")
   expect_match(fit$jags_code, "stateC_1_id\\[id_\\] ~")

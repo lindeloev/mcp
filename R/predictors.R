@@ -968,7 +968,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         "population_name", "name", "part", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "display_name", "order",
         "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
-        "correlated", "design_spec", "definition_name", "definition_segment"
+        "design_spec", "definition_name", "definition_segment"
       )
 
     # Segments that restart a group block: a group intercept or `(0 | group)`
