@@ -37,18 +37,9 @@ style_gg = function(gg, model, title, left, bottom, right, top) {
     )
 }
 
-# From canonical formula to more user-typed (stripping "y ~ 1" in many y ~ 1 ~ rhs)
+# Format segment formulas as in summary(), e.g., "y ~ 1" and "~ cp(1) + x"
 format_model_user = function(model) {
-  sapply(seq_along(model), function(i) {
-    if (i == 1) return(deparse1(model[[1]]))
-    cp = model[[i]][[2]][[3]]
-    rhs = model[[i]][[3]]
-    if (identical(cp, 1) || identical(cp, 1L)) {
-      deparse1(call("~", rhs))
-    } else {
-      deparse1(call("~", cp, rhs))
-    }
-  })
+  sub("^~", "~ ", vapply(model, deparse1, character(1)))
 }
 
 
