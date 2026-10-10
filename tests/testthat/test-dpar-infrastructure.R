@@ -456,8 +456,8 @@ test_that("distributional parameters use the same evaluation identity", {
   keys = c(".chain", ".iteration", ".draw", ".data_row")
 
   expect_equal(mu[, keys], sigma[, keys])
-  expect_silent(validate_eval_draws(mu, ".epred"))
-  expect_silent(validate_eval_draws(sigma, ".epred"))
+  expect_silent(validate_eval_draws(mu, ".mu"))
+  expect_silent(validate_eval_draws(sigma, ".sigma"))
 
   sigma_summary = fitted(
     fit,
@@ -476,8 +476,22 @@ test_that("distributional parameters use the same evaluation identity", {
     type = "predict",
     .return_fitted = TRUE
   )
-  expect_equal(predicted$.epred, mu$.epred)
+  expect_equal(predicted$.epred, mu$.mu)
   expect_null(attr(predicted$.prediction, ".epred"))
+})
+
+
+test_that("per-draw value columns are named after the dpar and scale", {
+  value_col = function(...) utils::tail(names(fitted(demo_fit, summary = FALSE, ndraws = 2, ...)), 1)
+  expect_equal(value_col(), ".epred")
+  expect_equal(value_col(dpar = "mu"), ".mu")
+  expect_equal(value_col(dpar = "sigma"), ".sigma")
+  expect_equal(value_col(scale = "linear"), ".linpred")
+  expect_equal(value_col(dpar = "sigma", scale = "linear"), ".linpred")
+  expect_error(
+    fitted(demo_fit, newdata = data.frame(time = 1:2, .sigma = 1:2), dpar = "sigma"),
+    "reserved output namespace"
+  )
 })
 
 

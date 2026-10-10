@@ -445,7 +445,7 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
     observed = fit$data[[columns$response]][loglik$.data_row]
     testthat::expect_equal(
       loglik$.loglik,
-      weights * stats::dnorm(observed, mu$.epred, sigma$.epred, log = TRUE)
+      weights * stats::dnorm(observed, mu$.mu, sigma$.sigma, log = TRUE)
     )
   }
 

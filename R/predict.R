@@ -100,7 +100,8 @@
 #'      - Predictors from `newdata`, plus its response column when supplied.
 #'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `.data_row`, the row number in the evaluated `newdata`.
 #'      - Draw values: one column for each parameter in the model.
-#'      - The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).
+#'      - The estimate (matching tidybayes conventions): `.epred` for expected responses, `.linpred` with `scale = "linear"`,
+#'        the `.dpar` for other dpars (e.g., `.mu` or `.sigma`), `.prediction`, `.residual`, or `.loglik`.
 #'
 #'   * If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
 #'       values (depending on `type`). This format is used by `brms` and it's useful as `yrep` in
@@ -138,6 +139,8 @@ pp_eval = function(
   if (is.null(fit$family$r$cdf))
     fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
   dpar = assert_dpar(dpar, fit = fit, type = type)
+  assert_typescale(type, scale)
+  value_col = get_value_col(type, dpar, scale)
   if (is.null(group_effects))
     stop("`group_effects` cannot be NULL. Use `TRUE` for all group-level effects or `FALSE`/`NA` for none.", call. = FALSE)
   if (length(group_effects) == 1 && is.na(group_effects))
@@ -219,7 +222,7 @@ pp_eval = function(
   )
 
   # Validate against reserved output namespace
-  assert_reserved_output_namespace(colnames(newdata), context = "newdata")
+  assert_reserved_output_namespace(colnames(newdata), context = "newdata", extra = value_col)
 
   # Filter newdata columns and attach unique evaluation row index
   kept_cols = colnames(newdata)[colnames(newdata) %notin% exclude_group_cols]
@@ -235,7 +238,6 @@ pp_eval = function(
   # ASSERTS AND RECODING #
   ########################
   checkmate::assert_flag(summary)
-  assert_typescale(type, scale)
   if (!isFALSE(width)) {
     checkmate::assert_number(width)
     if (width <= 0 || width >= 1)
@@ -259,12 +261,6 @@ pp_eval = function(
   # GET FITS/PREDICTIONS #
   ########################
   simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
-  value_col = switch(type,
-    fitted = ".epred",
-    predict = ".prediction",
-    residuals = ".residual",
-    loglik = ".loglik"
-  )
   if (length(group_info$cols) > 0) {
     # Match group-level draws to each row of data.
     draws = dplyr::left_join(
@@ -410,6 +406,22 @@ pp_eval = function(
   }
 }
 
+
+
+# Name of the per-draw value column, following tidybayes: `.epred`, `.linpred`,
+# `.prediction`, etc. Other dpars are named after the dpar, e.g., `.sigma`.
+get_value_col = function(type, dpar = "epred", scale = "response") {
+  if (type == "fitted" && scale == "linear")
+    return(".linpred")
+  if (type == "fitted" && dpar != "epred")
+    return(paste0(".", dpar))
+  switch(type,
+    fitted = ".epred",
+    predict = ".prediction",
+    residuals = ".residual",
+    loglik = ".loglik"
+  )
+}
 
 
 #' Fitted and predicted values of `mcp` models fits

@@ -12,7 +12,7 @@
 
   - Adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`, `ndraws(fit)`, rstantools linpred/epred, etc. with full S3 generic registration for `{posterior}`, `{rstantools}`, and `{tidybayes}` (`spread_draws()`, `gather_draws()`).
 
-  - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility.
+  - Per-draw methods (`summary = FALSE` in `fitted()`, `predict()`, `residuals()`, `log_lik()`) now return dot-prefixed columns (`.epred`, `.prediction`, `.residual`, `.loglik`) for `{tidybayes}` / `{ggdist}` compatibility. `fitted()` returns `.linpred` with `scale = "linear"` and `[.dpar]` for other dpars (e.g., `.sigma`, `.ar1`, or `mu`).
 
   - `nsamples` soft-deprecated in favor of `ndraws`; `which_y` deprecated in favor of `dpar`.
 

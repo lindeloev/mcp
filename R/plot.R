@@ -238,11 +238,12 @@ get_plot = function(x,
       # Only a problem for AR/MA models, where newdata contains the response.
       dplyr::select(-dplyr::any_of(as.character(yvar)))
 
-    # ".epred" is only present for `type = "fitted"` (or "predict" with
+    # Fitted values are only present for `type = "fitted"` (or "predict" with
     # `.return_fitted = TRUE`). Predict-only draws (no q_fit requested) have
     # no fitted values to rename.
-    if (".epred" %in% names(draws))
-      draws = dplyr::rename(draws, "{data_columns$response}" := ".epred")
+    fitted_col = get_value_col("fitted", dpar, scale)
+    if (fitted_col %in% names(draws))
+      draws = dplyr::rename(draws, "{data_columns$response}" := dplyr::all_of(fitted_col))
 
     add_plot_groups(draws, curve_by = curve_by, color_by = color_by)
   }
