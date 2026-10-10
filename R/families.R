@@ -645,7 +645,7 @@ mcpfamily_negbinomial = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("shape", family$link_shape, implicit = TRUE, require_initial_predictor = TRUE)
+      new_dpar_spec("shape", family$link_shape, implicit = TRUE, require_initial_predictor = TRUE, lower = 0)
     ),
     default_prior = default_prior,
     response = response,
