@@ -173,7 +173,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `fit = mcp_example("name")` now returns the fit directly instead of a list with a `$fit` entry. It now defaults to sampling the model (`sample = "post"`) and the `sample` argument is now directly passed to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
-  - The term "ct" (for "central tendency") has been replaced with "mu", e.g., in `plot(fit, which_y = "mu")`. These were defaults, so hopefully no-one will notice the renaming.
+  - The term "ct" (for "central tendency") has been replaced with `dpar = "epred"` (the default), e.g., in `plot_dpar(fit, dpar = "epred")` and `fitted(fit, dpar = "epred")`. Deprecated `which_y = "ct"` is translated to `dpar = "epred"` with a warning.
 
   - `fit$data` now only contains the data columns that are used in the model.
 

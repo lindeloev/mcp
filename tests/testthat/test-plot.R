@@ -87,7 +87,7 @@ test_that("geom_cp_density draws a vertical spike for fixed change points", {
 })
 
 
-test_that("plot() supports exact q_predict, deprecates samples, and checks dots", {
+test_that("plot() supports exact q_predict, deprecates nsamples, and checks dots", {
   # Exact q_predict quantiles
   p = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
   expect_s3_class(p, "ggplot")
@@ -98,15 +98,12 @@ test_that("plot() supports exact q_predict, deprecates samples, and checks dots"
   expect_equal(p1$layers[[2]]$data, p2$layers[[2]]$data)
   expect_equal(p1$layers[[3]]$data, p2$layers[[3]]$data)
 
-  # Deprecation warning for samples and nsamples
+  # Deprecated nsamples (v0.3.4) is ndraws, not lines
   expect_warning(
-    plot(demo_fit, samples = 10),
+    p_nsamples <- plot(demo_fit, nsamples = 10),
     "deprecated"
   )
-  expect_warning(
-    plot(demo_fit, nsamples = 10),
-    "deprecated"
-  )
+  expect_equal(length(unique(p_nsamples$layers[[2]]$data$.draw)), 25)
 
   # scale = "linear" in plot.mcpfit
   p_lin = plot(demo_fit, scale = "linear")
@@ -115,7 +112,7 @@ test_that("plot() supports exact q_predict, deprecates samples, and checks dots"
   # Unknown dots trigger an error
   expect_error(
     plot(demo_fit, weird_arg = 123),
-    "must be empty"
+    "Unrecognized argument"
   )
   expect_error(
     plot_dpar(demo_fit, weird_arg = 123),

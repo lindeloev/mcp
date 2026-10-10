@@ -86,11 +86,7 @@ get_plot = function(x,
   ########################
   # ASSERTS AND RECODING #
   ########################
-  checkmate::assert_class(fit, "mcpfit")
-  if (!is.mcpfamily(fit$family))
-    fit$family = mcpfamily(fit$family)
-  if (is.null(fit$family$r$cdf))
-    fit$family$r$cdf = mcpfamily(fit$family)$r$cdf
+  check_mcpfit_version(fit)
   checkmate::assert_flag(rate)
 
   trials_col = mcp_columns(fit)$trials
@@ -425,7 +421,7 @@ get_plot = function(x,
 #' @aliases plot plot.mcpfit
 #' @export
 #' @inheritParams get_plot
-#' @param samples,nsamples Deprecated. Use `lines` instead.
+#' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Must be empty. Reserved for future use.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -467,52 +463,17 @@ plot.mcpfit = function(x,
                     ndraws = 500,
                     scale = "response",
                     at = NULL,
-                    samples = lifecycle::deprecated(),
                     nsamples = lifecycle::deprecated(),
                     ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
   if (!missing(color_by) && is.null(color_by)) grouping = "none"
 
-  if (lifecycle::is_present(samples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      "plot.mcpfit(samples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
-    )
-    if (missing(lines)) lines = samples
-  }
-
-  if (lifecycle::is_present(nsamples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      "plot.mcpfit(nsamples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
-    )
-    if (missing(lines)) lines = nsamples
-  }
-
-  args = list(...)
-  if ("which_y" %in% names(args)) {
-    warn_which_y(args, "plot")
-    dpar_val = args$which_y
-    args$which_y = NULL
-    return(rlang::exec(
-      plot_dpar,
-      x = x,
-      dpar = dpar_val,
-      facet_by = facet_by,
-      color_by = color_by,
-      lines = lines,
-      cp_dens = cp_dens,
-      prior = prior,
-      arma = arma,
-      ndraws = ndraws,
-      scale = scale,
-      at = at,
-      !!!args
-    ))
-  }
-  rlang::check_dots_empty()
+  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
+  dots = list(...)
+  which_y = warn_which_y(dots, "plot")
+  dots$which_y = NULL
+  if (length(dots) > 0)
+    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
 
   get_plot(
     x,
@@ -526,7 +487,7 @@ plot.mcpfit = function(x,
     cp_dens = cp_dens,
     rate = rate,
     prior = prior,
-    dpar = NULL,
+    dpar = if (is.null(which_y)) "epred" else which_y,
     arma = arma,
     ndraws = ndraws,
     scale = scale,
@@ -550,29 +511,9 @@ plot_dpar = function(x,
                      ndraws = 500,
                      scale = "response",
                      at = NULL,
-                     samples = lifecycle::deprecated(),
-                     nsamples = lifecycle::deprecated(),
                      ...) {
   grouping = if (missing(color_by) && missing(facet_by)) "auto" else "mapped"
   if (!missing(color_by) && is.null(color_by)) grouping = "none"
-
-  if (lifecycle::is_present(samples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      "plot_dpar(samples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
-    )
-    if (missing(lines)) lines = samples
-  }
-
-  if (lifecycle::is_present(nsamples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      "plot_dpar(nsamples)",
-      details = "Use `lines` instead to specify the number of lines. Quantiles are computed from the posterior predictive mixture."
-    )
-    if (missing(lines)) lines = nsamples
-  }
   rlang::check_dots_empty()
 
   get_plot(

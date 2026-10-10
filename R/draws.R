@@ -155,55 +155,6 @@ nchains = posterior::nchains
 niterations = posterior::niterations
 
 
-# Resolve the deprecated `nsamples` argument
-resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
-                         samples = lifecycle::deprecated(),
-                         env = rlang::caller_env(),
-                         user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(samples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      paste0(what, "(samples)"),
-      env = env,
-      user_env = user_env
-    )
-  }
-  if (lifecycle::is_present(nsamples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      paste0(what, "(nsamples)"),
-      paste0(what, "(ndraws)"),
-      env = env,
-      user_env = user_env
-    )
-    if (!ndraws_missing)
-      stop("Use only one of `ndraws` and deprecated `nsamples`.")
-    ndraws = nsamples
-  }
-  ndraws
-}
-
-
-# Resolve the deprecated `samples_format` argument
-resolve_draws_format = function(draws_format, samples_format, draws_format_missing, what,
-                                env = rlang::caller_env(),
-                                user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(samples_format)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      paste0(what, "(samples_format)"),
-      paste0(what, "(draws_format)"),
-      env = env,
-      user_env = user_env
-    )
-    if (!draws_format_missing)
-      stop("Use only one of `draws_format` and deprecated `samples_format`.")
-    draws_format = samples_format
-  }
-  rlang::arg_match0(draws_format, c("tidy", "matrix"))
-}
-
-
 #' Get tidy draws with or without group-level effects
 #'
 #' Extract posterior or prior draws formatted as tidy data frames

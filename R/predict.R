@@ -582,9 +582,9 @@ fitted.mcpfit = function(
   width = resolve_width(width, probs, missing(width), "fitted.mcpfit")
   draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "fitted.mcpfit")
   dots = list(...)
-  warn_which_y(dots, "fitted")
-  if ("which_y" %in% names(dots) && missing(dpar))
-    dpar = dots$which_y
+  which_y = warn_which_y(dots, "fitted")
+  if (!is.null(which_y) && missing(dpar))
+    dpar = which_y
   dots$which_y = NULL
   if (length(dots) > 0)
     stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)

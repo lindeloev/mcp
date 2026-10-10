@@ -293,6 +293,21 @@ test_that("helpful deprecation detections work for old code idioms", {
     "`which_y` was deprecated in mcp v0.4.0. Use `plot_dpar()` instead.",
     fixed = TRUE
   )
+  expect_warning(
+    p <- plot(demo_fit, which_y = "sigma", q_fit = TRUE),
+    "which_y"
+  )
+  expect_equal(p$labels$y, "sigma")
+  expect_true("quantile" %in% names(p$layers[[2]]$data))
+  expect_warning(
+    p <- plot(demo_fit, which_y = "ct"),
+    "which_y"
+  )
+  expect_equal(nrow(p$layers[[1]]$data), nrow(demo_fit$data))
+  expect_warning(
+    expect_equal(fitted(demo_fit, which_y = "ct"), fitted(demo_fit)),
+    "which_y"
+  )
 
   # fit$simulate() signature change
   expect_error(

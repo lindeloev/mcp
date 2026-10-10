@@ -79,7 +79,7 @@ translate_cp_lhs = function(form, i, response) {
 }
 
 
-# Warn on deprecated which_y argument
+# Warn on deprecated which_y argument and return it as a `dpar` (NULL if absent)
 # - args: List of dots arguments passed to a function.
 # - func_name: Name of calling function for warning message context.
 warn_which_y = function(args, func_name) {
@@ -91,6 +91,49 @@ warn_which_y = function(args, func_name) {
     }
     warning(msg, call. = FALSE)
   }
+
+  # "ct" (central tendency) was the v0.3.4 default
+  if (identical(args$which_y, "ct")) "epred" else args$which_y
+}
+
+
+# Resolve the deprecated `nsamples` argument
+resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
+                         env = rlang::caller_env(),
+                         user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(nsamples)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      paste0(what, "(nsamples)"),
+      paste0(what, "(ndraws)"),
+      env = env,
+      user_env = user_env
+    )
+    if (!ndraws_missing)
+      stop("Use only one of `ndraws` and deprecated `nsamples`.")
+    ndraws = nsamples
+  }
+  ndraws
+}
+
+
+# Resolve the deprecated `samples_format` argument
+resolve_draws_format = function(draws_format, samples_format, draws_format_missing, what,
+                                env = rlang::caller_env(),
+                                user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(samples_format)) {
+    lifecycle::deprecate_soft(
+      "0.4.0",
+      paste0(what, "(samples_format)"),
+      paste0(what, "(draws_format)"),
+      env = env,
+      user_env = user_env
+    )
+    if (!draws_format_missing)
+      stop("Use only one of `draws_format` and deprecated `samples_format`.")
+    draws_format = samples_format
+  }
+  rlang::arg_match0(draws_format, c("tidy", "matrix"))
 }
 
 
