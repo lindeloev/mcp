@@ -107,6 +107,7 @@ test_that("built-in families implement the shared internal contract", {
 
   for (family in families) {
     expect_true(is.mcpfamily(family))
+    expect_identical(assert_mcpfamily(family), family)
     expect_true(is.function(family$r$epred))
     expect_true(is.function(family$r$log_lik))
     expect_true(is.function(family$r$rng))

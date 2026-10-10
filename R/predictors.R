@@ -725,7 +725,7 @@ is_empty_initial_predictor = function(form) {
 get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL) {
   checkmate::assert_formula(form_rhs)
   checkmate::assert_int(segment, lower = 1)
-  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  checkmate::assert_class(family, "mcpfamily")
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x)
 

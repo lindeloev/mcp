@@ -247,7 +247,7 @@ unpack_additive = function(expr) {
 # This allows treating mu like any other wrapper, simplifying downstream parsing.
 canonicalize_rhs = function(form_rhs, family) {
   checkmate::assert_formula(form_rhs)
-  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  checkmate::assert_class(family, "mcpfamily")
   env = environment(form_rhs)
 
   # Unpack top-level additive leaves and their call names

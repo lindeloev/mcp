@@ -87,6 +87,7 @@ mcpfamily = function(x) {
       (is.null(x$link_shape) || identical(unname(x$link_shape), unname(x$links[["shape"]])))
     )
     if (link_matches) {
+      assert_mcpfamily(x)
       return(x)
     }
   }
@@ -157,6 +158,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   class(family) = c("mcpfamily", "family")
+  assert_mcpfamily(family)
   family
 }
 
@@ -681,7 +683,7 @@ add_dpar_specs = function(family) {
 
 # Resolve each dpar link from whether the model includes an explicit formula for it.
 resolve_dpar_specs = function(family, predictors, model = NULL) {
-  checkmate::assert_true(is.mcpfamily(family), .var.name = "family")
+  checkmate::assert_class(family, "mcpfamily")
   checkmate::assert_data_frame(predictors)
   assert_data_cols(predictors, c("dpar", "explicit"))
   family = add_dpar_specs(family)
@@ -857,18 +859,17 @@ print.mcpfamily = function(x, ...) {
 }
 
 
-# Check that an object implements the complete mcp family contract.
 #' @aliases is.mcpfamily
 #' @describeIn mcpfamily Checks whether x is an `mcpfamily`.
 #' @export
 is.mcpfamily = function(x) {
-  if (!inherits(x, "mcpfamily"))
-    return(FALSE)
+  inherits(x, "mcpfamily")
+}
 
-  required = c("default_prior", "dpar_specs", "dpars", "links", "response", "r", "backends")
-  if (any(required %notin% names(x)))
-    return(FALSE)
 
+# Check that an mcpfamily implements the complete mcp family contract. Returns `x` invisibly.
+assert_mcpfamily = function(x) {
+  checkmate::assert_class(x, "mcpfamily")
   checkmate::assert_true(is.family(x), .var.name = "x")
   checkmate::assert_data_frame(x$default_prior)
   assert_data_cols(x$default_prior, c("dpar", "par_type", "prior"))
@@ -910,7 +911,7 @@ is.mcpfamily = function(x) {
   checkmate::assert_function(x$linkfun)
   checkmate::assert_function(x$linkinv)
 
-  TRUE
+  invisible(x)
 }
 
 # This renaming enables fit$simulate() with JAGS-like code
