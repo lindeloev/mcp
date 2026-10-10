@@ -97,7 +97,7 @@ test_that("generated AR residuals use the same partial-lag recursion", {
   expected_residuals[4] = innovations[4] + ar_list$ar1_[4] * expected_residuals[3] + ar_list$ar2_[4] * expected_residuals[2]
 
   set.seed(42)
-  result = suppressMessages(mcp:::simulate_ar(rep(1, 4), ar_list))
+  result = mcp:::simulate_ar(rep(1, 4), ar_list)
 
   expect_equal(result$resid_sigma, innovations)
   expect_equal(result$resid_ar, expected_residuals - innovations)

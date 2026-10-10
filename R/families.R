@@ -293,8 +293,7 @@ mcpfamily_gaussian = function(family) {
   garma = if (family$link == "identity") {
     list(
       observed_r = function(y, data, threshold) y,
-      observed_jags = function(context) context$y,
-      generate_message = "Generating residuals for AR(N) model since the response column/argument was not provided."
+      observed_jags = function(context) context$y
     )
   }
 
@@ -952,7 +951,6 @@ is.mcpfamily = function(x) {
   if (!is.null(x$garma)) {
     checkmate::assert_function(x$garma$observed_r)
     checkmate::assert_function(x$garma$observed_jags)
-    checkmate::assert_string(x$garma$generate_message, null.ok = TRUE)
     checkmate::assert_function(x$garma$validate_threshold, null.ok = TRUE)
   }
   checkmate::assert_string(x$linkfun_str)

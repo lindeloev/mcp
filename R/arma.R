@@ -520,8 +520,6 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
     stop_github("Rows belonging to each series_id must be contiguous.")
 
   generate_series = is.null(y)
-  if (generate_series && !is.null(family$garma$generate_message))
-    message(family$garma$generate_message)
 
   ar_order = length(ar_list)
   ma_order = length(ma_list)
@@ -615,10 +613,8 @@ simulate_ar = function(sigma_, ar_list, resid_abs = NULL, series_id = NULL) {
   # resid_ is split into the innovation and AR() part. So resid_ = resid_ar + resid_sigma
   resid_sigma = stats::rnorm(length(sigma_), 0, sigma_)
   generate_residuals = length(resid_abs) == 0
-  if (generate_residuals) {
-    message("Generating residuals for AR(N) model since the response column/argument was not provided.")
+  if (generate_residuals)
     resid_abs = numeric(length(sigma_))
-  }
 
   resid_ar = numeric(length(resid_abs))
   for (rows in split(seq_along(resid_abs), series_id)) {
