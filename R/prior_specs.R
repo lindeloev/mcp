@@ -51,7 +51,7 @@ default_cp_specs = function(cps, context) {
     specs[[sd_name]] = tibble::tibble(
       parameter = sd_name,
       code = "dnorm(0, 2 * (max(.x) - min(.x)) / n_cp()) T(0, )",
-      description = "Group-level change-point variation",
+      description = "Group-level change-point SD before truncation",
       source = "default"
     )
 

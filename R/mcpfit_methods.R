@@ -369,7 +369,7 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 #' @aliases ranef ranef.mcpfit
 #' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
 #'   Change-point deviations are relative to their population change point;
-#'   `cp_i_sd` is the scale of their latent normal distribution.
+#'   `cp_i_sd` is the SD of their normal distribution before truncation.
 #' @export ranef
 #' @exportS3Method nlme::ranef
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {

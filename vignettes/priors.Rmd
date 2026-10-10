@@ -310,7 +310,7 @@ General quantities used in the table below:
 
 Each group-level effect has a population-level SD parameter. Predictor-side deviations use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives the `brms` half-Student-t prior on the response scale, except for log, logit, and probit links and inside `sigma()` and `shape()` (see the table above). Slope SDs are divided by $\operatorname{sd}(\text{column})$, like the population-level slopes. For distributional parameters, deviations and SD are on that parameter's link scale (for example, effects inside `sigma()` are on the log-SD scale).
 
-Change-point effects use the same ordinary normal hierarchy, with additional range and within-group ordering constraints. Therefore, `cp_i_sd` is the latent normal scale rather than the realized sample SD. See [group-level effects with mcp](../articles/group_effects.html) for the model equation and practical interpretation.
+Change-point effects use the same ordinary normal hierarchy, with additional range and within-group ordering constraints. Therefore, `cp_i_sd` is the SD of the normal distribution before truncation rather than the realized sample SD. See [group-level effects with mcp](../articles/group_effects.html) for the model equation and practical interpretation.
 
 # Deviations from `rstanarm` and `brms` {#deviations}
 

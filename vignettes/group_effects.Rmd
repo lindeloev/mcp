@@ -65,9 +65,11 @@ $$
 cp_{i,\mathrm{id}[g]} = \kappa_{ig} - cp_i,
 $$
 
-where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the reported deviation and `cp_i_sd` is the latent normal scale. The deviations are not forced to sum to zero.
+where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the reported deviation and `cp_i_sd` is the SD of the normal distribution *before truncation* (see below). The deviations are not forced to sum to zero.
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
+
+Because of this truncation, the realized SD of the group-specific change points is smaller than `cp_i_sd`, and their mean is pulled away from $cp_i$ when $cp_i$ is near a boundary. When `cp_i_sd` is large relative to the available span, the truncated normal approaches a uniform distribution, so the data carry little information about how large `cp_i_sd` is. Its posterior then has a long upper tail that mostly reflects the prior.
 
 Unlike predictor group-level effects, a change-point group effect applies only at the change point where it is included.
 
@@ -217,7 +219,7 @@ You can see the priors of the model like this:
 prior_summary(fit)
 ```
 
-`cp_1_id_sd` is the latent normal scale governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
+`cp_1_id_sd` is the SD of the normal distribution, before truncation, governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
 
 For predictor group-level effects (e.g., `(state || id)`), the SDs default to the `brms` half-Student-t prior on the response scale, `dt(0, max(2.5, mad(y)), 3) T(0, )`, with slope SDs divided by `sd(column)`. Log, logit, and probit links and distributional parameters use other scales; see [default priors on group-level effects](../articles/priors.html#default-priors-on-group-level-effects).
 
