@@ -222,9 +222,12 @@ mcp = function(
   assert_model_data(data, par_x, unlist(vars[c("predictor", "group", "offset", "series")]))
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
   data = data[, model_vars]  # Remove unused data
-  for (col in vars$response)
+  for (col in vars$response) {
     if (is.logical(data[[col]]))
       data[[col]] = as.numeric(data[[col]])
+    if (!is.numeric(data[[col]]))
+      stop("The response column '", col, "' must be numeric or logical. Got ", class(data[[col]])[1], ".", call. = FALSE)
+  }
 
   # Plain named lists are the v0.4 JAGS-string prior format. Future classed
   # sampler-agnostic prior objects can dispatch before this legacy path.

@@ -39,7 +39,8 @@ test_runs = function(model,
   testthat::expect_true(is.data.frame(empty$data), model)
   testthat::expect_true(is.list(empty$prior), model)
   testthat::expect_true(all(class(empty$family) == c("mcpfamily", "family")), model)
-  testthat::expect_true(is.null(empty$samples), model)
+  testthat::expect_true(all(c("mcmc_post", "mcmc_prior") %in% names(empty)), model)
+  testthat::expect_true(is.null(.subset2(empty, "mcmc_post")) && is.null(.subset2(empty, "mcmc_prior")), model)
   testthat::expect_false("loglik" %in% names(empty), model)
   testthat::expect_false("loo" %in% names(empty), model)
   testthat::expect_false("waic" %in% names(empty), model)
@@ -569,14 +570,18 @@ test_pp_eval = function(fit, prior = FALSE) {
 
 
 
-# Rutine for testing a list of erroneous models
+# Rutine for testing a list of erroneous models.
+# Rejects internal errors (stop_github(), base R errors from unvalidated input) and failed expectations in test_runs().
 test_bad = function(models, ...) {
+  internal_errors = "internal error in mcp|object '.*' not found|could not find function|subscript out of bounds|argument is of length zero|missing value where TRUE/FALSE needed|non-numeric argument|invalid for atomic vectors"
   for (model in models) {
     test_name = paste0(as.character(substitute(models)), ":
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
-      suppressWarnings(testthat::expect_error(test_runs(model, sample = FALSE, ...)))  # should err before sampling
+      error = suppressWarnings(testthat::expect_error(test_runs(model, sample = FALSE, ...)))  # should err before sampling
+      if (!is.null(error))
+        testthat::expect_false(inherits(error, "expectation") || grepl(internal_errors, conditionMessage(error)), conditionMessage(error))
     })
   }
 }
