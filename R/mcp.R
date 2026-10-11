@@ -126,7 +126,7 @@
 #' pp_check(demo_fit)  # Prior/Posterior predictive checks
 #'
 #' # Test a hypothesis
-#' hypothesis(demo_fit, "cp_1 > 10")
+#' hypothesis(demo_fit, "cp_1 > 30")
 #'
 #' # Make predictions
 #' head(fitted(demo_fit))

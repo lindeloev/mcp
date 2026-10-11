@@ -206,7 +206,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, message=FALSE}
 fit = mcp(model, data = df, par_x = "x")
 ```
 

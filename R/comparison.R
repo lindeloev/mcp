@@ -286,7 +286,7 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #' hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
 #'
 #' # Evaluate several directional hypotheses at once
-#' hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
+#' hypothesis(demo_fit, c("cp_1 > 30", "cp_2 > 70"))
 #'
 #' # Inspect the corresponding prior probability without a Bayes factor
 #' hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)

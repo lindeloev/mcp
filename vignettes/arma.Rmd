@@ -265,7 +265,7 @@ We recovered the parameters, including the change point (see `mean` but also the
 summary(fit)
 ```
 
-We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The chains occasionally visit a small mode around $x = 25$-$30$, which explains the low `ess_tail` warning for `cp_1` above: the lower tail is estimated less precisely. The fact that the posterior mean is around `r round(mean(as_draws_df(fit)$cp_1))` does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
+We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around `r round(mean(as_draws_df(fit)$cp_1))` does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
 ```{r}
 plot_pars(fit, regex_pars = "cp_1|ar_*")

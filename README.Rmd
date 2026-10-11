@@ -70,6 +70,8 @@ remotes::install_github("lindeloev/mcp@dev")
 `mcp` takes a list of formulas - one for each segment:
 
 ``` r
+library(mcp)
+
 model = list(
   response ~ 1,  # plateau (Intercept_1)
   ~ 0 + time,    # joined slope (time_2) at cp_1
@@ -91,7 +93,8 @@ You can do change point regression for a large number of models in a syntax that
 The following model infers the two change points between three segments. You can run this complete worked example (which fits the model and plots by default) in one line:
 
 ```{r demo-fit-mcp_example, results='hide', message=FALSE, fig.keep='none'}
-demo_fit = mcp_example("demo")
+library(mcp)
+demo_fit = mcp_example("demo")  # Also check out other examples
 ```
 
 See `demo_fit$example_code` for how it was generated, and explore more demos in `mcp_example()`. But for now, let's walk through the example manually:
@@ -150,7 +153,7 @@ You can expect most generics from R, `posterior`, `tidybayes` to work on mcpfits
 We can test (joint) probabilities in the model using `hypothesis()` ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point (`cp_1`) is later than 25 against it being less than 25?
 
 ```{r demo-hypothesis}
-hypothesis(fit, "cp_1 > 25")
+hypothesis(fit, "cp_1 > 30")
 ```
 
 For model comparisons, we can fit a null model and compare the predictive performance of the two models using (approximate) leave-one-out cross-validation ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). Let’s specify a null model where the first two segments are reduced to one straight line, i.e., removing the change point:

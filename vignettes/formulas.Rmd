@@ -235,7 +235,7 @@ First, using `hypothesis()`:
 hypothesis(demo_fit, "time_3 > time_2")
 ```
 
-The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its credibility interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, the estimate is negative, so the slope is smaller in segment 3 than in segment 2.
+The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its credibility interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, the estimate is negative, so the slope is smaller in segment 3 than in segment, with great certainty (`prob = 0`).
 
 If you need the full posterior distribution of the change (e.g., for `quantile()`, `hist()`, or plotting with `ggplot2`), extract draws, e.g., using `as_draws_df()`:
 
