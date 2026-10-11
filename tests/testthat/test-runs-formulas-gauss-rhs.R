@@ -78,6 +78,17 @@ test_that("population terms apply only where included while x-terms join", {
   expect_equal(as.numeric(fitted), expected)
 })
 
+test_that("x-terms end at a disjoined segment even without an earlier intercept", {
+  data = data.frame(x = 1:8, y = 0)
+  fit = mcp(list(y ~ 0 + x, ~ 0 + x, ~ 1 + sigma(1)), data, par_x = "x", sample = FALSE)
+  expect_lifetimes(fit, c(x_1 = 3L, x_2 = 3L))
+
+  fitted = fit$simulate(fit, data, cp_1 = 3.5, cp_2 = 5.5, x_1 = 1, x_2 = 2, Intercept_3 = 10,
+    sigma_1 = 1, sigma_3 = 1, .type = "fitted")
+  expected = ifelse(data$x < 5.5, pmin(data$x, 3.5) + 2 * pmax(data$x - 3.5, 0), 10)
+  expect_equal(as.numeric(fitted), expected)
+})
+
 test_that("redefinitions replace complete formula terms", {
   data = data.frame(
     x = 1:12,

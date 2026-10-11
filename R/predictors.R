@@ -97,22 +97,16 @@ collect_design_specs = function(...) {
 }
 
 
-# Find component in next segment to determine lifetime (exclusive upper segment limit)
-# - definitions: A data frame with a `segment` column.
-# - by: Columns identifying one replaceable component (e.g., c("dpar", "order")).
-get_definition_lifetimes = function(definitions, by) {
-  if (nrow(definitions) == 0) {
-    definitions = definitions[, unique(c(by, "segment")), drop = FALSE]
-    definitions$next_segment = integer()
-    return(definitions)
-  }
-
-  definitions %>%
-    dplyr::distinct(dplyr::across(dplyr::all_of(c(by, "segment")))) %>%
-    dplyr::arrange(dplyr::across(dplyr::all_of(c(by, "segment")))) %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(by))) %>%
-    dplyr::mutate(next_segment = as.integer(dplyr::lead(.data$segment))) %>%
-    dplyr::ungroup()
+# First segment where each term no longer applies (`next_segment`; NA = through the last segment).
+# Joined terms apply until the next segment that resets their `key`; other terms apply in their own segment only.
+# - key, segment, joins: One value per term.
+# - resets: A data frame with `key` and `segment` columns.
+get_next_segment = function(key, segment, joins, resets, n_segments) {
+  vapply(seq_along(segment), function(i) {
+    later = if (joins[i]) resets$segment[resets$key == key[i] & resets$segment > segment[i]] else segment[i] + 1L
+    later = later[later <= n_segments]
+    if (length(later) == 0) NA_integer_ else as.integer(min(later))
+  }, integer(1))
 }
 
 
@@ -817,76 +811,26 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   if ("threshold" %notin% names(predictors))
     predictors$threshold = rep(NA_real_, nrow(predictors))
 
-  # Population intercepts start a disjoined segment. First find
-  # the next intercept for each distributional parameter and AR/MA order.
-  # Strategy: (1) select one row for segments with intercepts for each dpar (filter)
-  #           (2) save this segment number in the last segment that had an intercept (lag)
-  #           (3) left-join this into predictors
-  #           (4) fill downwards into intermittent segments without intercepts
-  df_next_intercept = predictors %>%
-    dplyr::filter(.data$par_type == "Intercept") %>%
-    get_definition_lifetimes(c("dpar", "order")) %>%
-    dplyr::rename(next_intercept = "next_segment")
-
-  # Population predictors: left-join and fill-down. NA means "there is no next
-  # intercept segment".
-  predictors = predictors %>%
-    dplyr::left_join(df_next_intercept, by = c("dpar", "segment", "order")) %>%
-    dplyr::group_by(.data$dpar, .data$order) %>%
-    tidyr::fill("next_intercept", .direction = "down") %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(next_intercept = dplyr::if_else(.data$segment >= .data$next_intercept, NA_integer_, .data$next_intercept))
-
-  # Population terms that are not x-terms apply only in the segment that
-  # includes them. x-terms keep their value through joined segments and end at
-  # the next population intercept.
-  predictors = predictors %>%
-    dplyr::mutate(
-      next_segment = dplyr::if_else(
-        .data$par_type != "Intercept" & .data$x_factor == "1" &
-          .data$dpar %notin% c("ar", "ma"),
-        dplyr::if_else(.data$segment < n_segments, .data$segment + 1L, NA_integer_),
-        .data$next_intercept
-      )
-    ) %>%
-    dplyr::select(-"next_intercept")
-
-  # AR/MA x-terms and intercepts keep their value through joined segments that
-  # include the same lag, until the next AR/MA intercept
+  # How long each population term applies. x-terms and intercepts join later segments until the
+  # next intercept for the same dpar and AR/MA lag, which starts a disjoined segment. AR/MA terms
+  # also end in a segment that does not include their lag. Other terms apply in their own segment only.
+  population_key = paste(predictors$dpar, predictors$order)
+  is_intercept = predictors$par_type == "Intercept"
   included_arma = get_included_arma(components)
-  arma_next_segment = vapply(seq_len(nrow(predictors)), function(i) {
-    if (predictors$dpar[i] %notin% c("ar", "ma"))
-      return(NA_integer_)
+  arma_lags = dplyr::distinct(predictors[predictors$dpar %in% c("ar", "ma"), c("dpar", "order")])
+  arma_resets = lapply(seq_len(nrow(arma_lags)), function(i) {
+    included = included_arma$segment[included_arma$dpar == arma_lags$dpar[i] & included_arma$order >= arma_lags$order[i]]
+    tibble::tibble(key = paste(arma_lags$dpar[i], arma_lags$order[i]), segment = setdiff(seq_len(n_segments), included))
+  })
+  population_resets = dplyr::bind_rows(
+    tibble::tibble(key = population_key[is_intercept], segment = predictors$segment[is_intercept]),
+    arma_resets
+  )
+  predictors$next_segment = get_next_segment(
+    population_key, predictors$segment, joins = is_intercept | predictors$x_factor != "1",
+    population_resets, n_segments
+  )
 
-    next_segment = predictors$segment[i] + 1L
-    joins = predictors$par_type[i] == "Intercept" || predictors$x_factor[i] != "1"
-    while (joins && next_segment <= n_segments) {
-      included = included_arma[
-        included_arma$dpar == predictors$dpar[i] &
-          included_arma$segment == next_segment,
-        , drop = FALSE
-      ]
-      resets = any(predictors$dpar == predictors$dpar[i] &
-        predictors$order %in% predictors$order[i] & predictors$segment == next_segment &
-        predictors$par_type == "Intercept")
-      if (nrow(included) != 1 || included$order < predictors$order[i] || resets)
-        break
-      next_segment = next_segment + 1L
-    }
-    if (next_segment > n_segments) NA_integer_ else next_segment
-  }, integer(1))
-  predictors = predictors %>%
-    dplyr::mutate(
-      next_segment = dplyr::if_else(
-        .data$dpar %in% c("ar", "ma"),
-        arma_next_segment,
-        .data$next_segment
-      )
-    )
-
-  # Group intercepts and other terms that are not x-terms apply only in segments
-  # that include them. Group x-terms keep their value through joined segments
-  # until a later population intercept, group intercept, or `(0 | group)`.
   # Parse group blocks segment by segment so `same()` can find its source
   definitions = NULL
   for (segment in seq_len(n_segments)) {
@@ -917,40 +861,21 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         "design_spec", "definition_name", "definition_segment"
       )
 
-    # Segments that restart a group block: a group intercept or `(0 | group)`
-    resets = definitions %>%
-      dplyr::group_by(.data$dpar, .data$group_col, .data$segment) %>%
-      dplyr::summarise(
-        reset = any(!.data$has_coefficients | .data$par_type == "Intercept"),
-        .groups = "drop"
-      ) %>%
-      dplyr::filter(.data$reset)
-    # Disjoined segments (population intercepts) restart all group blocks too
-    population_resets = predictors %>%
-      dplyr::filter(.data$par_type == "Intercept") %>%
-      dplyr::distinct(.data$dpar, .data$segment)
-
-    # First restart after each coefficient's segment (NA = never)
-    next_reset = vapply(seq_len(nrow(predictor_group_effects)), function(i) {
-      candidates = resets$segment[
-        resets$dpar == predictor_group_effects$dpar[i] &
-          resets$group_col == predictor_group_effects$group_col[i] &
-          resets$segment > predictor_group_effects$segment[i]
-      ]
-      candidates = c(candidates, population_resets$segment[
-        population_resets$dpar == predictor_group_effects$dpar[i] &
-          population_resets$segment > predictor_group_effects$segment[i]
-      ])
-      if (length(candidates) == 0) NA_integer_ else min(candidates)
-    }, integer(1))
-
-    # Non-x terms end at the next segment; x-terms end at the next restart
-    predictor_group_effects = predictor_group_effects %>%
-      dplyr::mutate(next_segment = dplyr::if_else(
-        .data$x_factor == "1",
-        dplyr::if_else(.data$segment < n_segments, .data$segment + 1L, NA_integer_),
-        next_reset
-      ))
+    # How long each group term applies. Group x-terms join later segments until a group intercept
+    # or `(0 | group)` for the same dpar and grouping column, or a population intercept for that dpar.
+    # Group intercepts and other terms apply in their own segment only.
+    group_key = function(x) paste(x$dpar, x$group_col)
+    is_reset = !definitions$has_coefficients | definitions$par_type %in% "Intercept"
+    disjoined = dplyr::distinct(definitions, .data$dpar, .data$group_col) %>%
+      dplyr::inner_join(dplyr::distinct(predictors[is_intercept, c("dpar", "segment")]), by = "dpar", relationship = "many-to-many")
+    group_resets = dplyr::bind_rows(
+      tibble::tibble(key = group_key(definitions)[is_reset], segment = definitions$segment[is_reset]),
+      tibble::tibble(key = group_key(disjoined), segment = disjoined$segment)
+    )
+    predictor_group_effects$next_segment = get_next_segment(
+      group_key(predictor_group_effects), predictor_group_effects$segment,
+      joins = predictor_group_effects$x_factor != "1", group_resets, n_segments
+    )
   }
 
   # Store each fitted component specification once, not on every coefficient.
