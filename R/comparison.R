@@ -54,8 +54,8 @@
 #' data$y = 1 + 2 * data$x + rnorm(100, sd = 0.3)
 #' model1 = list(y ~ 1 + x)
 #' model2 = list(y ~ 1)
-#' fit1 = mcp(model1, data, warmup = 2000, iter = 6000, seed = 42)
-#' fit2 = mcp(model2, data, par_x = "x", warmup = 2000, iter = 6000, seed = 42)
+#' fit1 = mcp(model1, data, seed = 42)
+#' fit2 = mcp(model2, data, par_x = "x", seed = 42)
 #'
 #' # Compute LOO for each and compare (works for waic(fit) too)
 #' loo1 = loo(fit1)

@@ -154,7 +154,7 @@
 #'   cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 #' )
 #'
-#' fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
+#' fit3 = mcp(model, data = data, prior = prior, seed = 42)
 #'
 #' # Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
 #' model_same = list(
@@ -167,23 +167,25 @@
 #' # Show the JAGS model
 #' demo_fit$jags_code
 #' }
-mcp = function(model,
-               data,
-               prior = list(),
-               family = gaussian(),
-               par_x = NULL,
-               sample = "post",
-               cores = NULL,
-               chains = 3,
-               iter = 3000,
-               warmup = 1000,
-               adapt = lifecycle::deprecated(),
-               inits = NULL,
-               jags_code = NULL,
-               reparam = TRUE,
-               seed = NULL,
-               diagnostics = list(),
-               quiet = FALSE) {
+mcp = function(
+  model,
+  data,
+  prior = list(),
+  family = gaussian(),
+  par_x = NULL,
+  sample = "post",
+  chains = 3,
+  iter = 3000,
+  warmup = 1000,
+  inits = NULL,
+  jags_code = NULL,
+  reparam = TRUE,
+  seed = NULL,
+  diagnostics = list(),
+  quiet = FALSE,
+  cores = NULL,
+  adapt = lifecycle::deprecated()
+) {
   custom_jags_code = !is.null(jags_code)
 
   matched_call = match.call()

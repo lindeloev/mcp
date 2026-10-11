@@ -2,10 +2,10 @@ models_families_bernoulli = list(
   list(
     y ~ 1 + x,
     ~ 1 + x,
-    simulated = list(cp_1 = 93, Intercept_1 = -0.4, x_1 = 0.006, Intercept_2 = 2, x_2 = -0.004),
+    simulated = list(cp_1 = 93, Intercept_1 = -0.4, x_1 = 0.006, Intercept_2 = 3, x_2 = -0.004),
     family = bernoulli(link = "logit"),
     chains = 2,
-    warmup = 2000,
+    warmup = 500,
     iter = 1000,
     min_ess = 50,
     seed = 42
@@ -25,8 +25,8 @@ models_families_bernoulli = list(
     ~ 1 + x,
     simulated = list(cp_1 = 93, Intercept_1 = 0.2, x_1 = 0.001, Intercept_2 = 0.8, x_2 = -0.001),
     family = bernoulli(link = "identity"),
-    chains = 2,
-    warmup = 1000,
+    chains = 3,
+    warmup = 500,
     iter = 1000,
     min_ess = 50
   )
