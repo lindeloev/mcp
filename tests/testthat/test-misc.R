@@ -515,6 +515,11 @@ test_that("summaries use central intervals and posterior diagnostics", {
   expect_false("name" %in% names(result))
   expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
   expect_false("n.eff" %in% names(result))
+
+  # summary() returns a printable object instead of printing as a side effect
+  expect_length(capture.output(summary_result <- summary(demo_fit, width = width)), 0)
+  expect_s3_class(summary_result, c("mcpsummary", "tbl_df"))
+  expect_identical(capture.output(print(summary_result)), printed)
 })
 
 test_that("PPC and LOO draws stay aligned", {

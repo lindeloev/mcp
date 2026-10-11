@@ -204,15 +204,17 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @param width Float. The width of the central posterior interval (between 0
 #'   and 1).
 #' @param digits Non-negative integer. Number of significant digits used when
-#'   printing the summary. Defaults to 2. The invisibly returned tibble
-#'   retains the unrounded values.
+#'   printing the summary. Defaults to 2. The returned tibble retains the
+#'   unrounded values.
 #' @param prior Logical. Summarise prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
 #'   to `FALSE` for a compact, v0.3.4-compatible summary.
 #' @inheritParams mcp
 #' @param ... Must be empty. Reserved for future use.
 #'
-#' @return A tibble with parameter estimates and MCMC diagnostics. Rows
+#' @return An `mcpsummary` tibble with parameter estimates and MCMC diagnostics.
+#'   It prints with model information, separate tables for change points and
+#'   population-level parameters, and convergence warnings. Rows
 #'   are ordered by change point first, then `mu`, then the other
 #'   distributional parameters, then `ar`/`ma` components - each ascending by
 #'   segment. OBS: The change point distributions are often not unimodal and
@@ -259,6 +261,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'
 #' # Get the results as a tibble
 #' results = summary(demo_fit)
+#' results$mean
 #'
 #' # Group-level deviations (random effects)
 #' # ranef(my_fit)
@@ -271,7 +274,9 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
 }
 
 
-# Shared display, including unsampled models when printing.
+# Shared by summary() and print(), including unsampled models when printing.
+# Returns the population-level summary as an `mcpsummary` tibble. Its "mcpsummary"
+# attribute holds what print.mcpsummary() shows around the tables.
 summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, diagnostics = NULL, ...) {
   fit = object  # Standard name in mcp
   checkmate::assert_class(fit, "mcpfit")
@@ -288,46 +293,29 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   draws = mcmclist_draws(fit, prior = prior, error = FALSE)
 
   # Model info
-  cat(format(fit$family), "\n", sep = "")
-  if (!is.null(draws))
-    cat("Draws: ", coda::niter(draws) * coda::nchain(draws), " (", coda::nchain(draws), " chains with iter = ", coda::niter(draws), ")\n", sep = "")
-  
   forms = vapply(fit$model, formula_to_char, character(1))
-  cat("Segments:\n")
-  cat(paste0("  ", format(seq_along(forms)), ": ", forms, "\n"), sep = "")
+  header = c(
+    format(fit$family),
+    if (!is.null(draws)) paste0("Draws: ", coda::niter(draws) * coda::nchain(draws), " (", coda::nchain(draws), " chains with iter = ", coda::niter(draws), ")"),
+    "Segments:",
+    paste0("  ", format(seq_along(forms)), ": ", forms)
+  )
 
   # Data
   if (!is.null(draws)) {
-    # Print and return population-level summaries invisibly.
     result = get_summary(fit, width, scope = "population", prior = prior, verbose = verbose)
     pars = mcp_pars(fit)
     cp_names = pars$name[pars$part == "cp" & pars$scope == "population"]
-    is_cp = result$variable %in% cp_names
-
-    # Format before splitting, so both printed tables share column widths.
-    display = data.frame(lapply(result, format, digits = digits), check.names = FALSE)
-    if ("rhat" %in% names(display))
-      display$rhat = format(result$rhat, digits = digits, nsmall = digits)
-    result_cp = display[is_cp, , drop = FALSE]
-    result_population = display[!is_cp, , drop = FALSE]
-
-    if (nrow(result_cp) > 0) {
-      cat("\nChange point parameters:\n")
-      print(data.frame(result_cp), digits = digits, row.names = FALSE)
-    }
-    if (nrow(result_population) > 0) {
-      cat("\nPopulation-level parameters:\n")
-      print(data.frame(result_population), digits = digits, row.names = FALSE)
-    }
 
     # Convergence warning footer
+    footer = character()
     all_res = result
     group_names = mcp_pars(fit, scope = "group")$name
     if (length(group_names) > 0) {
       ran_res = get_summary(fit, width, scope = "group", prior = prior, verbose = verbose)
-      cat(
-        "\nGroup-level effects: ", paste(group_names, collapse = ", "),
-        ". Use `ranef(fit)` to inspect deviations by level.\n", sep = ""
+      footer = paste0(
+        "Group-level effects: ", paste(group_names, collapse = ", "),
+        ". Use `ranef(fit)` to inspect deviations by level."
       )
       all_res = dplyr::bind_rows(all_res, ran_res)
     }
@@ -337,15 +325,49 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
     conv = check_convergence(all_res, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
     if (conv$n_bad > 0) {
       param_str = if (conv$n_bad == 1) "1 parameter shows" else paste0(conv$n_bad, " parameters show")
-      cat("\nWarning: ", param_str, " poor convergence (", conv$thresholds, ").\n", sep = "")
+      footer = c(footer, paste0("Warning: ", param_str, " poor convergence (", conv$thresholds, ")."))
     }
+  } else {
+    result = tibble::tibble()
+    cp_names = character()
+    footer = "No draws. Nothing to summarise."
+  }
 
-    return(invisible(result))
+  attr(result, "mcpsummary") = list(header = header, cp_names = cp_names, footer = footer, digits = digits)
+  class(result) = c("mcpsummary", class(result))
+  result
+}
+
+
+#' @aliases print.mcpsummary
+#' @describeIn summary.mcpfit Print an `mcpsummary` returned by `summary()`: model
+#'   information, change point and population-level parameters, and diagnostics.
+#' @export
+print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
+  info = attr(x, "mcpsummary")
+  if (is.null(info) || (nrow(x) > 0 && "variable" %notin% names(x)))
+    return(NextMethod())  # e.g., after dplyr::select() dropped `variable`
+
+  cat(info$header, sep = "\n")
+  if (nrow(x) > 0) {
+    # Format before splitting, so both printed tables share column widths.
+    display = data.frame(lapply(x, format, digits = digits), check.names = FALSE)
+    if ("rhat" %in% names(display))
+      display$rhat = format(x$rhat, digits = digits, nsmall = digits)
+    is_cp = x$variable %in% info$cp_names
+
+    if (any(is_cp)) {
+      cat("\nChange point parameters:\n")
+      print(display[is_cp, , drop = FALSE], digits = digits, row.names = FALSE)
+    }
+    if (any(!is_cp)) {
+      cat("\nPopulation-level parameters:\n")
+      print(display[!is_cp, , drop = FALSE], digits = digits, row.names = FALSE)
+    }
   }
-  else {
-    cat("\nNo draws. Nothing to summarise.")
-    return(invisible(NULL))
-  }
+  if (length(info$footer) > 0)
+    cat(paste0("\n", info$footer), sep = "\n")
+  invisible(x)
 }
 
 
@@ -548,7 +570,7 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
 
 #' @aliases print print.mcpfit
 #' @describeIn summary.mcpfit Print the posterior summary of an \code{\link{mcpfit}} object.
-#' @param x An \code{\link{mcpfit}} object.
+#' @param x An \code{\link{mcpfit}} object, or an `mcpsummary` returned by `summary()`.
 #' @export
 print.mcpfit = function(x, ...) {
   args = list(...)
@@ -559,7 +581,8 @@ print.mcpfit = function(x, ...) {
     message("Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.")
     args$prior = TRUE
   }
-  do.call(summarize_mcpfit, c(list(object = x), args))
+  print(do.call(summarize_mcpfit, c(list(object = x), args)))
+  invisible(x)
 }
 
 
