@@ -31,18 +31,3 @@
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 "_PACKAGE"
 
-
-.onLoad = function(libname, pkgname) {
-  # rstantools is only suggested, so register its methods whenever it is loaded.
-  # posterior and coda methods are registered in NAMESPACE.
-  register_rstantools = function(...) {
-    rstantools = asNamespace("rstantools")
-    registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = rstantools)
-    registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = rstantools)
-    registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = rstantools)
-    registerS3method("log_lik", "mcpfit", log_lik.mcpfit, envir = rstantools)
-  }
-  if (requireNamespace("rstantools", quietly = TRUE))
-    register_rstantools()
-  setHook(packageEvent("rstantools", "onLoad"), register_rstantools)
-}

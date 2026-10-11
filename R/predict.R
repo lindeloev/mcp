@@ -645,6 +645,7 @@ fitted.mcpfit = function(
 #'   inverse-linked parameter directly, evaluating success probabilities \eqn{\mu}
 #'   in \eqn{[0, 1]} rather than counts.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
+#' @exportS3Method rstantools::posterior_epred
 posterior_epred.mcpfit = function(
   object,
   newdata = NULL,
@@ -675,6 +676,7 @@ posterior_epred.mcpfit = function(
 
 
 #' @rdname posterior_epred.mcpfit
+#' @exportS3Method rstantools::posterior_predict
 posterior_predict.mcpfit = function(
   object,
   newdata = NULL,
@@ -704,6 +706,7 @@ posterior_predict.mcpfit = function(
 
 
 #' @rdname posterior_epred.mcpfit
+#' @exportS3Method rstantools::posterior_linpred
 posterior_linpred.mcpfit = function(
   object,
   transform = FALSE,
@@ -808,6 +811,7 @@ log_lik = function(object, ...) UseMethod("log_lik")
 #' @aliases log_lik log_lik.mcpfit
 #' @describeIn execute-mcp-model Pointwise log-likelihood
 #' @export
+#' @exportS3Method rstantools::log_lik
 log_lik.mcpfit = function(
   object,
   newdata = NULL,
