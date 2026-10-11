@@ -28,27 +28,21 @@ prior_context = function(data, segments, design_specs = list()) {
   y_name = segments$y[1]
   x = data[[x_name]]
 
-  calibration_offsets = list()
-  for (s in Filter(function(s) isTRUE(s$has_offset), design_specs)) {
-    if (!is.null(s$offset_data) && any(s$offset_data != 0)) {
-      calibration_offsets[[paste0("offset_", s$dpar, "_", s$segment)]] = s$offset_data
-      if (identical(s$dpar, "mu")) {
-        data[[paste0("offset_", s$segment)]] = s$offset_data
-        data$offset = s$offset_data
-      }
+  # mu offsets are available as `offset` or `offset_<segment>` in default prior expressions
+  for (s in Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu"), design_specs)) {
+    if (any(s$offset_data != 0)) {
+      data[[paste0("offset_", s$segment)]] = s$offset_data
+      data$offset = s$offset_data
     }
   }
 
   list(
     data = data,
-    calibration_offsets = calibration_offsets,
     x_name = x_name,
     y_name = y_name,
     x_display = display_data_name(x_name),
     y_display = display_data_name(y_name),
     x_min = min(x, na.rm = TRUE),
-    x_max = max(x, na.rm = TRUE),
-    x_span = diff(range(x, na.rm = TRUE)),
     y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_name]]), na.rm = TRUE)),
     n_cp = nrow(segments) - 1,
     n_segments = nrow(segments)

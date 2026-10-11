@@ -263,7 +263,7 @@ test_that("transformations use the original par_x while segment bases stay local
     data,
     sample = FALSE
   )
-  table = get_fit_model_tables(fit)$predictors
+  table = get_predictors(fit$model, data, fit$family, par_x = "x")
 
   expect_equal(table$x_factor[table$matrix_name == "sin(x)"], "1")
   expect_equal(
@@ -292,7 +292,7 @@ test_that("transformations use the original par_x while segment bases stay local
 test_that("par_x is recognized as an exact formula symbol", {
   data = data.frame(a.b = 0:4, axb = c(2, 4, 6, 8, 10), y = 0)
   fit = mcp(list(y ~ 0 + axb), data, par_x = "a.b", sample = FALSE)
-  predictor = dplyr::filter(get_fit_model_tables(fit)$predictors, .data$dpar == "mu")
+  predictor = dplyr::filter(get_predictors(fit$model, data, fit$family, par_x = "a.b"), .data$dpar == "mu")
 
   expect_equal(predictor$x_factor, "1")
   expect_equal(unname(predictor$matrix_data[[1]]), data$axb)
@@ -301,7 +301,7 @@ test_that("par_x is recognized as an exact formula symbol", {
 test_that("x-free interactions are evaluated directly at zero", {
   data = data.frame(x = 0:4, z = c(2, 0, 0, 4, 5), y = 0)
   fit = mcp(list(y ~ 0 + x:z), data, par_x = "x", sample = FALSE)
-  predictor = dplyr::filter(get_fit_model_tables(fit)$predictors, .data$dpar == "mu")
+  predictor = dplyr::filter(get_predictors(fit$model, data, fit$family, par_x = "x"), .data$dpar == "mu")
 
   expect_equal(predictor$x_factor, "x")
   expect_equal(unname(predictor$matrix_data[[1]]), data$z)
@@ -352,10 +352,8 @@ test_that("prediction reuses fitted factor encodings", {
     state = ordered(rep(c("low", "middle", "high"), 2))
   )
   ordered_fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
-  ordered_matrix = get_predictor_matrix(
-    get_fit_model_tables(ordered_fit)$predictors,
-    get_fit_model_tables(ordered_fit)$group_effects
-  )
+  ordered_tables = get_predictor_tables(ordered_fit$model, data, ordered_fit$family, par_x = "x")
+  ordered_matrix = get_predictor_matrix(ordered_tables$predictors, ordered_tables$group_effects)
   ordered_new = add_rhs_predictors(
     transform(data, state = as.character(state)), ordered_fit
   )
@@ -367,10 +365,8 @@ test_that("prediction reuses fitted factor encodings", {
   custom_data = transform(data, state = factor(state))
   contrasts(custom_data$state) = stats::contr.sum(3)
   custom_fit = suppressWarnings(mcp(list(y ~ state), custom_data, par_x = "x", sample = FALSE))
-  custom_matrix = get_predictor_matrix(
-    get_fit_model_tables(custom_fit)$predictors,
-    get_fit_model_tables(custom_fit)$group_effects
-  )
+  custom_tables = suppressWarnings(get_predictor_tables(custom_fit$model, custom_data, custom_fit$family, par_x = "x"))
+  custom_matrix = get_predictor_matrix(custom_tables$predictors, custom_tables$group_effects)
   custom_new = add_rhs_predictors(
     transform(custom_data, state = as.character(state)), custom_fit
   )
@@ -389,10 +385,8 @@ test_that("prediction is independent of later contrast options", {
     state = factor(rep(c("a", "b", "c"), 2))
   )
   fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
-  fitted_matrix = get_predictor_matrix(
-    get_fit_model_tables(fit)$predictors,
-    get_fit_model_tables(fit)$group_effects
-  )
+  fitted_tables = get_predictor_tables(fit$model, data, fit$family, par_x = "x")
+  fitted_matrix = get_predictor_matrix(fitted_tables$predictors, fitted_tables$group_effects)
 
   options(contrasts = c("contr.sum", "contr.poly"))
   new_matrix = add_rhs_predictors(data, fit)

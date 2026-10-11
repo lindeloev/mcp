@@ -51,10 +51,6 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   table = add_segment_anchors(table, predictors, cps)
   resolved = stats::setNames(as.list(table$value), table$parameter)
   attr(resolved, "prior_table") = table
-  attr(resolved, "prior_context") = context[c(
-    "x_name", "y_name", "x_display", "y_display", "x_min", "x_max",
-    "x_span", "n_cp", "n_segments", "calibration_offsets"
-  )]
   resolved
 }
 

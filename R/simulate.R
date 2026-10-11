@@ -62,11 +62,8 @@ evaluate_design_specs = function(design_specs, newdata) {
 
 # Populate matrix data columns in a predictor or group-effects table.
 populate_design_columns = function(table, evaluated_designs) {
-  if (nrow(table) == 0 || "design_id" %notin% names(table))
-    return(table)
-
-  design_ids = unique(stats::na.omit(table$design_id))
-  for (design_id in design_ids) {
+  table$matrix_data = vector("list", nrow(table))
+  for (design_id in unique(stats::na.omit(table$design_id))) {
     rows = which(table$design_id == design_id)
     design = evaluated_designs[[design_id]]
     if (is.null(design))

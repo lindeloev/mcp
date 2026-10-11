@@ -332,9 +332,7 @@ mcp = function(model,
   # Make prior
   prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs)
   prior_table = attr(prior, "prior_table")
-  prior_context = attr(prior, "prior_context")
   attr(prior, "prior_table") = NULL
-  attr(prior, "prior_context") = NULL
   assert_fixed_dpars(prior_table, predictor_definitions, family)
 
   # Assemble model metadata used by fitted-model methods
@@ -345,14 +343,19 @@ mcp = function(model,
       if (is.na(column)) NULL else column
     })
   )
+  # Data-sized design values are only needed to build the model. Fitted-model
+  # methods evaluate the stored design specifications on (new)data instead.
   model_tables = list(
     data_columns = data_columns,
     segments = segments,
     cps = cps,
-    predictors = predictor_occurrences,
-    group_effects = group_occurrences,
+    predictors = dplyr::select(predictor_occurrences, -"matrix_data"),
+    group_effects = dplyr::select(group_occurrences, -"matrix_data"),
     parameters = parameters,
-    design_specs = predictor_tables$design_specs
+    design_specs = lapply(predictor_tables$design_specs, function(spec) {
+      spec$offset_data = NULL
+      spec
+    })
   )
 
   # Validate AR/MA configuration
@@ -509,7 +512,6 @@ mcp = function(model,
       model_tables = model_tables,
       formula_jags = formula_jags,
       prior_table = prior_table,
-      prior_context = prior_context,
       prior_format = "jags_string_v1",
       diagnostics = diagnostics,
       custom_jags_code = custom_jags_code,
