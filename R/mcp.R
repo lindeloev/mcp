@@ -375,7 +375,6 @@ mcp = function(
       recover_levels(data, group_definitions)
 
     class(draws) = "mcmc.list"
-    assert_ordered_cp_draws(draws, cps)
     draws
   }
 

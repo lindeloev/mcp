@@ -165,28 +165,6 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 }
 
 
-# Check ordering of realized group-level change points
-assert_ordered_group_cps = function(cps, args) {
-  if (nrow(cps) < 2 || all(is.na(cps$group_col)))
-    return(invisible(NULL))
-
-  realized_cps = lapply(seq_len(nrow(cps)), function(i) {
-    value = args[[cps$name[i]]]
-    if (!is.na(cps$group_col[i]))
-      value = value + args[[cps$group_name[i]]]
-    value
-  })
-  n = max(lengths(realized_cps))
-  realized_cps = vapply(
-    realized_cps, rep, numeric(n), length.out = n
-  )
-  if (any(realized_cps[, -1, drop = FALSE] <= realized_cps[, -ncol(realized_cps), drop = FALSE]))
-    stop("Realized group-level change points must remain strictly ordered within each group.")
-
-  invisible(NULL)
-}
-
-
 # Draw independent normal values inside possibly different finite intervals.
 # Used for the default group-level change-point hierarchy in fit$simulate().
 simulate_truncated_normal = function(mean, sd, lower, upper) {
@@ -271,7 +249,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   missing_args = dplyr::setdiff(expected_arg_names, names(args))
   if (length(missing_args) > 0)
     stop_github("Missing the following arguments: ", and_collapse(missing_args))
-  assert_ordered_group_cps(model_tables$cps, args)
 
   # Other args
   assert_typescale(.type, .scale)

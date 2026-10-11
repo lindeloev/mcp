@@ -92,8 +92,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Fitting and priors:**
 
-  - After sampling, `mcp()` now verifies that population- and group-level change points are strictly ordered in every draw and that all realized change points lie within the observed predictor range. If ordering is broken, wrong segments apply.
-
   - Group-level change points `(1|id)` now use a standard hierarchical normal model sampled efficiently through their absolute locations. This makes `cp_i_sd` the SD of the normal distribution before truncation rather than the realized sample SD.
 
   - AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
