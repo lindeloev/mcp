@@ -90,11 +90,15 @@ run_jags = function(jags_code,
     seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
 
-  # Default inits where users supplied none: equispaced change points for the sequential
-  # beta chain and prior medians for other nodes, e.g., away from the zero bound of SDs.
+  # Default inits where users supplied none: equispaced change points for sorted uniforms
+  # or the sequential beta chain and prior medians for other nodes, e.g., away from the
+  # zero bound of SDs.
   cp_frac_nodes = unique(stringr::str_extract_all(jags_code, "cp_[0-9]+_frac_")[[1]])
   N = length(cp_frac_nodes)
   defaults = c(stats::setNames(as.list(1 / (N - seq_len(N) + 2)), cp_frac_nodes), get_jags_median_inits(jags_code))
+  N = length(unique(stringr::str_extract_all(jags_code, "cp_sorted_\\[[0-9]+\\]")[[1]]))
+  if (N > 0)
+    defaults$cp_unit_ = seq_len(N) / (N + 1)
   defaults = defaults[!duplicated(names(defaults))]
   inits = lapply(inits, function(ch) c(ch, defaults[setdiff(names(defaults), names(ch))]))
 
@@ -223,7 +227,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     if (generated) c(
       "i_", "garma_threshold_", "garma_y_", "garma_link_y_",
       "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_",
-      paste0("cp_", seq_len(nrow(segments) - 1L), "_frac_"),
+      paste0("cp_", seq_len(nrow(segments) - 1L), "_frac_"), "cp_unit_", "cp_sorted_", "cp_i_",
       paste0("x_local_", seq_len(nrow(segments)), "_"),
       paste0("link_", dpars, "_"), paste0(dpars, "_"),
       paste0(c(predictors$code_name, group_effects$name), "_inverse")

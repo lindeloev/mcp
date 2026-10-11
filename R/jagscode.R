@@ -37,14 +37,9 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
                           prior_table, series = FALSE) {
   prior_description = stats::setNames(prior_table$description, prior_table$parameter)
   prior_kind_ = stats::setNames(prior_table$kind, prior_table$parameter)
-  # For default segment-1 intercept priors placed at min(x): the value of that segment's
-  # x-terms at min(x), e.g., "x_1 * 101". NA for all other parameters.
-  prior_reference = as.list(stats::setNames(prior_table$reference, prior_table$parameter))
-  # Segment anchors (see add_segment_anchors()): for slopes sampled as the rise over their
-  # segment, the segment width, e.g., "(cp_2 - cp_1)"; for intercepts sampled as the level
-  # at the segment end, the change over the segment, e.g., "x_2 * (cp_2 - cp_1)". NA otherwise.
-  prior_rise_width = as.list(stats::setNames(prior_table$rise_width, prior_table$parameter))
-  prior_end_change = as.list(stats::setNames(prior_table$end_change, prior_table$parameter))
+
+  # Parameters sampled via an auxiliary node (see add_reparams())
+  aux_table = prior_table[!is.na(prior_table$aux_suffix), , drop = FALSE]
 
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
@@ -53,6 +48,9 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # Change points
   cp_0 = min(", par_x, ")\n")
 
+  #######################
+  # CHANGE POINT PRIORS #
+  #######################
   # Get change point priors and check if they are Dirichlet
   cps = prior[intersect(paste0("cp_", seq_len(K - 1L)), names(prior))]
   dirichlet_calls = lapply(cps, function(x) {
@@ -83,15 +81,20 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   cp_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
   for (i in seq_along(cps)) {
     name = names(cps)[i]
-    if (any(is_dirichlet)) {
+    if (any(is_dirichlet) && alpha[1] == 1) {
+      # Uniform order statistics: sorted uniforms. On the unit scale because the JAGS
+      # slice sampler starts with a step width of 1.
+      if (i == 1)
+        mm = paste0(mm, "  for (cp_i_ in 1:", length(cps), ") {\n    cp_unit_[cp_i_] ~ dunif(0, 1)\n  }\n  cp_sorted_ = sort(cp_unit_)  # Uniform order statistics\n")
+      mm = paste0(mm, "  ", name, " = cp_0 + cp_sorted_[", i, "] * (cp_", K, " - cp_0)\n")
+    } else if (any(is_dirichlet)) {
       # Sequential Beta chain for ordered Dirichlet(alpha) change points
       a = alpha[1]
       M = length(cps) - i + 1L
       lower_cp = paste0("cp_", i - 1L)
-      desc_comment = if (a == 1) "Uniform order statistics" else paste0("Dirichlet(", format_prior_number(a), ")")
       mm = paste0(
         mm,
-        "  ", name, "_frac_ ~ dbeta(", format_prior_number(a), ", ", format_prior_number(M * a), ")  # Relative fraction of remaining span (", desc_comment, ")\n",
+        "  ", name, "_frac_ ~ dbeta(", format_prior_number(a), ", ", format_prior_number(M * a), ")  # Relative fraction of remaining span (Dirichlet(", format_prior_number(a), "))\n",
         "  ", name, " = ", lower_cp, " + ", name, "_frac_ * (cp_", K, " - ", lower_cp, ")  # Ordered change point\n"
       )
     } else {
@@ -118,16 +121,13 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # Use get_prior_str() to add remaining population-level priors
   for (i in seq_along(prior_pop)) {
     name = names(prior_pop)[i]
-    mm = paste0(mm, get_prior_str(
-      prior_pop, i,
-      description = prior_description[[name]],
-      kind = prior_kind_[[name]],
-      reference = prior_reference[[name]],
-      rise_width = prior_rise_width[[name]],
-      end_change = prior_end_change[[name]]
-    ))
+    aux = aux_table[aux_table$parameter == name, , drop = FALSE]
+    if (nrow(aux) == 1) {
+      mm = paste0(mm, get_aux_prior_str(name, prior_pop[[i]], prior_description[[name]], aux))
+    } else {
+      mm = paste0(mm, get_prior_str(prior_pop, i, description = prior_description[[name]], kind = prior_kind_[[name]]))
+    }
   }
-
 
   # Use get_prior_str() to add group-level priors.
   if (length(prior_group) > 0) {
@@ -146,13 +146,13 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     }
   }
 
+
   #########
   # GARMA #
   #########
   has_arma_terms = !is.na(ar_order) || !is.na(ma_order)
   if (has_arma_terms)
     mm = paste0(mm, get_garma_jagscode(ar_order, ma_order, par_x, series))
-
 
 
   ###########
@@ -249,11 +249,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 #   the prior is written in a loop over its levels.
 # - population_name: for group-level change points, the population change point, e.g., "cp_1".
 # - description: comment to add in the JAGS code. kind: see prior_kind().
-# - reference, rise_width, end_change: NULL/NA, or a string used to sample the
-#   parameter on a better-mixing scale (see add_intercept_references() and
-#   add_segment_anchors()), e.g., "x_1 * 101", "(cp_2 - cp_1)", or "x_2 * (cp_2 - cp_1)".
 get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
-                          description = "Prior", kind = NULL, reference = NULL, rise_width = NULL, end_change = NULL) {
+                          description = "Prior", kind = NULL) {
   # Helpers
   value = prior[[i]]
   name = names(prior[i])
@@ -279,44 +276,12 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     ))
   }
 
-  # Disjoined segment intercept, sampled as the level at the segment end to improve mixing (see add_segment_anchors()).
-
-  if (kind == "distribution" && is.null(group_col) && !is.null(end_change) && !is.na(end_change)) {
-    call = parse_prior_call(value)
-    end_name = paste0(name, "_end_")
-    end_prior = prior_to_jags(paste0("dnorm(", call$args[1], " + ", end_change, ", ", call$args[2], ")"))
-    return(paste0(
-      "  ", end_name, " ~ ", end_prior, "  # ", description, "; sampled as the level at the segment end\n",
-      "  ", name, " = ", end_name, " - (", end_change, ")\n"
-    ))
-  }
-
-  # Joined segment slope, sampled as the rise over the segment to improve mixing (see add_segment_anchors()).
-  if (kind == "distribution" && is.null(group_col) && !is.null(rise_width) && !is.na(rise_width)) {
-    call = parse_prior_call(value)
-    rise_name = paste0(name, "_rise_")
-    rise_prior = prior_to_jags(paste0("dnorm(", call$args[1], ", ", call$args[2], " * ", rise_width, ")"))
-    return(paste0(
-      "  ", rise_name, " ~ ", rise_prior, "  # ", description, "; sampled as the rise over the segment\n",
-      "  ", name, " = ", rise_name, " / ", rise_width, "\n"
-    ))
-  }
-
   # Other distributions: convert SD/scale to JAGS precision and write a stochastic node
   if (kind == "distribution") {
     value = prior_to_jags(value)
 
-    # Segment-1 intercept with the prior on the level at min(x) (see add_intercept_references()).
-    # The user-facing Intercept_1 at x = 0 is derived by subtracting the x-terms at min(x).
-    if (is.null(group_col) && !is.null(reference) && !is.na(reference)) {
-      start_name = paste0(name, "_start_")
-      return(paste0(
-        "  ", start_name, " ~ ", value, "  # ", description, "\n",
-        "  ", name, " = ", start_name, " - (", reference, ")  # Intercept at x = 0\n"
-      ))
-
     # Plain population-level parameter
-    } else if (is.null(group_col)) {
+    if (is.null(group_col)) {
       return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
 
     # Ordinary group-level effect: one draw per group level

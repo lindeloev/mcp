@@ -7,7 +7,7 @@ models_gauss = list(
       cp_1 = 93,
       Intercept_1 = log(9),
       x_1 = 0.003,
-      Intercept_2 = log(14),
+      Intercept_2 = log(18),
       x_2 = -0.004,
       sigma_1 = 2
     ),

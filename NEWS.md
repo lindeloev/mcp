@@ -18,13 +18,13 @@
 
   - Added R generics for mcpfits: `formula(fit)`, `family(fit)`, `model.frame(fit)`, `nobs(fit)`, `vcov(fit)`, and `confint(fit)`. Fits now also store a proper matched `$call`. Printed summaries now report posterior `sd` and has a new layout.
 
-- **Dirichlet is now the default prior on change points:** The default change point prior is now the mathematically beautiful and principled `dirichlet(1)` (flat Dirichlet / uniform order statistics). Effectively, the prior remain unchanged for models with 1 change point because Dirichlet reduces to the same uniform prior. For models with 2+ change points, the previous "truncated-$t$" prior has been removed. It only served the purpose of higher ESS/s at the expense of being mathematically unprincipled. While previous `mcp` versions supported a slow implementation of Dirichlet, achieving good ESS/s was made possible by parameterizing the dirichlet as a sequential stick-breaking Beta chain ($z_j \sim \text{Beta}(1, N - j + 1)$). Comparing all `mcp_example()`, estimates remain essentially identical between truncated-t and dirichlet. Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes Factor) on default priors will likely differ, but BF is ill advised on default priors anyway - that is why `hypothesis()` throws a warning if this is attempted. Read more on the [the mcp website](https://lindeloev.github.io/mcp/).
+- **Dirichlet is now the default prior on change points:** The default change point prior is now the mathematically beautiful and principled `dirichlet(1)` (flat Dirichlet / uniform order statistics). Effectively, the prior remain unchanged for models with 1 change point because Dirichlet reduces to the same uniform prior. For models with 2+ change points, the previous "truncated-$t$" prior has been removed. It only served the purpose of higher ESS/s at the expense of being mathematically unprincipled. While previous `mcp` versions supported a slow implementation of Dirichlet, achieving good ESS/s was made possible by sampling `dirichlet(1)` as sorted uniforms (other `dirichlet(alpha)` use a sequential stick-breaking Beta chain, $z_j \sim \text{Beta}(\alpha, (N - j + 1) \alpha)$). Comparing all `mcp_example()`, estimates remain essentially identical between truncated-t and dirichlet. Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes Factor) on default priors will likely differ, but BF is ill advised on default priors anyway - that is why `hypothesis()` throws a warning if this is attempted. Read more on the [the mcp website](https://lindeloev.github.io/mcp/).
 
 - **Negative binomial and offset():** You can now do `mcp(..., family = negbinomial())`. NB (and Poisson) can now model rates and exposure because `offset()` is now supported in formulas - also for other families. 
 
 - **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations and used to complete response histories in AR/MA models. Predictions generate fresh replicated outcomes at every row; `predict(fit) |> filter(is.na(y))` can be used to see predictive intervals and draws at missing points, and similarly `fitted()` for expected responses. Missing AR/MA histories remain unsupported in `log_lik()`, `loo()`, and `waic()`.
 
-- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This due to a reparameterization that keep intercepts and slopes relatively independent of change points during sampling and due to (selectively) using the JAGS glm module.
+- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This is due to reparameterizations that keep intercepts and slopes relatively independent of earlier segments during sampling and due to (selectively) using the JAGS glm module. The reparameterizations do not change the model or its priors. Compare `fit$jags_code` between `mcp(..., reparam = FALSE)` and `mcp(..., reparam = TRUE)` (new default). Read more in [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html).
 
 ## Major breaking changes
 
@@ -46,7 +46,9 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Parameters and outputs:**
 
-  - `fit$pars` was removed. Use `mcp_pars(fit)` for a canonical table of model parameters and `mcp_columns(fit)` for resolved data-column roles, including the automatically chosen `par_x`.
+  - `fit$pars` and `fit$mcmc_loglik` was removed and now raises a helpful errors. `fit$pars` is now replaced with `mcp_pars(fit)` and `mcp_columns(fit)`. `fit$mcmc_loglik` is no longer stored - generate using `log_lik(fit)`.
+
+  - `mcp:::tidy_samples()` is removed. Use `as_draws_df(fit)` or `tidybayes::spread_draws()`.
 
   - `fixef()` now reports only population-level effects for `mu` (the primary response parameter), excluding change points, other distributional parameters, AR/MA parameters, and group-effect SDs. Use `summary(fit)` to get all parameters.
 
@@ -92,7 +94,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - After sampling, `mcp()` now verifies that population- and group-level change points are strictly ordered in every draw and that all realized change points lie within the observed predictor range. If ordering is broken, wrong segments apply.
 
-  - Group-level change points `(1|id)` now use a standard hierarchical normal model sampled efficiently through their absolute locations. This makes `cp_i_sd` the latent normal scale rather than the realized sample SD.
+  - Group-level change points `(1|id)` now use a standard hierarchical normal model sampled efficiently through their absolute locations. This makes `cp_i_sd` the SD of the normal distribution before truncation rather than the realized sample SD.
 
   - AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
 

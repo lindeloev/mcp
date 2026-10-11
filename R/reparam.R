@@ -1,0 +1,159 @@
+# ABOUT: Reparameterizations that make JAGS sample faster. Each one samples a
+# default prior on a better-mixing scale and derives the parameter from it. The
+# model, the priors, and hence the posterior are unchanged. mcp(..., reparam = FALSE)
+# writes the plain model. See vignette("implementation").
+# -----------------
+
+# Sampling scales for population-level coefficients
+#
+# Adds the columns `aux_suffix`, `aux_shift`, `aux_width`, and `aux_derive` to the
+# prior table. Where `aux_suffix` is not NA, the parameter is sampled via an
+# auxiliary node (see get_aux_prior_str()):
+#
+#   <name>_<suffix>_ ~ dist(location * width + shift, scale * width)
+#   <name> = (<name>_<suffix>_ - derive) / width
+#
+# With reparam = TRUE, the following are sampled as values that stay in place when
+# a change point moves. All dpars except ar and ma follow the same rules.
+#
+# - Segment 1: The intercept as the value at a fixed point, the expected midpoint of
+#   segment 1 under the dirichlet(1) prior, min(x) + (max(x) - min(x)) / (2 * K).
+# - Joined segments: The lowest-degree x-term as the value at the segment end, and
+#   further x-terms (e.g., I(x^2)) as their rise over the segment.
+# - Disjoined segments: The intercept as the value at the segment end.
+#
+# Only default dnorm() and dt() priors without truncation are reparameterized.
+# Segments bounded by group-level change points are skipped because their data use
+# group-specific widths. With reparam = FALSE, only the default segment-1 intercept
+# prior on the value at min(x) remains (see add_intercept_references()).
+add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
+  # Empty columns, filled by set_aux() for reparameterized parameters
+  aux_cols = c("aux_suffix", "aux_shift", "aux_width", "aux_derive")
+  table[aux_cols] = NA_character_
+  set_aux = function(name, suffix, shift = NA, width = NA, derive = shift) {
+    table[match(name, table$parameter), aux_cols] <<- list(suffix, shift, width, derive)
+  }
+
+  # Only default location-scale priors can be shifted and scaled exactly
+  is_reparam_prior = function(name) {
+    row = match(name, table$parameter)
+    call = parse_prior_call(table$value[row])
+    reparam && !is.na(row) && table$source[row] == "default" && !is.null(call) &&
+      call$name %in% c("dnorm", "dt") && !grepl("T(", table$value[row], fixed = TRUE)
+  }
+  # Terms without other variables (a model-matrix column of ones)
+  is_pure = vapply(predictors$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
+
+  # Helpers to write x-terms, e.g., "xE2_2 * (cp_2 - cp_1)^2"
+  power = function(x_factor) ifelse(x_factor == "x", "", sub("x", "", x_factor, fixed = TRUE))
+  width = function(k, x_factor) paste0("(cp_", k, " - cp_", k - 1, ")", power(x_factor))
+  x_terms_at = function(terms, at) paste0(terms$code_name, " * ", at, power(terms$x_factor), collapse = " + ")
+  K = nrow(cps) + 1
+
+  # Each dpar separately. AR/MA are not anchored at change points.
+  for (dpar in setdiff(unique(predictors$dpar), c("ar", "ma"))) {
+    own = predictors[predictors$dpar == dpar, ]
+    own_pure = is_pure[predictors$dpar == dpar]
+    # x-terms without other variables, in the segment that defines them
+    slopes = own[own$x_factor != "1" & own_pure & own$segment == own$definition_segment, ]
+
+    # Segment 1: the intercept as the value at a fixed point
+    intercept = own$code_name[own$segment == 1 & own$par_type == "Intercept"]
+    terms = slopes[slopes$segment == 1, ]
+    if (length(intercept) == 1 && nrow(terms) > 0 && is_reparam_prior(intercept)) {
+      x_max = max(context$data[[context$x_name]], na.rm = TRUE)
+      at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
+      set_aux(intercept, "mid", shift = paste0(x_terms_at(terms, at), " - (", x_terms_at(terms, "cp_0"), ")"), derive = x_terms_at(terms, at))
+    } else if (length(intercept) == 1 && !is.na(table$reference[match(intercept, table$parameter)])) {
+      # Otherwise (e.g., reparam = FALSE): only the prior placement on the value at min(x)
+      set_aux(intercept, "start", derive = table$reference[match(intercept, table$parameter)])
+    }
+
+    # Segments 2+ with x-terms
+    for (k in setdiff(unique(slopes$segment), 1)) {
+      # Skip segments bounded by group-level change points
+      if (any(!is.na(cps$group_col[cps$name %in% paste0("cp_", c(k - 1, k))])))
+        next
+      terms = slopes[slopes$segment == k, ]
+      terms = terms[order(nchar(power(terms$x_factor))), ]  # Lowest degree first
+      intercept = own$code_name[own$segment == k & own$par_type == "Intercept"]
+
+      # Disjoined segment: the intercept as the value at the segment end
+      if (length(intercept) == 1) {
+        if (is_reparam_prior(intercept))
+          set_aux(intercept, "end", shift = paste0(terms$code_name, " * ", width(k, terms$x_factor), collapse = " + "))
+        next
+      }
+
+      # Joined segment: the first x-term as the value at the segment end, others as their rise
+      start = get_value_at_cp(own, own_pure, k)
+      for (i in seq_len(nrow(terms))) {
+        if (!is_reparam_prior(terms$code_name[i]))
+          next
+        if (i == 1 && !is.null(start)) {
+          set_aux(terms$code_name[i], "end", shift = start, width = width(k, terms$x_factor[i]))
+        } else {
+          set_aux(terms$code_name[i], "rise", width = width(k, terms$x_factor[i]))
+        }
+      }
+    }
+  }
+  table
+}
+
+
+# JAGS expression for a dpar's value at cp_(k-1), where joined segment k starts:
+# the terms from earlier segments that are still included in segment k, with
+# x-terms at their full width. Segment 1 measures x from 0. NULL if it is not one
+# number, e.g., when other variables are included.
+get_value_at_cp = function(own, own_pure, k) {
+  # Terms from earlier segments that are still included in segment k
+  included = own$segment < k & (is.na(own$next_segment) | own$next_segment > k)
+  if (any(!own_pure[included]))
+    return(NULL)
+  rows = own[included, ]
+  if (nrow(rows) == 0)
+    return("0")
+
+  # Intercepts as-is; x-terms at their full width
+  width = ifelse(rows$segment == 1, "cp_1", paste0("(cp_", rows$segment, " - cp_", rows$segment - 1, ")"))
+  power = ifelse(rows$x_factor %in% c("1", "x"), "", sub("x", "", rows$x_factor, fixed = TRUE))
+  terms = ifelse(rows$x_factor == "1", rows$code_name, paste0(rows$code_name, " * ", width, power))
+  paste(terms, collapse = " + ")
+}
+
+
+# JAGS code for a parameter sampled via an auxiliary node (see add_reparams()).
+# `aux` is the parameter's row in the prior table.
+get_aux_prior_str = function(name, value, description, aux) {
+  # Prior on the auxiliary node: dist(location * width + shift, scale * width)
+  aux_name = paste0(name, "_", aux$aux_suffix, "_")
+  if (!is.na(aux$aux_shift) || !is.na(aux$aux_width)) {
+    call = parse_prior_call(value)
+    location = call$args[1]
+    if (!is.na(aux$aux_width)) {
+      location = if (location == "0") "0" else paste0(location, " * ", aux$aux_width)
+      call$args[2] = paste0(call$args[2], " * ", aux$aux_width)
+    }
+    if (!is.na(aux$aux_shift))
+      location = if (location == "0") aux$aux_shift else paste0(location, " + ", aux$aux_shift)
+    call$args[1] = location
+    value = paste0(call$name, "(", paste(call$args, collapse = ", "), ")")
+  }
+
+  # The parameter derived from the auxiliary node: (aux - derive) / width
+  derive = if (is.na(aux$aux_derive)) aux_name else paste0(aux_name, " - (", aux$aux_derive, ")")
+  if (!is.na(aux$aux_width))
+    derive = paste0(if (is.na(aux$aux_derive)) derive else paste0("(", derive, ")"), " / ", aux$aux_width)
+  # JAGS comment and code
+  sampled_as = c(
+    start = "",
+    mid = "; sampled as the value at the expected midpoint of segment 1",
+    end = "; sampled as the value at the segment end",
+    rise = "; sampled as the rise over the segment"
+  )
+  paste0(
+    "  ", aux_name, " ~ ", prior_to_jags(value), "  # ", description, sampled_as[[aux$aux_suffix]], "\n",
+    "  ", name, " = ", derive, "\n"
+  )
+}

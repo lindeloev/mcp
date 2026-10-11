@@ -51,8 +51,8 @@
 #' For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
 #' You can also explicitly set `cp_i = "dirichlet(alpha)"` with the same positive `alpha` for all
 #' change points to regularize spacing (`alpha > 1` penalizes change points from occurring close together,
-#' while `alpha < 1` favors clustering). Under the hood, this is parameterized as an exact sequential
-#' stick-breaking Beta chain for fast and robust sampling.
+#' while `alpha < 1` favors clustering). Under the hood, `dirichlet(1)` is sampled as sorted uniforms
+#' and other `alpha` as an exact sequential stick-breaking Beta chain for fast and robust sampling.
 #' [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
 #'
 #' @section Notes on priors:

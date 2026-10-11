@@ -234,7 +234,7 @@ text(0.5, 1.05, labels = "sum")
 par(mfrow = c(1, 1))
 ```
 
-Note on implementation: Under the hood, `mcp` parameterizes this using a sequential stick-breaking Beta chain ($z_j \sim \text{Beta}(1, N - j + 1)$, $\text{cp}_j = \text{cp}_{j-1} + z_j(\max(x) - \text{cp}_{j-1})$). This allows JAGS to sample the model much more efficiently.
+Note on implementation: Under the hood, `mcp` samples this as sorted uniform draws on the observed x-range, which JAGS samples efficiently. Other `dirichlet(alpha)` priors use a sequential stick-breaking Beta chain ($z_j \sim \text{Beta}(\alpha, (N - j + 1)\alpha)$, $\text{cp}_j = \text{cp}_{j-1} + z_j(\max(x) - \text{cp}_{j-1})$). See [From formulas to sampler code](../articles/implementation.html).
 
 The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)).
 

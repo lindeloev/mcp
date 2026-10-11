@@ -577,7 +577,7 @@ test_that("x-term powers are autoscaled by the sd of the power measured from min
 
 test_that("default segment-1 intercept priors are placed at min(x)", {
   data = data.frame(x = 101:130, y = 1:30 + 0.5 * (1:30 > 15))
-  fit = mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE)
+  fit = mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE, reparam = FALSE)
   expect_match(fit$jags_code, "Intercept_1_start_ ~ dnorm(", fixed = TRUE)
   expect_match(fit$jags_code, "Intercept_1 = Intercept_1_start_ - (x_1 * 101 + xE2_1 * 10201)", fixed = TRUE)
   expect_match(prior_summary(fit, verbose = TRUE)$description[1:3], "on the level at min(x)", fixed = TRUE, all = FALSE)
@@ -585,11 +585,11 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   # User-specified intercept priors stay on the intercept at x = 0
   user_fit = mcp(list(y ~ 1 + x), data, prior = list(Intercept_1 = "dnorm(0, 10)"), sample = FALSE)
   expect_match(user_fit$jags_code, "Intercept_1 ~ dnorm(", fixed = TRUE)
-  expect_false(grepl("_start_", user_fit$jags_code))
+  expect_false(grepl("Intercept_1_", user_fit$jags_code))
 
   # Nothing to move when x starts at zero or segment 1 has no x-terms
-  expect_false(grepl("_start_", mcp(list(y ~ 1 + x), transform(data, x = x - 101), sample = FALSE)$jags_code))
-  expect_false(grepl("_start_", mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE)$jags_code))
+  expect_false(grepl("_start_", mcp(list(y ~ 1 + x), transform(data, x = x - 101), sample = FALSE, reparam = FALSE)$jags_code))
+  expect_false(grepl("_start_", mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE, reparam = FALSE)$jags_code))
 })
 
 
@@ -614,36 +614,50 @@ test_that("a constant response uses unit scale for sd(y)-based default priors", 
 })
 
 
-test_that("default priors keep segment lines in place when change points move", {
+test_that("reparameterizations keep segment lines in place when change points move", {
   data = data.frame(x = 1:100, y = rnorm(100))
-  fit = mcp(list(y ~ 1 + x, ~ 1 + x, ~ 0 + x + I(x^2)), data, par_x = "x", sample = FALSE)
-  # Disjoined segment: intercept sampled as the level at the segment end
+  model = list(y ~ 1 + x, ~ 1 + x, ~ 0 + x + I(x^2))
+  fit = mcp(model, data, par_x = "x", sample = FALSE)
+  # Segment 1: intercept sampled as the value at the expected midpoint of segment 1, 1 + 99 / 6
+  expect_match(fit$jags_code, "Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))", fixed = TRUE)
+  # Disjoined segment: intercept sampled as the value at the segment end
   expect_match(fit$jags_code, "Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))", fixed = TRUE)
-  # Joined segment: slopes sampled as the rise over the segment
-  expect_match(fit$jags_code, "x_3 = x_3_rise_ / (cp_3 - cp_2)", fixed = TRUE)
+  # Joined segment: first x-term sampled as the value at the segment end, others as the rise
+  expect_match(fit$jags_code, "x_3 = (x_3_end_ - (Intercept_2 + x_2 * (cp_2 - cp_1))) / (cp_3 - cp_2)", fixed = TRUE)
   expect_match(fit$jags_code, "xE2_3 = xE2_3_rise_ / (cp_3 - cp_2)^2", fixed = TRUE)
-  # Segment 1 is unchanged
-  expect_match(fit$jags_code, "\n  x_1 ~ dnorm")
+  # Distributional parameters follow the same rules
+  sigma_fit = mcp(list(y ~ 1, ~ 0 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
+  expect_match(sigma_fit$jags_code, "sigma_2 = sigma_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
+
+  # The plain model
+  plain_fit = mcp(model, data, par_x = "x", sample = FALSE, reparam = FALSE)
+  expect_false(grepl("_mid_|_end_|_rise_", plain_fit$jags_code))
+  expect_match(plain_fit$jags_code, "\n  x_3 ~ dnorm")
+  expect_equal(plain_fit$prior, fit$prior)
 
   # Not for user-specified priors or segments bounded by group-level change points
   user_fit = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE)
-  expect_false(grepl("_rise_", user_fit$jags_code))
+  expect_false(grepl("_end_|_rise_", user_fit$jags_code))
   data$id = rep(1:5, 20)
   group_fit = mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 0 + x), data, par_x = "x", sample = FALSE)
-  expect_false(grepl("_rise_", group_fit$jags_code))
+  expect_false(grepl("_end_|_rise_", group_fit$jags_code))
 })
 
 
-test_that("segment anchors imply the default priors", {
-  data = data.frame(x = 1:100, y = rnorm(100))
-  fit = suppressWarnings(mcp(
-    list(y ~ 1, ~ 0 + x, ~ 1 + x), data, par_x = "x", sample = "prior",
-    chains = 1, iter = 4000, warmup = 100, seed = 42, quiet = TRUE
-  ))
-  draws = as_draws_df(fit, prior = TRUE)
-  for (name in c("x_2", "Intercept_3")) {
-    prior = as.numeric(parse_prior_call(fit$prior[[name]])$args)
-    expect_equal(mean(draws[[name]]), prior[1], tolerance = 0.1 * prior[2], label = name)
-    expect_equal(stats::sd(draws[[name]]), prior[2], tolerance = 0.1, label = name)
+test_that("reparameterizations imply the same priors", {
+  data = data.frame(x = 101:200, y = rnorm(100))
+  model = list(y ~ 1 + x, ~ 0 + x, ~ 1 + x + sigma(1 + x))
+  get_quantiles = function(reparam) {
+    fit = suppressWarnings(mcp(
+      model, data, par_x = "x", sample = "prior", reparam = reparam,
+      chains = 2, iter = 5000, warmup = 200, seed = 42, quiet = TRUE
+    ))
+    draws = as_draws_df(fit, prior = TRUE)
+    sapply(mcp_pars(fit)$name, function(name) stats::quantile(draws[[name]], c(0.1, 0.5, 0.9)))
   }
+  q_reparam = get_quantiles(TRUE)
+  q_plain = get_quantiles(FALSE)
+  spread = q_plain[3, ] - q_plain[1, ]
+  for (name in colnames(q_plain))
+    expect_true(all(abs(q_reparam[, name] - q_plain[, name]) < 0.1 * spread[name]), label = name)
 })

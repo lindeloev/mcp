@@ -58,6 +58,8 @@ fit$jags_code
 
 Look at the section under the comment `# Formula for mu` which is the (automatically generated) model that was discussed above. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value of `x` is, of course, always true).
 
+The section under `# Change points` implements the default `dirichlet(1)` prior on the change points, which is the distribution of sorted uniform draws (uniform order statistics). `mcp` samples uniform draws on the unit interval, `cp_unit_`, sorts them, and scales them to the observed range of $x$. Moving one change point therefore leaves the others in place. The unit interval suits JAGS's slice sampler, whose step size starts at 1. Other `dirichlet(alpha)` priors are sampled as a sequential stick-breaking Beta chain (`cp_1_frac_` etc.).
+
 
 # Modeling changes in slope
 
@@ -110,42 +112,88 @@ Let us see this in action:
 
 ```{r}
 model = list(y ~ 0 + x, ~ 0 + x)
-fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
+fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE, reparam = FALSE)
 fit$jags_code
 ```
+
+We used `reparam = FALSE` to see the plain model. By default, `mcp` samples some parameters on other scales, which we will return to [below](#reparameterizations).
 
 Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see this exact indicator formulation in action: `x_local_1_[i_]` and `x_local_2_[i_]` correspond to $X_{1,i}$ and $X_{2,i}$, and each segment's slope is multiplied by its activation indicator (e.g., `(x[i_] >= cp_1)`).
 
 You will find the exact same formula for `y_ = ...` if you do `print(fit$simulate)`, though this function contains a whole lot of other stuff too.
 
 
-## Implementation: Improve sampling efficiency by keeping segment ends in place when change points move
+# Reparameterizations
 
-In `fit$jags_code`, you may see unintuitive formulations like the following:
+By default (`mcp(..., reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model (`reparam = FALSE`). Only the sampling becomes faster and converges more reliably. Here are excerpts of `fit$jags_code` for `list(y ~ 1 + x, ~ 0 + x, ~ 1 + x)` with `x = 1:100`, first with `reparam = FALSE`:
 
 ```{r, eval = FALSE}
-# Joined segments: slope sampled as the rise over the segment
-x_2_rise_ ~ dnorm(0, 1/(0.2*(cp_2-cp_1))^2)
-x_2 = x_2_rise_ / (cp_2 - cp_1)
-
-# Disjoined segments: intercept sampled as the level at the segment end
-Intercept_3_end_ ~ dnorm(0.6 + x_3 * (cp_3 - cp_2), 1/(3.5)^2)
-Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
+Intercept_1_start_ ~ dnorm(0, 1/(2.5)^2)  # Prior on the value at min(x) = 1
+Intercept_1 = Intercept_1_start_ - (x_1 * 1)
+x_1 ~ dnorm(0, 1/(0.087)^2)
+x_2 ~ dnorm(0, 1/(0.087)^2)
+Intercept_3 ~ dnorm(0, 1/(2.5)^2)
+x_3 ~ dnorm(0, 1/(0.087)^2)
 ```
 
-Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. If it holds a slope $\beta_{k,1}$ fixed while it updates a change point $\tau_k$, the level at the end of segment $k$ moves by $\beta_{k,1} \Delta\tau$, and so do all later joined segments. Such moves fit the data badly and are mostly rejected, so the change point and the slope must creep along together, which mixes slowly.
+And with `reparam = TRUE`:
 
-`mcp` solves this by reparameterizing the model, sampling the above quantities whenever a prior is an mcp-default normal prior. With this, moving a change point leaves the levels at the ends of each segment in place.
+```{r, eval = FALSE}
+# Segment 1: intercept sampled as the value at x = 17.5
+Intercept_1_mid_ ~ dnorm(0 + x_1 * (17.5) - (x_1 * cp_0), 1/(2.5)^2)
+Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))
+x_1 ~ dnorm(0, 1/(0.087)^2)
 
-This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the naive formulation. If the default prior is $\beta_{k,1} \sim \text{Normal}(0, s)$, the rise $r_k = \beta_{k,1} w_k$ over the segment width $w_k = \tau_k - \tau_{k-1}$ has standard deviation $s w_k$. So `mcp` gives the rise the prior $r_k \sim \text{Normal}(0, s w_k)$, which keeps the implied slope $r_k / w_k$ at $\text{Normal}(0, s)$. Likewise, the level at the segment end, $e_k = \beta_{k,0} + \beta_{k,1} w_k \sim \text{Normal}(m + \beta_{k,1} w_k, s)$, is just the intercept's default $\text{Normal}(m, s)$ prior shifted by $\beta_{k,1} w_k$. We can verify this for widths spanning two orders of magnitude:
+# Joined segment: slope sampled as the value at the segment end
+x_2_end_ ~ dnorm(Intercept_1 + x_1 * cp_1, 1/(0.087*(cp_2-cp_1))^2)
+x_2 = (x_2_end_ - (Intercept_1 + x_1 * cp_1)) / (cp_2 - cp_1)
+
+# Disjoined segment: intercept sampled as the value at the segment end
+Intercept_3_end_ ~ dnorm(0 + x_3 * (cp_3 - cp_2), 1/(2.5)^2)
+Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
+x_3 ~ dnorm(0, 1/(0.087)^2)
+```
+
+
+## Why this is easier for the sampler
+
+Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. In the plain model, an intercept is the value at the start of its segment, and a joined segment starts where the previous segment ended. So if JAGS moves a change point $\tau_k$ while holding the slopes fixed, the lines of segment $k+1$, and of all later joined segments, shift up or down. Such moves fit the data badly and are mostly rejected, so the change points and the coefficients must creep along together, which mixes slowly.
+
+With `reparam = TRUE`, `mcp` instead samples quantities that stay in place when a change point moves:
+
+- **Joined segments:** The value at the segment end, $e_k$. Moving $\tau_{k-1}$ now pivots segment $k$ around its end, so later segments stay in place.
+- **Disjoined segments:** The value at the segment end, $e_k$. Then segment $k$'s line, $e_k + \beta_{k,1}(x - \tau_k)$, does not depend on $\tau_{k-1}$ at all.
+- **Segment 1:** The value at the fixed point $c = \min(x) + (\max(x) - \min(x)) / (2K)$, which is the midpoint of segment 1 under the `dirichlet(1)` prior. Like centering $x$ in ordinary regression, this makes the intercept and slope less correlated.
+
+Further x-terms in joined segments (e.g., `I(x^2)`) are sampled as their rise over the segment, $\beta w_k^2$. The same rules apply to distributional parameters such as `sigma(1 + x)`.
+
+
+## Why this is the same model
+
+All of the above follow from one fact: if a coefficient $\beta$ has a location-scale prior, e.g., $\beta \sim \text{Normal}(m, s)$, then for any $a$ and $w > 0$,
+
+$$u = a + w \beta \quad \sim \quad \text{Normal}(a + w m, \; w s).$$
+
+So JAGS can sample $u$ with this prior and derive $\beta = (u - a) / w$, and $\beta$ has exactly its original prior. This holds when $a$ and $w$ depend on other parameters, such as change points and other coefficients, because the prior on $\beta$ given those parameters is unchanged. Here is what `mcp` samples, with segment widths $w_k = \tau_k - \tau_{k-1}$ and $v_{k-1}$ being the value where segment $k$ starts:
+
+| Coefficient | Sampled $u$ | $a$ | $w$ |
+|---|---|---|---|
+| Segment 1 intercept $\beta_{1,0}$ (prior on the value at $\min(x)$) | Value at $c$ | $\beta_{1,1}(c - \min(x))$ | $1$ |
+| Joined slope $\beta_{k,1}$ | Value at segment end $e_k = v_{k-1} + \beta_{k,1} w_k$ | $v_{k-1}$ | $w_k$ |
+| Joined `I(x^2)` term $\beta_{k,2}$ | Rise $\beta_{k,2} w_k^2$ | $0$ | $w_k^2$ |
+| Disjoined intercept $\beta_{k,0}$ | Value at segment end $e_k = \beta_{k,0} + \beta_{k,1} w_k$ | $\beta_{k,1} w_k$ | $1$ |
+
+Let us verify this for the joined slope, where the sampled value at the segment end depends on both the starting value and the segment width:
 
 ```{r}
 s = 0.5  # Prior SD of the slope
-width = runif(100000, 0.5, 50)  # Any segment widths
-rise = rnorm(100000, mean = 0, sd = s * width)  # Prior on the rise
-slope = rise / width  # Derived slope
+start = rnorm(100000, 10, 3)  # Value where the segment starts (set by earlier segments)
+width = runif(100000, 0.5, 50)  # Segment widths (set by the change points)
+end = rnorm(100000, mean = start, sd = s * width)  # Sampled value at the segment end
+slope = (end - start) / width  # Derived slope
 
-c(mean = mean(slope), sd = sd(slope))  # Normal(0, 0.5), as for the naive slope
+c(mean = mean(slope), sd = sd(slope))  # Normal(0, 0.5), as for the plain slope
+c(cor(slope, start), cor(slope, width))  # ... regardless of start and width
 ```
 
-User-specified priors are sampled as written.
+`mcp` only reparameterizes its default `dnorm()` and `dt()` priors. User-specified priors are sampled as written, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.

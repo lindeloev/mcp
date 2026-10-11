@@ -32,7 +32,7 @@ validate_prior_v1 = function(prior) {
 }
 
 # Get priors for all parameters in the model
-get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data, design_specs = list()) {
+get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
   checkmate::assert_class(family, "mcpfamily")
   context = prior_context(data, segments, design_specs)
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
@@ -48,7 +48,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   all_names = specs$parameter
   table = compile_prior_specs(specs, all_names, context)
   table = add_intercept_references(table, predictors, context)
-  table = add_segment_anchors(table, predictors, cps)
+  table = add_reparams(table, predictors, cps, context, reparam)
   resolved = stats::setNames(as.list(table$value), table$parameter)
   attr(resolved, "prior_table") = table
   resolved

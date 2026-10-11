@@ -51,6 +51,12 @@
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
 #'   framework. R-side simulation and prediction methods continue to use the
 #'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+#' @param reparam Logical. Whether to enable reparameterization for faster mixing. Ignored
+#'   when `jags_code` is supplied. Read more in
+#'   [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
+#'   * `TRUE` (default) This changes only `fit$jags_code` and sampling efficiency, not the 
+#'     model, the priors, or the posterior. 
+#'   * `FALSE` runs the plain model. This mostly serve the pedagogical purpose of transparency.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
 #'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
@@ -174,6 +180,7 @@ mcp = function(model,
                adapt = lifecycle::deprecated(),
                inits = NULL,
                jags_code = NULL,
+               reparam = TRUE,
                seed = NULL,
                diagnostics = list(),
                quiet = FALSE) {
@@ -277,6 +284,7 @@ mcp = function(model,
   if (missing(quiet)) {
     quiet = isTRUE(getOption("mcp.quiet", FALSE)) || identical(Sys.getenv("IN_PKGDOWN"), "true")
   }
+  checkmate::assert_flag(reparam)
   checkmate::assert_flag(quiet)
 
   # jags_code
@@ -330,7 +338,7 @@ mcp = function(model,
   }
 
   # Make prior
-  prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs)
+  prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
   prior_table = attr(prior, "prior_table")
   attr(prior, "prior_table") = NULL
   assert_fixed_dpars(prior_table, predictor_definitions, family)
