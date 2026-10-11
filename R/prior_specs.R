@@ -50,7 +50,7 @@ default_cp_specs = function(cps, context) {
     group_name = cps$group_name[j]
     specs[[sd_name]] = tibble::tibble(
       parameter = sd_name,
-      code = "dnorm(0, 2 * (max(.x) - min(.x)) / n_cp()) T(0, )",
+      code = "dnorm(0, (max(.x) - min(.x)) / (2 * (n_cp() + 1))) T(0, )",
       description = "Group-level change-point SD before truncation",
       source = "default"
     )

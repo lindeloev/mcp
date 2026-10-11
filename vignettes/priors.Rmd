@@ -21,7 +21,7 @@ set.seed(42)
 
 *NOTE: the JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.*
 
-`mcp`'s default priors use established defaults where possible: [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html) for intercepts and coefficients, and [`brms`](https://paulbuerkner.com/brms/reference/set_prior.html) for scale parameters such as `sigma` and group-level SDs. Change points and autocorrelation have `mcp`-specific defaults, and a few other deviations are [documented here](../articles/default_priors.html#deviations).
+`mcp`'s default priors use established defaults where possible: [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html) for intercepts and coefficients, and [`brms`](https://paulbuerkner.com/brms/reference/set_prior.html) for scale parameters such as `sigma` and group-level SDs. Change points (including their group-level SDs) and autocorrelation have `mcp`-specific defaults, and a few other deviations are [documented here](../articles/default_priors.html#deviations).
 
 # Setting a prior
 
@@ -237,6 +237,8 @@ par(mfrow = c(1, 1))
 Note on implementation: Under the hood, `mcp` samples this as sorted uniform draws on the observed x-range, which JAGS samples efficiently. Other `dirichlet(alpha)` priors use a sequential stick-breaking Beta chain ($z_j \sim \text{Beta}(\alpha, (N - j + 1)\alpha)$, $\text{cp}_j = \text{cp}_{j-1} + z_j(\max(x) - \text{cp}_{j-1})$). See [From formulas to sampler code](../articles/implementation.html).
 
 The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) places a joint prior on positive segment spacings that sum to the observed x-range. This construction also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)).
+
+For group-level change points, e.g., `cp((1 | id))`, the SD `cp_1_id_sd` has a half-normal default prior with a scale of a quarter of the expected interval in which each group's change point can vary. With one change point, this is `dnorm(0, (max(x) - min(x)) / 4) T(0, )`. See [default priors on group-level change points](../articles/default_priors.html#group-level-change-points) for the justification.
 
 ## Regularizing change points: `dirichlet(alpha)`
 

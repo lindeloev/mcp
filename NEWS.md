@@ -94,6 +94,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Group-level change points `(1|id)` now use a standard hierarchical normal model sampled efficiently through their absolute locations. This makes `cp_i_sd` the SD of the normal distribution before truncation rather than the realized sample SD.
 
+  - The default prior on group-level change-point SDs (`cp_i_id_sd`) is now `dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )`, i.e., a quarter of the expected interval in which each group's change point can vary. Under the old prior, group-level change points were barely pooled, and `cp_i` and `cp_i_id_sd` were weakly identified. The new prior is approximately uniform on the *realized* SD of the group-level change points, which differs from `cp_i_id_sd`, the SD *before truncation*. See [default priors](https://lindeloev.github.io/mcp/articles/default_priors.html#group-level-change-points) for the justification.
+
   - AR and MA intercepts now have zero-centered, regularizing `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform priors. Their categorical contrasts and numeric slopes now use modest normal priors instead of heavy-tailed Student-t priors. Coefficients remain direct and are not jointly constrained to stationary or invertible regions.
 
   - Corrected the JAGS translation of prior scales. `ddexp()` and `dlogis()` now convert their conventional scale to inverse scale rather than inverse variance; The exported `sd_to_prec()` helper is soft-deprecated because prior translation is now an internal, sampler-specific step.
