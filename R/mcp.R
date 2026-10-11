@@ -382,7 +382,6 @@ mcp = function(model,
     segments, predictor_occurrences, group_occurrences, par_x, family,
     design_specs = predictor_tables$design_specs
   )
-  formula_r = get_formula_r(formula_jags, predictor_definitions, group_definitions, cps, par_x)
 
   # Make jags code if it is not provided by the user
   if (!custom_jags_code) {
@@ -509,7 +508,6 @@ mcp = function(model,
     .internal = list(
       model_tables = model_tables,
       formula_jags = formula_jags,
-      formula_r = formula_r,
       prior_table = prior_table,
       prior_context = prior_context,
       prior_format = "jags_string_v1",

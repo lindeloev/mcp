@@ -142,7 +142,9 @@ get_sim_pars = function(cps, predictors, group_effects) {
 
 #' Evaluate model and return a list of dpars
 #'
-#' Evaluates the model in a separate environment to prevent name conflicts.
+#' Evaluates the R translation of `fit$.internal$formula_jags`. Parameters and
+#' data are looked up in `args`, while model nodes are assigned in a separate
+#' environment, so neither can overwrite the other.
 #'
 #' @param fit An `mcpfit` object.
 #' @param args args from `simulate_vectorized`
@@ -150,15 +152,14 @@ get_sim_pars = function(cps, predictors, group_effects) {
 #' @return `data.frame` with one column per dpar
 #' @noRd
 evaluate_model_dpars = function(fit, args, pred_pars) {
-  # Assemble design columns in model-matrix order, regardless of argument order.
-  rhs_matrix_ = do.call(cbind, args[pred_pars])
-
-  cp_0 = -Inf
-  assign(paste0("cp_", length(fit$model)), Inf)  # e.g., cp_3 = Inf
+  inputs = list2env(args, parent = topenv())
+  inputs$rhs_matrix_ = do.call(cbind, args[pred_pars])  # Design columns in model-matrix order
+  inputs$cp_0 = -Inf  # Outer segments extend beyond the data in R
+  assign(paste0("cp_", length(fit$model)), Inf, envir = inputs)  # e.g., cp_3 = Inf
 
   # Evaluate model in environment
-  out = new.env()
-  with(out, eval(str2expression(fit$.internal$formula_r)))
+  out = new.env(parent = inputs)
+  eval(str2expression(get_formula_r(fit$.internal$formula_jags)), envir = out)
 
   out %>%
     as.list() %>%

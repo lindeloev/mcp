@@ -134,79 +134,22 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
 
 #' Convert for-looped JAGS code to vectorized R code
 #'
+#' The R code is evaluated where parameters and data are variables with one
+#' value per row (see `evaluate_model_dpars()`), so only the JAGS row indexing
+#' needs translation.
+#'
 #' @param formula_jags Character, often residing in `fit$.internal$formula_jags`.
-#' @param predictors Output of `get_predictors()`.
-#' @param group_effects Output of `get_group_effects()`.
-#' @param cps Output of `get_segment_tables()`.
-#' @param par_x Name of the change-point predictor.
 #' @return Character
 #' @noRd
-get_formula_r = function(formula_jags, predictors, group_effects, cps, par_x) {
-  sim_pars = get_sim_pars(cps, predictors, group_effects)
-  predictor_pars = predictors$code_name
-  predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
-  group_pars = predictor_group_effects$name
-  cp_pars = setdiff(sim_pars, c(predictor_pars, group_pars))
-
-  # Extract offset variable names present in formula_jags
-  offset_nodes = unique(stringr::str_extract_all(formula_jags, "offset_[A-Za-z0-9_]+_")[[1]])
-
-  # Replacements that turns rowwise JAGS code into vectorized R code
-  replace_args = c(
-    # Group-level predictor coefficients
-    if (length(group_pars) > 0) stats::setNames(
-        paste0("args$", group_pars),
-        paste0(group_pars, "[", predictor_group_effects$group_col, "]")
-      ),
-
-    # Offset nodes
-    if (length(offset_nodes) > 0) stats::setNames(
-      paste0("args$", offset_nodes),
-      offset_nodes
-    ),
-
-    # Predictor part
-    stats::setNames(paste0(", args$", sim_pars), paste0(", ", sim_pars)),
-    if (length(predictor_pars) > 0) stats::setNames(
-        paste0("args$", predictor_pars, ", "),
-        paste0(predictor_pars, ", ")
-      ),
-    stats::setNames("cbind(args$", "cbind("),
-    stats::setNames("args$", "args$args$"),  # Fix double-inserting args$ above
-
-    # Change points
-    stats::setNames(paste0("args$", par_x, " >="), paste0(par_x, " >=")),
-    stats::setNames(paste0("args$", par_x, " <"), paste0(par_x, " <")),
-
-    # General
-    stats::setNames("pmin(args$", "pmin(")
-  )
-  if (length(cp_pars) > 0) {
-    replace_args = c(
-      replace_args,
-      stats::setNames(paste0(" (args$", cp_pars, " + "), paste0(" (", cp_pars, " + ")),  # group-level change point
-      stats::setNames(paste0(" + args$", cp_pars, ")"), paste0(" + ", cp_pars, ")")),  # group-level change point
-      stats::setNames(paste0(">= args$", cp_pars), paste0(">= ", cp_pars)),
-      stats::setNames(paste0("< args$", cp_pars), paste0("< ", cp_pars)),
-      stats::setNames(paste0(") - args$", cp_pars), paste0(") - ", cp_pars))
-    )
-  }
-
+get_formula_r = function(formula_jags) {
   formula_r = formula_jags %>%
     stringr::str_remove_all("\\[i_\\]") %>%  # Vectorized
-    stringr::str_remove_all("CP_[0-9]+_INDEX")  # Only used for JAGS code; not in R.
+    stringr::str_remove_all("CP_[0-9]+_INDEX") %>%  # Group-level change points are already one value per row
+    stringr::str_replace_all("([A-Za-z0-9_.]+)\\[[A-Za-z0-9_.]+\\]", "\\1")  # Ditto for group-level coefficients, e.g., x_1_id[id]
 
-  fixed_replace = c(
-    stats::setNames(
-      c("[,", "pmin(", "pmax(", "), drop = FALSE],", "], cbind("),
-      c("[i_,", "min(", "max(", ")],", "], c(")
-    ),
-    replace_args
-  )
-
-  for (pattern in names(fixed_replace)) {
+  fixed_replace = c("[i_," = "[,", "min(" = "pmin(", "max(" = "pmax(", ")]," = "), drop = FALSE],", "], c(" = "], cbind(")
+  for (pattern in names(fixed_replace))
     formula_r = gsub(pattern, fixed_replace[[pattern]], formula_r, fixed = TRUE)
-  }
 
   class(formula_r) = c("mcptext", "character")  # Nicer printing
   formula_r

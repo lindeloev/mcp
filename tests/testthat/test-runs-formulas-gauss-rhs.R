@@ -302,6 +302,18 @@ test_that("x-free interactions are evaluated directly at zero", {
   expect_equal(as.numeric(fitted), data$x * data$z)
 })
 
+test_that("parameter names that end in other parameter names are evaluated correctly", {
+  # gBx_1 ends in x_1
+  data = data.frame(x = c(1, 2, 3, 4, 5, 6), g = c("A", "B", "C", "A", "B", "C"), y = 0)
+  fit = mcp(list(y ~ 1 + g * x), data, par_x = "x", sample = FALSE)
+  fitted = fit$simulate(
+    fit, data, Intercept_1 = 1, gB_1 = 2, gC_1 = 3, x_1 = 10, gBx_1 = 20, gCx_1 = 30,
+    sigma_1 = 1, .type = "fitted"
+  )
+  slope = c(A = 10, B = 30, C = 40)[data$g]
+  expect_equal(as.numeric(fitted), c(A = 1, B = 3, C = 4)[data$g] + slope * data$x, ignore_attr = TRUE)
+})
+
 test_that("factor punctuation produces safe parameter names", {
   data = data.frame(
     x = 1:4,
