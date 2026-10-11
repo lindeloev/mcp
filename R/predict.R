@@ -798,7 +798,12 @@ resolve_re_formula = function(re.form, re_formula) {
 
 #' @rdname execute-mcp-model
 #' @export
-log_lik = function(object, ...) UseMethod("log_lik")
+log_lik = function(object, ...) {
+  # If mcp masks rstantools::log_lik(), forward e.g. brmsfit objects to it
+  if (!inherits(object, "mcpfit") && isNamespaceLoaded("rstantools"))
+    return(rstantools::log_lik(object, ...))
+  UseMethod("log_lik")
+}
 
 #' @aliases log_lik log_lik.mcpfit
 #' @describeIn execute-mcp-model Pointwise log-likelihood

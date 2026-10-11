@@ -215,7 +215,7 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'
 #' @aliases hypothesis hypothesis.mcpfit
 #' @inheritParams summary.mcpfit
-#' @param fit An \code{\link{mcpfit}} object.
+#' @param x An \code{\link{mcpfit}} object.
 #' @param hypotheses String representation of a logical test involving model parameters.
 #'   Takes R code that evaluates to TRUE or FALSE in a vectorized way.
 #'
@@ -293,14 +293,20 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export
-hypothesis = function(fit, ...) UseMethod("hypothesis")
+hypothesis = function(x, ...) {
+  # If mcp masks brms::hypothesis(), forward e.g. brmsfit objects to it
+  if (!inherits(x, "mcpfit") && isNamespaceLoaded("brms"))
+    return(brms::hypothesis(x, ...))
+  UseMethod("hypothesis")
+}
 
 
 #' @rdname hypothesis
 #' @export
-hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) {
+#' @exportS3Method brms::hypothesis
+hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
   rlang::check_dots_empty()
-  checkmate::assert_class(fit, "mcpfit")
+  fit = x  # Standard name in mcp
   checkmate::assert_character(hypotheses)
   legacy_parameter_names(hypotheses, "hypothesis()")
   checkmate::assert_number(width, lower = 0, upper = 1)

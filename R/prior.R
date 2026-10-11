@@ -64,8 +64,12 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #' (e.g. `min(x)` or `max(x)`) may be retained in symbolic form in compact output,
 #' while `verbose = TRUE` displays the underlying rule, description, source, and kind.
 #'
-#' @param fit An `mcpfit` object.
+#' `prior_summary()` shares its generic with \pkg{rstantools} (used by `brms` and `rstanarm`), so it
+#' works for all of these models regardless of package load order.
+#'
+#' @param object An `mcpfit` object.
 #' @param verbose Logical. Include rule, description, source, and kind.
+#' @param ... Must be empty. Reserved for future use.
 #' @return A tibble with one row per model parameter, ordered and labeled
 #'   the same way as `summary()`: change points first, then `mu`, then the
 #'   other distributional parameters, then `ar`/`ma` components - each with
@@ -75,8 +79,20 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #' @examples
 #' prior_summary(demo_fit)  # Show the effective priors and bounds
 #' prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
-prior_summary = function(fit, verbose = FALSE) {
-  checkmate::assert_class(fit, "mcpfit")
+prior_summary = function(object, ...) {
+  # If mcp masks rstantools::prior_summary(), forward e.g. brmsfit objects to it
+  if (!inherits(object, "mcpfit") && isNamespaceLoaded("rstantools"))
+    return(rstantools::prior_summary(object, ...))
+  UseMethod("prior_summary")
+}
+
+
+#' @rdname prior_summary
+#' @export
+#' @exportS3Method rstantools::prior_summary
+prior_summary.mcpfit = function(object, verbose = FALSE, ...) {
+  rlang::check_dots_empty()
+  fit = object  # Standard name in mcp
   checkmate::assert_flag(verbose)
   table = fit$.internal$prior_table
 

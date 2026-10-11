@@ -817,3 +817,18 @@ test_that("draw-dependent methods require explicit prior selection", {
   expect_no_error(capture.output(print(fit)))
 })
 
+
+
+test_that("generics shared with brms and rstantools dispatch both ways", {
+  skip_if_not_installed("brms")
+  loadNamespace("brms")
+
+  # Their generics find mcp's methods
+  expect_identical(brms::hypothesis(demo_fit, "cp_1 > 30"), hypothesis(demo_fit, "cp_1 > 30"))
+  expect_identical(rstantools::prior_summary(demo_fit), prior_summary(demo_fit))
+  expect_identical(rstantools::log_lik(demo_fit), log_lik(demo_fit))
+
+  # mcp's generics forward other classes, reaching brms's default method
+  not_mcpfit = data.frame(a = 1:3)
+  expect_identical(hypothesis(not_mcpfit, "a > 0"), brms::hypothesis(not_mcpfit, "a > 0"))
+})
