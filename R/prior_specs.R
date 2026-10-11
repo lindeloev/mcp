@@ -242,8 +242,9 @@ truncate_lower_prior = function(prior_value, lower, name = NULL) {
   parts = split_prior_truncation(prior_value)
   call = parse_prior_call(parts$distribution)
 
-  # Only stochastic distributions without existing truncation need bounding
-  if (is.null(call) || !grepl("^d[A-Za-z]", call$name) || !is.null(parts$truncation))
+  # Only stochastic distributions without existing truncation need bounding.
+  # dinvgamma() is positive and written as a transformed dgamma(), which cannot take T().
+  if (is.null(call) || !grepl("^d[A-Za-z]", call$name) || !is.null(parts$truncation) || call$name == "dinvgamma")
     return(prior_value)
 
   # dunif cannot take T() in JAGS; bound through its lower parameter instead

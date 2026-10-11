@@ -92,7 +92,7 @@ test_that("negative-binomial R evaluation matches stats", {
     data,
     Intercept_1 = log(mu),
     x_1 = 0,
-    shape_1 = log(shape)
+    shape_1 = shape
   )
 
   predictors = add_rhs_predictors(data, fit)
@@ -102,7 +102,7 @@ test_that("negative-binomial R evaluation matches stats", {
     !!!predictors,
     Intercept_1 = rep(log(mu), nrow(data)),
     x_1 = rep(0, nrow(data)),
-    shape_1 = rep(log(shape), nrow(data)),
+    shape_1 = rep(shape, nrow(data)),
     .type = "loglik"
   )
   expect_equal(
@@ -122,8 +122,15 @@ test_that("negative-binomial exposes mean-shape metadata and defaults", {
   fit = mcp(list(y ~ 1 + x), data, family = negbinomial(), sample = FALSE)
 
   expect_equal(fit$family$dpars, c("mu", "shape"))
-  expect_equal(fit$family$links, c(mu = "log", shape = "log"))
-  expect_equal(fit$prior$shape_1, "dloginvgamma(0.4, 0.3)")
+  expect_equal(fit$family$links, c(mu = "log", shape = "identity"))
+  expect_equal(fit$prior$shape_1, "dinvgamma(0.4, 0.3)")
+  expect_match(fit$jags_code, "shape_1 = 1 / shape_1_inverse", fixed = TRUE)
+
+  # User priors on the constant shape are bounded to its positive support
+  fit_user = mcp(list(y ~ 1 + x), data, family = negbinomial(), prior = list(shape_1 = "dnorm(10, 2)"), sample = FALSE)
+  expect_equal(fit_user$prior$shape_1, "dnorm(10, 2) T(0, )")
+  fit_user = mcp(list(y ~ 1 + x), data, family = negbinomial(), prior = list(shape_1 = "dinvgamma(1, 2)"), sample = FALSE)
+  expect_equal(fit_user$prior$shape_1, "dinvgamma(1, 2)")
 })
 
 
@@ -136,6 +143,7 @@ test_that("modeled shape uses link-scale coefficient priors", {
     sample = FALSE
   )
 
+  expect_equal(fit$family$links, c(mu = "log", shape = "log"))
   expect_equal(fit$prior$shape_1, "dnorm(0, 2.5)")
   expect_equal(
     fit$prior$shape_x_1,

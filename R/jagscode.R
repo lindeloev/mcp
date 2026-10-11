@@ -259,21 +259,20 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
   if (is.null(kind))
     kind = prior_kind(value, names(prior))
 
-  # JAGS does not support dinvgamma or dloginvgamma. Write it manually.
-  # If inverse_shape ~ Gamma(a, b), then
-  # shape = exp(-log(inverse_shape)) ~ InvGamma(a, b).
-  if (stringr::str_detect(value, "^dloginvgamma\\(")) {
+  # JAGS does not support dinvgamma. Write it manually.
+  # If inverse_shape ~ Gamma(a, b), then shape = 1 / inverse_shape ~ InvGamma(a, b).
+  if (stringr::str_detect(value, "^dinvgamma\\(")) {
     if (!is.null(group_col))
-      stop("dloginvgamma() is currently only supported for population-level parameters.")
+      stop("dinvgamma() is currently only supported for population-level parameters.")
 
     call = parse_prior_call(value)
-    if (is.null(call) || call$name != "dloginvgamma" || length(call$args) != 2)
-      stop("Expected dloginvgamma(shape, scale). Got '", value, "'.")
+    if (is.null(call) || call$name != "dinvgamma" || length(call$args) != 2)
+      stop("Expected dinvgamma(shape, scale) without truncation. Got '", value, "'.")
 
     inverse_name = paste0(name, "_inverse")
     return(paste0(
       "  ", inverse_name, " ~ dgamma(", call$args[1], ", ", call$args[2], ")  # ", description, "\n",
-      "  ", name, " = -log(", inverse_name, ")  # Log of inverse-gamma parameter\n"
+      "  ", name, " = 1 / ", inverse_name, "  # Inverse-gamma parameter\n"
     ))
   }
 

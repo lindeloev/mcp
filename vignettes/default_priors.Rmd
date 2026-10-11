@@ -52,13 +52,13 @@ General quantities used in the table below:
 | **Mean ($\mu$): Logit link** (`binomial`, `bernoulli`) | `normal(0, 1.5)` | `normal(0, 1.5 / sd(column))` | `student_t(3, 0, 1.5) T(0, )`† | `rstanarm` with `mcp`-specific scales |
 | **Mean ($\mu$): Probit link** (`binomial`, `bernoulli`) | `normal(0, 1)` | `normal(0, 1 / sd(column))` | `student_t(3, 0, 1) T(0, )`† | `rstanarm` with `mcp`-specific scales |
 | **Mean ($\mu$): Identity link** (`binomial`, `bernoulli`) | `beta(1, 1)` | contrasts: `uniform(-1, 1)`<br>slopes: `normal(0, 1 / sd(column))` | `student_t(3, 0, 1) T(0, )`† | |
-| **Constant dispersion** (implicit `sigma`, `shape`) | `sigma_1`: `student_t(3, 0, S_y) T(0, )`<br>`shape_1`: `inv_gamma(0.4, 0.3)`‡ | — | — | `brms` |
+| **Constant dispersion** (implicit `sigma`, `shape`) | `sigma_1`: `student_t(3, 0, S_y) T(0, )`<br>`shape_1`: `inv_gamma(0.4, 0.3)` | — | — | `brms` |
 | **Modeled `sigma()`** (log link) | `student_t(3, 0, 2.5)` | contrasts: `student_t(3, 0, 2.5)`<br>slopes: `student_t(3, 0, 2.5 / sd(column))` | `student_t(3, 0, 2.5) T(0, )`† | `brms` intercept |
 | **Modeled `shape()`** (log link) | `normal(0, 2.5)` | contrasts: `normal(0, 2.5)`<br>slopes: `normal(0, 2.5 / sd(column))` | `normal(0, 2.5) T(0, )`† | |
 | **Autocorrelation** (`ar()`, `ma()`) | `normal(0, 0.5) T(-1, 1)` | contrasts: `normal(0, 0.25)`<br>slopes: `normal(0, 0.25 / sd(column))` | — | |
 | **Change points** (`cp_i`) | `dirichlet(1)` | — | `normal(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
 
-\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`. † Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. ‡ On the shape itself. `shape_1` is the log-shape, so this prior is written `dloginvgamma(0.4, 0.3)`. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations).
+\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`. † Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations).
 
 
 # Default priors on group-level effects

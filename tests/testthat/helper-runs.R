@@ -221,7 +221,8 @@ test_summary = function(fit, group_cols, prior = FALSE) {
     summary_cols = c(summary_cols, "sim", "match")
     verbose_summary_cols = c(verbose_summary_cols, "sim", "match")
   }
-  output = capture.output({ result = summary(fit, prior = prior) })
+  result = summary(fit, prior = prior)
+  output = capture.output(print(result))
   testthat::expect_named(result, summary_cols)
   testthat::expect_true(all(result$variable %in% mcp_pars(fit, scope = "population")$name))  # All parameters
   capture.output({ verbose_result = summary(fit, prior = prior, verbose = TRUE) })

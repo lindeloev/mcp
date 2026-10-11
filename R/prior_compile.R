@@ -208,7 +208,7 @@ human_prior_call = function(x) {
     dunif = if (length(a) == 2) paste0("uniform(min = ", a[1], ", max = ", a[2], ")") else parts$distribution,
     dbeta = if (length(a) == 2) paste0("beta(shape1 = ", a[1], ", shape2 = ", a[2], ")") else parts$distribution,
     dgamma = if (length(a) == 2) paste0("gamma(shape = ", a[1], ", rate = ", a[2], ")") else parts$distribution,
-    dloginvgamma = if (length(a) == 2) paste0("log_inverse_gamma(shape = ", a[1], ", scale = ", a[2], ")") else parts$distribution,
+    dinvgamma = if (length(a) == 2) paste0("inv_gamma(shape = ", a[1], ", scale = ", a[2], ")") else parts$distribution,
     dirichlet = if (length(a) == 1) paste0("dirichlet(alpha = ", a[1], ")") else parts$distribution,
     parts$distribution
   )
@@ -262,7 +262,7 @@ prior_bounds = function(x, parameter = NULL, all_names = character(), context = 
     return(paste0("[", lower, ", ", upper, "]"))
   }
   if (call$name == "dbeta") return("[0, 1]")
-  if (call$name %in% c("dgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
+  if (call$name %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
 }
 

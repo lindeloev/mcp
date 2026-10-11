@@ -27,11 +27,14 @@ bernoulli = function(link = "logit") {
 #'
 #' @aliases negbinomial
 #' @param link Link function for `mu`.
-#' @param link_shape Link function for `shape`.
+#' @param link_shape Link function for `shape` when it is modeled using `shape()`.
 #' @details `shape` is required by the likelihood, so it includes an intercept in segment 1.
 #'   Later segments that do not include `shape()` are joined. For example, `y ~ 1 + x + shape(1 + x)`
 #'   models both the mean and shape. Regression coefficients for both dpars are
 #'   on their link scales.
+#'
+#'   Without `shape()`, `shape_1` is the shape itself with an `inv_gamma(0.4, 0.3)` prior,
+#'   as in `brms`, much like the implicit `sigma_1` in `gaussian()`.
 #' @export
 #' @examples
 #' # Fit an overdispersed count model with the default log links
@@ -84,7 +87,7 @@ mcpfamily = function(x) {
   if (inherits(x, "mcpfamily")) {
     link_matches = is.null(x$links) || (
       identical(unname(x$link), unname(x$links[["mu"]])) &&
-      (is.null(x$link_shape) || identical(unname(x$link_shape), unname(x$links[["shape"]])))
+      (is.null(x$link_shape) || identical(unname(x$link_shape), x$dpar_specs$link_modeled[x$dpar_specs$dpar == "shape"]))
     )
     if (link_matches) {
       assert_mcpfamily(x)
@@ -578,7 +581,7 @@ mcpfamily_negbinomial = function(family) {
     "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
     "mu", "dummy", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5) T(0, )", "Autoscaled log-count contrast (rstanarm default)", "always",
     "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Autoscaled log-count coefficient (rstanarm default)", "always",
-    "shape", "Intercept", "dloginvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape", "constant",
+    "shape", "Intercept", "dinvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape (brms default)", "constant",
     "shape", "Intercept", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Weakly regularizing modeled log-shape intercept", "modeled",
     "shape", "dummy", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Regularizing shape contrast on the log scale", "always",
     "shape", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Regularizing log-shape coefficient scaled by the predictor SD", "always"
@@ -635,7 +638,7 @@ mcpfamily_negbinomial = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("shape", family$link_shape, implicit = TRUE, require_initial_predictor = TRUE, lower = 0)
+      new_dpar_spec("shape", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = family$link_shape, lower = 0)
     ),
     default_prior = default_prior,
     response = response,

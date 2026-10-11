@@ -97,9 +97,9 @@ fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x 
 
 # Negative-binomial extension
 
-`negbinomial()` uses log links for both its conditional mean `mu` and overdispersion `shape`, where $\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}$. Its mean priors are the same as for `poisson()`.
+`negbinomial()` uses log links for its conditional mean `mu` and, when modeled, its overdispersion `shape`, where $\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}$. Its mean priors are the same as for `poisson()`.
 
-When no `shape()` formula is supplied, the response-scale shape has an inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong overdispersion and the large-shape Poisson limit; `fit$prior` shows its log-shape representation as `dloginvgamma(0.4, 0.3)`.
+When no `shape()` formula is supplied, `shape_1` is the shape itself (like `sigma_1` in `gaussian()`) with an inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong overdispersion and the large-shape Poisson limit.
 
 An explicit `shape()` formula models log-shape. Harmonizing with log-mean coefficients, its intercept and contrasts default to `dnorm(0, 2.5)` and numeric coefficients to `dnorm(0, 2.5 / S)` scaled to predictor change $S$ (group SDs default to `dnorm(0, ...) T(0, )`). Where `brms` uses flat coefficients and a Student-t intercept, `mcp` uses proper normal priors to avoid heavy tails that pull shape toward extreme overdispersion. Shape regression can be weakly identified, so informed priors may be useful.
 
