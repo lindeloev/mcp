@@ -313,6 +313,9 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
     # PREPARE FOR TEST #
     ####################
     # Check input
+    if (stringr::str_detect(expression, "!=|=="))
+      stop("`!=` and `==` are not supported. Use `=` for equality hypotheses; the Bayes factor for the inequality is 1 / BF: ", expression, call. = FALSE)
+
     n_equals = stringr::str_count(expression, "(?<!(<|>))=")
     n_directional = stringr::str_count(expression, "<|<=|>|>=")
 

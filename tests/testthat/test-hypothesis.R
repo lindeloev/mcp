@@ -142,6 +142,9 @@ test_that("hypothesis()", {
     "prior contrast is constant",
     fixed = TRUE
   )
+
+  # Inequality is not an equality test
+  expect_error(hypothesis(demo_fit, "cp_1 != 30"), "`!=` and `==` are not supported", fixed = TRUE)
 })
 
 
