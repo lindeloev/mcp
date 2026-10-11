@@ -57,8 +57,8 @@ For a single change point, this is the Beta(1, 1) / Uniform distribution over \v
 For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
 You can also explicitly set \code{cp_i = "dirichlet(alpha)"} with the same positive \code{alpha} for all
 change points to regularize spacing (\code{alpha > 1} penalizes change points from occurring close together,
-while \code{alpha < 1} favors clustering). Under the hood, this is parameterized as an exact sequential
-stick-breaking Beta chain for fast and robust sampling.
+while \code{alpha < 1} favors clustering). Under the hood, \code{dirichlet(1)} is sampled as sorted uniforms
+and other \code{alpha} as an exact sequential stick-breaking Beta chain for fast and robust sampling.
 \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
 }
 \section{Notes on priors}{

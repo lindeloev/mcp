@@ -64,7 +64,7 @@ and 1).}
 \item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 }
 \value{
-A data.frame with a row per hypothesis and the following columns:
+A tibble with a row per hypothesis and the following columns:
 \itemize{
 \item \code{hypothesis} is the hypothesis; often re-arranged to test against zero.
 \item \code{mean} is the posterior mean of the left-hand side of the hypothesis, or
@@ -79,8 +79,11 @@ within the fitted model.
 \item \code{BF} Bayes Factor in favor  of the hypothesis.
 For "=" it is the Savage-Dickey density ratio.
 For directional hypotheses, it is the posterior odds divided by the
-prior odds. It is \code{NA} when \code{prior = TRUE} or when prior draws are
-not available (e.g., \code{sample = "post"}).
+prior odds. It is \code{Inf} (or \code{0}) when all (or no) posterior draws satisfy
+the hypothesis, i.e., the evidence exceeds what the number of draws can
+resolve; increase \code{iter} for a finite estimate. It is \code{NA} when \code{prior = TRUE},
+when prior draws are not available (e.g., \code{sample = "post"}), or when all
+or no prior draws satisfy the hypothesis.
 }
 }
 \description{
@@ -105,10 +108,7 @@ hypothesis(demo_fit, "cp_1 > 30")
 hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
 
 # Evaluate several directional hypotheses at once
-hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
-
-# Directional hypotheses can be used for a focused posterior question
-hypothesis(demo_fit, "cp_1 > 30")
+hypothesis(demo_fit, c("cp_1 > 30", "cp_2 > 70"))
 
 # Inspect the corresponding prior probability without a Bayes factor
 hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)

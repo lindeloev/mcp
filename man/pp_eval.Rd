@@ -20,9 +20,7 @@ pp_eval(
   scale = "response",
   .return_fitted = FALSE,
   .return_dpars = FALSE,
-  .garma_replicate = FALSE,
-  nsamples = lifecycle::deprecated(),
-  samples_format = lifecycle::deprecated()
+  .garma_replicate = FALSE
 )
 }
 \arguments{
@@ -123,15 +121,10 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 
 \item{.garma_replicate}{Internal. For GARMA predictions, generate each
 response history recursively instead of conditioning on observed responses.}
-
-\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
-
-\item{samples_format}{Deprecated. Use \code{draws_format} instead.
-See more under "value"}
 }
 \value{
 \itemize{
-\item If \code{summary = TRUE}: A data frame with the columns of \code{newdata} (or
+\item If \code{summary = TRUE}: A tibble with the columns of \code{newdata} (or
 \code{fit$data} if \code{newdata} is \code{NULL}), followed by summaries for each row:
 \itemize{
 \item \code{.mean}: The mean of the draws.

@@ -6,7 +6,7 @@
 \alias{posterior_linpred.mcpfit}
 \title{Posterior prediction draws for \code{mcpfit} objects}
 \usage{
-posterior_epred.mcpfit(
+\method{posterior_epred}{mcpfit}(
   object,
   newdata = NULL,
   draws = NULL,
@@ -19,7 +19,7 @@ posterior_epred.mcpfit(
   ...
 )
 
-posterior_predict.mcpfit(
+\method{posterior_predict}{mcpfit}(
   object,
   newdata = NULL,
   draws = NULL,
@@ -32,7 +32,7 @@ posterior_predict.mcpfit(
   ...
 )
 
-posterior_linpred.mcpfit(
+\method{posterior_linpred}{mcpfit}(
   object,
   transform = FALSE,
   newdata = NULL,

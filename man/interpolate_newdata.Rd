@@ -3,9 +3,16 @@
 \encoding{UTF-8}
 \name{interpolate_newdata}
 \alias{interpolate_newdata}
-\title{Returns a data.frame with all combos of predictors}
+\title{Returns a tibble with all combos of predictors}
 \usage{
-interpolate_newdata(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL)
+interpolate_newdata(
+  fit,
+  by = NULL,
+  x_values = NULL,
+  at = NULL,
+  arma = NULL,
+  prior = FALSE
+)
 }
 \arguments{
 \item{fit}{An \code{mcpfit} object.}
@@ -22,9 +29,12 @@ be supplied as explicit scalar design values; e.g., \code{at = list(N = 20)}.}
 \item{arma}{Logical. If \code{TRUE}, preserve the observed response history for
 conditional AR/MA evaluation. Defaults to \code{TRUE} when the fit includes
 \code{ar()} or \code{ma()} terms. Set to \code{FALSE} to interpolate unconditional trends.}
+
+\item{prior}{Logical. Increase the resolution around the change points of the
+prior draws (\code{TRUE}) instead of the posterior draws (\code{FALSE}, default).}
 }
 \value{
-\code{data.frame} with
+A tibble with
 \itemize{
 \item Cols for par_x
 \item unique levels combos of factorial vars

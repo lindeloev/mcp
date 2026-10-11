@@ -12,16 +12,17 @@ mcp(
   family = gaussian(),
   par_x = NULL,
   sample = "post",
-  cores = NULL,
   chains = 3,
   iter = 3000,
   warmup = 1000,
-  adapt = lifecycle::deprecated(),
   inits = NULL,
   jags_code = NULL,
+  reparam = TRUE,
   seed = NULL,
   diagnostics = list(),
-  quiet = FALSE
+  quiet = FALSE,
+  cores = NULL,
+  adapt = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -59,12 +60,6 @@ object without sample. This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 
-\item{cores}{Deprecated and ignored. Configure parallel processing with a
-\link[future:plan]{future} plan instead, for example
-\code{future::plan(future::multisession, workers = 3)}. With the default future
-plan, chains are sampled sequentially. The argument remains available for
-backwards compatibility.}
-
 \item{chains}{Positive integer. Number of chains to run.}
 
 \item{iter}{Positive integer. Number of post-warmup draws from each chain.
@@ -73,8 +68,6 @@ The total number of draws is \code{iter * chains}.}
 \item{warmup}{Positive integer. Number of initial iterations per chain which
 are discarded before sampling. Set higher if needed for sampler adaptation;
 use diagnostics to assess convergence.}
-
-\item{adapt}{Deprecated; use \code{warmup} instead.}
 
 \item{inits}{A list of initial values for the parameters. This can be useful
 if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
@@ -85,6 +78,15 @@ User-provided \code{inits} take precedence.}
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
 framework. R-side simulation and prediction methods continue to use the
 mcp-default formulas (with warning), so they may no longer match custom JAGS code.}
+
+\item{reparam}{Logical. Whether to enable reparameterization for faster mixing. Ignored
+when \code{jags_code} is supplied. Read more in
+\href{https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations}{From formulas to sampler code}.
+\itemize{
+\item \code{TRUE} (default) This changes only \code{fit$jags_code} and sampling efficiency, not the
+model, the priors, or the posterior.
+\item \code{FALSE} runs the plain model. This mostly serve the pedagogical purpose of transparency.
+}}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. If \code{NULL} (default), the seed is drawn from R's random-number generator,
@@ -100,6 +102,14 @@ the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
 \item{quiet}{Logical. Suppress routine JAGS output and mcp sampling-status
 messages? Defaults to \code{FALSE}.}
+
+\item{cores}{Deprecated and ignored. Configure parallel processing with a
+\link[future:plan]{future} plan instead, for example
+\code{future::plan(future::multisession, workers = 3)}. With the default future
+plan, chains are sampled sequentially. The argument remains available for
+backwards compatibility.}
+
+\item{adapt}{Deprecated; use \code{warmup} instead.}
 }
 \value{
 An \code{\link{mcpfit}} object.
@@ -150,7 +160,7 @@ plot_pars(demo_fit)  # Parameter distributions
 pp_check(demo_fit)  # Prior/Posterior predictive checks
 
 # Test a hypothesis
-hypothesis(demo_fit, "cp_1 > 10")
+hypothesis(demo_fit, "cp_1 > 30")
 
 # Make predictions
 head(fitted(demo_fit))
@@ -178,7 +188,7 @@ prior = list(
   cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
 )
 
-fit3 = mcp(model, data = data, prior = prior, warmup = 2000, iter = 6000, seed = 42)
+fit3 = mcp(model, data = data, prior = prior, seed = 42)
 
 # Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
 model_same = list(

@@ -10,9 +10,6 @@ Identity links can make impossible predictions for Bernoulli, binomial, Poisson,
 # 2026-08-01: Intercept meaning in each segment
 Intercept_1 is at x = 0. Later intercepts are at the onset of the segment, which is random. The Intercept_1 means the parameters of the first segment is compatible with regular regression as we know them from lm(), etc. But brms mean-centers it's intercept, which is nice for interpretability. However, given the random location of the change points, mean-centering within a segment is not trivial - at least I did not find a good solution. Especially given the "handover" nature of mcp-model between segments, I find it defensible to have Intercept_2+ represent the beginning of those intervals. See LEARNINGS.md for another note on mean-centering.
 
-## 2026-08-05: Prediction quantile precision
-The `q_predict = TRUE` currently simply runs `quantile(simulated_outcomes, c(0.025, 0.975))`. For small number of draws, it is highly uncertaint. It added ~100 lines of code to improve precision 4-fold per second using rao-blackwell. I opted not to do it. Other solutions are welcome.
-
 ## 2026-08-05: Bridge sampling
 Requires a lot of work on tracking priors, including their truncation etc. Since bridge sampling is very sensitive to priors anyway, and I doubt users will put a lot of thought into priors, I have opted not to do it.
 
@@ -26,7 +23,7 @@ Making `loo` or something loo-like support leave-future-out or blocked sampling 
 `terms()`, `model.matrix()`, `simulate()`, `update()`, `coef`. I am not yet ready to commit to a format for these. `fit$simulate()` will probably always replace `simulate()`
 
 ## 2026-08-14: fit$jags_code and fit$simulate()
-Supplying custom `mcp(..., jags_code)` will make fit$simulate() out of sync. This is a known error but requires too much extra tooling to address for now. Options include user-supplied "r_code" to match or a very capable JAGS -> R translator (mcp already does this for it's own models internally).
+ mcp currently simply throw a warning if using fit$simulate() with custom jags_code. Supplying custom `mcp(..., jags_code)` will make fit$simulate() out of sync. This is a known error but requires too much extra tooling to address for now. Options include user-supplied "r_code" to match or a very capable JAGS -> R translator (mcp already does this for it's own models internally).
 
 ## 2026-08-17: What is population-level?
 `summary.mcpfit()` calls both distributional parameters (`dpar`, e.g., sigma, shape, ...) and AR/MA parameters "population-level". Only change points and group-level effects are not called population-level. This may not be classical wording, but having sections for each `dpar` seems like bloat.

@@ -12,7 +12,7 @@
   q_fit = FALSE,
   q_predict = FALSE,
   facet_by = NULL,
-  color_by = NULL,
+  color_by = "auto",
   lines = 25,
   geom_data = "point",
   cp_dens = TRUE,
@@ -22,7 +22,6 @@
   ndraws = 500,
   scale = "response",
   at = NULL,
-  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -32,7 +31,7 @@ plot_dpar(
   dpar = "epred",
   q_fit = FALSE,
   facet_by = NULL,
-  color_by = NULL,
+  color_by = "auto",
   lines = 25,
   cp_dens = TRUE,
   prior = FALSE,
@@ -40,8 +39,6 @@ plot_dpar(
   ndraws = 500,
   scale = "response",
   at = NULL,
-  samples = lifecycle::deprecated(),
-  nsamples = lifecycle::deprecated(),
   ...
 )
 }
@@ -64,8 +61,8 @@ quantiles.
 Can be grouping-factor or categorical predictor columns.}
 
 \item{color_by}{A character vector naming categorical predictor or grouping columns to color by.
-If both \code{color_by} and \code{facet_by} are omitted, a sole categorical predictor is colored automatically. Set \code{color_by = NULL} explicitly to disable this.
-Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
+Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
+\code{"auto"} colors by the categorical predictor if the model has exactly one and it is not in \code{facet_by}. \code{NULL} disables color.}
 
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
 It is the number of joint posterior draws shown for every curve. FALSE or \code{lines = 0} plots no lines.
@@ -113,7 +110,7 @@ They default to their observed means. Family-specific response auxiliaries
 can be supplied as explicit scalar design values. Passed to
 \code{interpolate_newdata()}.}
 
-\item{samples, nsamples}{Deprecated. Use \code{lines} instead.}
+\item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
 \item{...}{Must be empty. Reserved for future use.}
 

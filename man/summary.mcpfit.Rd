@@ -35,7 +35,7 @@
 and 1).}
 
 \item{digits}{Non-negative integer. Number of significant digits used when
-printing the summary. Defaults to 2. The invisibly returned data frame
+printing the summary. Defaults to 2. The invisibly returned tibble
 retains the unrounded values.}
 
 \item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
@@ -60,7 +60,7 @@ coefficients are on the link scale.}
 \item{x}{An \code{\link{mcpfit}} object.}
 }
 \value{
-A data frame with parameter estimates and MCMC diagnostics. Rows
+A tibble with parameter estimates and MCMC diagnostics. Rows
 are ordered by change point first, then \code{mu}, then the other
 distributional parameters, then \code{ar}/\code{ma} components - each ascending by
 segment. OBS: The change point distributions are often not unimodal and
@@ -109,7 +109,7 @@ Summarise parameter estimates and model diagnostics.
 
 \item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
 Change-point deviations are relative to their population change point;
-\code{cp_i_sd} is the scale of their latent normal distribution.
+\code{cp_i_sd} is the SD of their normal distribution before truncation.
 
 \item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
 
@@ -119,7 +119,7 @@ Change-point deviations are relative to their population change point;
 summary(demo_fit)
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 
-# Get the results as a data frame
+# Get the results as a tibble
 results = summary(demo_fit)
 
 # Group-level deviations (random effects)

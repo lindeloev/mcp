@@ -15,7 +15,7 @@ mcp_pars(fit, scope = NULL, role = NULL)
 \code{"dpar_effect"}, \code{"arma"}, \code{"group_sd"}, or \code{"group_deviation"}.}
 }
 \value{
-A data frame with one row per parameter definition. \code{name} is the
+A tibble with one row per parameter definition. \code{name} is the
 model parameter name; \code{dpar} identifies its distributional parameter or
 component (\code{"cp"}, \code{"ar"}, or \code{"ma"}); \code{order} gives an AR/MA lag;
 \code{group_col} and \code{population_name} describe group-level effects.

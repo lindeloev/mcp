@@ -59,7 +59,6 @@ log_lik(object, ...)
   newdata = NULL,
   summary = FALSE,
   width = 0.95,
-  rate = TRUE,
   prior = FALSE,
   group_effects = TRUE,
   arma = TRUE,
@@ -152,8 +151,7 @@ If there are group-level effects, this is the number of draws from each group.
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
-\item{samples_format}{Deprecated. Use \code{draws_format} instead.
-See more under "value"}
+\item{samples_format}{Deprecated. Use \code{draws_format} instead.}
 
 \item{varying}{Deprecated. Use \code{group_effects} instead.}
 
@@ -185,7 +183,7 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 }
 \value{
 \itemize{
-\item If \code{summary = TRUE}: A data frame with the columns of \code{newdata} (or
+\item If \code{summary = TRUE}: A tibble with the columns of \code{newdata} (or
 \code{fit$data} if \code{newdata} is \code{NULL}), followed by summaries for each row:
 \itemize{
 \item \code{.mean}: The mean of the draws.

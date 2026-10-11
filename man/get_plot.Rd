@@ -9,7 +9,7 @@ get_plot(
   q_fit = FALSE,
   q_predict = FALSE,
   facet_by = NULL,
-  color_by = NULL,
+  color_by = "auto",
   lines = 25,
   geom_data = "point",
   cp_dens = TRUE,
@@ -19,8 +19,7 @@ get_plot(
   arma = TRUE,
   ndraws = 500,
   scale = "response",
-  at = NULL,
-  .grouping = "auto"
+  at = NULL
 )
 }
 \arguments{
@@ -42,8 +41,8 @@ quantiles.
 Can be grouping-factor or categorical predictor columns.}
 
 \item{color_by}{A character vector naming categorical predictor or grouping columns to color by.
-If both \code{color_by} and \code{facet_by} are omitted, a sole categorical predictor is colored automatically. Set \code{color_by = NULL} explicitly to disable this.
-Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.}
+Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
+\code{"auto"} colors by the categorical predictor if the model has exactly one and it is not in \code{facet_by}. \code{NULL} disables color.}
 
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
 It is the number of joint posterior draws shown for every curve. FALSE or \code{lines = 0} plots no lines.
@@ -99,8 +98,6 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 They default to their observed means. Family-specific response auxiliaries
 can be supplied as explicit scalar design values. Passed to
 \code{interpolate_newdata()}.}
-
-\item{.grouping}{Internal. Whether grouping arguments were omitted, mapped, or explicitly disabled.}
 }
 \value{
 A \pkg{ggplot2} object.
