@@ -68,7 +68,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
     lifecycle::deprecate_soft("0.4.0", "loo(pointwise)", "loo(by_row)")
     by_row = pointwise
   }
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "loo.mcpfit")
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "loo.mcpfit", "ndraws", "nsamples")
   rlang::check_dots_used()  # `loo::loo()` silently ignores unknown arguments, e.g., `arma = FALSE`
   fit = x
   checkmate::assert_class(fit, "mcpfit")
@@ -171,7 +171,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
 #' @export waic
 #' @export
 waic.mcpfit = function(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated()) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "waic.mcpfit")
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "waic.mcpfit", "ndraws", "nsamples")
   rlang::check_dots_empty()
   fit = x
   checkmate::assert_class(fit, "mcpfit")
@@ -302,7 +302,7 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
   rlang::check_dots_empty()
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_character(hypotheses)
-  check_legacy_parameter_names(hypotheses, "hypothesis()")
+  legacy_parameter_names(hypotheses, "hypothesis()")
   checkmate::assert_number(width, lower = 0, upper = 1)
   checkmate::assert_flag(prior)
 

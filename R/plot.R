@@ -452,12 +452,8 @@ plot.mcpfit = function(x,
                     at = NULL,
                     nsamples = lifecycle::deprecated(),
                     ...) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "plot.mcpfit")
-  dots = list(...)
-  which_y = warn_which_y(dots, "plot")
-  dots$which_y = NULL
-  if (length(dots) > 0)
-    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "plot.mcpfit", "ndraws", "nsamples")
+  which_y = legacy_which_y(list(...), "plot")
 
   get_plot(
     x,

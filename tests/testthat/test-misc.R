@@ -599,7 +599,7 @@ test_that("legacy mcpfits explain how to reproduce v0.3.4", {
   legacy_fit = demo_fit
   legacy_fit$.internal$model_tables = NULL
 
-  expect_true(is_legacy_mcpfit(legacy_fit))
+  expect_true(legacy_is_mcpfit(legacy_fit))
   expect_error(mcp_pars(legacy_fit), "install_github", fixed = TRUE)
   expect_error(summary(legacy_fit), "v0.4.0 bug fixes", fixed = TRUE)
 })

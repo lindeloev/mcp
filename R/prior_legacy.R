@@ -35,7 +35,7 @@ legacy_prior_map = function(context) {
 }
 
 
-warn_legacy_prior_constants = function(prior, context) {
+legacy_prior_constants = function(prior, context) {
   prior_text = unlist(prior[vapply(prior, is.character, logical(1))], use.names = TRUE)
   if (length(prior_text) == 0)
     return(invisible(NULL))
@@ -56,7 +56,7 @@ warn_legacy_prior_constants = function(prior, context) {
 }
 
 
-translate_legacy_prior = function(x, context) {
+legacy_translate_prior = function(x, context) {
   map = legacy_prior_map(context)
   for (i in seq_len(nrow(map)))
     x = stringr::str_replace_all(x, paste0("\\b", map$token[i], "\\b"), map$rule[i])
@@ -64,14 +64,14 @@ translate_legacy_prior = function(x, context) {
 }
 
 
-resolve_legacy_prior_name = function(name, context) {
+legacy_prior_value = function(name, context) {
   map = legacy_prior_map(context)
   match = match(name, map$token)
   if (is.na(match)) NULL else map$value[match]
 }
 
 
-add_legacy_prior_jags_data = function(jags_data, jags_code, context) {
+legacy_prior_jags_data = function(jags_data, jags_code, context) {
   map = legacy_prior_map(context)
   used = map$token[vapply(map$token, function(token) {
     stringr::str_detect(jags_code, paste0("\\b", token, "\\b"))

@@ -9,7 +9,7 @@ validate_prior_v1 = function(prior) {
       (is.null(names(prior)) || anyNA(names(prior)) || any(!nzchar(names(prior))))) {
     stop("`prior` must be a completely named list; every entry needs a nonempty parameter name.")
   }
-  check_legacy_parameter_names(names(prior), "prior")
+  legacy_parameter_names(names(prior), "prior")
 
   which_duplicated = duplicated(names(prior))
   if (any(which_duplicated))
@@ -36,7 +36,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   checkmate::assert_class(family, "mcpfamily")
   context = prior_context(data, segments, design_specs)
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
-  warn_legacy_prior_constants(prior, context)
+  legacy_prior_constants(prior, context)
 
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),

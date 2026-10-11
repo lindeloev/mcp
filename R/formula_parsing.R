@@ -272,7 +272,7 @@ canonicalize_segment = function(form, i, default_response = NULL) {
   if (i > 1 && length(form) == 3) {
     if (identical(form[[2]], default_response))
       stop("Error in segment ", i, ": segments 2+ use the response from segment 1. Remove `", deparse1(form[[2]]), " ~`, e.g., `~ 0 + x`.", call. = FALSE)
-    form = translate_cp_lhs(form, i, default_response)
+    form = legacy_cp_lhs(form, i, default_response)
   }
 
   split = split_cp(form[[length(form)]])

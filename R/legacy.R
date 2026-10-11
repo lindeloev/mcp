@@ -1,7 +1,9 @@
 # Compatibility and Deprecation Detections for Legacy Code & Fits -------------
+# Functions are prefixed `legacy_` so that call sites show what to remove in mcp 1.0.
+# The S3 methods `$.mcpfit` and `[[.mcpfit` and the defunct `tidy_samples()` keep their names.
 
 # Check if an mcpfit object was created with mcp < 0.4.0
-is_legacy_mcpfit = function(fit) {
+legacy_is_mcpfit = function(fit) {
   tables = fit$.internal$model_tables
   !is.mcpfamily(fit$family) || is.null(tables) || is.null(tables$parameters) ||
     !"role" %in% names(tables$parameters)
@@ -23,7 +25,7 @@ legacy_mcp_message = function(problem) {
 # Stop if an mcpfit cannot be used by mcp v0.4
 check_mcpfit_version = function(fit) {
   checkmate::assert_class(fit, "mcpfit")
-  if (is_legacy_mcpfit(fit))
+  if (legacy_is_mcpfit(fit))
     stop(legacy_mcp_message(
       "This `mcpfit` object lacks the internal structures introduced in mcp v0.4."
     ), call. = FALSE)
@@ -32,7 +34,7 @@ check_mcpfit_version = function(fit) {
 
 
 # Stop on the most common v0.3.4 parameter names
-check_legacy_parameter_names = function(x, context) {
+legacy_parameter_names = function(x, context) {
   old_names = x[stringr::str_detect(x, "(^|[^[:alnum:]_])int_[0-9]+($|[^[:alnum:]_])")]
   if (length(old_names) > 0)
     stop(legacy_mcp_message(paste0(
@@ -50,7 +52,7 @@ check_legacy_parameter_names = function(x, context) {
 
 # Translate deprecated left-hand sides in segment 2+ formulas to cp() syntax, with a warning
 # E.g., `1 + (1 | id) ~ 0 + x` and `y ~ 1 + (1 | id) ~ 0 + x` --> `~ cp(1 + (1 | id)) + 0 + x`.
-translate_cp_lhs = function(form, i, response) {
+legacy_cp_lhs = function(form, i, response) {
   lhs = form[[2]]
   rhs = form[[3]]
   if (is_tilde_call(rhs))
@@ -79,11 +81,12 @@ translate_cp_lhs = function(form, i, response) {
 }
 
 
-# Warn on deprecated which_y argument and return it as a `dpar` (NULL if absent)
-# - args: List of dots arguments passed to a function.
+# Warn on deprecated `which_y` in `...` and return it as a `dpar` (NULL if absent). Other
+# arguments in `...` are errors. In mcp 1.0, replace with `rlang::check_dots_empty()`.
+# - dots: `list(...)` of the calling function.
 # - func_name: Name of calling function for warning message context.
-warn_which_y = function(args, func_name) {
-  if ("which_y" %in% names(args)) {
+legacy_which_y = function(dots, func_name) {
+  if ("which_y" %in% names(dots)) {
     msg = if (func_name == "plot") {
       "`which_y` was deprecated in mcp v0.4.0. Use `plot_dpar()` instead."
     } else {
@@ -92,13 +95,17 @@ warn_which_y = function(args, func_name) {
     warning(msg, call. = FALSE)
   }
 
+  unknown = setdiff(rlang::names2(dots), "which_y")
+  if (length(unknown) > 0)
+    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(ifelse(nzchar(unknown), unknown, "<unnamed>")), call. = FALSE)
+
   # "ct" (central tendency) was the v0.3.4 default
-  if (identical(args$which_y, "ct")) "epred" else args$which_y
+  if (identical(dots$which_y, "ct")) "epred" else dots$which_y
 }
 
 
 # Warn that the deprecated `cores` argument in mcp() is ignored
-warn_cores = function(cores, env = rlang::caller_env(), user_env = rlang::caller_env(2)) {
+legacy_cores = function(cores, env = rlang::caller_env(), user_env = rlang::caller_env(2)) {
   if (is.null(cores))
     return(invisible(NULL))
   if (!identical(cores, "all"))
@@ -126,118 +133,58 @@ warn_cores = function(cores, env = rlang::caller_env(), user_env = rlang::caller
 }
 
 
-# Resolve the deprecated `adapt` argument in mcp()
-resolve_warmup = function(warmup, adapt, warmup_missing,
-                          env = rlang::caller_env(),
-                          user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(adapt)) {
-    if (!warmup_missing)
-      stop("Supply only one of `warmup` and deprecated `adapt`.", call. = FALSE)
+# Resolve an argument renamed in mcp v0.4.0 and return the value to use.
+# - new, old: Values of the new and the deprecated argument, e.g., `ndraws` and `nsamples`.
+# - new_missing: `missing(new)` in the calling function.
+# - what: Name of the calling function, e.g., "fitted.mcpfit".
+# - new_name, old_name: Argument names, e.g., "ndraws" and "nsamples".
+# - deprecate: `lifecycle::deprecate_soft` or `lifecycle::deprecate_warn`.
+legacy_arg = function(new, old, new_missing, what, new_name, old_name,
+                      deprecate = lifecycle::deprecate_soft, details = NULL,
+                      env = rlang::caller_env(), user_env = rlang::caller_env(2)) {
+  if (!lifecycle::is_present(old))
+    return(new)
+  if (!new_missing)
+    stop("Use only one of `", new_name, "` and deprecated `", old_name, "`.", call. = FALSE)
 
-    lifecycle::deprecate_soft(
-      when = "0.4.0",
-      what = "mcp(adapt)",
-      with = "mcp(warmup)",
-      env = env,
-      user_env = user_env
-    )
-    warmup = adapt
-  }
-  warmup
-}
-
-
-# Resolve the deprecated `nsamples` argument
-resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
-                         env = rlang::caller_env(),
-                         user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(nsamples)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      paste0(what, "(nsamples)"),
-      paste0(what, "(ndraws)"),
-      env = env,
-      user_env = user_env
-    )
-    if (!ndraws_missing)
-      stop("Use only one of `ndraws` and deprecated `nsamples`.")
-    ndraws = nsamples
-  }
-  ndraws
-}
-
-
-# Resolve the deprecated `samples_format` argument
-resolve_draws_format = function(draws_format, samples_format, draws_format_missing, what,
-                                env = rlang::caller_env(),
-                                user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(samples_format)) {
-    lifecycle::deprecate_soft(
-      "0.4.0",
-      paste0(what, "(samples_format)"),
-      paste0(what, "(draws_format)"),
-      env = env,
-      user_env = user_env
-    )
-    if (!draws_format_missing)
-      stop("Use only one of `draws_format` and deprecated `samples_format`.")
-    draws_format = samples_format
-  }
-  rlang::arg_match0(draws_format, c("tidy", "matrix"))
-}
-
-
-# Resolve the deprecated `varying` argument
-resolve_group_effects = function(group_effects, varying, group_effects_missing, what,
-                                 env = rlang::caller_env(),
-                                 user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(varying)) {
-    lifecycle::deprecate_warn(
-      "0.4.0",
-      paste0(what, "(varying)"),
-      paste0(what, "(group_effects)"),
-      env = env,
-      user_env = user_env
-    )
-    if (!group_effects_missing)
-      stop("Use only one of `group_effects` and deprecated `varying`.")
-    group_effects = varying
-  }
-  group_effects
+  deprecate(
+    "0.4.0",
+    paste0(what, "(", old_name, ")"),
+    paste0(what, "(", new_name, ")"),
+    details = details,
+    env = env,
+    user_env = user_env
+  )
+  old
 }
 
 
 # Resolve deprecated `probs` (from v0.3.4) to `width`. Only a single central interval can be translated.
-resolve_width = function(width, probs, width_missing, what,
-                         env = rlang::caller_env(),
-                         user_env = rlang::caller_env(2)) {
-  if (lifecycle::is_present(probs)) {
-    lifecycle::deprecate_warn(
-      "0.4.0",
-      paste0(what, "(probs)"),
-      paste0(what, "(width)"),
-      details = "The interval columns are now `.lower` and `.upper`. For other quantiles, summarise the draws from `summary = FALSE`.",
-      env = env,
-      user_env = user_env
-    )
-    if (!width_missing)
-      stop("Use only one of `width` and deprecated `probs`.")
-    if (isTRUE(probs)) {
-      width = 0.95
-    } else if (isFALSE(probs)) {
-      width = FALSE
-    } else if (is.numeric(probs) && length(probs) == 2 && isTRUE(all.equal(sum(probs), 1))) {
-      width = abs(diff(probs))
-    } else {
-      stop("Deprecated `probs` can only be translated to a central interval, e.g., `probs = c(0.025, 0.975)`. Use `width` instead, or summarise the draws from `summary = FALSE` for other quantiles.", call. = FALSE)
-    }
+legacy_width = function(width, probs, width_missing, what,
+                        env = rlang::caller_env(),
+                        user_env = rlang::caller_env(2)) {
+  if (!lifecycle::is_present(probs))
+    return(width)
+
+  probs = legacy_arg(
+    width, probs, width_missing, what, "width", "probs", lifecycle::deprecate_warn,
+    details = "The interval columns are now `.lower` and `.upper`. For other quantiles, summarise the draws from `summary = FALSE`.",
+    env = env, user_env = user_env
+  )
+  if (isTRUE(probs)) {
+    0.95
+  } else if (isFALSE(probs)) {
+    FALSE
+  } else if (is.numeric(probs) && length(probs) == 2 && isTRUE(all.equal(sum(probs), 1))) {
+    abs(diff(probs))
+  } else {
+    stop("Deprecated `probs` can only be translated to a central interval, e.g., `probs = c(0.025, 0.975)`. Use `width` instead, or summarise the draws from `summary = FALSE` for other quantiles.", call. = FALSE)
   }
-  width
 }
 
 
 # Warn when a binomial prediction relies on the pre-v0.4 proportion default.
-warn_binomial_rate = function(fit, newdata, what) {
+legacy_binomial_rate = function(fit, newdata, what) {
   if (fit$family$family != "binomial")
     return(invisible(NULL))
   if (is.null(newdata))
@@ -254,7 +201,7 @@ warn_binomial_rate = function(fit, newdata, what) {
 }
 
 
-# Signal deprecated and removed mcpfit fields from v0.3.4
+# Signal deprecated and removed mcpfit fields from v0.3.4. LEGACY: remove `$.mcpfit` and `[[.mcpfit` in mcp 1.0.
 #' @export
 `$.mcpfit` = function(x, name) {
   if (name == "fit" && is.null(.subset2(x, "fit"))) {
@@ -268,7 +215,7 @@ warn_binomial_rate = function(fit, newdata, what) {
       with = I("as_draws(fit) or coda::as.mcmc(fit)")
     )
   }
-  stop_removed_mcpfit_field(name)
+  legacy_mcpfit_field(name)
   .subset2(x, name)
 }
 
@@ -282,20 +229,20 @@ warn_binomial_rate = function(fit, newdata, what) {
     )
   }
   if (is.character(i))
-    stop_removed_mcpfit_field(i)
+    legacy_mcpfit_field(i)
   .subset2(x, i)
 }
 
 
 # Stop with a pointer to the replacement when accessing mcpfit fields removed after v0.3.4
-stop_removed_mcpfit_field = function(name) {
+legacy_mcpfit_field = function(name) {
   removed = c(pars = "mcp_pars(fit) and mcp_columns(fit)", mcmc_loglik = "log_lik(fit)")
   if (name %in% names(removed))
     lifecycle::deprecate_stop("0.4.0", I(paste0("fit$", name)), I(removed[[name]]))
 }
 
 
-# Defunct internal helper for MCMC draw extraction, advertised as `mcp:::tidy_samples()` in v0.3.4
+# Defunct internal helper for MCMC draw extraction, advertised as `mcp:::tidy_samples()` in v0.3.4. LEGACY: remove in mcp 1.0.
 tidy_samples = function(...) {
   lifecycle::deprecate_stop("0.4.0", "tidy_samples()", I("as_draws_df() or tidybayes::spread_draws()"))
 }

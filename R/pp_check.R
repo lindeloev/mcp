@@ -45,8 +45,8 @@ pp_check.mcpfit = function(
   varying = lifecycle::deprecated(),
   ...
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_check")
-  group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "pp_check")
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "pp_check", "ndraws", "nsamples")
+  group_effects = legacy_arg(group_effects, varying, missing(group_effects), "pp_check", "group_effects", "varying", lifecycle::deprecate_warn)
 
   # Internal mcp naming convention
   fit = object

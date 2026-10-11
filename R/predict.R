@@ -515,19 +515,15 @@ predict.mcpfit = function(
   conditional = TRUE,
   ...
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "predict.mcpfit")
-  group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "predict.mcpfit")
-  width = resolve_width(width, probs, missing(width), "predict.mcpfit")
-  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "predict.mcpfit")
-  dots = list(...)
-  warn_which_y(dots, "predict")
-  dots$which_y = NULL
-  if (length(dots) > 0)
-    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "predict.mcpfit", "ndraws", "nsamples")
+  group_effects = legacy_arg(group_effects, varying, missing(group_effects), "predict.mcpfit", "group_effects", "varying", lifecycle::deprecate_warn)
+  width = legacy_width(width, probs, missing(width), "predict.mcpfit")
+  draws_format = legacy_arg(draws_format, samples_format, missing(draws_format), "predict.mcpfit", "draws_format", "samples_format")
+  legacy_which_y(list(...), "predict")
 
   checkmate::assert_flag(conditional)
   if (missing(rate))
-    warn_binomial_rate(object, newdata, "predict")
+    legacy_binomial_rate(object, newdata, "predict")
 
   pp_eval(
     object,
@@ -569,20 +565,16 @@ fitted.mcpfit = function(
   probs = lifecycle::deprecated(),
   ...
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "fitted.mcpfit")
-  group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "fitted.mcpfit")
-  width = resolve_width(width, probs, missing(width), "fitted.mcpfit")
-  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "fitted.mcpfit")
-  dots = list(...)
-  which_y = warn_which_y(dots, "fitted")
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "fitted.mcpfit", "ndraws", "nsamples")
+  group_effects = legacy_arg(group_effects, varying, missing(group_effects), "fitted.mcpfit", "group_effects", "varying", lifecycle::deprecate_warn)
+  width = legacy_width(width, probs, missing(width), "fitted.mcpfit")
+  draws_format = legacy_arg(draws_format, samples_format, missing(draws_format), "fitted.mcpfit", "draws_format", "samples_format")
+  which_y = legacy_which_y(list(...), "fitted")
   if (!is.null(which_y) && missing(dpar))
     dpar = which_y
-  dots$which_y = NULL
-  if (length(dots) > 0)
-    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
 
   if (missing(rate) && (is.null(dpar) || identical(dpar, "epred")) && scale == "response")
-    warn_binomial_rate(object, newdata, "fitted")
+    legacy_binomial_rate(object, newdata, "fitted")
 
   pp_eval(
     object,
@@ -828,15 +820,11 @@ log_lik.mcpfit = function(
   probs = lifecycle::deprecated(),
   ...
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit")
-  group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "log_lik.mcpfit")
-  width = resolve_width(width, probs, missing(width), "log_lik.mcpfit")
-  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "log_lik.mcpfit")
-  dots = list(...)
-  warn_which_y(dots, "log_lik")
-  dots$which_y = NULL
-  if (length(dots) > 0)
-    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "log_lik.mcpfit", "ndraws", "nsamples")
+  group_effects = legacy_arg(group_effects, varying, missing(group_effects), "log_lik.mcpfit", "group_effects", "varying", lifecycle::deprecate_warn)
+  width = legacy_width(width, probs, missing(width), "log_lik.mcpfit")
+  draws_format = legacy_arg(draws_format, samples_format, missing(draws_format), "log_lik.mcpfit", "draws_format", "samples_format")
+  legacy_which_y(list(...), "log_lik")
 
   pp_eval(
     object,
@@ -872,14 +860,10 @@ residuals.mcpfit = function(
   probs = lifecycle::deprecated(),
   ...
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "residuals.mcpfit")
-  group_effects = resolve_group_effects(group_effects, varying, missing(group_effects), "residuals.mcpfit")
-  width = resolve_width(width, probs, missing(width), "residuals.mcpfit")
-  dots = list(...)
-  warn_which_y(dots, "residuals")
-  dots$which_y = NULL
-  if (length(dots) > 0)
-    stop("Unrecognized argument(s) passed in `...`: ", and_collapse(names(dots)), call. = FALSE)
+  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "residuals.mcpfit", "ndraws", "nsamples")
+  group_effects = legacy_arg(group_effects, varying, missing(group_effects), "residuals.mcpfit", "group_effects", "varying", lifecycle::deprecate_warn)
+  width = legacy_width(width, probs, missing(width), "residuals.mcpfit")
+  legacy_which_y(list(...), "residuals")
 
   pp_eval(
     object,

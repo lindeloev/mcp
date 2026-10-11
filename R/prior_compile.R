@@ -114,7 +114,7 @@ resolve_prior_ast = function(expr, context) {
   if (is.numeric(expr))
     return(as.numeric(expr))
   if (is.name(expr)) {
-    legacy_value = resolve_legacy_prior_name(as.character(expr), context)
+    legacy_value = legacy_prior_value(as.character(expr), context)
     return(if (is.null(legacy_value)) expr else unname(legacy_value))
   }
   if (!is.call(expr))
@@ -286,7 +286,7 @@ compile_prior_record = function(parameter, code, all_names, context, source,
                                  description = NULL) {
   kind = prior_kind(code, all_names)
   original = if (is.numeric(code)) format_prior_number(code) else code
-  display_original = translate_legacy_prior(original, context)
+  display_original = legacy_translate_prior(original, context)
   context$cp_limits = kind == "distribution" && parameter %in% context$cp_pars
   resolved = resolve_prior_value(code, context)
 

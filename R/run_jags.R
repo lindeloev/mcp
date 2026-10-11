@@ -310,7 +310,7 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
   # Compatibility for custom JAGS code written with the released data
   # constants. Generated code and newly resolved priors no longer need these.
   context = prior_context(data, segments, design_specs)
-  jags_data = add_legacy_prior_jags_data(jags_data, jags_code, context)
+  jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
 
   if (generated && grepl("response_observed_", jags_code, fixed = TRUE))
     jags_data$response_observed_ = as.integer(!is.na(data[[segments$y[1]]]))

@@ -247,8 +247,8 @@ mcp = function(
     checkmate::check_false(sample),
     .var.name = "sample"
   )
-  warn_cores(cores)
-  warmup = resolve_warmup(warmup, adapt, missing(warmup))
+  legacy_cores(cores)
+  warmup = legacy_arg(warmup, adapt, missing(warmup), "mcp", "warmup", "adapt")
   checkmate::assert_int(chains, lower = 1)
   checkmate::assert_int(iter, lower = 1)
   checkmate::assert_int(warmup, lower = 1)
