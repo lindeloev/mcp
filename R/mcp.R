@@ -300,7 +300,7 @@ mcp = function(model,
   group_occurrences = get_group_effects(cps, predictor_tables$group_effects)
   predictor_definitions = definition_rows(predictor_occurrences)
   group_definitions = definition_rows(group_occurrences)
-  family = resolve_dpar_specs(family, predictor_definitions, model)
+  family = resolve_dpar_specs(family, predictor_tables$components)
 
   if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)

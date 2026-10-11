@@ -23,11 +23,11 @@ test_that("AR and MA each allow one term per segment", {
 
   expect_error(
     get_predictors(list(y ~ ar(1) + ar(2)), data, family, par_x = "x"),
-    "Only one of these allowed per segment"
+    "Only one `ar()` allowed in each segment", fixed = TRUE
   )
   expect_error(
     get_predictors(list(y ~ ma(1) + ma(2)), data, family, par_x = "x"),
-    "Only one of these allowed per segment"
+    "Only one `ma()` allowed in each segment", fixed = TRUE
   )
   expect_no_error(
     get_predictors(list(y ~ ar(1) + ma(1)), data, family, par_x = "x")

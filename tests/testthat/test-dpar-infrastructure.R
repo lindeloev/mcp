@@ -185,13 +185,7 @@ test_that("generated code separates link and distribution scales", {
     unname(unlist(change_fit$prior[c("sigma_1", "sigma_2")])),
     rep("dt(0, 2.5, 3)", 2)
   )
-  predictors = get_fit_model_tables(change_fit)$predictors
-  expect_false(predictors$explicit[
-    predictors$code_name == "sigma_1"
-  ])
-  expect_true(predictors$explicit[
-    predictors$code_name == "sigma_2"
-  ])
+  expect_true(change_fit$family$dpar_specs$modeled[change_fit$family$dpar_specs$dpar == "sigma"])
 
   expect_false(any(grepl("^link_", mcp_pars(fit, scope = "population")$name)))
   expect_false(any(grepl("^(mu_|sigma_)\\[", mcp_pars(fit, scope = "population")$name)))
@@ -286,6 +280,14 @@ test_that("required dpars have an initial predictor and implicit defaults retain
   implicit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", sample = FALSE)
   expect_equal(implicit$family$links["sigma"], c(sigma = "identity"))
   expect_equal(mcp_pars(implicit)$name[grepl("^sigma", mcp_pars(implicit)$name)], "sigma_1")
+})
+
+
+test_that("each component is allowed once per segment", {
+  data = data.frame(x = 1:4, y = c(2, 3, 5, 7))
+  expect_error(mcp(list(y ~ 1 + sigma(1) + sigma(1)), data, par_x = "x", sample = FALSE), "Only one `sigma()` allowed", fixed = TRUE)
+  expect_error(mcp(list(y ~ mu(1) + mu(x)), data, par_x = "x", sample = FALSE), "Only one `mu()` allowed", fixed = TRUE)
+  expect_error(mcp(list(y ~ 1 + sigma(1, x)), data, par_x = "x", sample = FALSE), "`sigma()` takes exactly one formula", fixed = TRUE)
 })
 
 

@@ -4,30 +4,17 @@
 # refers to the generalized link-scale recurrence.
 # ------------------------------------------------------------
 
-#' Unpack arma order and formula
+#' Unpack an ar() or ma() term
 #'
-#' @param form_str_in A character such as `"ar(number)"`, `"ma(number)"`, or
-#'   either component with a second formula argument.
-#' @return A list with `$order`, `$form_str` (e.g., `"ar(formula)"`), and
-#'   `$threshold`. The component formula is 1 if no formula is given.
+#' @param expr A call such as `ar(2)`, `ma(1, 1 + x)`, or `ar(1, threshold = 0.2, series = id)`.
+#' @return A list with `$order`, `$formula` (the expression inside the term; `1`
+#'   if no formula is given and `0` if `order = 0`), `$threshold`, and `$series`.
 #' @noRd
-unpack_arma = function(form_str_in) {
-  if (length(form_str_in) == 0) {
-    return(list(
-      order = NA,
-      form_str = NA,
-      threshold = NA_real_,
-      series = NA_character_
-    ))
-  } else if (length(form_str_in) > 1) {
-    stop("Only one of these allowed per segment: ", form_str_in)
-  }
+unpack_arma = function(expr) {
+  term = deparse1(expr)
+  component = rlang::arg_match0(as.character(expr[[1]]), c("ar", "ma"))
 
-  component_call = str2lang(form_str_in)
-  component = as.character(component_call[[1]])
-  component = rlang::arg_match0(component, c("ar", "ma"))
-
-  component_args = as.list(component_call)[-1]
+  component_args = as.list(expr)[-1]
   component_arg_names = names(component_args)
   if (is.null(component_arg_names))
     component_arg_names = rep("", length(component_args))
@@ -48,30 +35,27 @@ unpack_arma = function(form_str_in) {
     stop(component, "() accepts only `order`, an optional formula, `threshold`, and `series`.")
 
   # GET ORDER
-  order_str = paste(deparse(component_args[[1]], width.cutoff = 500), collapse = "")
-  order = suppressWarnings(as.numeric(order_str))
+  order = suppressWarnings(as.numeric(deparse1(component_args[[1]])))
 
   # Check the order
   if (is.na(order))
-    stop("Wrong specification of order in '", form_str_in, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a non-negative integer.")
-  checkmate::assert_int(order, lower = 0, .var.name = form_str_in)
+    stop("Wrong specification of order in '", term, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a non-negative integer.")
+  checkmate::assert_int(order, lower = 0, .var.name = term)
 
   # GET FORMULA AND THRESHOLD AND SERIES
   if (order == 0) {
     if (length(formula_index) == 1)
-      stop("Formula cannot be specified when order = 0 in '", form_str_in, "'.")
-    form_str = paste0(component, "(0)")
+      stop("Formula cannot be specified when order = 0 in '", term, "'.")
+    formula = 0
   } else if (length(formula_index) == 1) {
-    formula_str = paste(deparse(component_args[[formula_index]], width.cutoff = 500), collapse = "")
-    form_str = paste0(component, "(", formula_str, ")")
+    formula = component_args[[formula_index]]
   } else {
     # If there is no formula, use an intercept-only component formula.
-    form_str = paste0(component, "(1)")
+    formula = 1
   }
 
   if (length(threshold_index) == 1) {
-    threshold_str = paste(deparse(component_args[[threshold_index]], width.cutoff = 500), collapse = "")
-    threshold = suppressWarnings(as.numeric(threshold_str))
+    threshold = suppressWarnings(as.numeric(deparse1(component_args[[threshold_index]])))
     if (length(threshold) != 1 || is.na(threshold) || !is.finite(threshold) || threshold <= 0 || threshold >= 1)
       stop("`threshold` in ", component, "() must be one number between 0 and 1.")
   } else {
@@ -95,7 +79,7 @@ unpack_arma = function(form_str_in) {
   # Return
   list(
     order = order,
-    form_str = form_str,
+    formula = formula,
     threshold = threshold,
     series = series
   )
@@ -110,25 +94,16 @@ get_arma_order = function(predictors, term) {
 }
 
 
-# Parse the included ar()/ma() terms once rather than re-parsing the same wrappers
-# for every AR/MA coefficient below. Positive-order ~ 0 formulas have no
-# coefficient rows but are joined to the earlier intercept and x-terms.
-get_included_arma = function(rhs) {
-  included = lapply(seq_along(rhs), function(segment) {
-    term_labels = attributes(stats::terms(rhs[[segment]]))$term.labels
-    lapply(c("ar", "ma"), function(component) {
-      term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
-      parsed = unpack_arma(term)
-      if (is.na(parsed$order))
-        return(NULL)
-      tibble::tibble(
-        dpar = component,
-        segment = segment,
-        order = parsed$order
-      )
-    }) %>% dplyr::bind_rows()
-  })
-  dplyr::bind_rows(included)
+# The ar()/ma() terms included in each segment, given `get_segment_components()` for each segment.
+# Positive-order ~ 0 formulas have no coefficient rows but are joined to the earlier
+# intercept and x-terms.
+get_included_arma = function(components) {
+  rows = list()
+  for (segment in seq_along(components)) {
+    for (component in intersect(c("ar", "ma"), names(components[[segment]])))
+      rows[[length(rows) + 1L]] = tibble::tibble(dpar = component, segment = segment, order = components[[segment]][[component]]$order)
+  }
+  dplyr::bind_rows(rows)
 }
 
 

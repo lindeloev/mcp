@@ -699,28 +699,13 @@ add_dpar_specs = function(family) {
 }
 
 
-# Resolve each dpar link from whether the model includes an explicit formula for it.
-resolve_dpar_specs = function(family, predictors, model = NULL) {
+# Resolve each dpar link from whether the model includes a formula for it, e.g., sigma(1).
+# - components: A list with `get_segment_components()` for each segment.
+resolve_dpar_specs = function(family, components) {
   checkmate::assert_class(family, "mcpfamily")
-  checkmate::assert_data_frame(predictors)
-  assert_data_cols(predictors, c("dpar", "explicit"))
   family = add_dpar_specs(family)
 
-  modeled_dpars = unique(predictors$dpar[predictors$explicit])
-  if (!is.null(model)) {
-    term_labels = unlist(lapply(model, function(segment) {
-      rhs = get_rhs(segment)
-      attr(stats::terms(rhs), "term.labels")
-    }))
-    included_dpars = family$dpar_specs$dpar[vapply(
-      family$dpar_specs$dpar,
-      function(dpar) any(stringr::str_detect(term_labels, paste0("^", dpar, "\\("))),
-      logical(1)
-    )]
-    modeled_dpars = union(modeled_dpars, included_dpars)
-  }
-
-  family$dpar_specs$modeled = family$dpar_specs$dpar %in% modeled_dpars
+  family$dpar_specs$modeled = family$dpar_specs$dpar %in% unlist(lapply(components, names))
   family$dpar_specs$link = ifelse(
     family$dpar_specs$modeled,
     family$dpar_specs$link_modeled,

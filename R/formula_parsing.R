@@ -111,10 +111,10 @@ get_formula_vars = function(model) {
       walk(expr[[2]], role)
       add("group", all.vars(expr[[3]]))
     } else if (fun %in% c("ar", "ma")) {
-      arma = unpack_arma(deparse1(expr))
+      arma = unpack_arma(expr)
       if (!is.na(arma$series))
         add("series", arma$series)
-      walk(str2lang(arma$form_str)[[2]], role)
+      walk(arma$formula, role)
     } else {
       for (arg in as.list(expr)[-1])
         walk(arg, role)
@@ -216,45 +216,51 @@ unpack_additive = function(expr) {
 }
 
 
-# Canonicalize a segment RHS formula so that bare mu terms are wrapped in mu(...)
-# E.g., `~ 1 + x + sigma(1 + x)` --> `~ mu(1 + x) + sigma(1 + x)`.
-# This allows treating mu like any other wrapper, simplifying downstream parsing.
-canonicalize_rhs = function(form_rhs, family) {
+# Split a segment's right-hand side into its components: a one-sided formula for each included
+# distributional parameter, where bare terms belong to mu, and the unpacked ar()/ma() terms
+# (see `unpack_arma()`, with the formula as `form`).
+# E.g., `~ 1 + x + sigma(1 + x) + ar(2)` --> list(mu = ~1 + x, sigma = ~1 + x, ar = list(order = 2, form = ~1, ...)).
+# As in other R formulas, a segment without mu terms includes an intercept: `~ sigma(1)` has mu = ~1.
+get_segment_components = function(form_rhs, family) {
   checkmate::assert_formula(form_rhs)
   checkmate::assert_class(family, "mcpfamily")
-  env = environment(form_rhs)
-
-  # Unpack top-level additive leaves and their call names
-  leaves = unpack_additive(form_rhs[[2]])
-  leaf_names = vapply(leaves, function(x) if (is.call(x)) deparse1(x[[1]]) else "", character(1))
-
-  # Separate component wrappers, explicit mu() calls, and bare terms
-  dpar_wrappers = setdiff(unique(c(known_dpar_wrappers(), family$dpar_specs$dpar)), "mu")
-  known_wrappers = c(dpar_wrappers, "ar", "ma")
-
-  wrapper_leaves = leaves[leaf_names %in% known_wrappers]
-  explicit_mu = leaves[leaf_names == "mu"]
-  bare_leaves = leaves[leaf_names %notin% c(known_wrappers, "mu")]
-
-  if (length(explicit_mu) > 1)
-    stop("Only one `mu()` allowed in each formula.", call. = FALSE)
-
-  # Merge explicit mu() contents with any bare terms
-  inner_mu = if (length(explicit_mu) == 1 && length(explicit_mu[[1]]) > 1) {
-    unpack_additive(explicit_mu[[1]][[2]])
-  } else {
-    list()
-  }
-  mu_leaves = c(inner_mu, bare_leaves)
-
-  # Helper to chain additive expressions
+  as_form = function(expr) stats::as.formula(call("~", expr), env = environment(form_rhs))
   sum_exprs = function(exprs) Reduce(function(a, b) call("+", a, b), exprs)
 
-  # Wrap mu terms into mu(...) (defaulting to mu(1) if empty)
-  mu_expr = if (length(mu_leaves) == 0) call("mu", 1) else call("mu", sum_exprs(mu_leaves))
+  # Unpack top-level additive terms and their wrapper names
+  leaves = unpack_additive(form_rhs[[2]])
+  leaf_names = vapply(leaves, function(x) if (is.call(x)) deparse1(x[[1]]) else "", character(1))
+  wrappers = c(family$dpars, "ar", "ma")
 
-  # Return canonical one-sided formula
-  stats::as.formula(call("~", sum_exprs(c(list(mu_expr), wrapper_leaves))), env = env)
+  unsupported = setdiff(intersect(leaf_names, known_dpar_wrappers()), family$dpars)
+  if (length(unsupported) > 0) {
+    family_call = paste0(family$family, "()")
+    stop(
+      paste0("`", unsupported, "()`", collapse = " and "), " is not a distributional parameter for family = ", family_call, ". ",
+      "See available parameters with `mcpfamily(", family_call, ")$dpars`."
+    )
+  }
+  repeated = unique(leaf_names[duplicated(leaf_names) & leaf_names %in% wrappers])
+  if (length(repeated) > 0)
+    stop("Only one ", and_collapse(paste0("`", repeated, "()`")), " allowed in each segment.", call. = FALSE)
+
+  # Bare terms are added to the contents of an explicit mu()
+  is_bare = leaf_names %notin% wrappers
+  components = list()
+  for (i in which(!is_bare)) {
+    if (leaf_names[i] %in% c("ar", "ma")) {
+      arma = unpack_arma(leaves[[i]])
+      arma$form = as_form(arma$formula)
+      components[[leaf_names[i]]] = arma[c("order", "form", "threshold", "series")]
+    } else if (length(leaves[[i]]) != 2) {
+      stop("`", leaf_names[i], "()` takes exactly one formula, e.g., `", leaf_names[i], "(1 + x)`. Got `", deparse1(leaves[[i]]), "`.", call. = FALSE)
+    } else {
+      components[[leaf_names[i]]] = as_form(leaves[[i]][[2]])
+    }
+  }
+  mu_leaves = c(if (!is.null(components$mu)) unpack_additive(components$mu[[2]]), leaves[is_bare])
+  components$mu = as_form(if (length(mu_leaves) == 0) 1 else sum_exprs(mu_leaves))
+  components
 }
 
 

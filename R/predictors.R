@@ -712,69 +712,40 @@ is_empty_initial_predictor = function(form) {
 
 #' Apply `get_predictors_dpar` to each formula in a segment
 #'
+#' @param components The segment's components from `get_segment_components()`.
 #' @noRd
-get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL) {
-  checkmate::assert_formula(form_rhs)
+get_predictors_segment = function(components, segment, family, data, par_x, check_rank = TRUE, previous = NULL) {
+  checkmate::assert_list(components)
   checkmate::assert_int(segment, lower = 1)
   checkmate::assert_class(family, "mcpfamily")
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x)
 
-  # Components have already been canonicalized by get_predictor_tables()
-  form_env = environment(form_rhs)
-  attrs = attributes(stats::terms(form_rhs))
-  term_labels = attrs$term.labels
-
-  # Formula wrappers belonging to distributional parameters and AR/MA
-  model_dpars = family$dpar_specs$dpar
-  arma_components = c("ar", "ma")
-
-  # Give a family-specific error when a recognized dpar wrapper is unavailable.
-  used_dpar_wrappers = known_dpar_wrappers()[vapply(
-    known_dpar_wrappers(),
-    function(dpar) any(stringr::str_detect(term_labels, paste0("^", dpar, "\\("))),
-    logical(1)
-  )]
-  unsupported_dpars = setdiff(used_dpar_wrappers, model_dpars)
-  if (length(unsupported_dpars) > 0) {
-    dpar_calls = paste0("`", unsupported_dpars, "()`", collapse = " and ")
-    family_call = paste0(family$family, "()")
-    stop(
-      dpar_calls, " is not a distributional parameter for family = ", family_call, ". ",
-      "See available parameters with `mcpfamily(", family_call, ")$dpars`."
-    )
-  }
-
   #############################
   # DISTRIBUTIONAL PARAMETERS #
   #############################
   dpar_pars = list()
-  for (dpar in model_dpars) {
+  for (dpar in family$dpars) {
     spec = get_dpar_spec(family, dpar)
-    dpar_term = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
+    dpar_form = components[[dpar]]
 
     # An implicit dpar includes an intercept in segment 1 and is joined in
     # later segments until the user includes another dpar intercept.
-    if (length(dpar_term) == 0 && spec$implicit && segment == 1) {
-      dpar_form = stats::as.formula("~1", env = form_env)
+    if (is.null(dpar_form) && spec$implicit && segment == 1) {
+      dpar_form = stats::as.formula("~1", env = environment(components$mu))
+    } else if (!is.null(dpar_form) && segment == 1 && spec$require_initial_predictor && is_empty_initial_predictor(dpar_form)) {
+      stop(
+        "`", dpar, "(0)` cannot be the initial predictor for family = ", family$family,
+        "(). Include an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
+        call. = FALSE
+      )
+    }
+
+    if (!is.null(dpar_form)) {
       dpar_pars[[dpar]] = get_shared_predictors(
         data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
         design_id = paste("population", dpar, segment, sep = ":"), previous = previous
-      ) %>%
-        dplyr::mutate(explicit = FALSE)
-    } else if (length(dpar_term) > 0) {
-      dpar_form = get_term_content(dpar_term, form_env)
-      if (segment == 1 && spec$require_initial_predictor && is_empty_initial_predictor(dpar_form))
-        stop(
-          "`", dpar, "(0)` cannot be the initial predictor for family = ", family$family,
-          "(). Include an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
-          call. = FALSE
-        )
-      dpar_pars[[dpar]] = get_shared_predictors(
-        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
-        design_id = paste("population", dpar, segment, sep = ":"), previous = previous
-      ) %>%
-        dplyr::mutate(explicit = TRUE)
+      )
     }
   }
 
@@ -782,44 +753,32 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
   # AR/MA #
   #########
   arma_pars = list()
-  for (component in arma_components) {
-    component_term = term_labels[stringr::str_detect(term_labels, paste0("^", component, "\\("))]
-    component_stuff = unpack_arma(component_term)
+  for (component in intersect(c("ar", "ma"), names(components))) {
+    arma = components[[component]]
+    if (length(get_group_terms(arma$form)) > 0)
+      stop(
+        "Group-level effects inside ", component,
+        "() are not currently supported. Found one in segment ", segment, "."
+      )
 
-    if (!is.na(component_stuff$order)) {
-      component_form = get_term_content(component_stuff$form_str, form_env)
-      if (length(get_group_terms(component_form)) > 0)
-        stop(
-          "Group-level effects inside ", component,
-          "() are not currently supported. Found one in segment ", segment, "."
-        )
-      # Expand one formula into a separate regression parameter for each lag.
-      arma_pars[[component]] = if (component_stuff$order == 0) {
-        get_shared_predictors(
-          data, component_form, segment, component, par_x, order = 1L, check_rank,
-          design_id = paste("population", component, 0, segment, sep = ":"), previous = previous
-        ) %>%
-          dplyr::mutate(threshold = component_stuff$threshold, explicit = TRUE)
-      } else {
-        lapply(
-          seq_len(component_stuff$order),
-          function(order) get_shared_predictors(
-            data, component_form, segment, component, par_x, order, check_rank,
-            design_id = paste("population", component, order, segment, sep = ":"), previous = previous
-          )
-        ) %>%
-          dplyr::bind_rows() %>%
-          dplyr::mutate(threshold = component_stuff$threshold, explicit = TRUE)
-      }
-    }
+    # Expand one formula into a separate regression parameter for each lag.
+    # Order 0 turns off all lags, coded as lag 1 with formula ~ 0.
+    arma_pars[[component]] = lapply(seq_len(max(1, arma$order)), function(order) {
+      get_shared_predictors(
+        data, arma$form, segment, component, par_x, order, check_rank,
+        design_id = paste("population", component, if (arma$order == 0) 0 else order, segment, sep = ":"),
+        previous = previous
+      )
+    }) %>%
+      dplyr::bind_rows()
   }
 
   # AR and MA use the same transformed observation, so their threshold must be
   # shared within a segment. One explicitly supplied value applies to both.
-  supplied_thresholds = unique(stats::na.omit(unlist(lapply(arma_pars, function(x) x$threshold))))
+  supplied_thresholds = unique(stats::na.omit(c(components$ar$threshold, components$ma$threshold)))
   if (length(supplied_thresholds) > 1)
     stop("ar() and ma() must use the same `threshold` within a segment.")
-  
+
   # Most users need no threshold argument; resolve the common default here.
   segment_threshold = if (length(supplied_thresholds) == 1) supplied_thresholds else 0.1
   arma_pars = lapply(arma_pars, dplyr::mutate, threshold = segment_threshold)
@@ -838,15 +797,15 @@ get_predictors_segment = function(form_rhs, segment, family, data, par_x, check_
 #'
 #' @noRd
 get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
-  # Canonicalize segment formulas to wrap bare mu terms into mu(...)
-  rhs = lapply(model, get_rhs)
-  rhs = lapply(rhs, canonicalize_rhs, family = family)
+  # Parse the components of each segment once (mu, other dpars, ar, ma)
+  components = lapply(model, function(form) get_segment_components(get_rhs(form), family))
+  n_segments = length(components)
 
   # Resolve each component against earlier occurrences, including chains
   parsed_predictors = NULL
-  for (segment in seq_along(rhs)) {
+  for (segment in seq_len(n_segments)) {
     parsed_predictors = dplyr::bind_rows(parsed_predictors,
-      get_predictors_segment(rhs[[segment]], segment, family, data, par_x,
+      get_predictors_segment(components[[segment]], segment, family, data, par_x,
         check_rank, previous = parsed_predictors))
   }
   parsed_predictors = dplyr::arrange(parsed_predictors, .data$dpar, .data$segment)
@@ -886,7 +845,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       next_segment = dplyr::if_else(
         .data$par_type != "Intercept" & .data$x_factor == "1" &
           .data$dpar %notin% c("ar", "ma"),
-        dplyr::if_else(.data$segment < length(rhs), .data$segment + 1L, NA_integer_),
+        dplyr::if_else(.data$segment < n_segments, .data$segment + 1L, NA_integer_),
         .data$next_intercept
       )
     ) %>%
@@ -894,14 +853,14 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   # AR/MA x-terms and intercepts keep their value through joined segments that
   # include the same lag, until the next AR/MA intercept
-  included_arma = get_included_arma(rhs)
+  included_arma = get_included_arma(components)
   arma_next_segment = vapply(seq_len(nrow(predictors)), function(i) {
     if (predictors$dpar[i] %notin% c("ar", "ma"))
       return(NA_integer_)
 
     next_segment = predictors$segment[i] + 1L
     joins = predictors$par_type[i] == "Intercept" || predictors$x_factor[i] != "1"
-    while (joins && next_segment <= length(rhs)) {
+    while (joins && next_segment <= n_segments) {
       included = included_arma[
         included_arma$dpar == predictors$dpar[i] &
           included_arma$segment == next_segment,
@@ -914,7 +873,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         break
       next_segment = next_segment + 1L
     }
-    if (next_segment > length(rhs)) NA_integer_ else next_segment
+    if (next_segment > n_segments) NA_integer_ else next_segment
   }, integer(1))
   predictors = predictors %>%
     dplyr::mutate(
@@ -930,9 +889,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # until a later population intercept, group intercept, or `(0 | group)`.
   # Parse group blocks segment by segment so `same()` can find its source
   definitions = NULL
-  for (segment in seq_along(rhs)) {
+  for (segment in seq_len(n_segments)) {
     definitions = dplyr::bind_rows(definitions,
-      get_predictor_group_definitions_segment(rhs[[segment]], segment, family,
+      get_predictor_group_definitions_segment(components[[segment]], segment, family,
         data, par_x, check_rank, previous = definitions))
   }
 
@@ -989,7 +948,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     predictor_group_effects = predictor_group_effects %>%
       dplyr::mutate(next_segment = dplyr::if_else(
         .data$x_factor == "1",
-        dplyr::if_else(.data$segment < length(rhs), .data$segment + 1L, NA_integer_),
+        dplyr::if_else(.data$segment < n_segments, .data$segment + 1L, NA_integer_),
         next_reset
       ))
   }
@@ -1005,6 +964,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       definition_name = character(), definition_segment = integer())
 
   list(
+    components = components,
     predictors = predictors,
     group_effects = predictor_group_effects,
     design_specs = design_specs

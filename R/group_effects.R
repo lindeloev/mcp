@@ -126,19 +126,13 @@ parse_predictor_group_term = function(
 #' @return A tibble containing group coefficients and explicit turn-offs.
 #' @noRd
 get_predictor_group_definitions_segment = function(
-  form_rhs, segment, family, data, par_x, check_rank = TRUE, previous = NULL
+  components, segment, family, data, par_x, check_rank = TRUE, previous = NULL
 ) {
-  # Components have already been canonicalized by get_predictor_tables()
-  form_env = environment(form_rhs)
-  term_labels = attr(stats::terms(form_rhs), "term.labels")
-
   # Parse group-level terms for all distributional parameters (including mu)
   definitions = list()
-  for (dpar in family$dpar_specs$dpar) {
-    dpar_terms = term_labels[stringr::str_detect(term_labels, paste0("^", dpar, "\\("))]
-    if (length(dpar_terms) == 0)
-      next
-    standardized = standardize_shared_component(get_term_content(dpar_terms, form_env), segment)
+  for (dpar in intersect(family$dpars, names(components))) {
+    form_env = environment(components[[dpar]])
+    standardized = standardize_shared_component(components[[dpar]], segment)
     selected = standardized$selected
     selected = selected[vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
