@@ -100,31 +100,47 @@ reference:
     contents:
       - sd_to_prec
 
+articles:
+  - title: Modeling
+    contents:
+      - formulas
+      - group_effects
+      - dpar
+      - arma
+  - title: Families
+    contents:
+      - families
+      - poisson
+      - binomial
+  - title: Inference
+    contents:
+      - priors
+      - comparison
+      - predict
+      - missing
+  - title: Implementation
+    contents:
+      - implementation
+      - default_priors
+      - tips
+
 redirects:
   - ["articles/varying.html", "articles/group_effects.html"]
   - ["articles/variance.html", "articles/dpar.html"]
 
 navbar:
   left:
-    - text: General usage
+    - text: Modeling
       menu:
       - text: Formulas
         href: articles/formulas.html
-      - text: Priors
-        href: articles/priors.html
-      - text: Hypotheses and model comparison
-        href: articles/comparison.html
       - text: Group-level (random) effects
         href: articles/group_effects.html
       - text: Variance and other distributional parameters
         href: articles/dpar.html
       - text: Time series and autocorrelation
         href: articles/arma.html
-      - text: Fits and predictions
-        href: articles/predict.html
-      - text: Missing responses and imputation
-        href: articles/missing.html
-    - text: GLM
+    - text: Families
       menu:
       - text: Supported families and link functions
         href: articles/families.html
@@ -132,8 +148,22 @@ navbar:
         href: articles/poisson.html
       - text: Binomial and Bernoulli
         href: articles/binomial.html
-    - text: Other
+    - text: Inference
       menu:
+      - text: Priors
+        href: articles/priors.html
+      - text: Hypotheses and model comparison
+        href: articles/comparison.html
+      - text: Fits and predictions
+        href: articles/predict.html
+      - text: Missing responses and imputation
+        href: articles/missing.html
+    - text: Implementation
+      menu:
+      - text: From formulas to sampler code
+        href: articles/implementation.html
+      - text: Default priors
+        href: articles/default_priors.html
       - text: Tips, tricks, and debugging
         href: articles/tips.html
     - text: Functions

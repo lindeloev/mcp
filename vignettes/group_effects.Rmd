@@ -213,6 +213,9 @@ pp_check(fit, facet_by = "id")
 
 
 # Priors for group-level effects
+
+*[Brief overview of all default priors](../articles/default_priors.html#summary-reference-table)*
+
 You can see the priors of the model like this:
 
 ```{r, R.options = list(width = 9999)}
@@ -221,7 +224,7 @@ prior_summary(fit)
 
 `cp_1_id_sd` is the SD of the normal distribution, before truncation, governing the `cp_1_id` deviations. Unlike predictor group-level effects, change-point locations are also constrained to remain in range and ordered within each group.
 
-For predictor group-level effects (e.g., `(state || id)`), the SDs default to the `brms` half-Student-t prior on the response scale, `dt(0, max(2.5, mad(y)), 3) T(0, )`, with slope SDs divided by `sd(column)`. Log, logit, and probit links and distributional parameters use other scales; see [default priors on group-level effects](../articles/priors.html#default-priors-on-group-level-effects).
+For predictor group-level effects (e.g., `(state || id)`), the SDs default to the `brms` half-Student-t prior on the response scale, `dt(0, max(2.5, mad(y)), 3) T(0, )`, with slope SDs divided by `sd(column)`. Log, logit, and probit links and distributional parameters use other scales; see [default priors on group-level effects](../articles/default_priors.html#default-priors-on-group-level-effects).
 
 
 # JAGS code

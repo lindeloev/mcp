@@ -74,11 +74,13 @@ plot_pars(fit)
 
 # Priors for Poisson models
 
+*[Brief overview of all default priors](../articles/default_priors.html#summary-reference-table)*
+
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
 
 The intercept prior is a normal distribution centered on the rounded median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5 and its rounded MAD. `pmax()` keeps zeros finite and the minimum scale avoids an accidentally narrow prior.
 
-Categorical contrasts use `dnorm(0, 2.5)`; numeric coefficients use `dnorm(0, 2.5 / S)` scaled to a representative predictor change $S$. Group standard deviations similarly default to half-normal priors (`dnorm(0, ...) T(0, )`). Following the precedent of `rstanarm`, these normal defaults retain wide regularizing coverage while avoiding the infinite prior expected counts and explosive simulations produced by Student-t tails under exponentiation (used in some packages).
+Categorical contrasts use `dnorm(0, 2.5)`; numeric coefficients use `dnorm(0, 2.5 / S)` scaled to a representative predictor change $S$. Group standard deviations similarly default to half-normal priors (`dnorm(0, ...) T(0, )`). Following the precedent of `rstanarm`, these normal defaults retain wide regularizing coverage while avoiding the infinite prior expected counts and explosive simulations produced by Student-t tails under exponentiation (used in some packages). See overview of [similarities and deviations from `rstanarm` and `brms`](../articles/default_priors.html#deviations) for log links.
 
 ```{r, R.options = list(width = 9999)}
 prior_summary(fit)

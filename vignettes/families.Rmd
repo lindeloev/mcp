@@ -32,7 +32,7 @@ Currently supported families and link functions are:
 - Default: `poisson(link = "log")`. Alternatives: `poisson(link = "identity")`
 - Default: `negbinomial(link = "log", link_shape = "log")`
 
-See the "GLM" menu above for more details on using GLM with `mcp`. The hardest part about adding new families/links is specifying default priors. Read more in [the article on mcp priors](../articles/priors.html).
+See the "Families" menu above for more details on using GLM with `mcp`. The hardest part about adding new families/links is specifying default priors. Read more in [the article on default priors](../articles/default_priors.html).
 
 # Non-default link functions
 

@@ -137,7 +137,7 @@ Because point Bayes factors depend directly on the prior density, they require b
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
-The default [uniform order statistics prior on change points](../articles/priors.html) has flat symmetric properties across the range, but an informed prior should be used for point-null hypothesis testing.
+The default [uniform order statistics prior on change points](../articles/priors.html#cp_prior) has flat symmetric properties across the range, but an informed prior should be used for point-null hypothesis testing.
 
 
 

@@ -287,6 +287,8 @@ hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
 
 # Priors on AR and MA coefficients {#ar_prior}
 
+*[Brief overview of all default priors](../articles/default_priors.html#summary-reference-table)*
+
 The default prior on each AR and MA intercept is a truncated normal distribution:
 
 ``` r
