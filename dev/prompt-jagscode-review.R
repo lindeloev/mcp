@@ -2,13 +2,23 @@
 # I ran these by Geminin 3.1 Pro in 2026-08-01 with no errors.
 
 build_llm_prompt = function(fit) {
+  # Fitted model tables do not store data-sized design values, so re-evaluate them on fit$data
+  model_tables = fit$.internal$model_tables
+  evaluated_designs = mcp:::evaluate_design_specs(model_tables$design_specs, fit$data)
+  design_specs = lapply(names(model_tables$design_specs), function(id) {
+    spec = model_tables$design_specs[[id]]
+    spec$offset_data = as.numeric(evaluated_designs[[id]]$offset)
+    spec
+  })
   jags_data = mcp:::get_jags_data(
     data = fit$data,
     family = fit$family,
-    segments = fit$.internal$model_tables$segments,
-    predictors = fit$.internal$model_tables$predictors,
-    group_effects = fit$.internal$model_tables$group_effects,
-    jags_code = fit$jags_code
+    segments = model_tables$segments,
+    predictors = mcp:::populate_design_columns(model_tables$predictors, evaluated_designs),
+    group_effects = mcp:::populate_design_columns(model_tables$group_effects, evaluated_designs),
+    jags_code = fit$jags_code,
+    series = model_tables$data_columns$series,
+    design_specs = design_specs
   )
 
   # Dynamically strip simulated attributes from response and other variables

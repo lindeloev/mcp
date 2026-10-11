@@ -176,7 +176,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # LIKELIHOOD #
   ##############
   context = get_jags_family_context(segments)
-  mm = paste0(mm, "\n\n    # Likelihood and log-density for family = ", family$family, "()
+  mm = paste0(mm, "\n\n    # Likelihood for family = ", family$family, "()
     ")
 
   # Transform link-scale predictors to distribution-scale parameters. These are
