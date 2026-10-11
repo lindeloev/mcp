@@ -187,7 +187,7 @@ get_plot = function(x,
   lines = min(lines, available_draws)
 
   # Useful vars
-  yvar = rlang::sym(data_columns$response)
+  yvar = data_columns$response
   by = plot_by
   group_pars = unpack_group_effects(fit, cols = by)$pars
   if (is.null(group_pars))
@@ -196,7 +196,7 @@ get_plot = function(x,
   ############################
   # MAKE NEWDATA AND PREDICT #
   ############################
-  needs_arma = arma && is_arma(fit) && dpar %in% c("epred", "mu")
+  needs_arma = uses_garma(fit, arma, "fitted", dpar)
   newdata = interpolate_newdata(fit, by = by, at = at, arma = needs_arma, prior = prior)
 
   # Predict
@@ -222,7 +222,7 @@ get_plot = function(x,
   prepare_draws = function(draws) {
     draws = draws %>%
       # Only a problem for AR/MA models, where newdata contains the response.
-      dplyr::select(-dplyr::any_of(as.character(yvar)))
+      dplyr::select(-dplyr::any_of(yvar))
 
     # Fitted values are only present for `type = "fitted"` (or "predict" with
     # `.return_fitted = TRUE`). Predict-only draws (no q_fit requested) have
@@ -255,7 +255,7 @@ get_plot = function(x,
     keep = unique(c(data_columns$par_x, facet_by, ".group", ".color"))
 
     if (show_q_fit)
-      q_fit_data = get_quantiles(draws, q_fit, as.character(yvar), keep)
+      q_fit_data = get_quantiles(draws, q_fit, yvar, keep)
     if (show_q_predict)
       q_predict_data = get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate)
   }
@@ -301,12 +301,11 @@ get_plot = function(x,
   if (dpar == "epred") {
     if (geom_data == "point") {
       observed_data = fit$data[!is.na(fit$data[[data_columns$response]]), , drop = FALSE]
-      point_size = fit$family$response$point_size
-      point_size_col = get_family_aux_columns(fit$family, model_tables$segments)[point_size]
-      if (length(point_size_col) == 0 || is.na(point_size_col)) {
+      weights_col = data_columns$weights
+      if (is.null(weights_col)) {
         gg = gg + ggplot2::geom_point(data = observed_data)
       } else {
-        gg = gg + ggplot2::geom_point(ggplot2::aes(size = .data[[point_size_col]]), data = observed_data) +
+        gg = gg + ggplot2::geom_point(ggplot2::aes(size = .data[[weights_col]]), data = observed_data) +
           ggplot2::scale_size_area(max_size = 2 * 1.5/sqrt(1.5))  # See https://stackoverflow.com/questions/63023877/setting-absolute-point-size-for-geom-point-with-scale-size-area/63024297?noredirect=1#comment111454629_63024297
       }
     } else if (geom_data == "line") {
@@ -329,8 +328,7 @@ get_plot = function(x,
     gg = gg + geom_quantiles(q_fit_data, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
   }
   if (show_q_predict) {
-    yvar_predict = rlang::sym(".predicted")
-    gg = gg + geom_quantiles(q_predict_data, yvar_predict, use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
+    gg = gg + geom_quantiles(q_predict_data, ".predicted", use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
   }
 
   # Add change point densities?
@@ -343,11 +341,11 @@ get_plot = function(x,
     } else if (show_q_predict) {
       limits_y = range(q_predict_data$.predicted)
     } else if (show_q_fit) {
-      limits_y = range(dplyr::pull(q_fit_data, as.character(yvar)))
-    } else if (as.character(yvar) %in% names(eval_lines)) {
-      limits_y = range(dplyr::pull(eval_lines, as.character(yvar)))
+      limits_y = range(dplyr::pull(q_fit_data, yvar))
+    } else if (yvar %in% names(eval_lines)) {
+      limits_y = range(dplyr::pull(eval_lines, yvar))
     } else {
-      stop("Failed to draw change point density for this plot. Please raise an error on GitHub.")
+      stop_github("Failed to draw change point density for this plot.")
     }
 
     gg = gg + geom_cp_density(fit, facet_by, prior, limits_y, use_color) +
@@ -609,15 +607,11 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 #' @return A `ggplot2::geom_line` object.
 #' @noRd
 geom_quantiles = function(data_quantiles, yvar, use_color = TRUE, color = NULL, ...) {
-  quantile_mapping = if (use_color) {
-    ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group), color = .data$.color)
-  } else {
-    ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group))
-  }
-
   if (use_color) {
-    return(ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, ...))
+    mapping = ggplot2::aes(y = .data[[yvar]], group = interaction(.data$quantile, .data$.group), color = .data$.color)
+    ggplot2::geom_line(mapping = mapping, data = data_quantiles, ...)
   } else {
-    ggplot2::geom_line(mapping = quantile_mapping, data = data_quantiles, color = color, ...)
+    mapping = ggplot2::aes(y = .data[[yvar]], group = interaction(.data$quantile, .data$.group))
+    ggplot2::geom_line(mapping = mapping, data = data_quantiles, color = color, ...)
   }
 }

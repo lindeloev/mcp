@@ -126,8 +126,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
     )),
     validate = function(y, data, response_columns) invisible(TRUE),  # Default to no validation
     observed = function(y, data, rate) y,
-    probability = function(rate) FALSE,
-    point_size = "weights"
+    probability = function(rate) FALSE
   )
 
   # Fill in missing top-level response elements
@@ -152,9 +151,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   family$garma = garma
   family = add_dpar_specs(family)
 
-  family$linkfun_str = get_link_str(family$link)
-  family$linkinv_str = get_link_str(family$link, inverse = TRUE)
-  family$linkfun = get_link_function(family$link)
+  family$linkfun =get_link_function(family$link)
   family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   class(family) = c("mcpfamily", "family")
@@ -186,6 +183,18 @@ make_weighted_log_lik = function(family_log_lik) {
     weights = if (is.null(data$weights)) 1 else data$weights
     weights * family_log_lik(y, dpars, data)
   }
+}
+
+
+# JAGS code raising a discrete likelihood to the observation weight using the Poisson zeros trick:
+# P(Z = 0) from dpois(phi) contributes -phi to the log-likelihood, so phi = weight * -log(density).
+# Missing responses (response_observed_ = 0) contribute nothing.
+jags_weighted_likelihood = function(label, weights, neg_log_density) {
+  c(
+    paste0("# ", label, " likelihood raised to the observation weight"),
+    paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, ", neg_log_density, ")"),
+    "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])"
+  )
 }
 
 
@@ -367,11 +376,7 @@ mcpfamily_binomial = function(family) {
         trials = context$aux("trials")
         mu = context$dpar("mu")
         y = context$y
-        c(
-          "# Binomial likelihood raised to the observation weight",
-          paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, loggam(", y, " + 1) + loggam(", trials, " - ", y, " + 1) - loggam(", trials, " + 1) - ", y, " * log(", mu, ") - (", trials, " - ", y, ") * log(1 - ", mu, "))"),
-          paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
-        )
+        jags_weighted_likelihood("Binomial", weights, paste0("loggam(", y, " + 1) + loggam(", trials, " - ", y, " + 1) - loggam(", trials, " + 1) - ", y, " * log(", mu, ") - (", trials, " - ", y, ") * log(1 - ", mu, ")"))
       }
     }
   )
@@ -452,11 +457,7 @@ mcpfamily_bernoulli = function(family) {
       } else {
         mu = context$dpar("mu")
         y = context$y
-        c(
-          "# Bernoulli likelihood raised to the observation weight",
-          paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, - ", y, " * log(", mu, ") - (1 - ", y, ") * log(1 - ", mu, "))"),
-          paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
-        )
+        jags_weighted_likelihood("Bernoulli", weights, paste0("- ", y, " * log(", mu, ") - (1 - ", y, ") * log(1 - ", mu, ")"))
       }
     }
   )
@@ -544,11 +545,7 @@ mcpfamily_poisson = function(family) {
       } else {
         mu = context$dpar("mu")
         y = context$y
-        c(
-          "# Poisson likelihood raised to the observation weight",
-          paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, ", mu, " - ", y, " * log(", mu, ") + loggam(", y, " + 1))"),
-          paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
-        )
+        jags_weighted_likelihood("Poisson", weights, paste0(mu, " - ", y, " * log(", mu, ") + loggam(", y, " + 1)"))
       }
     }
   )
@@ -615,27 +612,20 @@ mcpfamily_negbinomial = function(family) {
   jags = list(
     glm_module = "never",  # JAGS glm module: see run_jags()
     likelihood = function(context) {
-    mu = context$dpar("mu")
-    shape = context$dpar("shape")
-    prob = context$local("nb_prob")
-    weights = context$aux("weights", "1")
-
-    # Unweighted likelihood
-    if (identical(weights, "1")) {
-      c(
-        paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
-        paste0(context$y, " ~ dnegbin(", prob, ", ", shape, ")")
-      )
-    } else {
+      mu = context$dpar("mu")
+      shape = context$dpar("shape")
+      prob = context$local("nb_prob")
+      weights = context$aux("weights", "1")
       y = context$y
-      c(
-        paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")"),
-        "# Negative binomial likelihood raised to the observation weight",
-        paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, loggam(", shape, ") + loggam(", y, " + 1) - loggam(", y, " + ", shape, ") - ", shape, " * log(", prob, ") - ", y, " * log(1 - ", prob, "))"),
-        paste0("likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])")
-      )
+      prob_code = paste0(prob, " = ", shape, " / (", shape, " + ", mu, ")")
+
+      # Unweighted likelihood
+      if (identical(weights, "1"))
+        return(c(prob_code, paste0(y, " ~ dnegbin(", prob, ", ", shape, ")")))
+
+      c(prob_code, jags_weighted_likelihood("Negative binomial", weights, paste0("loggam(", shape, ") + loggam(", y, " + 1) - loggam(", y, " + ", shape, ") - ", shape, " * log(", prob, ") - ", y, " * log(1 - ", prob, ")")))
     }
-  })
+  )
   garma = list(
     observed_r = function(y, data, threshold) pmax(y, threshold),
     observed_jags = function(context) paste0("max(", context$y, ", ", context$threshold, ")")
@@ -895,7 +885,6 @@ assert_mcpfamily = function(x) {
   checkmate::assert_function(x$response$validate)
   checkmate::assert_function(x$response$observed)
   checkmate::assert_function(x$response$probability)
-  checkmate::assert_string(x$response$point_size, null.ok = TRUE)
   for (auxiliary in x$response$auxiliary) {
     checkmate::assert_flag(auxiliary$required)
     checkmate::assert_character(auxiliary$operations)
@@ -911,8 +900,6 @@ assert_mcpfamily = function(x) {
     checkmate::assert_function(x$garma$observed_jags)
     checkmate::assert_function(x$garma$validate_threshold, null.ok = TRUE)
   }
-  checkmate::assert_string(x$linkfun_str)
-  checkmate::assert_string(x$linkinv_str)
   checkmate::assert_function(x$linkfun)
   checkmate::assert_function(x$linkinv)
 

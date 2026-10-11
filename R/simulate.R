@@ -259,7 +259,7 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   if (.type == "fitted" && (.rate || (!is.null(.dpar) && .dpar != "epred")))
     aux_operations = setdiff(aux_operations, "epred")
   aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
-  evaluating_arma = has_arma_terms && .arma && !(.type == "fitted" && !is.null(.dpar) && .dpar %notin% c("epred", "mu"))
+  evaluating_arma = uses_garma(fit, .arma, .type, .dpar)
   data_pars = c(data_columns$par_x, if (evaluating_arma) data_columns$series, stats::na.omit(unname(aux_columns)))
   offset_pars = unname(unlist(lapply(
     model_tables$design_specs,
@@ -394,9 +394,7 @@ simulate_atomic = function(fit,
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
   data_columns = mcp_columns(fit)
-  has_arma_terms = is_arma(fit)
-  evaluating_arma = has_arma_terms && .arma && !(.type == "fitted" && !is.null(.dpar) && .dpar %notin% c("epred", "mu"))
-  if (evaluating_arma)
+  if (uses_garma(fit, .arma, .type, .dpar))
     assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)

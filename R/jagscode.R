@@ -205,8 +205,9 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # Compute link-scale residuals for GARMA
   if (has_arma_terms) {
     garma_y = family$garma$observed_jags(context)
-    garma_link_y = if (family$linkfun_str == "") "garma_y_[i_]" else
-      paste0(family$linkfun_str, "(garma_y_[i_])")
+    linkfun_str = get_link_str(family$link)
+    garma_link_y = if (linkfun_str == "") "garma_y_[i_]" else
+      paste0(linkfun_str, "(garma_y_[i_])")
     mm = paste0(
       mm,
       "\n    garma_y_[i_] = ", garma_y,
@@ -331,7 +332,7 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
   # References to other group-level effects are indexed too, e.g.,
   # "x_1_id * 2" becomes "x_1_id[id_] * 2".
   if (!is.null(group_col)) {
-    value = gsub(paste0("([A-Za-z0-9_]+_", group_col, ")(?!\\[)"), paste0("\\1[", group_col, "_]"), value, perl = TRUE)
+    value = gsub(paste0("([A-Za-z0-9_]+_", group_col, ")\\b(?!\\[)"), paste0("\\1[", group_col, "_]"), value, perl = TRUE)
     return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
     ", name, "[", group_col, "_] = ", value, "  # ", description, "
   }\n"))

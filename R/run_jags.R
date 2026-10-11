@@ -332,20 +332,18 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
 #' @param group_effects Returned by `get_group_effects()`.
 #' @noRd
 recover_levels = function(draws, data, group_effects) {
+  # JAGS names levels by index, e.g., "x_1_id[2]"; use the original levels, e.g., "x_1_id[Omar]"
+  index_names = character()
+  level_names = character()
   for (i in seq_len(nrow(group_effects))) {
-    effect = group_effects[i, ]
-    group_levels = levels(factor(data[[effect$group_col]]))
-    # Get vectors of old ("from") and replacement column names in draws
-    from = colnames(draws[[1]])[stringr::str_starts(colnames(draws[[1]]), paste0(effect$name, '\\['))]
-    to = sprintf(paste0(effect$name, '[%s]'), group_levels)
-
-    # Recode column names on each list (chain) using lapply
-    names(to) = from
-    draws = lapply(draws, function(x) {
-      colnames(x) = dplyr::recode(colnames(x), !!!to)
-      x
-    })
+    group_levels = levels(factor(data[[group_effects$group_col[i]]]))
+    index_names = c(index_names, paste0(group_effects$name[i], "[", seq_along(group_levels), "]"))
+    level_names = c(level_names, paste0(group_effects$name[i], "[", group_levels, "]"))
   }
 
-  draws
+  lapply(draws, function(x) {
+    matched = match(colnames(x), index_names)
+    colnames(x)[!is.na(matched)] = level_names[matched[!is.na(matched)]]
+    x
+  })
 }

@@ -262,6 +262,35 @@ truncate_lower_prior = function(prior_value, lower, name = NULL) {
 }
 
 
+# Check that priors are set on the original parameter, not on names that same() replaced.
+# - predictors, group_effects: occurrence tables, i.e., including rows reused by same().
+assert_prior_not_shared = function(prior, predictors, group_effects) {
+  shared = dplyr::bind_rows(
+    dplyr::transmute(
+      dplyr::filter(predictors, .data$segment != .data$definition_segment),
+      replaced = stringr::str_replace(.data$code_name, "_[0-9]+$", paste0("_", .data$segment)),
+      original = .data$code_name
+    ),
+    dplyr::transmute(
+      dplyr::filter(group_effects, .data$segment != .data$definition_segment),
+      replaced = stringr::str_replace(.data$sd_name, paste0("_", .data$definition_segment, "_"), paste0("_", .data$segment, "_")),
+      original = .data$sd_name
+    )
+  ) %>% dplyr::distinct()
+  bad_prior = shared[shared$replaced %in% names(prior), , drop = FALSE]
+  if (nrow(bad_prior) > 0) {
+    guidance = if (nrow(bad_prior) == 1) {
+      paste0("`", bad_prior$original, "` instead of `", bad_prior$replaced, "`")
+    } else {
+      paste0("`", bad_prior$original, "` (not `", bad_prior$replaced, "`)")
+    }
+    stop("`same()` reuses earlier parameters instead of creating new ones. Set prior on ",
+      and_collapse(guidance), ".", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+
 overlay_user_prior_specs = function(specs, prior, cps, context, predictors, family) {
   name_matches = names(prior) %in% specs$parameter
   if (any(!name_matches)) {

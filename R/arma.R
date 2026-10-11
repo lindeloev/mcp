@@ -124,6 +124,30 @@ assert_arma_series = function(data, series) {
 }
 
 
+# Validate the AR/MA configuration of a model before sampling
+check_arma_model = function(family, predictors, segments, data, par_x, series = NULL) {
+  if (is.null(family$garma))
+    stop(
+      "family = ", family$family, "(link = \"", family$link,
+      "\") does not define the GARMA behavior required by ar() or ma()."
+    )
+
+  response_data = get_family_response_data(family, segments, data)
+  assert_arma_thresholds(family, predictors$threshold[predictors$dpar %in% c("ar", "ma")], response_data)
+
+  x_by_series = split(data[[par_x]], if (is.null(series)) 1 else data[[series]])
+  x_unordered = any(vapply(
+    x_by_series,
+    function(x) is.unsorted(x) && is.unsorted(rev(x)),
+    logical(1)
+  ))
+  if (x_unordered)
+    message("'", par_x, "' is unordered. Please note that ar() and ma() apply in data-frame row order, not the values of '", par_x, "'.")
+
+  invisible(TRUE)
+}
+
+
 # Validate GARMA observation thresholds against family-appropriate bounds
 assert_arma_thresholds = function(family, threshold, data = list()) {
   threshold = unique(stats::na.omit(threshold))
@@ -144,6 +168,13 @@ assert_arma_thresholds = function(family, threshold, data = list()) {
 # Check whether this model has any AR/MA terms
 is_arma = function(fit) {
   any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
+}
+
+
+# Whether an evaluation runs the GARMA recurrence. AR/MA terms change the expected
+# response and mu, but not other dpars such as sigma or ar1.
+uses_garma = function(fit, arma, type, dpar = NULL) {
+  arma && is_arma(fit) && (type != "fitted" || is.null(dpar) || dpar %in% c("epred", "mu"))
 }
 
 

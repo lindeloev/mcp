@@ -306,6 +306,11 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
   checkmate::assert_number(width, lower = 0, upper = 1)
   checkmate::assert_flag(prior)
 
+  # Selected draws, plus prior draws for Bayes factors when the posterior is selected
+  draws = posterior::as_draws_df(posterior_draws(fit, prior = prior))
+  has_prior_draws = !prior && !is.null(mcmclist_draws(fit, prior = TRUE, error = FALSE))
+  draws_prior = if (has_prior_draws) posterior::as_draws_df(posterior_draws(fit, prior = TRUE))
+
   # Loop through hypotheses and populate df_result
   df_result = tibble::tibble()
   for (expression in hypotheses) {
@@ -331,10 +336,8 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
     if (stringr::str_detect(expression, "\\[|\\]") && !stringr::str_detect(expression, "`"))
       stop("Needs `` around group-level deviations, e.g., `cp_1_id[2]`. Got this: ", expression)
 
-    if (n_equals == 1) {
-      parameters = colnames(mcmclist_draws(fit, prior = prior)[[1]])
-      validate_savage_dickey_expression(expression, parameters)
-    }
+    if (n_equals == 1)
+      validate_savage_dickey_expression(expression, posterior::variables(draws))
 
 
     # If this is a single expression (does not contain & or |), we can estimate
@@ -353,35 +356,30 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
 
       # Get effect estimate
       LHS_expr = rlang::parse_expr(LHS)
-      draws = posterior_draws(fit, prior = prior) %>%
-        posterior::as_draws_df()
-      draws$effect = rlang::eval_tidy(LHS_expr, data = draws)
+      effect = rlang::eval_tidy(LHS_expr, data = draws)
 
       tail_prob = (1 - width) / 2
       estimate = list(
-        effect = mean(draws$effect),
-        .lower = stats::quantile(draws$effect, tail_prob, names = FALSE),
-        .upper = stats::quantile(draws$effect, 1 - tail_prob, names = FALSE)
+        effect = mean(effect),
+        .lower = stats::quantile(effect, tail_prob, names = FALSE),
+        .upper = stats::quantile(effect, 1 - tail_prob, names = FALSE)
       )
     } else {
-      draws = posterior_draws(fit, prior = prior) %>%
-        posterior::as_draws_df()
-
       estimate = list(effect = NA, .lower = NA, .upper = NA)
     }
 
-    # SAVAGE-DICKEY: compute BF
+    # SAVAGE-DICKEY: compute BF. Equality hypotheses always have an LHS (see validate_savage_dickey_expression()).
     if (n_equals == 1) {
       if (prior) {
         BF = NA_real_
       } else {
-        if (!coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) || !coda::is.mcmc.list(.subset2(fit, "mcmc_post")))
+        if (!has_prior_draws)
           stop("Model contains '='. Both prior and posterior draws are needed to compute Savage-Dickey density ratios. Run mcp(..., sample = 'both').")
 
         # Check that that both prior contrast and posterior contrast are distributed (not constants)
         # Protects against "x_1 - x_1 = 1" and prior = list(x_1 = 3)
-        prior_values = get_hypothesis_values(posterior_draws(fit, prior = TRUE), LHS)
-        post_values = get_hypothesis_values(posterior_draws(fit), LHS)
+        prior_values = rlang::eval_tidy(LHS_expr, data = draws_prior)
+        post_values = effect
         if (diff(range(prior_values)) == 0)
           stop("Cannot compute Savage-Dickey density ratio because the prior contrast is constant: ", expression, call. = FALSE)
         if (diff(range(post_values)) == 0)
@@ -421,10 +419,7 @@ hypothesis.mcpfit = function(fit, hypotheses, width = 0.95, prior = FALSE, ...) 
       result = rlang::eval_tidy(expr_parsed, data = draws)
       prob = mean(result == TRUE)
 
-      has_both = coda::is.mcmc.list(.subset2(fit, "mcmc_prior")) && coda::is.mcmc.list(.subset2(fit, "mcmc_post"))
-      if (!prior && has_both) {
-        draws_prior = posterior_draws(fit, prior = TRUE) %>%
-          posterior::as_draws_df()
+      if (has_prior_draws) {
         prior_result = rlang::eval_tidy(expr_parsed, data = draws_prior)
         prior_prob = mean(prior_result == TRUE)
 
@@ -538,13 +533,6 @@ get_density = function(x, value) {
   }
   bandwidth = tryCatch(stats::bw.SJ(x), error = function(e) stats::bw.nrd0(x))
   mean(stats::dnorm(value, mean = x, sd = bandwidth))
-}
-
-
-# Evaluate a hypothesis expression for every draw.
-get_hypothesis_values = function(draws, LHS) {
-  draws = posterior::as_draws_df(draws)
-  rlang::eval_tidy(rlang::parse_expr(LHS), data = draws)
 }
 
 

@@ -144,7 +144,7 @@ pp_eval = function(
   data_columns = mcp_columns(fit)
   checkmate::assert_flag(.garma_replicate)
   replicate_garma = .garma_replicate && arma && is_arma(fit)
-  evaluating_arma = arma && is_arma(fit) && !(type == "fitted" && dpar %notin% c("epred", "mu"))
+  evaluating_arma = uses_garma(fit, arma, type, dpar)
   if (evaluating_arma)
     assert_arma_series(newdata, data_columns$series)
   if (type == "loglik")

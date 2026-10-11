@@ -21,7 +21,9 @@
 #' @param family A supported family: `gaussian()`, `binomial()`, `bernoulli()`,
 #'   `poisson()`, or `negbinomial()`, with a supported link function; e.g.,
 #'   `gaussian(link = "log")`.
-#' @param par_x String (default: `NULL` which is auto-detect).
+#' @param par_x String. Name of the change-point variable, i.e., the data column
+#'   on which change points are located. `NULL` (default) auto-detects it as the
+#'   only continuous predictor in the formulas.
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.
 #'   * `"prior"`: Sample only the prior. Use `prior = TRUE` explicitly in
@@ -56,7 +58,7 @@
 #'   [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
 #'   * `TRUE` (default) This changes only `fit$jags_code` and sampling efficiency, not the 
 #'     model, the priors, or the posterior. 
-#'   * `FALSE` runs the plain model. This mostly serve the pedagogical purpose of transparency.
+#'   * `FALSE` runs the plain model. This mostly serves the pedagogical purpose of transparency.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
 #'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
@@ -245,41 +247,8 @@ mcp = function(
     checkmate::check_false(sample),
     .var.name = "sample"
   )
-  if (!is.null(cores)) {
-    if (!identical(cores, "all"))
-      checkmate::assert_int(cores, lower = 1)
-
-    cores_details = paste0(
-      "`cores` is ignored. Parallel processing is now controlled by the active ",
-      "future plan. For example, call ",
-      "`future::plan(future::multisession, workers = 3)` before `mcp()`, and ",
-      "`future::plan(future::sequential)` when the workers are no longer needed."
-    )
-    if (identical(cores, "all") || (is.numeric(cores) && cores > 1))
-      cores_details = paste0(
-        "Setting `cores` above one no longer enables parallel processing. ",
-        cores_details
-      )
-
-    lifecycle::deprecate_warn(
-      when = "0.4.0",
-      what = "mcp(cores)",
-      details = cores_details
-    )
-  }
-
-  if (lifecycle::is_present(adapt)) {
-    if (!missing(warmup))
-      stop("Supply only one of `warmup` and deprecated `adapt`.", call. = FALSE)
-
-    lifecycle::deprecate_soft(
-      when = "0.4.0",
-      what = "mcp(adapt)",
-      with = "mcp(warmup)"
-    )
-    warmup = adapt
-  }
-
+  warn_cores(cores)
+  warmup = resolve_warmup(warmup, adapt, missing(warmup))
   checkmate::assert_int(chains, lower = 1)
   checkmate::assert_int(iter, lower = 1)
   checkmate::assert_int(warmup, lower = 1)
@@ -318,31 +287,8 @@ mcp = function(
   if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
-  # Check that priors are set on the original parameter, not ones replaced by same()
-  shared = dplyr::bind_rows(
-    dplyr::transmute(
-      dplyr::filter(predictor_occurrences, .data$segment != .data$definition_segment),
-      replaced = stringr::str_replace(.data$code_name, "_[0-9]+$", paste0("_", .data$segment)),
-      original = .data$code_name
-    ),
-    dplyr::transmute(
-      dplyr::filter(group_occurrences, .data$segment != .data$definition_segment),
-      replaced = stringr::str_replace(.data$sd_name, paste0("_", .data$definition_segment, "_"), paste0("_", .data$segment, "_")),
-      original = .data$sd_name
-    )
-  ) %>% dplyr::distinct()
-  bad_prior = shared[shared$replaced %in% names(prior), , drop = FALSE]
-  if (nrow(bad_prior) > 0) {
-    guidance = if (nrow(bad_prior) == 1) {
-      paste0("`", bad_prior$original, "` instead of `", bad_prior$replaced, "`")
-    } else {
-      paste0("`", bad_prior$original, "` (not `", bad_prior$replaced, "`)")
-    }
-    stop("`same()` reuses earlier parameters instead of creating new ones. Set prior on ",
-      and_collapse(guidance), ".", call. = FALSE)
-  }
-
   # Make prior
+  assert_prior_not_shared(prior, predictor_occurrences, group_occurrences)
   prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
   prior_table = attr(prior, "prior_table")
   attr(prior, "prior_table") = NULL
@@ -371,27 +317,9 @@ mcp = function(
     })
   )
 
-  # Validate AR/MA configuration
   has_arma = any(predictor_definitions$dpar %in% c("ar", "ma"))
-  if (has_arma) {
-    if (is.null(family$garma))
-      stop(
-        "family = ", family$family, "(link = \"", family$link,
-        "\") does not define the GARMA behavior required by ar() or ma()."
-      )
-
-    response_data = get_family_response_data(family, segments, data)
-    assert_arma_thresholds(family, predictor_definitions$threshold[predictor_definitions$dpar %in% c("ar", "ma")], response_data)
-
-    x_by_series = split(data[[par_x]], if (is.null(series)) 1 else data[[series]])
-    x_unordered = any(vapply(
-      x_by_series,
-      function(x) is.unsorted(x) && is.unsorted(rev(x)),
-      logical(1)
-    ))
-    if (x_unordered)
-      message("'", par_x, "' is unordered. Please note that ar() and ma() apply in data-frame row order, not the values of '", par_x, "'.")
-  }
+  if (has_arma)
+    check_arma_model(family, predictor_definitions, segments, data, par_x, series)
 
   # Make formulas
   formula_jags = get_formula_jags(

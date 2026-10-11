@@ -97,6 +97,56 @@ warn_which_y = function(args, func_name) {
 }
 
 
+# Warn that the deprecated `cores` argument in mcp() is ignored
+warn_cores = function(cores, env = rlang::caller_env(), user_env = rlang::caller_env(2)) {
+  if (is.null(cores))
+    return(invisible(NULL))
+  if (!identical(cores, "all"))
+    checkmate::assert_int(cores, lower = 1)
+
+  cores_details = paste0(
+    "`cores` is ignored. Parallel processing is now controlled by the active ",
+    "future plan. For example, call ",
+    "`future::plan(future::multisession, workers = 3)` before `mcp()`, and ",
+    "`future::plan(future::sequential)` when the workers are no longer needed."
+  )
+  if (identical(cores, "all") || (is.numeric(cores) && cores > 1))
+    cores_details = paste0(
+      "Setting `cores` above one no longer enables parallel processing. ",
+      cores_details
+    )
+
+  lifecycle::deprecate_warn(
+    when = "0.4.0",
+    what = "mcp(cores)",
+    details = cores_details,
+    env = env,
+    user_env = user_env
+  )
+}
+
+
+# Resolve the deprecated `adapt` argument in mcp()
+resolve_warmup = function(warmup, adapt, warmup_missing,
+                          env = rlang::caller_env(),
+                          user_env = rlang::caller_env(2)) {
+  if (lifecycle::is_present(adapt)) {
+    if (!warmup_missing)
+      stop("Supply only one of `warmup` and deprecated `adapt`.", call. = FALSE)
+
+    lifecycle::deprecate_soft(
+      when = "0.4.0",
+      what = "mcp(adapt)",
+      with = "mcp(warmup)",
+      env = env,
+      user_env = user_env
+    )
+    warmup = adapt
+  }
+  warmup
+}
+
+
 # Resolve the deprecated `nsamples` argument
 resolve_ndraws = function(ndraws, nsamples, ndraws_missing, what,
                          env = rlang::caller_env(),

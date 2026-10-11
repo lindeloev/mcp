@@ -46,7 +46,9 @@ see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-prior
 \code{poisson()}, or \code{negbinomial()}, with a supported link function; e.g.,
 \code{gaussian(link = "log")}.}
 
-\item{par_x}{String (default: \code{NULL} which is auto-detect).}
+\item{par_x}{String. Name of the change-point variable, i.e., the data column
+on which change points are located. \code{NULL} (default) auto-detects it as the
+only continuous predictor in the formulas.}
 
 \item{sample}{One of
 \itemize{
@@ -85,7 +87,7 @@ when \code{jags_code} is supplied. Read more in
 \itemize{
 \item \code{TRUE} (default) This changes only \code{fit$jags_code} and sampling efficiency, not the
 model, the priors, or the posterior.
-\item \code{FALSE} runs the plain model. This mostly serve the pedagogical purpose of transparency.
+\item \code{FALSE} runs the plain model. This mostly serves the pedagogical purpose of transparency.
 }}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
