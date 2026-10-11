@@ -522,7 +522,6 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   quantiles = get_quantiles(samples, c(0.25, 0.75), ".epred", c("x", ".group", ".color"))
   quantile_layer = geom_quantiles(
     quantiles,
-    xvar = rlang::sym("x"),
     yvar = rlang::sym(".epred"),
     use_color = TRUE
   )

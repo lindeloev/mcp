@@ -277,7 +277,6 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'       when prior draws are not available (e.g., `sample = "post"`), or when all
 #'       or no prior draws satisfy the hypothesis.
 #'
-#' @export
 #' @examples
 #' # demo_fit contains both posterior and prior draws
 #' # A directional hypothesis returns its posterior probability and Bayes factor
@@ -288,9 +287,6 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'
 #' # Evaluate several directional hypotheses at once
 #' hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
-#'
-#' # Directional hypotheses can be used for a focused posterior question
-#' hypothesis(demo_fit, "cp_1 > 30")
 #'
 #' # Inspect the corresponding prior probability without a Bayes factor
 #' hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)

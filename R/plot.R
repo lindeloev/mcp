@@ -27,6 +27,21 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 }
 
 
+# Validate `q_fit`/`q_predict` and translate TRUE to the 95% central interval
+resolve_plot_quantiles = function(q, arg) {
+  checkmate::assert(
+    checkmate::check_flag(q),
+    checkmate::check_numeric(q, min.len = 1, any.missing = FALSE),
+    .var.name = arg
+  )
+  if (isTRUE(q))
+    return(c(0.025, 0.975))
+  if (is.numeric(q) && any(q <= 0 | q >= 1))
+    stop("`", arg, "` must be strictly between 0 and 1.")
+  q
+}
+
+
 #' Underlies `plot()` and `plot_dpar()`
 #'
 #' @keywords internal
@@ -113,30 +128,8 @@ get_plot = function(x,
   assert_typescale(type = "fitted", scale = scale)
   dpar = assert_dpar(dpar, fit = fit, type = "fitted")
   # Quantiles
-  checkmate::assert(
-    checkmate::check_flag(q_fit),
-    checkmate::check_numeric(q_fit, any.missing = FALSE),
-    .var.name = "q_fit"
-  )
-  checkmate::assert(
-    checkmate::check_flag(q_predict),
-    checkmate::check_numeric(q_predict, any.missing = FALSE),
-    .var.name = "q_predict"
-  )
-  if (is.logical(q_fit) && all(q_fit == TRUE))
-    q_fit = c(0.025, 0.975)
-  if (is.logical(q_predict) && all(q_predict == TRUE))
-    q_predict = c(0.025, 0.975)
-  if (is.numeric(q_fit)) {
-    checkmate::assert_numeric(q_fit, min.len = 1, any.missing = FALSE)
-    if (any(q_fit <= 0 | q_fit >= 1))
-      stop("`q_fit` must be strictly between 0 and 1.")
-  }
-  if (is.numeric(q_predict)) {
-    checkmate::assert_numeric(q_predict, min.len = 1, any.missing = FALSE)
-    if (any(q_predict <= 0 | q_predict >= 1))
-      stop("`q_predict` must be strictly between 0 and 1.")
-  }
+  q_fit = resolve_plot_quantiles(q_fit, "q_fit")
+  q_predict = resolve_plot_quantiles(q_predict, "q_predict")
   show_q_fit = !isFALSE(q_fit)
   show_q_predict = !isFALSE(q_predict)
 
@@ -194,7 +187,6 @@ get_plot = function(x,
   lines = min(lines, available_draws)
 
   # Useful vars
-  xvar = rlang::sym(data_columns$par_x)
   yvar = rlang::sym(data_columns$response)
   by = plot_by
   group_pars = unpack_group_effects(fit, cols = by)$pars
@@ -260,7 +252,7 @@ get_plot = function(x,
       return_dpars = show_q_predict && type == "predict"
     )
     draws = prepare_draws(draws)
-    keep = unique(c(as.character(xvar), facet_by, ".group", ".color"))
+    keep = unique(c(data_columns$par_x, facet_by, ".group", ".color"))
 
     if (show_q_fit)
       q_fit_data = get_quantiles(draws, q_fit, as.character(yvar), keep)
@@ -334,11 +326,11 @@ get_plot = function(x,
 
   # Add quantiles?
   if (show_q_fit) {
-    gg = gg + geom_quantiles(q_fit_data, xvar, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
+    gg = gg + geom_quantiles(q_fit_data, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
   }
   if (show_q_predict) {
     yvar_predict = rlang::sym(".predicted")
-    gg = gg + geom_quantiles(q_predict_data, xvar, yvar_predict, use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
+    gg = gg + geom_quantiles(q_predict_data, yvar_predict, use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
   }
 
   # Add change point densities?
@@ -616,7 +608,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 #' @param ... Arguments passed to geom_line
 #' @return A `ggplot2::geom_line` object.
 #' @noRd
-geom_quantiles = function(data_quantiles, xvar, yvar, use_color = TRUE, color = NULL, ...) {
+geom_quantiles = function(data_quantiles, yvar, use_color = TRUE, color = NULL, ...) {
   quantile_mapping = if (use_color) {
     ggplot2::aes(y = .data[[as.character(yvar)]], group = interaction(.data$quantile, .data$.group), color = .data$.color)
   } else {

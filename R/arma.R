@@ -336,7 +336,6 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
     fit, as.list(draws_predictors),
     paste0(".pred_", get_predictor_design_names(model_predictors, model_group_effects))
   )
-  components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
   probabilities = vapply(components, function(component) {
     violations = arma_root_violations(values, component)
     max(tapply(violations, draws_predictors$.data_row, mean))
@@ -505,7 +504,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
   # independent series/draws can be evaluated together, including ragged series.
   if (generate_series)
     y = rep(NA_real_, n)
-  link_y = family$linkfun(get_garma_observed(y, family, threshold, data))
+  link_y = family$linkfun(family$garma$observed_r(y, data, threshold))
   resid_abs = numeric(n)
   resid_ma = numeric(n)
   resid_garma = numeric(n)
@@ -533,8 +532,8 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
       row_dpars$mu = family$linkinv(link_mu[missing_rows])
       row_data = lapply(data, function(x) if (length(x) == 1) x else x[missing_rows])
       y[missing_rows] = family$r$rng(length(missing_rows), row_dpars, row_data)
-      link_y[missing_rows] = family$linkfun(get_garma_observed(
-        y[missing_rows], family, threshold[missing_rows], row_data
+      link_y[missing_rows] = family$linkfun(family$garma$observed_r(
+        y[missing_rows], row_data, threshold[missing_rows]
       ))
     }
     resid_abs[rows] = link_y[rows] - base_link_mu[rows]

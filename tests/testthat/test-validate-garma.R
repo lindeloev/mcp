@@ -359,7 +359,7 @@ test_that("one GARMA recurrence handles generated, supplied, and partial histori
 
     # Independent row-by-row reference: coefficients belong to the current
     # row; history crosses segment changes but never independent series.
-    link_y = family$linkfun(get_garma_observed(generated$y, family, threshold, data))
+    link_y = family$linkfun(family$garma$observed_r(generated$y, data, threshold))
     expected = numeric(n)
     for (rows in split(seq_len(n), series)) {
       for (position in seq_along(rows)) {

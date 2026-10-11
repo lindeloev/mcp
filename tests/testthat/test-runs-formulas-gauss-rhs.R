@@ -180,13 +180,14 @@ test_that("formula offsets work in mcp formulas", {
   sim_out = fit_gauss$simulate(
     fit_gauss,
     data.frame(x = 1:4, z = c(10, 10, 20, 20)),
-    cp_1 = 2.5, Intercept_1 = 5, x_1 = 1, Intercept_2 = 10, x_2 = 2, sigma_1 = 0.001
+    cp_1 = 2.5, Intercept_1 = 5, x_1 = 1, Intercept_2 = 10, x_2 = 2, sigma_1 = 0.001,
+    .type = "fitted", .dpar = "mu"
   )
   # Segment 1 (x=1, z=10): mu = 5 + 1*1 + 10 = 16
   # Segment 1 (x=2, z=10): mu = 5 + 1*2 + 10 = 17
   # Segment 2 (x=3, z=20): mu = 10 + 2*(3-2.5) + 20 = 31
   # Segment 2 (x=4, z=20): mu = 10 + 2*(4-2.5) + 20 = 33
-  expect_equal(unname(attr(sim_out, "dpars")$mu), c(16, 17, 31, 33))
+  expect_equal(as.numeric(sim_out), c(16, 17, 31, 33))
 
   # Offset in sigma
   fit_sigma = mcp(

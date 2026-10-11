@@ -191,11 +191,8 @@ mcp_draws = function(
   absolute = FALSE,
   prior = FALSE,
   ndraws = NULL,
-  nsamples = lifecycle::deprecated(),
   newdata = NULL
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "mcp_draws")
-
   # General argument checks
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(population, c("logical", "character"))

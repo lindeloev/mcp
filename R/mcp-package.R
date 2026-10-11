@@ -33,29 +33,16 @@
 
 
 .onLoad = function(libname, pkgname) {
-  if (requireNamespace("posterior", quietly = TRUE)) {
-    registerS3method("as_draws", "mcpfit", as_draws.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("as_draws_df", "mcpfit", as_draws_df.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("as_draws_array", "mcpfit", as_draws_array.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("as_draws_matrix", "mcpfit", as_draws_matrix.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("as_draws_rvars", "mcpfit", as_draws_rvars.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("nchains", "mcpfit", nchains.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("ndraws", "mcpfit", ndraws.mcpfit, envir = asNamespace("posterior"))
-    registerS3method("niterations", "mcpfit", niterations.mcpfit, envir = asNamespace("posterior"))
+  # rstantools is only suggested, so register its methods whenever it is loaded.
+  # posterior and coda methods are registered in NAMESPACE.
+  register_rstantools = function(...) {
+    rstantools = asNamespace("rstantools")
+    registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = rstantools)
+    registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = rstantools)
+    registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = rstantools)
+    registerS3method("log_lik", "mcpfit", log_lik.mcpfit, envir = rstantools)
   }
-  if (requireNamespace("coda", quietly = TRUE)) {
-    registerS3method("as.mcmc", "mcpfit", as.mcmc.mcpfit, envir = asNamespace("coda"))
-  }
-  if (requireNamespace("rstantools", quietly = TRUE)) {
-    registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = asNamespace("rstantools"))
-    registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = asNamespace("rstantools"))
-    registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = asNamespace("rstantools"))
-    registerS3method("log_lik", "mcpfit", log_lik.mcpfit, envir = asNamespace("rstantools"))
-  }
-  setHook(packageEvent("rstantools", "onLoad"), function(...) {
-    registerS3method("posterior_epred", "mcpfit", posterior_epred.mcpfit, envir = asNamespace("rstantools"))
-    registerS3method("posterior_predict", "mcpfit", posterior_predict.mcpfit, envir = asNamespace("rstantools"))
-    registerS3method("posterior_linpred", "mcpfit", posterior_linpred.mcpfit, envir = asNamespace("rstantools"))
-    registerS3method("log_lik", "mcpfit", log_lik.mcpfit, envir = asNamespace("rstantools"))
-  })
+  if (requireNamespace("rstantools", quietly = TRUE))
+    register_rstantools()
+  setHook(packageEvent("rstantools", "onLoad"), register_rstantools)
 }

@@ -61,9 +61,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   })
   is_dirichlet = !vapply(dirichlet_calls, is.null, logical(1))
   if (any(is_dirichlet)) {
-    if (!all(is_dirichlet))
-      stop("All or none of the change point priors must be `dirichlet(alpha)`.")
-
+    # overlay_user_prior_specs() ensures that all or none are dirichlet()
     alpha = vapply(dirichlet_calls, function(call) {
       if (length(call$args) != 1)
         return(NA_real_)

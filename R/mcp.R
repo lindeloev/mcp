@@ -280,9 +280,8 @@ mcp = function(model,
   checkmate::assert_flag(quiet)
 
   # jags_code
-  if(!is.null(jags_code))
-    if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
-      stop("`jags_code` must be NULL or a string with a JAGS model, containing 'model {...}'.")
+  if (custom_jags_code && (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{")))
+    stop("`jags_code` must be NULL or a string with a JAGS model, containing 'model {...}'.")
 
 
   ##################
@@ -386,7 +385,7 @@ mcp = function(model,
   formula_r = get_formula_r(formula_jags, predictor_definitions, group_definitions, cps, par_x)
 
   # Make jags code if it is not provided by the user
-  if (is.null(jags_code)) {
+  if (!custom_jags_code) {
     ar_order = get_arma_order(predictor_definitions, "ar")
     ma_order = get_arma_order(predictor_definitions, "ma")
     jags_code = get_jags_code(

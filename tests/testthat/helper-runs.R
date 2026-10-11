@@ -89,10 +89,7 @@ test_runs = function(model,
       "Some parameters may not have converged well",  # ditto - too few iterations to mix
       "Posterior AR/MA root smoke test"
     )
-    accepted_messages = c(
-      "Autoregression currently assumes homoskedasticity",
-      "You are using ar\\(\\) together"
-    )
+    accepted_messages = character()
 
     for (warn in warnings) {
       if (!any(stringr::str_starts(warn, accepted_warnings))) {
@@ -251,32 +248,6 @@ test_summary = function(fit, group_cols, prior = FALSE) {
   }
 }
 
-
-# Test the regular plot, including faceting
-test_plot = function(fit, group_cols) {
-  q_fit = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
-  q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
-  # To facet or not to facet
-  if (length(group_cols) > 0) {
-    gg = try(plot(fit, facet_by = group_cols[1], color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)  # just take the first
-  } else {
-    gg = try(plot(fit, color_by = NULL, q_fit = q_fit, q_predict = q_predict, lines = 3, ndraws = NULL), silent = TRUE)
-  }
-  # Is it a ggplot or a known error?
-  if (inherits(gg, "try-error")) {
-    # (the error is an artifact of very small test data --> wide posteriors.)
-    if (fit$family$family == "poisson") {
-      expected_error = "predict"  # column "predict" OK: a side-effect of the small data and short sampling.
-    } else {
-      expected_error = ">>>>do_not_expect_any_errors<<<<<"
-    }
-    error_message = attr(gg, "condition")$message
-    is_expected = any(stringr::str_detect(error_message, expected_error))
-    testthat::expect_true(is_expected)
-  } else {
-    testthat::expect_s3_class(gg, "ggplot")
-  }
-}
 
 # Test plot() calls to bayesplot
 test_plot_pars = function(fit, prior = FALSE) {
@@ -568,7 +539,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       testthat::expect_true(stringr::str_detect(error_message, "Modelled extremely large count mean"))
     } else {
       # Fail otherwise
-      testthat::expect_true(error_message)
+      testthat::fail(error_message)
     }
   } else {
     testthat::expect_s3_class(pp_default, "ggplot")
@@ -579,7 +550,7 @@ test_pp_eval = function(fit, prior = FALSE) {
         if (fit$family$family %in% c("poisson", "negbinomial")) {
           testthat::expect_true(stringr::str_detect(as.character(pp_bayesplot), "Modelled extremely large count mean"))
         } else {
-          testthat::expect_true(as.character(pp_bayesplot))
+          testthat::fail(as.character(pp_bayesplot))
         }
       } else {
         testthat::expect_s3_class(pp_bayesplot, "ggplot")

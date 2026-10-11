@@ -12,7 +12,7 @@
 #'   code for the change point starting that segment) and `cps` (one row per
 #'   estimated change point, naturally indexed by `cp = 1, 2, ...`).
 #' @noRd
-get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
+get_segment_tables = function(model, data, family, par_x) {
   checkmate::assert_string(par_x)
 
   ############################################
@@ -54,29 +54,23 @@ get_segment_tables = function(model, data = NULL, family = gaussian(), par_x) {
   # Group-level effects
   cp_group_cols = unique(stats::na.omit(segments$cp_group_col))
 
-  # Check data types
-  if (!is.null(data)) {
-    # Check y
-    y_col = segments$y[1]
-    if (any(is.na(data[[y_col]]))) {
-      has_weights = "weights" %in% names(segments) && any(!is.na(segments$weights))
-      if (has_weights && isTRUE(family$response$is_discrete))
-        stop("Weights with missing responses (NA in '", y_col, "') is not supported for family = ", family$family, "().")
-      message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
-    }
-
-    # Check grouping factors
-    if (length(cp_group_cols) > 0) {
-      for (group_col in cp_group_cols) {
-        group_data = data[, group_col]
-        if (!is.character(group_data) && !is.factor(group_data))
-          if (!all(group_data == floor(group_data)))
-            stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
-      }
-    }
-
-    assert_response_data(family, segments, data)
+  # Check y
+  y_col = segments$y[1]
+  if (any(is.na(data[[y_col]]))) {
+    has_weights = any(!is.na(segments$weights))
+    if (has_weights && isTRUE(family$response$is_discrete))
+      stop("Weights with missing responses (NA in '", y_col, "') is not supported for family = ", family$family, "().")
+    message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
   }
+
+  # Check grouping factors
+  for (group_col in cp_group_cols) {
+    group_data = data[, group_col]
+    if (is.numeric(group_data) && any(group_data != floor(group_data)))
+      stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
+  }
+
+  assert_response_data(family, segments, data)
 
 
   ###############################################

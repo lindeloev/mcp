@@ -130,7 +130,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   if (has_custom_jags_code(fit))
     sim_list = NULL
   if(!is.null(sim_list)) {
-    simulated = as.list(sim_list)  # Get as oroper list
+    simulated = as.list(sim_list)  # Get as proper list
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
 
     # Handle group-level deviations. Find the matching labels.

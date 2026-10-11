@@ -12,6 +12,7 @@
 #'   \code{"ribbon"}, \code{"intervals"}).
 #' @param facet_by Name of a grouping column used by group-level effects.
 #' @param varying Deprecated. Use `group_effects` instead.
+#' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. For
 #'   GARMA models, each replicated response series is generated recursively

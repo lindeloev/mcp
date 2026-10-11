@@ -65,10 +65,7 @@
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". More draws trade speed for accuracy.
-#' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE` (for `fitted()`, `predict()`, and `log_lik()`). `residuals()` always returns tidy output.
-#' @param samples_format Deprecated. Use `draws_format` instead.
-#'   See more under "value"
 #' @param scale One of
 #'   * `"response"`: return on the response scale, i.e., after applying the inverse link function.
 #'   * `"linear"`: return on the linear-predictor (link) scale, where the linear
@@ -123,12 +120,9 @@ pp_eval = function(
   scale = 'response',
   .return_fitted = FALSE,
   .return_dpars = FALSE,
-  .garma_replicate = FALSE,
-  nsamples = lifecycle::deprecated(),
-  samples_format = lifecycle::deprecated()
+  .garma_replicate = FALSE
 ) {
-  ndraws = resolve_ndraws(ndraws, nsamples, missing(ndraws), "pp_eval")
-  draws_format = resolve_draws_format(draws_format, samples_format, missing(draws_format), "pp_eval")
+  draws_format = rlang::arg_match0(draws_format, c("tidy", "matrix"))
 
   # Recode
   fit = object
@@ -455,6 +449,8 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' @inheritParams pp_eval
 #' @param varying Deprecated. Use `group_effects` instead.
 #' @param probs Deprecated. Use `width` instead.
+#' @param nsamples Deprecated. Use `ndraws` instead.
+#' @param samples_format Deprecated. Use `draws_format` instead.
 #' @param ... Must be empty. Reserved for future use.
 #' @inherit pp_eval return
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}

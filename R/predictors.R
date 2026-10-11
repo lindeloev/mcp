@@ -237,6 +237,26 @@ get_par_x = function(vars, data, par_x = NULL) {
 }
 
 
+# Zero-row predictor table with the columns returned by get_predictors_dpar()
+empty_predictors = function() {
+  tibble::tibble(
+    dpar = character(),
+    segment = integer(),
+    matrix_name = character(),
+    display_name = character(),
+    code_name = character(),
+    term_key = character(),
+    par_type = character(),
+    order = integer(),
+    x_factor = character(),
+    design_id = character(),
+    design_col = integer(),
+    design_spec = list(),
+    matrix_data = list()
+  )
+}
+
+
 #' Get predictors for one distributional parameter
 #'
 #' This function extracts a `par_x`-less design matrix.
@@ -268,23 +288,9 @@ get_par_x = function(vars, data, par_x = NULL) {
 #' @noRd
 get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL,
                                check_rank = TRUE, design_id = NULL) {
-  # EMpty segments return no rows
+  # Empty segments return no rows
   if (all(as.character(form_rhs) == c("~", "0")))
-    return(tibble::tibble(
-      dpar = character(),
-      segment = integer(),
-      matrix_name = character(),
-      display_name = character(),
-      code_name = character(),
-      term_key = character(),
-      par_type = character(),
-      order = integer(),
-      x_factor = character(),
-      design_id = character(),
-      design_col = integer(),
-      design_spec = list(),
-      matrix_data = list()
-    ))
+    return(empty_predictors())
 
   checkmate::assert_data_frame(data)
   checkmate::assert_formula(form_rhs)
@@ -438,21 +444,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
         design_spec = list(design$spec)
       ))
     } else {
-      return(tibble::tibble(
-        dpar = character(),
-        segment = integer(),
-        matrix_name = character(),
-        display_name = character(),
-        code_name = character(),
-        term_key = character(),
-        par_type = character(),
-        order = integer(),
-        x_factor = character(),
-        design_id = character(),
-        design_col = integer(),
-        design_spec = list(),
-        matrix_data = list()
-      ))
+      return(empty_predictors())
     }
   }
 

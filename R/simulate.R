@@ -229,14 +229,6 @@ add_response_dpars = function(dpar_values, family) {
 }
 
 
-# Get observed response vector for GARMA recursion
-get_garma_observed = function(y, family, threshold, data = list()) {
-  if (is.null(family$garma))
-    stop_github("GARMA observation transformation is unavailable for family = ", family$family, "().")
-  family$garma$observed_r(y, data, threshold)
-}
-
-
 #' Vectorized R-side run of the full model.
 #'
 #' Used internally in mcp.
@@ -505,7 +497,6 @@ simulate_atomic = function(fit,
     simulated[[effect$name]] = args[[effect$name]]
     args[[effect$sd_name]] = NULL
   }
-  assert_ordered_group_cps(model_tables$cps, args)
 
   # Get permutations
   predictor_data = add_rhs_predictors(newdata, fit)
@@ -521,19 +512,10 @@ simulate_atomic = function(fit,
     warn_arma_simulation(values)
   }
 
-  # Get y
-  simulated_y = pred_param_grid %>%
-    dplyr::mutate(
-      .simulated_y = rlang::exec(simulate_vectorized,
-                               fit,
-                               !!!pred_param_grid,
-                               .type = .type,
-                               .rate = .rate,
-                               .dpar = .dpar,
-                               .arma = .arma,
-                               .scale = .scale)
-    ) %>%
-    dplyr::pull(.data$.simulated_y)
+  # Get y. Internal attributes (e.g., dpars) are not returned to the user.
+  simulated_y = rlang::exec(simulate_vectorized, fit, !!!pred_param_grid,
+    .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
+  attributes(simulated_y) = NULL
 
   # add_simulated etc. and return
   attr(simulated_y, "simulated") = simulated  # Set as attribute
@@ -553,13 +535,9 @@ simulate_atomic = function(fit,
 #' @return An R function.
 #' @noRd
 get_fitsimulate = function(cps, predictors, group_effects) {
-  # List of argument names
-  predictor_group_effects = group_effects[group_effects$part == "predictor", , drop = FALSE]
-  cp_group_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
-
+  # List of argument names. Group-level SDs default to 0 (no group-level deviations).
   args_required = c(cps$name, predictors$code_name)
-  args_default = c(cp_group_effects$sd_name, predictor_group_effects$sd_name)
-  args_default = args_default[nzchar(args_default)]
+  args_default = group_effects$sd_name
 
   # Assemble formal arguments
   args_formals = c(
@@ -583,5 +561,8 @@ get_fitsimulate = function(cps, predictors, group_effects) {
   }
 
   formals(sim_fn) = as.pairlist(args_formals)
+
+  # Enclose only the argument names, not the data-sized tables passed to this function
+  environment(sim_fn) = list2env(list(args_required = args_required), parent = topenv())
   sim_fn
 }
