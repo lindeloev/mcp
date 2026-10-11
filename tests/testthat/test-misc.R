@@ -383,6 +383,11 @@ test_that("Simple mcpfit methods", {
 
   expect_true(is.mcpfit(demo_fit))
   expect_false(is.mcpfit(mtcars))
+
+  # Unsupported generics point to the supported alternatives
+  expect_error(coef(demo_fit), "fixef(fit)", fixed = TRUE)
+  expect_error(as.matrix(demo_fit), "as_draws_matrix(fit)", fixed = TRUE)
+  expect_error(as.array(demo_fit), "as_draws_array(fit)", fixed = TRUE)
 })
 
 test_that("posterior draws accessor preserves the stored chains", {

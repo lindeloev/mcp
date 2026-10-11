@@ -99,6 +99,16 @@ as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
   mcmclist_draws(x, prior = prior)
 }
 
+# Fail helpfully instead of coercing the fit object itself
+#' @export
+as.matrix.mcpfit = function(x, ...) {
+  stop("Use `as_draws_matrix(fit)` to get draws as a matrix.", call. = FALSE)
+}
+#' @export
+as.array.mcpfit = function(x, ...) {
+  stop("Use `as_draws_array(fit)` to get draws as an array.", call. = FALSE)
+}
+
 #' @exportS3Method tidybayes::tidy_draws
 tidy_draws.mcpfit = function(model, ...) {
   posterior::as_draws_df(model, ...)
@@ -179,9 +189,8 @@ niterations = posterior::niterations
 #'   * `TRUE` Returns the absolute location of all group-specific change points.
 #'   * `FALSE` Return the group-level deviations.
 #'   * Character vector: Apply the absolute transform only to these group-level parameters.
-#' @param newdata Optional prediction data selecting group levels. New predictor
-#'   groups receive one draw per source coefficient and posterior draw; new
-#'   group-level change points are not supported here.
+#' @param newdata Optional prediction data selecting group levels. Levels must
+#'   be in the fitted data.
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @noRd
 mcp_draws = function(
@@ -257,22 +266,17 @@ mcp_draws = function(
   specs = lapply(names(groups), function(col) {
     levels = if (is.null(newdata)) unique(fit$data[[col]]) else unique(newdata[[col]])
     novel = setdiff(levels, fit$data[[col]])
-    effects = group_info$effects[group_info$effects$group_col == col, ]
-    if (length(novel) > 0 && any(effects$part == "cp"))
-      stop("New groups with group-level change points are not supported; use existing groups or fit$simulate().", call. = FALSE)
+    if (length(novel) > 0)
+      stop(
+        "`newdata` has level(s) of the grouping factor '", col, "' that are not in the fitted data: ",
+        and_collapse(paste0("'", novel, "'")), ". Use `group_effects = FALSE` (similar to `re_formula = NA` in `posterior_*()`) ",
+        "to predict without group-level effects, or `fit$simulate()` to simulate new groups.",
+        call. = FALSE
+      )
     spec = tidyr::expand_grid(.value = groups[[col]], !!col := levels)
     spec$.name = paste0(spec$.value, "[", spec[[col]], "]")
     spec
   })
-
-  # Draw each new group's source coefficient once, before expanding observations
-  for (spec in specs) {
-    for (i in which(spec$.name %notin% names(draws))) {
-      effect = group_info$effects[group_info$effects$name == spec$.value[i], ]
-      assert_generatable_group_prior(fit, effect)
-      draws[[spec$.name[i]]] = stats::rnorm(nrow(draws), 0, draws[[effect$sd_name]])
-    }
-  }
   group_nodes = unlist(lapply(specs, function(spec) spec$.name))
   draws = dplyr::select(draws, dplyr::all_of(unique(c(
     ".chain", ".iteration", ".draw", pars_population, absolute_cps, group_nodes

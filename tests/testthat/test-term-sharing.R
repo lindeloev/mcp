@@ -241,7 +241,7 @@ test_that("whole group slopes reuse local coordinates, endpoints, and explicit s
 })
 
 
-test_that("posterior prediction and likelihood reuse fitted and new group deviations", {
+test_that("posterior prediction and likelihood reuse fitted group deviations", {
   data = data.frame(x = 1:18, id = rep(c("a", "b", "c"), 6), y = sin(1:18))
   fit = suppressWarnings(mcp(list(y ~ 1 + (1 | id), ~ 0 + same((1 | id))),
     data, par_x = "x", iter = 40, warmup = 30, chains = 1, diagnostics = FALSE, quiet = TRUE))
@@ -250,10 +250,14 @@ test_that("posterior prediction and likelihood reuse fitted and new group deviat
     draws[, "Intercept_1"] + draws[, paste0("Intercept_1_id[", data$id[i], "]")],
     draws[, "sigma_1"], log = TRUE), numeric(nrow(draws)))
   expect_equal(unname(log_lik(fit, summary = FALSE)), expected)
-  for (id in c("a", "new")) {
-    nd = data.frame(x = c(2, 17), id = id)
-    pred = fitted(fit, newdata = nd, summary = FALSE)
-    expect_equal(pred$.epred[pred$.data_row == 1], pred$.epred[pred$.data_row == 2])
-  }
+  nd = data.frame(x = c(2, 17), id = "a")
+  pred = fitted(fit, newdata = nd, summary = FALSE)
+  expect_equal(pred$.epred[pred$.data_row == 1], pred$.epred[pred$.data_row == 2])
+
+  # New groups require explicitly omitting group-level effects
+  nd$id = "new"
+  expect_error(fitted(fit, newdata = nd), "level(s) of the grouping factor 'id' that are not in the fitted data: 'new'", fixed = TRUE)
+  expect_error(rstantools::posterior_predict(fit, newdata = nd), "not in the fitted data")
+  expect_equal(fitted(fit, newdata = nd, group_effects = FALSE)$.mean, fitted(fit, newdata = nd[, "x", drop = FALSE], group_effects = FALSE)$.mean)
 })
 

@@ -17,6 +17,8 @@
 #' @param object An `mcpfit` object.
 #' @param newdata A `tibble` or a `data.frame` containing predictors in the model. 
 #' - If `NULL` (default), the original data is used.
+#' - Grouping factors must only contain levels from the fitted data. Use `group_effects = FALSE`
+#'   to predict without group-level effects, e.g., for new groups.
 #' - For models with `ar()` or `ma()`: `fitted()`, `residuals()`, `log_lik()`,
 #'   and `predict()` condition on the response history by default,
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and

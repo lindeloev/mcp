@@ -568,6 +568,13 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
 }
 
 
+# Fail helpfully instead of returning NULL. See dev/DECISIONS.md.
+#' @export
+coef.mcpfit = function(object, ...) {
+  stop("`coef()` is not implemented for mcpfit objects. Use `fixef(fit)` for population-level effects and `ranef(fit)` for group-level deviations.", call. = FALSE)
+}
+
+
 #' @aliases print print.mcpfit
 #' @describeIn summary.mcpfit Print the posterior summary of an \code{\link{mcpfit}} object.
 #' @param x An \code{\link{mcpfit}} object, or an `mcpsummary` returned by `summary()`.

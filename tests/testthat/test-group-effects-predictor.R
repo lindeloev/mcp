@@ -680,7 +680,7 @@ test_that("new groups reject hierarchies the R generators cannot reproduce", {
   existing = mcp_draws(fit, newdata = data.frame(x = 1, id = "a"), prior = TRUE)
   expect_true(all(existing$Intercept_1_id == 5))
   expect_error(mcp_draws(fit, newdata = newdata, prior = TRUE),
-               "Cannot generate group effect 'Intercept_1_id'")
+               "not in the fitted data: 'new'")
   expect_error(fit$simulate(fit, newdata, Intercept_1 = 0, sigma_1 = 1,
                             Intercept_1_id_sd = 1, .type = "fitted"),
                "Cannot generate group effect 'Intercept_1_id'")
@@ -688,7 +688,8 @@ test_that("new groups reject hierarchies the R generators cannot reproduce", {
   default_fit = mcp(model, group_data, par_x = "x", sample = "prior",
                     chains = 1, iter = 20, warmup = 10,
                     seed = 42, diagnostics = FALSE, quiet = TRUE)
-  expect_no_error(mcp_draws(default_fit, newdata = newdata, prior = TRUE))
+  expect_error(mcp_draws(default_fit, newdata = newdata, prior = TRUE),
+               "not in the fitted data: 'new'")
   expect_no_error(default_fit$simulate(default_fit, newdata,
                                       Intercept_1 = 0, sigma_1 = 1,
                                       Intercept_1_id_sd = 1, .type = "fitted"))
