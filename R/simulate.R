@@ -123,20 +123,6 @@ add_rhs_predictors = function(newdata, fit) {
 }
 
 
-#' Returns parameters needed for simulation
-#'
-#' @return Character vector
-#' @noRd
-get_sim_pars = function(cps, predictors, group_effects) {
-  c(
-    cps$name,
-    predictors$name,
-    group_effects$name
-  )
-}
-
-
-
 #' Evaluate model and return a list of dpars
 #'
 #' Evaluates the R translation of `fit$.internal$formula_jags`. Parameters and
@@ -222,35 +208,11 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
   ###########
   checkmate::assert_class(fit, "mcpfit")
   model_tables = get_fit_model_tables(fit)
-  predictor_occurrences = model_tables$predictors
-  group_occurrences = model_tables$group_effects
   data_columns = mcp_columns(fit)
-
-  # Assert that the ellipsis contains the expected argument names
-  param_pars = get_sim_pars(model_tables$cps, definition_rows(predictor_occurrences), definition_rows(group_occurrences))
-  pred_pars = paste0(
-    ".pred_", get_predictor_design_names(predictor_occurrences, group_occurrences)
-  )
-  operation = switch(.type, fitted = "epred", loglik = "log_lik", predict = "rng")
-  has_arma_terms = any(predictor_occurrences$dpar %in% c("ar", "ma"))
-  aux_operations = c(operation, if (has_arma_terms && .arma) "garma")
-  if (.type == "fitted" && (.rate || (!is.null(.dpar) && .dpar != "epred")))
-    aux_operations = setdiff(aux_operations, "epred")
-  aux_columns = get_family_aux_columns(fit$family, model_tables$segments, aux_operations)
-  evaluating_arma = uses_garma(fit, .arma, .type, .dpar)
-  data_pars = c(data_columns$par_x, if (evaluating_arma) data_columns$series, stats::na.omit(unname(aux_columns)))
-  offset_pars = unname(unlist(lapply(
-    model_tables$design_specs,
-    function(s) if (isTRUE(s$has_offset)) s$offset_name else NULL
-  )))
-  expected_arg_names = c(param_pars, pred_pars, data_pars, offset_pars)
-
+  pred_pars = paste0(".pred_", get_predictor_design_names(model_tables$predictors, model_tables$group_effects))
+  has_arma_terms = is_arma(fit)
   args = list(...)
-  missing_args = dplyr::setdiff(expected_arg_names, names(args))
-  if (length(missing_args) > 0)
-    stop_github("Missing the following arguments: ", and_collapse(missing_args))
 
-  # Other args
   assert_typescale(.type, .scale)
   checkmate::assert_flag(.rate)
 
@@ -375,7 +337,6 @@ simulate_atomic = function(fit,
     assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
-  model_predictor_definitions = definition_rows(model_tables$predictors)
   model_group_definitions = definition_rows(model_tables$group_effects)
   model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
@@ -384,15 +345,11 @@ simulate_atomic = function(fit,
     group_cols = stats::na.omit(model_group_effects$group_col)
   )
   assert_response_data(fit$family, model_tables$segments, newdata)
-  expected_args = c(
-    setdiff(get_sim_pars(model_tables$cps, model_predictor_definitions, model_group_definitions), model_group_definitions$name),
-    model_group_definitions$sd_name
-  )
   if (is.null(names(args)) || any(names(args) == ""))
     stop("All arguments must be named.")
   checkmate::assert_subset(
     names(args),
-    expected_args,
+    mcp_pars(fit, scope = "population")$parameter,
     .var.name = "names of arguments in `...`"
   )
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
@@ -474,7 +431,7 @@ simulate_atomic = function(fit,
 
   # Get permutations
   predictor_data = add_rhs_predictors(newdata, fit)
-  pred_param_grid = cbind(predictor_data, args)  # Use tidyr::expand_grid() if any args have length > 1.
+  pred_param_grid = cbind(predictor_data, args)  # Parameters are scalars or one value per row
   if (.type == "predict" && .arma && is_arma(fit)) {
     values = evaluate_model_dpars(
       fit, as.list(pred_param_grid),
