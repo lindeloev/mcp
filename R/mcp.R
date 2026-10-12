@@ -232,7 +232,11 @@ mcp = function(
   # sampler-agnostic prior objects can dispatch before this legacy path.
   validate_prior_v1(prior)
 
-  # Transform family to mcpfamily
+  # Transform family to mcpfamily. Accepts "poisson", poisson, and poisson() like glm().
+  if (is.character(family))
+    family = get(family, mode = "function", envir = topenv())
+  if (is.function(family))
+    family = family()
   if (!is_family(family) && !is_mcpfamily(family))
     stop("`family` is not a valid family. Should be gaussian(), binomial(), gaussian(link = 'log'), etc.")
 

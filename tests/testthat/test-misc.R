@@ -38,6 +38,13 @@ test_that("log_lik evaluates unclamped mathematical inverse links", {
 test_that("families", {
   expect_true(is_mcpfamily(bernoulli()))
   expect_false(is_mcpfamily(gaussian()))
+
+  # Like glm(), accept the family function or its name
+  df = data.frame(x = 1:10, y = 1:10)
+  for (family in list(poisson, "poisson", negbinomial, "negbinomial")) {
+    fit = mcp(list(y ~ 1), df, family = family, par_x = "x", sample = FALSE)
+    expect_equal(fit$family$family, if (identical(family, poisson) || identical(family, "poisson")) "poisson" else "negbinomial")
+  }
 })
 
 
