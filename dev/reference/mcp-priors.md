@@ -15,8 +15,8 @@ Each value in the list is either
 
 - A distribution in `mcp`'s JAGS-string syntax (e.g.,
   `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a conventional prior
-  distribution. Data-calibrated, regularizing defaults are used where
-  priors are not specified. These are designed for stable estimation and
+  distribution. Weakly informative defaults are used where priors are
+  not specified. These are designed for stable estimation and
   prediction, but should be justified before hypothesis testing. `mcp`
   uses conventional distribution scales rather than JAGS precision: SD
   for [`dnorm()`](https://rdrr.io/r/stats/Normal.html), scale for
@@ -33,29 +33,51 @@ Each value in the list is either
   two group-level deviations are shared via the prior, they will need to
   have the same grouping variable.
 
-Default coefficient priors follow the autoscaled defaults of `rstanarm`:
-`normal(0, 2.5 * sd(y) / sd(x))` for identity links and
-`normal(0, 2.5 / sd(x))` for log links, where `sd(x)` is the standard
-deviation of the predictor's model-matrix column (including dummy
-variables for factors). Logit and probit links use a narrower base
-scale, `normal(0, 1.5 / sd(x))`. For the change-point variable, `sd(x)`
-is taken over all data, and powers such as `I(x^2)` use
-`sd((x - min(x))^2)`. Intercepts also follow `rstanarm`, e.g.,
-`normal(mean(y), 2.5 * sd(y))` for Gaussian models (`normal(0, 1.5)` for
-logit and probit), while `sigma` and group-level SDs follow `brms`,
-e.g., `student_t(3, 0, max(2.5, mad(y)))`. These are scale parameters,
-for which a half-Student-t is the standard weakly informative choice
-(Gelman, 2006).
+Default priors follow `rstanarm` for intercepts and coefficients and
+`brms` for scale parameters, with a few documented deviations:
+
+- *Coefficients* are autoscaled as in `rstanarm`. For the mean (`mu`),
+  \$\$\beta \sim \mathrm{Normal}\left(0, \frac{2.5 \cdot
+  s_y}{\mathrm{sd}(\mathrm{column})}\right)\$\$ where \\s_y =
+  \mathrm{sd}(y)\\ for identity links and \\s_y = 1\\ for other links.
+  \\\mathrm{sd}(\mathrm{column})\\ is the SD of the coefficient's
+  model-matrix column, including the 0/1 dummies of factors. This makes
+  the prior largely invariant to the units of `x` and `y`. Logit and
+  probit links use 1.5 and 1 instead of 2.5. For x-terms, `sd(x)` is
+  taken over all data, and powers such as `I(x^2)` use
+  `sd((x - min(x))^2)`.
+
+- *Intercepts* are `normal(mean(y), 2.5 * sd(y))` for identity links,
+  `normal(0, 1.5)` for logit, and `normal(0, 1)` for probit. The latter
+  two are (approximately) uniform on the probability scale. For log
+  links (Gaussian, Poisson, and negative binomial), intercepts are
+  `normal(median(log(y)), max(2.5, mad(log(y))))`, rounded to one
+  decimal and with `y <= 0` replaced by 0.1 so that the log is defined.
+  This robustly centers the prior on the typical log-response, as in
+  `brms` (which uses a Student-t shape and replaces zeros the same way),
+  whereas `rstanarm` uses `normal(0, 2.5)`. For a factor without an
+  intercept, e.g., `y ~ 0 + state`, each factor level's coefficient is
+  an intercept and gets this prior where the segment starts at zero
+  (segment 1 or joined to nothing).
+
+- *`sigma` and group-level SDs* follow `brms`, e.g.,
+  `student_t(3, 0, max(2.5, mad(y)))`, since half-Student-t priors are a
+  standard weakly informative choice for scale parameters (Gelman,
+  2006).
 
 Like `rstanarm` and `brms`, which place intercept priors on centered
 predictors, the default prior on the segment-1 intercept applies to the
 level at the start of the segment, `min(x)`. The reported `Intercept_1`
-is still at `x = 0`, as in [`lm()`](https://rdrr.io/r/stats/lm.html).
-Later segments' intercepts are at their change point. User-specified
-intercept priors apply to `Intercept_1` as written. Notice that the
-autoscaling does not factor in the number of segments or their expected
-x-range. Consider scaling by expected segment length on a case-by-case
-basis if you have such a priori expectations.
+is still at `x = 0`, as in [`lm()`](https://rdrr.io/r/stats/lm.html), so
+its prior is given the x-terms, e.g.,
+`dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))` in `fit$prior`. Later
+segments' intercepts are at their change point. Unlike in `rstanarm` and
+`brms`, other predictors are not centered, so the prior applies where
+they are zero. If such a predictor is far from zero, center it before
+fitting or set a prior on `Intercept_1`. User-specified intercept priors
+apply to `Intercept_1` as written. The autoscaling does not account for
+segment length. If you expect steep slopes or strong curvature within
+short segments, consider setting a wider prior.
 
 The default prior on change points is `dirichlet(1)` (uniform order
 statistics). For a single change point, this is the Beta(1, 1) / Uniform
@@ -64,9 +86,9 @@ corresponds to a flat Dirichlet distribution over segment lengths. You
 can also explicitly set `cp_i = "dirichlet(alpha)"` with the same
 positive `alpha` for all change points to regularize spacing
 (`alpha > 1` penalizes change points from occurring close together,
-while `alpha < 1` favors clustering). Under the hood, this is
-parameterized as an exact sequential stick-breaking Beta chain for fast
-and robust sampling. [Read
+while `alpha < 1` favors clustering). Under the hood, `dirichlet(1)` is
+sampled as sorted uniforms and other `alpha` as an exact sequential
+stick-breaking Beta chain for fast and robust sampling. [Read
 more](https://lindeloev.github.io/mcp/articles/priors.html).
 
 ## Notes on priors
@@ -125,13 +147,13 @@ prior = list(
 fit = mcp(model, data = mcp_example_data("demo"), prior = prior, sample = "none")
 prior_summary(fit)
 #> # A tibble: 7 × 5
-#>   parameter   segment dpar  prior                                      bounds   
-#>   <chr>         <int> <chr> <chr>                                      <chr>    
-#> 1 cp_1              2 cp    uniform(min = 20, max = 50)                [20, 50] 
-#> 2 cp_2              3 cp    uniform(min = cp_1, max = 99.74132)        [cp_1, m…
-#> 3 Intercept_1       1 mu    normal(mean = 15.32512, sd = 16.86313)     none     
-#> 4 time_2            2 mu    normal(mean = 0, sd = 2)                   [0, Inf] 
-#> 5 Intercept_3       3 mu    15                                         none     
-#> 6 time_3            3 mu    time_2                                     none     
-#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 6) [0.001, …
+#>   parameter   segment dpar  prior                                        bounds 
+#>   <chr>         <int> <chr> <chr>                                        <chr>  
+#> 1 cp_1              2 cp    uniform(min = 20, max = 50)                  [20, 5…
+#> 2 cp_2              3 cp    uniform(min = cp_1, max = cp_3)              [cp_1,…
+#> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
+#> 4 time_2            2 mu    normal(mean = 0, sd = 2)                     [0, In…
+#> 5 Intercept_3       3 mu    15                                           none   
+#> 6 time_3            3 mu    time_2                                       none   
+#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…
 ```

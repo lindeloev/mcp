@@ -69,13 +69,14 @@ Plotting of fits, parameters, and diagnostics.
 - [`pp_check(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
   : Posterior Predictive Checks For Mcpfit Objects
 - [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
-  : Returns a data.frame with all combos of predictors
+  : Returns a tibble with all combos of predictors
 
 ## Textual summaries and statistics
 
 Summaries that pertain to the whole `mcpfit` or to specific parameters.
 
 - [`summary(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+  [`print(`*`<mcpsummary>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`fixef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`ranef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`print(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
@@ -107,9 +108,9 @@ Per-observation summaries or draws
 
   Fitted and predicted values of `mcp` models fits
 
-- [`posterior_epred.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
-  [`posterior_predict.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
-  [`posterior_linpred.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
+- [`posterior_epred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
+  [`posterior_predict()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
+  [`posterior_linpred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
   :
 
   Posterior prediction draws for `mcpfit` objects

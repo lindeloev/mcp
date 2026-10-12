@@ -24,25 +24,30 @@ around the bayesplot::ppc_*() methods."><meta property="og:image" content="https
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other"><li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -77,7 +82,7 @@ around the <code>bayesplot::ppc_*()</code> methods.</p>
 <span>  facet_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group_effects <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -106,6 +111,8 @@ for available plot types, omitting the <code>"ppc_"</code> prefix (e.g., <code>"
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
 <dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
+<li><p>Grouping factors must only contain levels from the fitted data. Use <code>group_effects = FALSE</code>
+to predict without group-level effects, e.g., for new groups.</p></li>
 <li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, <code><a href="execute-mcp-model.html">log_lik()</a></code>,
 and <code><a href="execute-mcp-model.html">predict()</a></code> condition on the response history by default,
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
@@ -125,12 +132,16 @@ is unavailable when a missing response enters a later observed history.</p></li>
 The selected draws must be available; prior-only fits require <code>prior = TRUE</code>.</p></dd>
 
 
-<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
-<dd><p>Group-level effects. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
-<li><p><code>FALSE</code> No group-level deviations (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
+<dt id="arg-group-effects">group_effects<a class="anchor" aria-label="anchor" href="#arg-group-effects"></a></dt>
+<dd><p>Group-level effects to include. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
+<li><p><code>FALSE</code> or <code>NA</code> No group-level deviations, i.e., population-level
+predictions. Like <code>re_formula = NA</code> in <code>{brms}</code>.</p></li>
 <li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
 the model.</p></li>
-<li><p>Character vector: Only include specified group-level parameters.</p></li>
+<li><p>Character vector of group-level parameter names, e.g., <code>c("cp_1_id", "x_2_id")</code>.
+<code>*</code> is a wildcard, e.g., <code>"state*_1_id"</code> selects all levels of a factor
+and <code>"*_id"</code> selects all effects by <code>id</code>. See names using <code>ranef(fit)</code>.
+Can be combined, e.g., <code>c("cp", "sigma_*")</code>.</p></li>
 </ul></dd>
 
 
@@ -139,13 +150,12 @@ the model.</p></li>
 <li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (<code>group = TRUE</code>).</p></li>
+currently requires all such effects (<code>group_effects = TRUE</code>).</p></li>
 </ul></dd>
 
 
 <dt id="arg-ndraws">ndraws<a class="anchor" aria-label="anchor" href="#arg-ndraws"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Number of posterior draws to return/summarise.
-If there are group-level effects, this is the number of draws from each group.
 <code>NULL</code> means "all". More draws trade speed for accuracy.</p></dd>
 
 
@@ -154,7 +164,7 @@ If there are group-level effects, this is the number of draws from each group.
 
 
 <dt id="arg-varying">varying<a class="anchor" aria-label="anchor" href="#arg-varying"></a></dt>
-<dd><p>Deprecated. Use <code>group</code> instead.</p></dd>
+<dd><p>Deprecated. Use <code>group_effects</code> instead.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

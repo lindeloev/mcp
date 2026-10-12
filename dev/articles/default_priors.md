@@ -1,0 +1,260 @@
+# Default priors
+
+This article documents the default priors in `mcp`. These are the priors
+used if you do not specify otherwise in `mcp(..., prior = list())`. See
+[Working with
+priors](https://lindeloev.github.io/mcp/dev/articles/priors.md) for how
+to set your own priors and do prior predictive checks, and for the
+[default prior on change
+points](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior).
+
+## Default priors on regression parameters
+
+`mcp` automatically assigns [weakly
+informative](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations)
+default priors to regression terms (`mu`, `sigma`, `shape`, `ar`, `ma`).
+They rule out absurd values while staying wide enough that the data
+dominate in most applications. They are designed for stable estimation
+and prediction. You can inspect all resolved priors for any fitted model
+using `prior_summary(fit, verbose = TRUE)`.
+
+Priors for hypothesis tests should be informed by the problem at hand.
+
+The default priors follow three principles:
+
+1.  **Coefficient priors are autoscaled as in
+    [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html):**
+    For the mean (`mu`), \beta \sim \text{Normal}\left(0, \frac{2.5
+    \cdot s_y}{\operatorname{sd}(\text{column})}\right) where s_y =
+    \operatorname{sd}(y) for identity links and s_y = 1 for other links
+    (logit and probit links use 1.5 and 1 instead of 2.5; see
+    [deviations](#deviations)). \operatorname{sd}(\text{column}) is the
+    SD of the coefficient’s model-matrix column, including the 0/1
+    dummies of factors. This makes the prior largely invariant to the
+    units of x and y, e.g., whether time is measured in seconds or
+    minutes. A priori, a change of one SD in a predictor changes the
+    response (on the link scale) by less than 5 \cdot s_y with 95%
+    probability.
+
+    - For x-terms, \operatorname{sd}(x) is computed over all data, so
+      slope priors do not depend on the number or location of change
+      points. Powers such as `I(x^2)` use \operatorname{sd}((x -
+      \min(x))^2), and interactions such as `x:group` use
+      \operatorname{sd}(x).
+
+    - The autoscaling does not account for segment length. If you expect
+      steep slopes or strong curvature within short segments, consider
+      setting a wider prior.
+
+2.  **Intercepts follow `rstanarm`:**
+    \text{Normal}(\operatorname{mean}(y), 2.5 \cdot
+    \operatorname{sd}(y)) for identity links, \text{Normal}(0, 1.5) for
+    logit links, and \text{Normal}(0, 1) for probit links (see
+    [deviations](#deviations) for these and for log links). `rstanarm`
+    and `brms` place the intercept prior on centered predictors.
+    Similarly, the default prior on `Intercept_1` applies to the level
+    at the start of segment 1, \min(x), though other predictors are not
+    centered (see [deviations](#deviations)). `Intercept_1` is still
+    reported at x = 0, as in [`lm()`](https://rdrr.io/r/stats/lm.html),
+    so `fit$prior` and
+    [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
+    show its prior given the slope, e.g.,
+    `normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))`. This
+    matters when x is far from zero, e.g., calendar years. Later
+    intercepts are already at their change point. User-specified priors
+    on `Intercept_1` apply at x = 0 as written. For a factor without an
+    intercept, e.g., `y ~ 0 + state`, each factor level has its own
+    intercept, so each gets this prior (see [deviations](#deviations)).
+
+3.  **Scale parameters follow
+    [`brms`](https://paulbuerkner.com/brms/reference/set_prior.html):**
+    The residual SD and, for identity links, group-level SDs get a
+    half-Student-t, \text{Student-t}(3, 0, S_y) \\ T(0, ) with S_y =
+    \max(2.5, \operatorname{mad}(y)). Half-Student-t priors are a
+    standard weakly informative choice for scale parameters, as
+    recommended for group-level SDs by [Gelman
+    (2006)](https://doi.org/10.1214/06-BA117A).
+
+### Summary reference table
+
+General quantities used in the table below:
+
+- \operatorname{sd}(\text{column}): the SD of the coefficient’s
+  model-matrix column, as described above.
+
+- response scale S_y = \max(2.5, \operatorname{mad}(y))
+
+- log-rate scale S\_{\text{rate}} = \max(2.5,
+  \operatorname{mad}(y\_{\text{rate}}))
+
+- log-rate y\_{\text{rate}} = \log(y) - \text{offset}, with y \le 0
+  replaced by 0.1, as `brms` does for zeros (and \text{offset} = 0 if
+  absent)
+
+[TABLE]
+
+\* For [`poisson()`](https://rdrr.io/r/stats/family.html), these are
+`rstanarm`’s Gaussian defaults (see [deviations](#deviations)), and the
+intercept is truncated `T(0, )`. † Group SDs for slopes are divided by
+\operatorname{sd}(\text{column}). A blank precedent means that the
+default is `mcp`-specific; see [deviations](#deviations).
+
+## Default priors on group-level effects
+
+Each group-level effect has a population-level SD parameter.
+Predictor-side deviations use a zero-mean normal distribution governed
+by that SD, as in ordinary multilevel regression. With a
+multi-coefficient `||` term, every independent coefficient has its own
+SD. The SD receives the `brms` half-Student-t prior on the response
+scale, except for log, logit, and probit links and inside
+[`sigma()`](https://rdrr.io/r/stats/sigma.html) and `shape()` (see the
+table above). Slope SDs are divided by \operatorname{sd}(\text{column}),
+like the population-level slopes. For distributional parameters,
+deviations and SD are on that parameter’s link scale (for example,
+effects inside [`sigma()`](https://rdrr.io/r/stats/sigma.html) are on
+the log-SD scale).
+
+### Group-level change points
+
+Change-point effects use the same ordinary normal hierarchy, with
+additional range and within-group ordering constraints. Therefore,
+`cp_i_sd` is the SD of the normal distribution **before truncation**
+rather than the realized sample SD. See [group-level effects with
+mcp](https://lindeloev.github.io/mcp/dev/articles/group_effects.md) for
+the model equation and practical interpretation.
+
+The default prior on the SD of group-level change points, e.g.,
+`cp_1_id_sd`, is \text{Normal}\left(0, \frac{W}{4}\right) T(0, ), \qquad
+W = \frac{2 (\max(x) - \min(x))}{N + 1} where N is the number of change
+points. W is the expected width of the interval in which a group’s
+change point can vary, i.e., between its two neighboring change points.
+Under the default `dirichlet(1)` prior, adjacent change points are on
+average (\max(x) - \min(x)) / (N + 1) apart. With one change point, W is
+the observed range of x.
+
+The scale W / 4 is calibrated on the realized spread of the group-level
+change points rather than on `cp_i_sd` itself. Because group-level
+change points are truncated to an interval of width W, their realized SD
+cannot exceed W / \sqrt{12}, the SD of a uniform distribution on that
+interval. When `cp_i_sd` is larger than about W / 2, the truncated
+normal is practically uniform, so the data carry little information to
+distinguish between larger values. With the default prior, the realized
+SD as a fraction of its maximum W / \sqrt{12} is approximately uniform
+between 0 and 1 a priori (prior deciles: 0.10, 0.20, 0.30, 0.39, 0.49,
+0.59, 0.69, 0.79, 0.87; simulated with \text{cp}\_i uniform within the
+interval). This is similar to how the logit and probit intercept priors
+are (approximately) uniform on the probability scale [read more in this
+section](#deviations). Thus, a priori, group-level change points are
+exchangeable around the population change point, so groups with little
+information about their change point are pooled towards it.
+
+The prior is half-normal rather than the half-Student-t used for
+predictor group-level SDs. Because the data carry little information
+about large values of `cp_i_sd`, a heavy upper tail would pass largely
+unchanged into the posterior. When adjacent change points both vary by
+group, the actual interval depends on the neighboring group-level change
+points, so W is an approximation.
+
+## Deviations from `rstanarm` and `brms`
+
+`mcp` deviates from these precedents in a few places:
+
+- **Logit and probit links
+  ([`binomial()`](https://rdrr.io/r/stats/family.html),
+  [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)):**
+  `mcp` uses `rstanarm`’s autoscaling, but with scales that make the
+  intercept prior (approximately) uniform on the probability scale. For
+  probit, `normal(0, 1)` is exactly uniform on the probability scale.
+  For logit, `normal(0, 1.5)` is approximately so (95% interval from
+  about 0.05 to 0.95; [McElreath, 2020](https://xcelab.net/rm/), section
+  11.1). Larger scales, such as `rstanarm`’s 2.5, place excess prior
+  mass near 0 and 1. This is particularly undesirable in change-point
+  models, where several segments each contribute their own intercept.
+  Group-level SDs use the same scales (1.5 and 1) instead of `brms`’s
+  2.5.
+
+- **Log links ([`poisson()`](https://rdrr.io/r/stats/family.html),
+  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md),
+  `gaussian(link = "log")`):** Coefficients follow `rstanarm`. The
+  intercept is centered on the data, as in `brms`, so that it adapts to
+  the magnitude of the counts. But it has normal tails rather than
+  `brms`’s Student-t tails, because exponentiated Student-t tails imply
+  infinite expected counts (\mathbb{E}\[\exp(\eta)\] = \infty). For the
+  same reason, group-level SDs are half-normal. With an
+  [`offset()`](https://rdrr.io/r/stats/offset.html), the intercept is a
+  log-rate, so `mcp` computes its location and scale from the observed
+  log-rates, \log(y) - \text{offset}. `brms` subtracts `mean(offset)`
+  from the location but computes the scale from the log-counts, so its
+  prior widens when exposures vary, even if the rates do not.
+
+- **Identity link for
+  [`poisson()`](https://rdrr.io/r/stats/family.html):** `rstanarm`
+  applies its unscaled defaults, e.g., `normal(0, 2.5)` for the
+  intercept, which ignore the magnitude of the counts. `mcp` uses the
+  Gaussian defaults instead, which are on the response scale.
+
+- **Intercept placement:** `rstanarm` and `brms` place the intercept
+  prior on centered predictors. `mcp` places the default prior on
+  `Intercept_1` at \min(x) for x-terms but does not center other
+  predictors, so the prior applies where they are zero. If such a
+  predictor is far from zero, e.g., age in years, center it before
+  fitting or set a prior on `Intercept_1`. Read more about the [the mcp
+  model](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
+
+- **Proper coefficient priors:** `brms` uses improper flat priors on
+  coefficients, which JAGS does not support. `mcp` uses `rstanarm`’s
+  instead.
+
+- **Factors without an intercept (`0 + state`):** In `y ~ 0 + state`, R
+  codes a coefficient for every factor level instead of an intercept and
+  contrasts. `rstanarm` uses its coefficient prior, centered at zero,
+  which is strongly informative when the data are far from zero. This
+  applies where a segment starts at zero: segment 1, and joined segments
+  with no earlier intercept or x-term, e.g., segment 2 in
+  `list(y ~ 0, ~ 0 + state)`. In other joined segments, e.g.,
+  `~ 0 + state` after `y ~ 1 + x`, the coefficients are jumps from where
+  the earlier segment left off, so they get the contrast prior.
+
+- **Coefficients in [`sigma()`](https://rdrr.io/r/stats/sigma.html),
+  `shape()`, [`ar()`](https://rdrr.io/r/stats/ar.html), and `ma()`, and
+  group-level SDs:** The prior scale of slopes is divided by
+  \operatorname{sd}(\text{column}), so that it applies per SD of the
+  predictor, as for `mu`. Contrasts are not divided because a 0/1 dummy
+  has no units to convert. `brms` uses flat priors for these
+  coefficients and the same scale for all group-level SDs.
+
+- **Identity links for binomial and Bernoulli models:** `rstanarm` does
+  not support this link, and `brms` applies its generic defaults (e.g.,
+  `student_t(3, 0, 2.5)` for the intercept), which do not respect that
+  probabilities lie between 0 and 1. `mcp` uses a uniform intercept
+  (`uniform(0, 1)`), uniform contrasts on the possible differences
+  (`uniform(-1, 1)`), and slopes of `normal(0, 1 / sd(column))`.
+
+- **Autoregressive and moving-average terms:** `mcp` uses zero-centered
+  `normal(0, 0.5) T(-1, 1)` priors to favor stationary and invertible
+  dynamics, with modest changes across segments and predictors
+  (`normal(0, 0.25)`).
+
+- **Change points:** `mcp`-specific, as described in [Working with
+  priors](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior).
+  The SDs of group-level change points have an `mcp`-specific prior,
+  described [above](#group-level-change-points).
+
+## Applied discussion of default priors in other articles
+
+Some articles discuss the default priors in the context of a particular
+family or model component:
+
+- [Poisson
+  models](https://lindeloev.github.io/mcp/dev/articles/poisson.html#priors-for-poisson-models)
+  and the [negative-binomial
+  extension](https://lindeloev.github.io/mcp/dev/articles/poisson.html#negative-binomial-extension).
+- [Binomial and Bernoulli
+  models](https://lindeloev.github.io/mcp/dev/articles/binomial.html#priors-for-binomial-models).
+- [Distributional
+  parameters](https://lindeloev.github.io/mcp/dev/articles/dpar.html#priors-for-distributional-parameters)
+  such as [`sigma()`](https://rdrr.io/r/stats/sigma.html).
+- [Autocorrelation](https://lindeloev.github.io/mcp/dev/articles/arma.html#ar_prior)
+  with [`ar()`](https://rdrr.io/r/stats/ar.html) and `ma()`.
+- [Group-level
+  effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.html#priors-for-group-level-effects).

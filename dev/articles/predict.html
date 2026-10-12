@@ -44,31 +44,38 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage">
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling">
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families">
 <li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul>
 </li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
+<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul>
+</li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
+<li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -95,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-09-28</h4>
+            <h4 data-toc-skip class="date">2026-10-12</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -119,13 +126,13 @@ dataset:</p>
 <span></span>
 <span><span class="va">data</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example_data</a></span><span class="op">(</span><span class="st">"demo"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   response     time</span></span>
-<span><span class="co">## 1 17.23552 76.33986</span></span>
-<span><span class="co">## 2 11.35171 83.51711</span></span>
-<span><span class="co">## 3 28.04995 60.18529</span></span>
-<span><span class="co">## 4 20.68198 74.72964</span></span>
-<span><span class="co">## 5 21.21364 85.88256</span></span>
-<span><span class="co">## 6 22.32282 40.05069</span></span></code></pre>
+<pre><code><span><span class="co">##    response     time</span></span>
+<span><span class="co">## 1 12.235516 76.33986</span></span>
+<span><span class="co">## 2  6.351706 83.51711</span></span>
+<span><span class="co">## 3 28.049953 60.18529</span></span>
+<span><span class="co">## 4 15.681983 74.72964</span></span>
+<span><span class="co">## 5 16.213643 85.88256</span></span>
+<span><span class="co">## 6 22.322824 40.05069</span></span></code></pre>
 <p>… and model it as three segments, i.e., two change points:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the model</span></span>
@@ -167,13 +174,15 @@ inferences.</p>
 <code>fitted(fit)</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   response     time   fitted        sd     Q2.5    Q97.5</span></span>
-<span><span class="co">## 1 17.23552 76.33986 17.84217 0.9990016 15.84515 19.79815</span></span>
-<span><span class="co">## 2 11.35171 83.51711 16.41701 0.7249251 14.96533 17.85840</span></span>
-<span><span class="co">## 3 28.04995 60.18529 25.44790 0.8844492 23.70304 27.14645</span></span>
-<span><span class="co">## 4 20.68198 74.72964 18.16191 1.0936603 15.99893 20.29138</span></span>
-<span><span class="co">## 5 21.21364 85.88256 15.94730 0.7188174 14.54413 17.36917</span></span>
-<span><span class="co">## 6 22.32282 40.05069 14.47462 0.6410212 13.15862 15.68560</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
+<span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
+<span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9 0.991  10.9    14.8</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4 0.713  10.0    12.8</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5 0.880  23.7    27.1</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2 1.09   11.1    15.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9 0.708   9.52   12.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5 0.639  13.2    15.7</span></span></code></pre>
 <p>In general, this output contains:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here,
@@ -182,19 +191,21 @@ same order as in <code>data</code> (which is copied to
 <code>fit$data</code>). Models with <a href="../articles/group_effects.html">group-level effects</a>
 additionally have the relevant grouping columns, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>
 models have the number of trials, etc.</p></li>
-<li><p><strong>fitted:</strong> The fitted value (posterior mean). When
-<code>summary = TRUE</code> (default), the column is called
-<code>fitted</code>. When <code>summary = FALSE</code>, the column is
-named <code>.epred</code>, matching
+<li><p><strong>.mean:</strong> The fitted value (posterior mean). When
+<code>summary = FALSE</code>, you instead get one row per draw with the
+value in <code>.epred</code>, matching
 <code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">tidybayes::add_epred_draws()</a></code> conventions.</p></li>
-<li><p><strong>sd:</strong> The posterior standard deviation of the
-expected response corresponding to <code>fitted</code>. In
-<code><a href="../reference/execute-mcp-model.html">predict()</a></code> output, <code>sd</code> is instead the posterior
-predictive standard deviation.</p></li>
-<li><p><strong>Q[some number]:</strong> The quantiles of the fitted
-distribution. You can set the quantiles using
-<code>fitted(fit, probs = c(0.1, 0.5, 0.9))</code>.</p></li>
+<li><p><strong>.sd:</strong> The posterior standard deviation of the
+expected response. In <code><a href="../reference/execute-mcp-model.html">predict()</a></code> output, <code>.sd</code> is
+instead the posterior predictive standard deviation.</p></li>
+<li><p><strong>.lower</strong> and <strong>.upper:</strong> The bounds
+of the central interval. It is 95% by default, but you can set it using,
+e.g., <code>fitted(fit, width = 0.8)</code>. Use
+<code>summary = FALSE</code> to compute other quantiles from the
+draws.</p></li>
 </ul>
+<p>The columns computed by <code>mcp</code> are prefixed with a dot, so
+they never collide with columns in your data.</p>
 <p>If you compare these values to the plot, you will see that they
 correspond. <code><a href="../reference/plot.mcpfit.html">plot()</a></code> merely calls <code><a href="../reference/execute-mcp-model.html">fitted()</a></code>
 behind the scenes.</p>
@@ -206,11 +217,13 @@ behind the scenes.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">25</span>, <span class="op">-</span><span class="fl">20</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">newdata</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##        time    fitted        sd       Q2.5    Q97.5</span></span>
-<span><span class="co">## 1  76.33986 17.842172 0.9990016  15.845155 19.79815</span></span>
-<span><span class="co">## 2  25.00000  9.935817 0.6604596   8.609782 11.23334</span></span>
-<span><span class="co">## 3 -20.00000  9.935788 0.6605319   8.609782 11.23334</span></span>
-<span><span class="co">## 4 200.00000 -6.712685 9.3058981 -25.149202 11.43209</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 4 × 5</span></span></span>
+<span><span class="co">##    time  .mean   .sd .lower .upper</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>  76.3  12.9  0.991  10.9   14.8 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>  25     9.94 0.661   8.62  11.2 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> -<span style="color: #BB0000;">20</span>     9.94 0.661   8.62  11.2 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> 200   -<span style="color: #BB0000;">12.2</span>  9.37  -<span style="color: #BB0000;">31.1</span>    6.15</span></span></code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -241,9 +254,11 @@ few, you can set <code>fitted(fit, dpar = "sigma")</code> to get fitted
 values for <code>sigma</code> (<a href="../articles/dpar.html">more on
 modeling sigma</a>), <code>prior = TRUE</code> to predict using only the
 prior, and <code>arma = FALSE</code> to exclude AR/MA effects. For
-group-level effects, use <code>group = TRUE</code> (all),
-<code>FALSE</code> (none), <code>"cp"</code> or <code>"predictor"</code>
-(a formula part), or an exact group-level parameter name.</p>
+group-level effects, use <code>group_effects = TRUE</code> (all),
+<code>FALSE</code> or <code>NA</code> (none), <code>"cp"</code> or
+<code>"predictor"</code> (a formula part), or group-level parameter
+names with optional <code>*</code> wildcards, e.g.,
+<code>"cp_*"</code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -258,20 +273,43 @@ correspond to the dashed green lines in the plot (the 80% posterior
 predictive interval):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   response     time  predict       sd       Q10      Q90</span></span>
-<span><span class="co">## 1 17.23552 76.33986 17.76087 4.025946 12.729675 22.95364</span></span>
-<span><span class="co">## 2 11.35171 83.51711 16.39834 3.945877 11.381113 21.45299</span></span>
-<span><span class="co">## 3 28.04995 60.18529 25.50435 3.974106 20.369367 30.52404</span></span>
-<span><span class="co">## 4 20.68198 74.72964 18.12685 4.009017 13.017773 23.30484</span></span>
-<span><span class="co">## 5 21.21364 85.88256 15.83290 3.944597 10.913034 20.98206</span></span>
-<span><span class="co">## 6 22.32282 40.05069 14.48612 3.932286  9.456287 19.49107</span></span></code></pre>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
+<span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
+<span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.8  4.00   7.77   18.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4  3.94   6.40   16.5</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5  3.97  20.4    30.5</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2  4.01   8.07   18.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.8  3.95   5.92   16.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  3.90   9.46   19.5</span></span></code></pre>
 <p>Note that <code><a href="../reference/execute-mcp-model.html">predict()</a></code> uses random sampling under the hood,
 so these values will differ slightly from call to call. You can make it
 replicable using <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> as above. In general, the more
 posterior draws, the less the call-to-call variance will be. Conversely,
 fewer draws means more call-to-call variation, e.g., if you do
-<code>predict(fit, ndraws = 10)</code>.</p>
+<code>predict(fit, ndraws = 10)</code>. The interval
+(<code>.lower</code> and <code>.upper</code>) is the exception: It is
+computed exactly from the posterior predictive distribution, so it is
+deterministic for a given set of posterior draws.</p>
+<p>To get custom quantiles, get the draws using
+<code>summary = FALSE</code> and summarise them yourself. These
+quantiles are computed from simulated responses, so they are subject to
+the call-to-call variation described above:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.data_row</span>, <span class="va">time</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/reframe.html" class="external-link">reframe</a></span><span class="op">(</span>quantile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span>, .prediction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">.prediction</span>, <span class="va">quantile</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
+<span><span class="co">##   .data_row  time quantile .prediction</span></span>
+<span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>         1  76.3      0.1        7.82</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>         1  76.3      0.5       13.0 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>         1  76.3      0.9       18.0 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>         2  83.5      0.1        6.53</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>         2  83.5      0.5       11.4 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>         2  83.5      0.9       16.5</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="residuals">Residuals<a class="anchor" aria-label="anchor" href="#residuals"></a>
@@ -311,7 +349,7 @@ issue</a>)</em>.</p>
 only do it to get the default priors that are suitable for inferring
 change points in this region, so you could’ve just run it without
 sampling:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -319,7 +357,7 @@ sampling:</p>
 </h3>
 <p>Now we extend the model with the future segment of which we have
 prior knowledge:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="op">~</span> <span class="fu">same</span><span class="op">(</span><span class="fl">1</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Return to Intercept_1 after cp_3</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -328,7 +366,7 @@ prior knowledge:</p>
 forecasting horizon so that the future change point remains within its
 supported range. Its response is missing, so it contributes no observed
 outcome. It may be helpful to review <a href="../articles/priors.html">the article on priors in mcp</a>.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">forecast_horizon</span> <span class="op">=</span> <span class="fl">170</span></span>
 <span><span class="va">data_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="va">forecast_horizon</span>, response <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">observed_start</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
@@ -339,22 +377,24 @@ outcome. It may be helpful to review <a href="../articles/priors.html">the artic
 <span>  cp_3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dnorm(cp_2 + (cp_2 - cp_1), 20) T("</span>, <span class="va">observed_end</span>, <span class="st">", "</span>, <span class="va">forecast_horizon</span>, <span class="st">")"</span><span class="op">)</span>  <span class="co"># In the future at the same interval</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Now let’s fit it:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data_forecast</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="step-3-predict">Step 3: predict!<a class="anchor" aria-label="anchor" href="#step-3-predict"></a>
 </h3>
-<p>We can now compute 50% and 80% posterior predictive intervals at
+<p>We can now compute the 80% posterior predictive interval at
 <code>time = 125</code>:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.75</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   time  predict       sd      Q10      Q25      Q75     Q90</span></span>
-<span><span class="co">## 1  125 9.244078 4.499987 3.553236 6.425221 12.29614 14.8795</span></span></code></pre>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
+<span><span class="co">##    time .mean   .sd .lower .upper</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.63  5.51 0.088<span style="text-decoration: underline;">9</span>   14.2</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
 manually doing our plot:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get expected-response and posterior predictive draws</span></span>
 <span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">170</span><span class="op">)</span></span>
 <span><span class="va">fitted_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, summary <span class="op">=</span> <span class="cn">FALSE</span>, ndraws <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
@@ -375,7 +415,7 @@ manually doing our plot:</p>
 <span>  <span class="co"># Observed data</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">time</span>, y <span class="op">=</span> <span class="va">response</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predicting with future change points"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="predict_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="predict_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can read the predicted values from above at <code>x = 125</code>
 off this graph. We literally just predicted for all values between 1 and
 170, and visualized it using a ribbon. This means that you can also

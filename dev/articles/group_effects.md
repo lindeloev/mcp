@@ -33,15 +33,15 @@ future::plan(future::multisession, workers = 3)
 
 You specify group-level effects using the familiar
 [`lmer`](https://www.rdocumentation.org/packages/lme4/versions/1.1-21/topics/lmer)
-and `brms` syntax `(1|group)`. In the cp part, this models a
+and `brms` syntax `(1|group)`. Inside `cp()`, this models a
 group-specific deviation from the population-level change point. For
 example:
 
 ``` r
 
 model = list(
-  y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
+  y ~ 1,                  # Intercept_1
+    ~ cp((1|id)) + 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
 )
 ```
 
@@ -52,10 +52,10 @@ each group:
 ``` r
 
 model = list(
-  y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x,  # cp_1, cp_1_sd, cp_1_id[i]
-  1 + (1|id) ~ 0,      # cp_2, cp_2_sd, cp_2_id[i]
-  (1|id) ~ 1           # cp_3 (implicit), cp_3_sd, cp_3_id[i]
+  y ~ 1,                   # Intercept_1
+    ~ cp((1|id)) + 0 + x,  # cp_1, cp_1_id_sd, cp_1_id[i]
+    ~ cp((1|id)) + 0,      # cp_2, cp_2_id_sd, cp_2_id[i]
+    ~ cp((1|id)) + 1       # cp_3, cp_3_id_sd, cp_3_id[i]
 )
 ```
 
@@ -65,14 +65,23 @@ For change point i and group g, the hierarchy is
 \qquad cp\_{i,\mathrm{id}\[g\]} = \kappa\_{ig} - cp_i,
 
 where \kappa\_{ig} is the group-specific location. Thus `cp_i_id[g]` is
-the reported deviation and `cp_i_sd` is the latent normal scale. The
-deviations are not forced to sum to zero.
+the reported deviation and `cp_i_sd` is the SD of the normal
+distribution *before truncation* (see below). The deviations are not
+forced to sum to zero.
 
 The hierarchy is subject to x\_{\min} \< \kappa\_{1g} \< \cdots \<
 \kappa\_{Kg} \< x\_{\max}. Thus, if adjacent change points both vary,
 their group-specific locations are ordered against each other—not
 against the adjacent population change point. Internally, JAGS samples
 \kappa\_{ig} directly for efficiency.
+
+Because of this truncation, the realized SD of the group-specific change
+points is smaller than `cp_i_sd`, and their mean is pulled away from
+cp_i when cp_i is near a boundary. When `cp_i_sd` is large relative to
+the available span, the truncated normal approaches a uniform
+distribution, so the data carry little information about how large
+`cp_i_sd` is. Its posterior then has a long upper tail that mostly
+reflects the prior.
 
 Unlike predictor group-level effects, a change-point group effect
 applies only at the change point where it is included.
@@ -171,8 +180,8 @@ plateau and a slope:
 ``` r
 
 model = list(
-  y ~ 1,  # Intercept_1
-  1 + (1|id) ~ 0 + x  # cp_1, cp_1_sd, cp_1_id[i]
+  y ~ 1,                  # Intercept_1
+    ~ cp((1|id)) + 0 + x  # cp_1, cp_1_id_sd, cp_1_id[i]
 )
 ```
 
@@ -198,7 +207,7 @@ df$y = empty$simulate(empty, df,
   Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
   
   # Draw group-level deviations with this SD
-  cp_1_sd = 15)
+  cp_1_id_sd = 15)
 
 head(df)
 ```
@@ -259,13 +268,15 @@ effects), use:
 mcp::ranef(fit)
 ```
 
-    ##             variable       mean       sd     lower    upper     rhat ess_bulk ess_tail       sim match
-    ## 1   cp_1_id[Batgirl] -14.828901 23.42185 -55.26252 35.32083 1.000926     4171     4598 -9.676304    OK
-    ## 2    cp_1_id[Batman] -11.582779 23.42783 -52.08382 38.49255 1.001012     4099     4462 -7.137652    OK
-    ## 3     cp_1_id[Clark]  16.576719 23.44898 -23.96506 66.70914 1.001117     4162     4432 20.834550    OK
-    ## 4      cp_1_id[Jane]   4.413525 23.43513 -35.98966 54.66779 1.000838     4105     4586  9.978659    OK
-    ## 5     cp_1_id[Louis]  12.891476 23.42891 -27.43964 63.12414 1.001123     4128     4664 16.354350    OK
-    ## 6 cp_1_id[Spiderman]   4.201495 23.42361 -36.33909 54.50696 1.001008     4132     4561  9.741142    OK
+    ## # A tibble: 6 × 10
+    ##   parameter            mean    sd lower upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>               <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1_id[Batgirl]   -17.9   10.4 -43.8  1.47  1.00     4366     2864 -9.68 OK   
+    ## 2 cp_1_id[Batman]    -14.7   10.3 -40.7  4.54  1.00     4397     2927 -7.14 OK   
+    ## 3 cp_1_id[Clark]      13.4   10.3 -12.2 32.9   1.00     4391     2845 20.8  OK   
+    ## 4 cp_1_id[Jane]        1.26  10.4 -24.2 20.7   1.00     4374     2908  9.98 OK   
+    ## 5 cp_1_id[Louis]       9.69  10.3 -16.0 29.0   1.00     4394     2957 16.4  OK   
+    ## 6 cp_1_id[Spiderman]   1.07  10.3 -24.5 20.8   1.00     4401     2886  9.74 OK
 
 Inspecting the `sim` and `match` columns, we see that the simulated
 deviations lie within the intervals. However, the intervals are wide
@@ -274,11 +285,12 @@ which is informed by only six groups. The group-specific locations
 (`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above.
 
 Prediction methods include all group-level effects by default. Set
-`group = FALSE` for population-only predictions, `group = "cp"` for all
-group-level effects in the cp part, `group = "predictor"` for
-predictor-side group-level effects, or supply an exact name such as
-`group = "cp_1_id"`. `ranef(fit)` deliberately remains simple and
-returns all group-level effects.
+`group_effects = FALSE` (or `NA`, as in `brms`) for population-level
+predictions, `group_effects = "cp"` for the change-point group-level
+effects, `group_effects = "predictor"` for the other group-level
+effects, or supply parameter names such as `group_effects = "cp_1_id"`.
+Use `*` as a wildcard, e.g., `"cp_*"` or `"*_id"`. `ranef(fit)`
+deliberately remains simple and returns all group-level effects.
 
 Good convergence is not always as obvious as in this example. While
 `plot_pars(fit)` shows population-level parameters only, you can select
@@ -286,7 +298,7 @@ the group-level deviations with `"group"`:
 
 ``` r
 
-plot_pars(fit, pars = "group", type = "trace", ncol = 3, nvariables = NULL)
+plot_pars(fit, pars = "group", type = "trace", ncol = 3, npars = NULL)
 ```
 
 ![](group_effects_files/figure-html/unnamed-chunk-14-1.png)
@@ -300,7 +312,7 @@ example, `^` anchors the start of a parameter name:
 
 ``` r
 
-plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, nvariables = NULL)
+plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, npars = NULL)
 ```
 
 ![](group_effects_files/figure-html/unnamed-chunk-15-1.png)
@@ -320,6 +332,9 @@ pp_check(fit, facet_by = "id")
 
 ## Priors for group-level effects
 
+*[Brief overview of all default
+priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary-reference-table)*
+
 You can see the priors of the model like this:
 
 ``` r
@@ -331,15 +346,23 @@ prior_summary(fit)
     ##   parameter   segment dpar  prior                                        bounds                        
     ##   <chr>         <int> <chr> <chr>                                        <chr>                         
     ## 1 cp_1              2 cp    dirichlet(alpha = 1)                         [min(x), max(x)]              
-    ## 2 cp_1_sd           2 cp    normal(mean = 0, sd = 197.7306)              [0, Inf]                      
-    ## 3 cp_1_id           2 cp    normal(mean = 0, sd = cp_1_sd)               [min(x) - cp_1, max(x) - cp_1]
-    ## 4 Intercept_1       1 mu    normal(mean = 25.18647, sd = 18.62054)       none                          
-    ## 5 x_2               2 mu    normal(mean = 0, sd = 0.6458842)             none                          
-    ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0.001, Inf]
+    ## 2 cp_1_id_sd        2 cp    normal(mean = 0, sd = 24.716)                [0, Inf]                      
+    ## 3 cp_1_id           2 cp    normal(mean = 0, sd = cp_1_id_sd)            [min(x) - cp_1, max(x) - cp_1]
+    ## 4 Intercept_1       1 mu    normal(mean = 25.186, sd = 18.621)           none                          
+    ## 5 x_2               2 mu    normal(mean = 0, sd = 0.64588)               none                          
+    ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0, Inf]
 
-`cp_1_sd` is the latent normal scale governing the `cp_1_id` deviations.
-Unlike predictor group-level effects, change-point locations are also
-constrained to remain in range and ordered within each group.
+`cp_1_id_sd` is the SD of the normal distribution, before truncation,
+governing the `cp_1_id` deviations. Unlike predictor group-level
+effects, change-point locations are also constrained to remain in range
+and ordered within each group.
+
+For predictor group-level effects (e.g., `(state || id)`), the SDs
+default to the `brms` half-Student-t prior on the response scale,
+`dt(0, max(2.5, mad(y)), 3) T(0, )`, with slope SDs divided by
+`sd(column)`. Log, logit, and probit links and distributional parameters
+use other scales; see [default priors on group-level
+effects](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#default-priors-on-group-level-effects).
 
 ## JAGS code
 
@@ -351,23 +374,24 @@ fit$jags_code
 ```
 
     ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_2 = CONST2_
-    ## 
-    ##   # Priors for population-level effects
-    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
-    ##   cp_1_sd ~ dnorm(0, 1/(197.7306)^2) T(0,)  # Group-level change-point variation
-    ##   Intercept_1 ~ dnorm(25.18647, 1/(18.62054)^2)   # Mean intercept (rstanarm default)
-    ##   x_2 ~ dnorm(0, 1/(0.6458842)^2)   # Autoscaled mean coefficient (rstanarm default)
-    ##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
-    ## 
-    ##   # Priors for group-level effects
+    ##   # Change points
+    ##   cp_0 = min(x)
+    ##   for (cp_i_ in 1:1) {
+    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
+    ##   }
+    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
+    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)
+    ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation
     ##   for (id_ in 1:n_unique_id) {
-    ##     cp_1_id_location[id_] ~ dnorm(cp_1 + CONST3_, 1/(cp_1_sd)^2) T(cp_1 + (CONST1_ - cp_1), cp_1 + (CONST2_ - cp_1))  # Ordered group-level change-point deviations from the population location
+    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Ordered group-level change-point deviations from the population location
     ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point
     ##   }
+    ##   cp_2 = max(x)
+    ## 
+    ##   # Priors for population-level effects
+    ##   Intercept_1 ~ dnorm(25.186470821654748, 1/(18.620544312604412)^2)   # Mean intercept (rstanarm default)
+    ##   x_2 ~ dnorm(0, 1/(0.64588420009064662)^2)   # Autoscaled mean coefficient (rstanarm default)
+    ##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -384,9 +408,9 @@ fit$jags_code
     ##     link_sigma_[i_] =
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(3)], c(sigma_1)) * 1
     ## 
-    ##     # Likelihood and log-density for family = gaussian()
+    ##     # Likelihood for family = gaussian()
     ##     mu_[i_] = link_mu_[i_]
-    ##     sigma_[i_] = max(1e-03, link_sigma_[i_])
+    ##     sigma_[i_] = max(1e-05, link_sigma_[i_])
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }

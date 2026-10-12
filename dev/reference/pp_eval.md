@@ -10,20 +10,18 @@ pp_eval(
   newdata = NULL,
   summary = TRUE,
   type = "fitted",
-  probs = TRUE,
+  width = 0.95,
   rate = TRUE,
   prior = FALSE,
   dpar = "epred",
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
   scale = "response",
   .return_fitted = FALSE,
   .return_dpars = FALSE,
-  .garma_replicate = FALSE,
-  nsamples = lifecycle::deprecated(),
-  samples_format = lifecycle::deprecated()
+  .garma_replicate = FALSE
 )
 ```
 
@@ -38,6 +36,10 @@ pp_eval(
   A `tibble` or a `data.frame` containing predictors in the model.
 
   - If `NULL` (default), the original data is used.
+
+  - Grouping factors must only contain levels from the fitted data. Use
+    `group_effects = FALSE` to predict without group-level effects,
+    e.g., for new groups.
 
   - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -96,10 +98,14 @@ pp_eval(
     [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
     Requires `scale = "response"`.
 
-- probs:
+- width:
 
-  Vector of quantiles (strictly between 0 and 1). Only in effect when
-  `summary == TRUE`.
+  Width of the central interval (strictly between 0 and 1), returned in
+  the `.lower` and `.upper` columns. `FALSE` omits the interval. Only in
+  effect when `summary == TRUE`. To get custom quantiles, summarise the
+  draws from `summary = FALSE`, e.g., using
+  [`dplyr::reframe()`](https://dplyr.tidyverse.org/reference/reframe.html)
+  (see examples).
 
 - rate:
 
@@ -136,19 +142,23 @@ pp_eval(
   - `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
     coefficient you want to evaluate.
 
-- group:
+- group_effects:
 
-  Group-level effects. One of:
+  Group-level effects to include. One of:
 
   - `TRUE` All group-level deviations.
 
-  - `FALSE` No group-level deviations
-    ([`c()`](https://rdrr.io/r/base/c.html)).
+  - `FALSE` or `NA` No group-level deviations, i.e., population-level
+    predictions. Like `re_formula = NA` in `{brms}`.
 
   - `"cp"` or `"predictor"`: All group-level deviations belonging to
     that part of the model.
 
-  - Character vector: Only include specified group-level parameters.
+  - Character vector of group-level parameter names, e.g.,
+    `c("cp_1_id", "x_2_id")`. `*` is a wildcard, e.g., `"state*_1_id"`
+    selects all levels of a factor and `"*_id"` selects all effects by
+    `id`. See names using `ranef(fit)`. Can be combined, e.g.,
+    `c("cp", "sigma_*")`.
 
 - arma:
 
@@ -162,24 +172,17 @@ pp_eval(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires all such effects (`group = TRUE`).
+    requires all such effects (`group_effects = TRUE`).
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are group-level effects, this is the number of draws from each
-  group. `NULL` means "all". More draws trade speed for accuracy.
+  Integer or `NULL`. Number of posterior draws to return/summarise.
+  `NULL` means "all". More draws trade speed for accuracy.
 
 - draws_format:
 
   One of "tidy" or "matrix". Controls the output format when
-  `summary == FALSE` (for
-  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-  and
-  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)).
-  [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  always returns tidy output.
+  `summary == FALSE`.
 
 - scale:
 
@@ -206,22 +209,23 @@ pp_eval(
   Internal. For GARMA predictions, generate each response history
   recursively instead of conditioning on observed responses.
 
-- nsamples:
-
-  Deprecated. Use `ndraws` instead.
-
-- samples_format:
-
-  Deprecated. Use `draws_format` instead. See more under "value"
-
 ## Value
 
-- If `summary = TRUE`: A data frame with the draw mean and SD (`sd`) for
-  each row in `newdata`. With posterior draws (the default), `sd` is the
-  posterior predictive SD for `type = "predict"` and the posterior SD of
-  the evaluated quantity otherwise. With `prior = TRUE`, these are the
-  analogous prior summaries. If `newdata` is `NULL`, the data in
-  `fit$data` is used.
+- If `summary = TRUE`: A tibble with the columns of `newdata` (or
+  `fit$data` if `newdata` is `NULL`), followed by summaries for each
+  row:
+
+  - `.mean`: The mean of the draws.
+
+  - `.sd`: The SD of the draws. With posterior draws (the default), this
+    is the posterior predictive SD for `type = "predict"` and the
+    posterior SD of the evaluated quantity otherwise.
+
+  - `.lower` and `.upper`: The bounds of the central interval given in
+    `width`.
+
+  With `prior = TRUE`, these are the analogous prior summaries. mcp's
+  own columns are dot-prefixed to avoid collisions with data columns.
 
 - If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes`
   `tibble` with all the posterior draws (`Nd`) evaluated at each row in
@@ -234,13 +238,15 @@ pp_eval(
   - Predictors from `newdata`, plus its response column when supplied.
 
   - Draw descriptors: ".chain", ".iteration", ".draw" (see the
-    `posterior` and `tidybayes` packages), and `data_row`, the row
+    `posterior` and `tidybayes` packages), and `.data_row`, the row
     number in the evaluated `newdata`.
 
   - Draw values: one column for each parameter in the model.
 
-  - The estimate. Either ".epred", ".prediction", ".residual", or
-    ".loglik" (matching tidybayes/ggdist conventions).
+  - The estimate (matching tidybayes conventions): `.epred` for expected
+    responses, `.linpred` with `scale = "linear"`, the `.dpar` for other
+    dpars (e.g., `.mu` or `.sigma`), `.prediction`, `.residual`, or
+    `.loglik`.
 
 - If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X
   `nrows(newdata)` matrix with fitted/predicted values (depending on
@@ -252,7 +258,3 @@ pp_eval(
 [`fitted.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 [`predict.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 [`residuals.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-
-## Author
-
-Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>

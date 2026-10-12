@@ -18,15 +18,15 @@ When `prior = TRUE`, the summary is based on prior draws and `BF` is
 ## Usage
 
 ``` r
-hypothesis(fit, ...)
+hypothesis(x, ...)
 
 # S3 method for class 'mcpfit'
-hypothesis(fit, hypotheses, width = 0.95, prior = FALSE, ...)
+hypothesis(x, hypotheses, width = 0.95, prior = FALSE, ...)
 ```
 
 ## Arguments
 
-- fit:
+- x:
 
   An
   [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
@@ -63,10 +63,10 @@ hypothesis(fit, hypotheses, width = 0.95, prior = FALSE, ...)
 
   - `"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"`: be creative.
 
-  - `` "`cp_1_id[1]` > `cp_1_id[2]`" ``: id1 is greater than id2, as
-    estimated through the group-level change-point deviation for `id` at
-    change point 1 (starting segment 2). Note that ``` `` ``` are
-    required when using `[i]`.
+  - `` "`cp_1_id[John]` > `cp_1_id[Mary]`" ``: John's change point is
+    later than Mary's, as estimated through the group-level change-point
+    deviation for `id` at change point 1 (starting segment 2). Note that
+    ``` `` ``` are required around names with `[level]`.
 
   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey
   density ratio: posterior density divided by prior density at the
@@ -106,13 +106,16 @@ hypothesis(fit, hypotheses, width = 0.95, prior = FALSE, ...)
 
 ## Value
 
-A data.frame with a row per hypothesis and the following columns:
+A tibble with a row per hypothesis and the following columns:
 
 - `hypothesis` is the hypothesis; often re-arranged to test against
   zero.
 
 - `mean` is the posterior mean of the left-hand side of the hypothesis,
   or the prior mean when `prior = TRUE`.
+
+- `sd` is the posterior standard deviation of ditto, or the prior SD
+  when `prior = TRUE`.
 
 - `lower` is the lower bound of the central posterior interval of width
   `width`, or the corresponding prior interval when `prior = TRUE`.
@@ -126,9 +129,12 @@ A data.frame with a row per hypothesis and the following columns:
 
 - `BF` Bayes Factor in favor of the hypothesis. For "=" it is the
   Savage-Dickey density ratio. For directional hypotheses, it is the
-  posterior odds divided by the prior odds. It is `NA` when
-  `prior = TRUE` or when prior draws are not available (e.g.,
-  `sample = "post"`).
+  posterior odds divided by the prior odds. It is `Inf` (or `0`) when
+  all (or no) posterior draws satisfy the hypothesis, i.e., the evidence
+  exceeds what the number of draws can resolve; increase `iter` for a
+  finite estimate. It is `NA` when `prior = TRUE`, when prior draws are
+  not available (e.g., `sample = "post"`), or when all or no prior draws
+  satisfy the hypothesis.
 
 ## Author
 
@@ -140,27 +146,30 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 # demo_fit contains both posterior and prior draws
 # A directional hypothesis returns its posterior probability and Bayes factor
 hypothesis(demo_fit, "cp_1 > 30")
-#>      hypothesis     mean     lower    upper  prob       BF
-#> 1 cp_1 - 30 > 0 1.459879 -1.938938 4.998374 0.813 4.691063
+#> # A tibble: 1 × 7
+#>   hypothesis     mean    sd lower upper  prob    BF
+#>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 cp_1 - 30 > 0  1.59  1.74 -1.76  4.91 0.828  4.91
 
 # Combine directional statements for an interval (a ROPE-style hypothesis)
 hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
-#>              hypothesis mean lower upper  prob       BF
-#> 1 cp_1 > 20 & cp_1 < 30   NA    NA    NA 0.187 1.189817
+#> # A tibble: 1 × 7
+#>   hypothesis            mean  sd    lower upper  prob    BF
+#>   <chr>                 <lgl> <lgl> <lgl> <lgl> <dbl> <dbl>
+#> 1 cp_1 > 20 & cp_1 < 30 NA    NA    NA    NA    0.172  1.16
 
 # Evaluate several directional hypotheses at once
-hypothesis(demo_fit, c("cp_1 > 20", "cp_2 > 70"))
-#>      hypothesis     mean      lower     upper  prob       BF
-#> 1 cp_1 - 20 > 0 11.45988  8.0610620 14.998374 1.000      Inf
-#> 2 cp_2 - 70 > 0  1.11715 -0.5594432  2.765253 0.818 4.440893
-
-# Directional hypotheses can be used for a focused posterior question
-hypothesis(demo_fit, "cp_1 > 30")
-#>      hypothesis     mean     lower    upper  prob       BF
-#> 1 cp_1 - 30 > 0 1.459879 -1.938938 4.998374 0.813 4.691063
+hypothesis(demo_fit, c("cp_1 > 30", "cp_2 > 70"))
+#> # A tibble: 2 × 7
+#>   hypothesis     mean    sd  lower upper  prob    BF
+#>   <chr>         <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl>
+#> 1 cp_1 - 30 > 0  1.59  1.74 -1.76   4.91 0.828  4.91
+#> 2 cp_2 - 70 > 0  1.14  1.01 -0.521  2.79 0.822  5.33
 
 # Inspect the corresponding prior probability without a Bayes factor
 hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)
-#>      hypothesis     mean     lower    upper  prob BF
-#> 1 cp_1 - 30 > 0 3.827508 -27.98519 55.25295 0.481 NA
+#> # A tibble: 1 × 7
+#>   hypothesis     mean    sd lower upper  prob    BF
+#>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 cp_1 - 30 > 0  3.16  22.8 -27.9  52.9 0.495    NA
 ```

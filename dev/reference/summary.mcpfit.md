@@ -16,6 +16,9 @@ summary(
   ...
 )
 
+# S3 method for class 'mcpsummary'
+print(x, digits = attr(x, "mcpsummary")$digits, ...)
+
 # S3 method for class 'mcpfit'
 fixef(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...)
 
@@ -41,8 +44,8 @@ print(x, ...)
 - digits:
 
   Non-negative integer. Number of significant digits used when printing
-  the summary. Defaults to 2. The invisibly returned data frame retains
-  the unrounded values.
+  the summary. Defaults to 2. The returned tibble retains the unrounded
+  values.
 
 - prior:
 
@@ -52,7 +55,7 @@ print(x, ...)
 - verbose:
 
   Logical. Include the `segment` and `dpar` columns. Defaults to `FALSE`
-  for a compact, v0.3.4-compatible summary.
+  for a compact summary.
 
 - diagnostics:
 
@@ -69,6 +72,12 @@ print(x, ...)
 
   Must be empty. Reserved for future use.
 
+- x:
+
+  An
+  [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
+  object, or an `mcpsummary` returned by `summary()`.
+
 - dpar:
 
   Distributional parameter(s) whose regression coefficients to return.
@@ -76,17 +85,13 @@ print(x, ...)
   [`sigma()`](https://rdrr.io/r/stats/sigma.html), these coefficients
   are on the link scale.
 
-- x:
-
-  An
-  [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
-  object.
-
 ## Value
 
-A data frame with parameter estimates and MCMC diagnostics. Rows are
-ordered by change point first, then `mu`, then the other distributional
-parameters, then `ar`/`ma` components - each ascending by segment. OBS:
+An `mcpsummary` tibble with parameter estimates and MCMC diagnostics. It
+prints with model information, separate tables for change points and
+population-level parameters, and convergence warnings. Rows are ordered
+by change point first, then `mu`, then the other distributional
+parameters, then `ar`/`ma` components - each ascending by segment. Note:
 The change point distributions are often not unimodal and symmetric so
 the intervals can be deceiving. Plot them using `plot_pars(fit)`.
 
@@ -96,7 +101,7 @@ With `verbose = TRUE`:
 
 - `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
   `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
-  lag order is encoded in `variable`, e.g. `ar2_1`.
+  lag order is encoded in `parameter`, e.g. `ar2_1`.
 
 - `mean` is the posterior mean
 
@@ -131,12 +136,17 @@ simulation and summary multiple times to get a sense of the robustness.
 
 ## Functions
 
+- `print(mcpsummary)`: Print an `mcpsummary` returned by `summary()`:
+  model information, change point and population-level parameters, and
+  diagnostics.
+
 - `fixef(mcpfit)`: Population-level fixed effects (regression
   coefficients) of `mcpfit`.
 
 - `ranef(mcpfit)`: Group-level deviations (random effects) of `mcpfit`.
   Change-point deviations are relative to their population change point;
-  `cp_i_sd` is the scale of their latent normal distribution.
+  `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their normal
+  distribution before truncation.
 
 - `print(mcpfit)`: Print the posterior summary of an
   [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
@@ -153,77 +163,59 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 summary(demo_fit)
 #> Family: gaussian
 #> Links: mu = identity; sigma = identity
-#> Iterations: 500 from 2 chains.
+#> Draws: 1000 (2 chains with iter = 500)
 #> Segments:
 #>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
+#>   2: ~ 0 + time
+#>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        31.46 1.729 28.06 34.998 1.00      726      951 30.0    OK
-#>  cp_2        71.12 1.016 69.44 72.765 1.00      867      958 70.0    OK
+#>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        31.59 1.744 28.24 34.914 1.00      950      907 30.0    OK
+#>  cp_2        71.14 1.015 69.48 72.788 1.00     1055     1029 70.0    OK
 #> 
 #> Population-level parameters:
-#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1 10.05 0.648  8.78 11.324 1.00      992      921 10.0    OK
-#>  time_2       0.53 0.046  0.44  0.619 1.00      898      858  0.5    OK
-#>  Intercept_3 17.46 1.175 15.38 19.965 1.00      799      941 20.0      
-#>  time_3      -0.10 0.073 -0.26  0.019 1.00      836      860 -0.3      
-#>  sigma_1      3.89 0.276  3.38  4.466 1.00     1043     1121  3.5    OK
+#>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1  9.95 0.665  8.49 11.223 1.00      894      973 10.0    OK
+#>  time_2       0.54 0.047  0.46  0.634 1.00      979      776  0.5    OK
+#>  Intercept_3 13.94 1.367 11.30 16.700 1.00      951      824 15.0    OK
+#>  time_3      -0.21 0.082 -0.36 -0.044 1.00      869      837 -0.3    OK
+#>  sigma_1      3.87 0.280  3.37  4.442 1.00      890      945  3.5    OK
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #> Family: gaussian
 #> Links: mu = identity; sigma = identity
-#> Iterations: 500 from 2 chains.
+#> Draws: 1000 (2 chains with iter = 500)
 #> Segments:
 #>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
+#>   2: ~ 0 + time
+#>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>     variable    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
-#>  cp_1        31.4599 1.72856 29.4131 33.5661 1.0024      726      951 30.0
-#>  cp_2        71.1172 1.01571 69.6973 72.5154 0.9987      867      958 70.0
+#>    parameter    mean      sd   lower    upper   rhat ess_bulk ess_tail  sim
+#>  cp_1        31.5935 1.74401 29.3232 33.82035 1.0005      950      907 30.0
+#>  cp_2        71.1442 1.01458 69.7466 72.53458 0.9991     1055     1029 70.0
 #>  match
 #>     OK
 #>     OK
 #> 
 #> Population-level parameters:
-#>     variable    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
-#>  Intercept_1 10.0470 0.64793  9.1995 10.8528 0.9986      992      921 10.0
-#>  time_2       0.5303 0.04610  0.4708  0.5878 1.0006      898      858  0.5
-#>  Intercept_3 17.4634 1.17476 15.9842 19.0219 1.0001      799      941 20.0
-#>  time_3      -0.1021 0.07325 -0.2060 -0.0142 0.9998      836      860 -0.3
-#>  sigma_1      3.8934 0.27572  3.5711  4.2535 0.9985     1043     1121  3.5
+#>    parameter    mean      sd   lower    upper   rhat ess_bulk ess_tail  sim
+#>  Intercept_1  9.9465 0.66456  9.0751 10.77530 1.0033      894      973 10.0
+#>  time_2       0.5437 0.04660  0.4836  0.60348 0.9993      979      776  0.5
+#>  Intercept_3 13.9424 1.36672 12.1993 15.70817 0.9998      951      824 15.0
+#>  time_3      -0.2066 0.08208 -0.3136 -0.09996 0.9996      869      837 -0.3
+#>  sigma_1      3.8675 0.28029  3.5116  4.23835 0.9997      890      945  3.5
 #>  match
 #>     OK
 #>     OK
-#>       
-#>       
+#>     OK
+#>     OK
 #>       
 
-# Get the results as a data frame
+# Get the results as a tibble
 results = summary(demo_fit)
-#> Family: gaussian
-#> Links: mu = identity; sigma = identity
-#> Iterations: 500 from 2 chains.
-#> Segments:
-#>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
-#> 
-#> Change point parameters:
-#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        31.46 1.729 28.06 34.998 1.00      726      951 30.0    OK
-#>  cp_2        71.12 1.016 69.44 72.765 1.00      867      958 70.0    OK
-#> 
-#> Population-level parameters:
-#>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1 10.05 0.648  8.78 11.324 1.00      992      921 10.0    OK
-#>  time_2       0.53 0.046  0.44  0.619 1.00      898      858  0.5    OK
-#>  Intercept_3 17.46 1.175 15.38 19.965 1.00      799      941 20.0      
-#>  time_3      -0.10 0.073 -0.26  0.019 1.00      836      860 -0.3      
-#>  sigma_1      3.89 0.276  3.38  4.466 1.00     1043     1121  3.5    OK
+results$mean
+#> [1] 31.5935403 71.1441814  9.9464536  0.5437021 13.9424489 -0.2065739  3.8674841
 
 # Group-level deviations (random effects)
 # ranef(my_fit)
@@ -232,22 +224,22 @@ results = summary(demo_fit)
 summary(demo_fit, prior = TRUE)
 #> Family: gaussian
 #> Links: mu = identity; sigma = identity
-#> Iterations: 500 from 2 chains.
+#> Draws: 1000 (2 chains with iter = 500)
 #> Segments:
 #>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
+#>   2: ~ 0 + time
+#>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>     variable     mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        33.82751 23.81  2.01 85.25 1.00      992      948 30.0    OK
-#>  cp_2        65.97862 23.39 17.59 98.37 1.00      809     1067 70.0    OK
+#>    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        33.161 22.78   2.10  82.9 1.00      901     1074 30.0    OK
+#>  cp_2        64.742 23.34  15.21  98.3 1.00      904      927 70.0    OK
 #> 
 #> Population-level parameters:
-#>     variable     mean    sd lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1 14.16572 10.68 -6.80 32.94 1.00      927      667 10.0    OK
-#>  time_2      -0.00596  0.12 -0.22  0.16 1.00     1042      945  0.5      
-#>  Intercept_3 13.83889 10.09 -4.97 31.09 1.00      891      879 20.0    OK
-#>  time_3       0.00022  0.10 -0.18  0.20 1.00      945      854 -0.3      
-#>  sigma_1      6.51879  8.85  0.28 26.16 1.00     1045     1026  3.5    OK
+#>    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1 13.671 18.03 -21.28  50.1 1.00     1039      982 10.0    OK
+#>  time_2      -0.020  0.61  -1.21   1.2 1.00      946     1017  0.5    OK
+#>  Intercept_3 14.016 17.63 -20.72  47.1 1.00      903      911 15.0    OK
+#>  time_3       0.012  0.62  -1.21   1.2 1.00      884      826 -0.3    OK
+#>  sigma_1      5.906  6.61   0.15  22.5 1.00      901      784  3.5    OK
 ```

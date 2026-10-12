@@ -43,14 +43,14 @@ mcp_pars(empty)
 ```
 
     ## # A tibble: 6 × 9
-    ##   name        part     scope role  segment dpar  order group_col population_name
-    ##   <chr>       <chr>    <chr> <chr>   <int> <chr> <int> <chr>     <chr>          
-    ## 1 cp_1        cp       popu… chan…       2 cp       NA NA        NA             
-    ## 2 cp_2        cp       popu… chan…       3 cp       NA NA        NA             
-    ## 3 Intercept_1 predict… popu… fixe…       1 mu       NA NA        NA             
-    ## 4 year_2      predict… popu… fixe…       2 mu       NA NA        NA             
-    ## 5 Intercept_3 predict… popu… fixe…       3 mu       NA NA        NA             
-    ## 6 year_3      predict… popu… fixe…       3 mu       NA NA        NA
+    ##   parameter part  scope role  segment dpar  order group_col population_parameter
+    ##   <chr>     <chr> <chr> <chr>   <int> <chr> <int> <chr>     <chr>               
+    ## 1 cp_1      cp    popu… chan…       2 cp       NA NA        NA                  
+    ## 2 cp_2      cp    popu… chan…       3 cp       NA NA        NA                  
+    ## 3 Intercep… pred… popu… fixe…       1 mu       NA NA        NA                  
+    ## 4 year_2    pred… popu… fixe…       2 mu       NA NA        NA                  
+    ## 5 Intercep… pred… popu… fixe…       3 mu       NA NA        NA                  
+    ## 6 year_3    pred… popu… fixe…       3 mu       NA NA        NA
 
 - It takes two intercepts (`Intercept_*`), for segments 1 and 3.
 - It takes two slopes (`year_*`), for segment 2 and 3.
@@ -72,7 +72,7 @@ later when we set priors.
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 1925, cp_2 = 1975, 
-  Intercept_1 = 2, Intercept_3 = -1, 
+  Intercept_1 = 2, Intercept_3 = -0.5, 
   year_2 = -0.1, year_3 = 0.1)
 
 head(df)
@@ -102,7 +102,7 @@ recover the parameters used to simulate the data.
 
 ``` r
 
-fit = mcp(model, data = df, family = binomial(), iter = 6000)
+fit = mcp(model, data = df, family = binomial(), iter = 10000)
 ```
 
 We can use `summary` to see that it recovered the parameters to a pretty
@@ -116,25 +116,23 @@ summary(fit)
 
     ## Family: binomial
     ## Links: mu = logit
-    ## Iterations: 6000 from 3 chains.
+    ## Draws: 30000 (3 chains with iter = 10000)
     ## Segments:
     ##   1: y | trials(N) ~ 1
-    ##   2: y | trials(N) ~ 1 ~ 0 + year
-    ##   3: y | trials(N) ~ 1 ~ 1 + year
+    ##   2: ~ 0 + year
+    ##   3: ~ 1 + year
     ## 
     ## Change point parameters:
-    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
-    ##  cp_1        1921.437 2.8959 1915.489 1926.899 1.01      806     1603 1925.0    OK
-    ##  cp_2        1973.509 3.2467 1961.906 1977.852 1.01      701      351 1975.0    OK
+    ##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1        1921.574 2.8273 1915.779 1926.87 1.00     3989     6561 1925.0    OK
+    ##  cp_2        1974.274 0.7362 1972.243 1974.98 1.00     4105     2074 1975.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim match
-    ##  Intercept_1    2.176 0.1869    1.826    2.552 1.01      882     2110    2.0    OK
-    ##  year_2        -0.092 0.0072   -0.106   -0.078 1.00     1673     2743   -0.1    OK
-    ##  Intercept_3   -1.296 0.4847   -2.675   -0.499 1.01      560      398   -1.0    OK
-    ##  year_3         0.108 0.0101    0.088    0.128 1.00      545      888    0.1    OK
-    ## 
-    ## Warning: 2 parameters show poor convergence (rhat > 1.01 or ess_bulk < 400 or ess_tail < 400).
+    ##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1    2.177 0.1860    1.835    2.57 1.00     4732     6979    2.0    OK
+    ##  year_2        -0.093 0.0066   -0.106   -0.08 1.00     8028    12552   -0.1    OK
+    ##  Intercept_3   -0.769 0.2264   -1.252   -0.37 1.00     1657     2343   -0.5    OK
+    ##  year_3         0.111 0.0102    0.092    0.13 1.00     1019     2242    0.1    OK
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
@@ -178,7 +176,7 @@ posterior distributions and trace plots:
 
 ``` r
 
-plot_pars(fit, nvariables = NULL)
+plot_pars(fit, npars = NULL)
 ```
 
 ![](binomial_files/figure-html/unnamed-chunk-11-1.png)
@@ -195,6 +193,9 @@ and
 can do a lot more than this, so check out their documentation.
 
 ## Priors for binomial models
+
+*[Brief overview of all default
+priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary-reference-table)*
 
 `mcp` uses priors to achieve a lot of its functionality. See [how to set
 priors](https://lindeloev.github.io/mcp/dev/articles/priors.md),
@@ -214,50 +215,44 @@ cbind(fit$prior)  # Raw view
 prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
-    ##             [,1]                  
-    ## cp_1        "dirichlet(1)"        
-    ## cp_2        "dirichlet(1)"        
-    ## Intercept_1 "dnorm(0, 1.5)"       
-    ## year_2      "dnorm(0, 0.04312197)"
-    ## Intercept_3 "dnorm(0, 1.5)"       
-    ## year_3      "dnorm(0, 0.04312197)"
+    ##             [,1]                            
+    ## cp_1        "dirichlet(1)"                  
+    ## cp_2        "dirichlet(1)"                  
+    ## Intercept_1 "dnorm(0, 1.5)"                 
+    ## year_2      "dnorm(0, 0.043121968093205169)"
+    ## Intercept_3 "dnorm(0, 1.5)"                 
+    ## year_3      "dnorm(0, 0.043121968093205169)"
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                             bounds           
-    ##   <chr>         <int> <chr> <chr>                             <chr>            
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)              [min(year), cp_2]
-    ## 2 cp_2              3 cp    dirichlet(alpha = 1)              [cp_1, max(year)]
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)        none             
-    ## 4 year_2            2 mu    normal(mean = 0, sd = 0.04312197) none             
-    ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)        none             
-    ## 6 year_3            3 mu    normal(mean = 0, sd = 0.04312197) none
+    ##   parameter   segment dpar  prior                           bounds           
+    ##   <chr>         <int> <chr> <chr>                           <chr>            
+    ## 1 cp_1              2 cp    dirichlet(alpha = 1)            [min(year), cp_2]
+    ## 2 cp_2              3 cp    dirichlet(alpha = 1)            [cp_1, max(year)]
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none             
+    ## 4 year_2            2 mu    normal(mean = 0, sd = 0.043122) none             
+    ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none             
+    ## 6 year_3            3 mu    normal(mean = 0, sd = 0.043122) none
 
-The priors on change points are discussed extensively in the prior
-vignette. With the default logit link, intercepts and categorical
-contrasts use `dt(0, 1.5, 3)`. Its central 95% interval is approximately
--4.8 to 4.8 logits, corresponding to probabilities from 0.008 to 0.992,
-while its heavy tails retain support for more extreme values. The figure
-compares Student-t priors with scales 1 (red), 1.5 (black, the `mcp`
-default), and 2.5 (blue), together with their correspondence to
-probabilities. The probit link currently uses the same numerical default
-for simplicity.
-
-Compared with the `dt(0, 2.5, 3)` intercept and flat coefficient
-defaults in `brms`, these proper priors mildly reduce extreme
-predictions in short segments while remaining broad and heavy-tailed.
+The priors on change points are discussed extensively in the [prior
+article](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior).
+With the default logit link, intercepts use `dnorm(0, 1.5)`, which is
+approximately uniform on the probability scale: its central 95% interval
+is approximately -2.9 to 2.9 logits, corresponding to probabilities from
+0.05 to 0.95. The probit link uses `dnorm(0, 1)`, which is exactly
+uniform on the probability scale. The figure compares normal priors with
+SD 1.5 (black, the `mcp` default) and 2.5 (blue, the `rstanarm`
+default), together with their correspondence to probabilities.
 
 ``` r
 
 inverse_logit = function(x) exp(x) / (1 + exp(x))
-scaled_t = function(x, scale) dt(x / scale, df = 3) / scale
 
 # Start the plot
 library(ggplot2)
 ggplot(data.frame(logits = 0), aes(x = logits)) + 
   
-  # Plot Student-t priors. Set scale in "args"
-  stat_function(fun=scaled_t, args = list(scale = 1), lwd=2, col="red") +
-  stat_function(fun=scaled_t, args = list(scale = 1.5), lwd=2, col="black") +
-  stat_function(fun=scaled_t, args = list(scale = 2.5), lwd=2, col="blue") +
+  # Plot normal priors. Set SD in "args"
+  stat_function(fun = dnorm, args = list(sd = 1.5), lwd = 2, col = "black") +
+  stat_function(fun = dnorm, args = list(sd = 2.5), lwd = 2, col = "blue") +
   
   # Set the secondary axis
   scale_x_continuous(
@@ -276,18 +271,15 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.
 
-Numeric coefficient scales are divided by a representative change in
-their model-matrix column: its range when it has two values, and two
-standard deviations otherwise. For
+Coefficients and categorical contrasts are autoscaled as in `rstanarm`:
+`dnorm(0, 1.5 / sd(column))` for logit links and
+`dnorm(0, 1 / sd(column))` for probit links, where `sd(column)` is the
+SD of the coefficient’s model-matrix column, including the 0/1 dummies
+of factors. For
 [x-terms](https://lindeloev.github.io/mcp/dev/articles/formulas.html#how-segments-connect)
-such as `x`, `state:x`, and `I(x^2)` (with `x` as the change-point
-variable), the representative change is instead the observed x-span,
-`max(x) - min(x)`. The implied change across the observed x-span
-therefore has the same 1.5-logit scale, regardless of the number of
-change points. Powers such as `I(x^2)` grow within a segment, so they
-additionally use the typical segment width,
-`(max(x) - min(x)) / n_segments()`, and imply the same change within a
-typical segment as a linear slope.
+such as `x` and `state:x` (with `x` as the change-point variable), this
+is `sd(x)` over all data, so slope priors do not depend on the number of
+change points. Powers such as `I(x^2)` use `sd((x - min(x))^2)`.
 
 ## JAGS code
 
@@ -299,21 +291,23 @@ fit$jags_code
 ```
 
     ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_3 = CONST2_
+    ##   # Change points
+    ##   cp_0 = min(year)
+    ##   for (cp_i_ in 1:2) {
+    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
+    ##   }
+    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
+    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_3 - cp_0)
+    ##   cp_2 = cp_0 + cp_sorted_[2] * (cp_3 - cp_0)
+    ##   cp_3 = max(year)
     ## 
     ##   # Priors for population-level effects
-    ##   cp_frac_1_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point
-    ##   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point
-    ##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept (rstanarm scaling with base 1.5)
-    ##   year_2_rise_ ~ dnorm(0, 1/(0.04312197*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm scaling with base 1.5); sampled as the rise over the segment
-    ##   year_2 = year_2_rise_ / (cp_2 - cp_1)
-    ##   Intercept_3_end_ ~ dnorm(0 + year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept (rstanarm scaling with base 1.5); sampled as the level at the segment end
+    ##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale
+    ##   year_2_end_ ~ dnorm(Intercept_1, 1/(0.043121968093205169*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling); sampled as the value at the segment end
+    ##   year_2 = (year_2_end_ - (Intercept_1)) / (cp_2 - cp_1)
+    ##   Intercept_3_end_ ~ dnorm(year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale; sampled as the value at the segment end
     ##   Intercept_3 = Intercept_3_end_ - (year_3 * (cp_3 - cp_2))
-    ##   year_3 ~ dnorm(0, 1/(0.04312197)^2)   # Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)
+    ##   year_3 ~ dnorm(0, 1/(0.043121968093205169)^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling)
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(year)) {
@@ -329,7 +323,7 @@ fit$jags_code
     ##       (year[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_3)) * 1 + 
     ##       (year[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(4)], c(year_3)) * x_local_3_[i_]
     ## 
-    ##     # Likelihood and log-density for family = binomial()
+    ##     # Likelihood for family = binomial()
     ##     mu_[i_] = ilogit(link_mu_[i_])
     ##     y[i_] ~ dbin(mu_[i_], N[i_])
     ##   }

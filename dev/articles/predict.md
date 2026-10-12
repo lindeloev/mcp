@@ -21,13 +21,13 @@ data = mcp_example_data("demo")
 head(data)
 ```
 
-    ##   response     time
-    ## 1 17.23552 76.33986
-    ## 2 11.35171 83.51711
-    ## 3 28.04995 60.18529
-    ## 4 20.68198 74.72964
-    ## 5 21.21364 85.88256
-    ## 6 22.32282 40.05069
+    ##    response     time
+    ## 1 12.235516 76.33986
+    ## 2  6.351706 83.51711
+    ## 3 28.049953 60.18529
+    ## 4 15.681983 74.72964
+    ## 5 16.213643 85.88256
+    ## 6 22.322824 40.05069
 
 … and model it as three segments, i.e., two change points:
 
@@ -84,13 +84,15 @@ To get the fitted values for each data point, simply do `fitted(fit)`:
 head(fitted(fit))
 ```
 
-    ##   response     time   fitted        sd     Q2.5    Q97.5
-    ## 1 17.23552 76.33986 17.84217 0.9990016 15.84515 19.79815
-    ## 2 11.35171 83.51711 16.41701 0.7249251 14.96533 17.85840
-    ## 3 28.04995 60.18529 25.44790 0.8844492 23.70304 27.14645
-    ## 4 20.68198 74.72964 18.16191 1.0936603 15.99893 20.29138
-    ## 5 21.21364 85.88256 15.94730 0.7188174 14.54413 17.36917
-    ## 6 22.32282 40.05069 14.47462 0.6410212 13.15862 15.68560
+    ## # A tibble: 6 × 6
+    ##   response  time .mean   .sd .lower .upper
+    ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1    12.2   76.3  12.9 0.991  10.9    14.8
+    ## 2     6.35  83.5  11.4 0.713  10.0    12.8
+    ## 3    28.0   60.2  25.5 0.880  23.7    27.1
+    ## 4    15.7   74.7  13.2 1.09   11.1    15.3
+    ## 5    16.2   85.9  10.9 0.708   9.52   12.3
+    ## 6    22.3   40.1  14.5 0.639  13.2    15.7
 
 In general, this output contains:
 
@@ -102,19 +104,22 @@ In general, this output contains:
   [`binomial()`](https://rdrr.io/r/stats/family.html) models have the
   number of trials, etc.
 
-- **fitted:** The fitted value (posterior mean). When `summary = TRUE`
-  (default), the column is called `fitted`. When `summary = FALSE`, the
-  column is named `.epred`, matching
+- **.mean:** The fitted value (posterior mean). When `summary = FALSE`,
+  you instead get one row per draw with the value in `.epred`, matching
   [`tidybayes::add_epred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html)
   conventions.
 
-- **sd:** The posterior standard deviation of the expected response
-  corresponding to `fitted`. In
+- **.sd:** The posterior standard deviation of the expected response. In
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  output, `sd` is instead the posterior predictive standard deviation.
+  output, `.sd` is instead the posterior predictive standard deviation.
 
-- **Q\[some number\]:** The quantiles of the fitted distribution. You
-  can set the quantiles using `fitted(fit, probs = c(0.1, 0.5, 0.9))`.
+- **.lower** and **.upper:** The bounds of the central interval. It is
+  95% by default, but you can set it using, e.g.,
+  `fitted(fit, width = 0.8)`. Use `summary = FALSE` to compute other
+  quantiles from the draws.
+
+The columns computed by `mcp` are prefixed with a dot, so they never
+collide with columns in your data.
 
 If you compare these values to the plot, you will see that they
 correspond.
@@ -134,11 +139,13 @@ newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
-    ##        time    fitted        sd       Q2.5    Q97.5
-    ## 1  76.33986 17.842172 0.9990016  15.845155 19.79815
-    ## 2  25.00000  9.935817 0.6604596   8.609782 11.23334
-    ## 3 -20.00000  9.935788 0.6605319   8.609782 11.23334
-    ## 4 200.00000 -6.712685 9.3058981 -25.149202 11.43209
+    ## # A tibble: 4 × 5
+    ##    time  .mean   .sd .lower .upper
+    ##   <dbl>  <dbl> <dbl>  <dbl>  <dbl>
+    ## 1  76.3  12.9  0.991  10.9   14.8 
+    ## 2  25     9.94 0.661   8.62  11.2 
+    ## 3 -20     9.94 0.661   8.62  11.2 
+    ## 4 200   -12.2  9.37  -31.1    6.15
 
 Note that:
 
@@ -169,9 +176,10 @@ arguments. To mention a few, you can set `fitted(fit, dpar = "sigma")`
 to get fitted values for `sigma` ([more on modeling
 sigma](https://lindeloev.github.io/mcp/dev/articles/dpar.md)),
 `prior = TRUE` to predict using only the prior, and `arma = FALSE` to
-exclude AR/MA effects. For group-level effects, use `group = TRUE`
-(all), `FALSE` (none), `"cp"` or `"predictor"` (a formula part), or an
-exact group-level parameter name.
+exclude AR/MA effects. For group-level effects, use
+`group_effects = TRUE` (all), `FALSE` or `NA` (none), `"cp"` or
+`"predictor"` (a formula part), or group-level parameter names with
+optional `*` wildcards, e.g., `"cp_*"`.
 
 ## Predictions
 
@@ -190,16 +198,18 @@ predictive interval):
 ``` r
 
 set.seed(42)
-head(predict(fit, probs = c(0.1, 0.9)))
+head(predict(fit, width = 0.8))
 ```
 
-    ##   response     time  predict       sd       Q10      Q90
-    ## 1 17.23552 76.33986 17.76087 4.025946 12.729675 22.95364
-    ## 2 11.35171 83.51711 16.39834 3.945877 11.381113 21.45299
-    ## 3 28.04995 60.18529 25.50435 3.974106 20.369367 30.52404
-    ## 4 20.68198 74.72964 18.12685 4.009017 13.017773 23.30484
-    ## 5 21.21364 85.88256 15.83290 3.944597 10.913034 20.98206
-    ## 6 22.32282 40.05069 14.48612 3.932286  9.456287 19.49107
+    ## # A tibble: 6 × 6
+    ##   response  time .mean   .sd .lower .upper
+    ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1    12.2   76.3  12.8  4.00   7.77   18.0
+    ## 2     6.35  83.5  11.4  3.94   6.40   16.5
+    ## 3    28.0   60.2  25.5  3.97  20.4    30.5
+    ## 4    15.7   74.7  13.2  4.01   8.07   18.3
+    ## 5    16.2   85.9  10.8  3.95   5.92   16.0
+    ## 6    22.3   40.1  14.5  3.90   9.46   19.5
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -208,7 +218,32 @@ slightly from call to call. You can make it replicable using
 [`set.seed()`](https://rdrr.io/r/base/Random.html) as above. In general,
 the more posterior draws, the less the call-to-call variance will be.
 Conversely, fewer draws means more call-to-call variation, e.g., if you
-do `predict(fit, ndraws = 10)`.
+do `predict(fit, ndraws = 10)`. The interval (`.lower` and `.upper`) is
+the exception: It is computed exactly from the posterior predictive
+distribution, so it is deterministic for a given set of posterior draws.
+
+To get custom quantiles, get the draws using `summary = FALSE` and
+summarise them yourself. These quantiles are computed from simulated
+responses, so they are subject to the call-to-call variation described
+above:
+
+``` r
+
+predict(fit, summary = FALSE) |>
+  dplyr::group_by(.data_row, time) |>
+  dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .prediction = quantile(.prediction, quantile)) |>
+  head()
+```
+
+    ## # A tibble: 6 × 4
+    ##   .data_row  time quantile .prediction
+    ##       <int> <dbl>    <dbl>       <dbl>
+    ## 1         1  76.3      0.1        7.82
+    ## 2         1  76.3      0.5       13.0 
+    ## 3         1  76.3      0.9       18.0 
+    ## 4         2  83.5      0.1        6.53
+    ## 5         2  83.5      0.5       11.4 
+    ## 6         2  83.5      0.9       16.5
 
 ## Residuals
 
@@ -289,16 +324,18 @@ fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
 
 ### Step 3: predict!
 
-We can now compute 50% and 80% posterior predictive intervals at
+We can now compute the 80% posterior predictive interval at
 `time = 125`:
 
 ``` r
 
-predict(fit_forecast, newdata = data.frame(time = 125), probs = c(0.1, 0.25, 0.75, 0.9))
+predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
 ```
 
-    ##   time  predict       sd      Q10      Q25      Q75     Q90
-    ## 1  125 9.244078 4.499987 3.553236 6.425221 12.29614 14.8795
+    ## # A tibble: 1 × 5
+    ##    time .mean   .sd .lower .upper
+    ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1   125  7.63  5.51 0.0889   14.2
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
@@ -328,7 +365,7 @@ ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   labs(title = "Predicting with future change points")
 ```
 
-![](predict_files/figure-html/unnamed-chunk-13-1.png)
+![](predict_files/figure-html/unnamed-chunk-14-1.png)
 
 You can read the predicted values from above at `x = 125` off this
 graph. We literally just predicted for all values between 1 and 170, and

@@ -76,6 +76,8 @@ released.
 
 ``` r
 
+library(mcp)
+
 model = list(
   response ~ 1,  # plateau (Intercept_1)
   ~ 0 + time,    # joined slope (time_2) at cp_1
@@ -107,7 +109,8 @@ by default) in one line:
 
 ``` r
 
-demo_fit = mcp_example("demo")
+library(mcp)
+demo_fit = mcp_example("demo")  # Also check out other examples
 ```
 
 See `demo_fit$example_code` for how it was generated, and explore more
@@ -125,7 +128,7 @@ model = list(
 )
 
 # Get example data and fit it: mcp(model, data, ...)
-fit = mcp(model, demo_fit$data, sample = "both", seed = 78)
+fit = mcp(model, demo_fit$data, sample = "both")
 ```
 
 ## Plot and summary
@@ -136,7 +139,6 @@ also add fitted interval (`q_fit`):
 
 ``` r
 
-set.seed(42)
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
 ```
 
@@ -154,24 +156,24 @@ summary(fit)
 ``` R
 ## Family: gaussian
 ## Links: mu = identity; sigma = identity
-## Iterations: 3000 from 3 chains.
+## Draws: 9000 (3 chains with iter = 3000)
 ## Segments:
 ##   1: response ~ 1
-##   2: response ~ 1 ~ 0 + time
-##   3: response ~ 1 ~ 1 + time
+##   2: ~ 0 + time
+##   3: ~ 1 + time
 ## 
 ## Change point parameters:
-##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  cp_1        31.65 1.743 28.34 35.109 1.00     1274     1903 30.0    OK
-##  cp_2        71.14 1.019 69.46 72.782 1.00     3509     6806 70.0    OK
+##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+##  cp_1        31.70 1.777 28.31 35.259 1.00     3211     4153 30.0    OK
+##  cp_2        71.16 0.997 69.47 72.765 1.00     3792     6331 70.0    OK
 ## 
 ## Population-level parameters:
-##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  Intercept_1  9.94 0.653  8.66 11.189 1.00     3356     6012 10.0    OK
-##  time_2       0.54 0.047  0.46  0.640 1.00     3184     5290  0.5    OK
-##  Intercept_3 18.94 1.336 16.34 21.660 1.00     2802     4459 20.0    OK
-##  time_3      -0.20 0.080 -0.36 -0.046 1.00     1331     2519 -0.3    OK
-##  sigma_1      3.86 0.281  3.35  4.458 1.00     5093     4609  3.5    OK
+##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+##  Intercept_1  9.95 0.652  8.65 11.200 1.00     4613     6693 10.0    OK
+##  time_2       0.55 0.048  0.46  0.643 1.00     5251     6627  0.5    OK
+##  Intercept_3 13.94 1.333 11.32 16.585 1.00     2471     4562 15.0    OK
+##  time_3      -0.20 0.082 -0.37 -0.046 1.00     1300     2400 -0.3    OK
+##  sigma_1      3.86 0.281  3.35  4.452 1.00     4945     4456  3.5    OK
 ```
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -203,7 +205,6 @@ empirical distribution in the data:
 
 ``` r
 
-set.seed(42)
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
@@ -225,12 +226,14 @@ example, what is the evidence (given priors) that the first change point
 
 ``` r
 
-hypothesis(fit, "cp_1 > 25")
+hypothesis(fit, "cp_1 > 30")
 ```
 
 ``` R
-##      hypothesis     mean    lower   upper      prob       BF
-## 1 cp_1 - 25 > 0 6.654192 3.337938 10.1086 0.9995556 1645.747
+## # A tibble: 1 × 7
+##   hypothesis     mean    sd lower upper  prob    BF
+##   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 cp_1 - 30 > 0  1.70  1.78 -1.69  5.26 0.829  5.18
 ```
 
 For model comparisons, we can fit a null model and compare the
@@ -246,7 +249,7 @@ straight line, i.e., removing the change point:
 model_null = list(response ~ 1 + time)  # Intercept_1 and time_1
 
 # Fit it
-fit_null = mcp(model_null, demo_fit$data, seed = 42)
+fit_null = mcp(model_null, demo_fit$data)
 ```
 
 Leveraging the power of
@@ -258,28 +261,15 @@ is strong:
 ``` r
 
 fit_loo = loo(fit)
-```
-
-``` R
-## Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-```
-
-``` r
-
 fit_null_loo = loo(fit_null)
 
 loo::loo_compare(fit_loo, fit_null_loo)
 ```
 
 ``` R
-##   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-##  model1       0.0     0.0      NA           1 k_psis > 0.7
-##  model2     -46.4     7.9    1.00
-
-## 
-## Diagnostic flags present.
-## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-## or https://mc-stan.org/loo/reference/loo-glossary.html.
+##   model elpd_diff se_diff p_worse diag_diff diag_elpd
+##  model1       0.0     0.0      NA                    
+##  model2     -58.1     9.0    1.00
 ```
 
 # Highlights from in-depth guides
@@ -346,7 +336,7 @@ testing](https://lindeloev.github.io/mcp/articles/comparison.html):
 effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
-  `(1|id)`, `(0 + x||id)`, or `1 + (1|id) ~ ...`. Get posteriors using
+  `(1|id)`, `(0 + x||id)`, or `cp((1|id))`. Get posteriors using
   `ranef(fit)`.
 
 - Plot using `plot(fit, facet_by = "my_group")` and
@@ -389,6 +379,11 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
+
+- Default priors are weakly informative and follow `rstanarm` for
+  intercepts and coefficients and `brms` for scale parameters, with a
+  few [documented
+  deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
 
 - The default prior on change points is `dirichlet(1)` (uniform order
   statistics). For a single change point, this is the Beta(1, 1) /
@@ -462,14 +457,14 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ## # A tibble: 6 × 14
 ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
 ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-## 1      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
-## 2      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
-## 3      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
-## 4      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
-## 5      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
-## 6      1          1     1  30.3  70.5        8.95  0.583        18.2 -0.145
+## 1      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
+## 2      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
+## 3      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
+## 4      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
+## 5      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
+## 6      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
 ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
-## #   data_row <int>, .epred <dbl>
+## #   .data_row <int>, .epred <dbl>
 ```
 
 # Citation

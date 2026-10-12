@@ -22,25 +22,30 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other"><li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -72,20 +77,18 @@
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  summary <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"fitted"</span>,</span>
-<span>  probs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  width <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  rate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  dpar <span class="op">=</span> <span class="st">"epred"</span>,</span>
-<span>  group <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group_effects <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  draws_format <span class="op">=</span> <span class="st">"tidy"</span>,</span>
 <span>  scale <span class="op">=</span> <span class="st">"response"</span>,</span>
 <span>  .return_fitted <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .return_dpars <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  .garma_replicate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  samples_format <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  .garma_replicate <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,6 +102,8 @@
 
 <dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
 <dd><p>A <code>tibble</code> or a <code>data.frame</code> containing predictors in the model.</p><ul><li><p>If <code>NULL</code> (default), the original data is used.</p></li>
+<li><p>Grouping factors must only contain levels from the fitted data. Use <code>group_effects = FALSE</code>
+to predict without group-level effects, e.g., for new groups.</p></li>
 <li><p>For models with <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>: <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">residuals()</a></code>, <code><a href="execute-mcp-model.html">log_lik()</a></code>,
 and <code><a href="execute-mcp-model.html">predict()</a></code> condition on the response history by default,
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
@@ -129,8 +134,11 @@ Requires <code>scale = "response"</code>.</p></li>
 </ul></dd>
 
 
-<dt id="arg-probs">probs<a class="anchor" aria-label="anchor" href="#arg-probs"></a></dt>
-<dd><p>Vector of quantiles (strictly between 0 and 1). Only in effect when <code>summary == TRUE</code>.</p></dd>
+<dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
+<dd><p>Width of the central interval (strictly between 0 and 1),
+returned in the <code>.lower</code> and <code>.upper</code> columns. <code>FALSE</code> omits the interval.
+Only in effect when <code>summary == TRUE</code>. To get custom quantiles, summarise the draws from
+<code>summary = FALSE</code>, e.g., using <code><a href="https://dplyr.tidyverse.org/reference/reframe.html" class="external-link">dplyr::reframe()</a></code> (see examples).</p></dd>
 
 
 <dt id="arg-rate">rate<a class="anchor" aria-label="anchor" href="#arg-rate"></a></dt>
@@ -155,12 +163,16 @@ coefficient you want to evaluate.</p></li>
 </ul></dd>
 
 
-<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
-<dd><p>Group-level effects. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
-<li><p><code>FALSE</code> No group-level deviations (<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>).</p></li>
+<dt id="arg-group-effects">group_effects<a class="anchor" aria-label="anchor" href="#arg-group-effects"></a></dt>
+<dd><p>Group-level effects to include. One of:</p><ul><li><p><code>TRUE</code> All group-level deviations.</p></li>
+<li><p><code>FALSE</code> or <code>NA</code> No group-level deviations, i.e., population-level
+predictions. Like <code>re_formula = NA</code> in <code>{brms}</code>.</p></li>
 <li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
 the model.</p></li>
-<li><p>Character vector: Only include specified group-level parameters.</p></li>
+<li><p>Character vector of group-level parameter names, e.g., <code>c("cp_1_id", "x_2_id")</code>.
+<code>*</code> is a wildcard, e.g., <code>"state*_1_id"</code> selects all levels of a factor
+and <code>"*_id"</code> selects all effects by <code>id</code>. See names using <code>ranef(fit)</code>.
+Can be combined, e.g., <code>c("cp", "sigma_*")</code>.</p></li>
 </ul></dd>
 
 
@@ -169,18 +181,17 @@ the model.</p></li>
 <li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (<code>group = TRUE</code>).</p></li>
+currently requires all such effects (<code>group_effects = TRUE</code>).</p></li>
 </ul></dd>
 
 
 <dt id="arg-ndraws">ndraws<a class="anchor" aria-label="anchor" href="#arg-ndraws"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Number of posterior draws to return/summarise.
-If there are group-level effects, this is the number of draws from each group.
 <code>NULL</code> means "all". More draws trade speed for accuracy.</p></dd>
 
 
 <dt id="arg-draws-format">draws_format<a class="anchor" aria-label="anchor" href="#arg-draws-format"></a></dt>
-<dd><p>One of "tidy" or "matrix". Controls the output format when <code>summary == FALSE</code> (for <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and <code><a href="execute-mcp-model.html">log_lik()</a></code>). <code><a href="execute-mcp-model.html">residuals()</a></code> always returns tidy output.</p></dd>
+<dd><p>One of "tidy" or "matrix". Controls the output format when <code>summary == FALSE</code>.</p></dd>
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
@@ -203,31 +214,26 @@ A linear scale is only applicable when <code>type == "fitted"</code> and <code>d
 <dd><p>Internal. For GARMA predictions, generate each
 response history recursively instead of conditioning on observed responses.</p></dd>
 
-
-<dt id="arg-nsamples">nsamples<a class="anchor" aria-label="anchor" href="#arg-nsamples"></a></dt>
-<dd><p>Deprecated. Use <code>ndraws</code> instead.</p></dd>
-
-
-<dt id="arg-samples-format">samples_format<a class="anchor" aria-label="anchor" href="#arg-samples-format"></a></dt>
-<dd><p>Deprecated. Use <code>draws_format</code> instead.
-See more under "value"</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
 
-<ul><li><p>If <code>summary = TRUE</code>: A data frame with the draw mean and SD (<code>sd</code>) for
-each row in <code>newdata</code>. With posterior draws (the default), <code>sd</code> is the
+<ul><li><p>If <code>summary = TRUE</code>: A tibble with the columns of <code>newdata</code> (or
+<code>fit$data</code> if <code>newdata</code> is <code>NULL</code>), followed by summaries for each row:</p><ul><li><p><code>.mean</code>: The mean of the draws.</p></li>
+<li><p><code>.sd</code>: The SD of the draws. With posterior draws (the default), this is the
 posterior predictive SD for <code>type = "predict"</code> and the posterior SD of the
-evaluated quantity otherwise. With <code>prior = TRUE</code>, these are the analogous
-prior summaries. If <code>newdata</code> is <code>NULL</code>, the data in <code>fit$data</code> is used.</p></li>
+evaluated quantity otherwise.</p></li>
+<li><p><code>.lower</code> and <code>.upper</code>: The bounds of the central interval given in <code>width</code>.</p></li>
+</ul><p>With <code>prior = TRUE</code>, these are the analogous prior summaries. mcp's own
+columns are dot-prefixed to avoid collisions with data columns.</p></li>
 <li><p>If <code>summary = FALSE</code> and <code>draws_format = "tidy"</code>: A <code>tidybayes</code> <code>tibble</code> with all the posterior
 draws (<code>Nd</code>) evaluated at each row in <code>newdata</code> (<code>Nn</code>), i.e., with <code>Nd x Nn</code> rows. If there are
 group-level effects, the returned data is expanded with the relevant levels for each row.</p>
 <p>The return columns are:</p><ul><li><p>Predictors from <code>newdata</code>, plus its response column when supplied.</p></li>
-<li><p>Draw descriptors: ".chain", ".iteration", ".draw" (see the <code>posterior</code> and <code>tidybayes</code> packages), and <code>data_row</code>, the row number in the evaluated <code>newdata</code>.</p></li>
+<li><p>Draw descriptors: ".chain", ".iteration", ".draw" (see the <code>posterior</code> and <code>tidybayes</code> packages), and <code>.data_row</code>, the row number in the evaluated <code>newdata</code>.</p></li>
 <li><p>Draw values: one column for each parameter in the model.</p></li>
-<li><p>The estimate. Either ".epred", ".prediction", ".residual", or ".loglik" (matching tidybayes/ggdist conventions).</p></li>
+<li><p>The estimate (matching tidybayes conventions): <code>.epred</code> for expected responses, <code>.linpred</code> with <code>scale = "linear"</code>,
+the <code>.dpar</code> for other dpars (e.g., <code>.mu</code> or <code>.sigma</code>), <code>.prediction</code>, <code>.residual</code>, or <code>.loglik</code>.</p></li>
 </ul></li>
 <li><p>If <code>summary = FALSE</code> and <code>draws_format = "matrix"</code>: An <code>N_draws</code> X <code>nrows(newdata)</code> matrix with fitted/predicted
 values (depending on <code>type</code>). This format is used by <code>brms</code> and it's useful as <code>yrep</code> in
@@ -236,10 +242,6 @@ values (depending on <code>type</code>). This format is used by <code>brms</code
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="execute-mcp-model.html">fitted.mcpfit</a></code> <code><a href="execute-mcp-model.html">predict.mcpfit</a></code> <code><a href="execute-mcp-model.html">residuals.mcpfit</a></code></p></div>
-    </div>
-    <div class="section level2">
-    <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
-    <p>Jonas Kristoffer Lindeløv <a href="mailto:jonas@lindeloev.dk">jonas@lindeloev.dk</a></p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

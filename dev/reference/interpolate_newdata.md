@@ -1,11 +1,18 @@
-# Returns a data.frame with all combos of predictors
+# Returns a tibble with all combos of predictors
 
 **\[experimental\]**
 
 ## Usage
 
 ``` r
-interpolate_newdata(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL)
+interpolate_newdata(
+  fit,
+  by = NULL,
+  x_values = NULL,
+  at = NULL,
+  arma = NULL,
+  prior = FALSE
+)
 ```
 
 ## Arguments
@@ -38,9 +45,14 @@ interpolate_newdata(fit, by = NULL, x_values = NULL, at = NULL, arma = NULL)
   [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` terms. Set to
   `FALSE` to interpolate unconditional trends.
 
+- prior:
+
+  Logical. Increase the resolution around the change points of the prior
+  draws (`TRUE`) instead of the posterior draws (`FALSE`, default).
+
 ## Value
 
-`data.frame` with
+A tibble with
 
 - Cols for par_x
 
@@ -83,13 +95,15 @@ newdata = interpolate_newdata(demo_fit)
 
 # Fit summary
 head(fitted(demo_fit, newdata))
-#>        time   fitted        sd     Q2.5    Q97.5
-#> 1 0.6186323 10.04702 0.6479304 8.782501 11.32416
-#> 2 1.6198715 10.04702 0.6479304 8.782501 11.32416
-#> 3 2.6211108 10.04702 0.6479304 8.782501 11.32416
-#> 4 3.6223501 10.04702 0.6479304 8.782501 11.32416
-#> 5 4.6235893 10.04702 0.6479304 8.782501 11.32416
-#> 6 5.6248286 10.04702 0.6479304 8.782501 11.32416
+#> # A tibble: 6 × 5
+#>    time .mean   .sd .lower .upper
+#>   <dbl> <dbl> <dbl>  <dbl>  <dbl>
+#> 1 0.619  9.95 0.665   8.49   11.2
+#> 2 1.62   9.95 0.665   8.49   11.2
+#> 3 2.62   9.95 0.665   8.49   11.2
+#> 4 3.62   9.95 0.665   8.49   11.2
+#> 5 4.62   9.95 0.665   8.49   11.2
+#> 6 5.62   9.95 0.665   8.49   11.2
 
 # Predictions for each draw
 prediction = predict(demo_fit, newdata, summary = FALSE)
@@ -97,20 +111,20 @@ head(prediction)
 #> # A tibble: 6 × 13
 #>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
 #>    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-#> 1      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> 2      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> 3      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> 4      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> 5      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> 6      1          1     1  30.8  72.1        10.2  0.513        15.7 0.0773
-#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, data_row <int>,
+#> 1      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
+#> 2      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
+#> 3      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
+#> 4      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
+#> 5      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
+#> 6      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
+#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, .data_row <int>,
 #> #   .prediction <dbl>
 
 # Custom plot
 library(ggplot2)
-plotdata = fitted(demo_fit, newdata)
-ggplot(plotdata, aes(x = time, y = fitted)) +
-  geom_ribbon(aes(ymin = `Q2.5`, ymax = `Q97.5`), alpha = 0.3) +
+plotdata = fitted(demo_fit, newdata)  # `width = .95` by default 
+ggplot(plotdata, aes(x = time, y = .mean)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper), alpha = 0.3) +
   geom_line(lwd = 2) +
   geom_point(aes(y = response), data = demo_fit$data)
 

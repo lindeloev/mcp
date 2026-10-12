@@ -84,9 +84,9 @@ later.
 
 ``` r
 
-fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 8000)
-fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 8000)
-fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 8000)
+fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 6000)
+fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 6000)
+fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 6000)
 ```
 
 We plot them and add a few `ggplot2` layers. We jitter the raw data in
@@ -122,8 +122,10 @@ is fixed at four items with the fitted continuous model:
 equality = hypothesis(fit_default, "cp_1 = 4")
 ## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `cp_1`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.
 equality
-##     hypothesis      mean     lower    upper prob       BF
-## 1 cp_1 - 4 = 0 0.3312236 -1.349374 1.576932   NA 3.198055
+## # A tibble: 1 × 7
+##   hypothesis    mean    sd lower upper  prob    BF
+##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+## 1 cp_1 - 4 = 0 0.311 0.754 -1.35  1.58    NA  3.28
 ```
 
 Notice that `mcp` issues a warning when computing Savage-Dickey Bayes
@@ -173,7 +175,7 @@ posterior_model_prob = equality$BF * prior_null_prob /
 posterior_model_prob
 ```
 
-    ## [1] 0.5159772
+    ## [1] 0.5220295
 
 Because point Bayes factors depend directly on the prior density, they
 require bespoke, substantively justified priors. For example, testing
@@ -185,13 +187,15 @@ was provided, yielding a substantially different Bayes factor:
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
-    ##     hypothesis      mean     lower    upper prob       BF
-    ## 1 cp_1 - 4 = 0 0.2060595 -1.130254 1.328908   NA 1.318547
+    ## # A tibble: 1 × 7
+    ##   hypothesis    mean    sd lower upper  prob    BF
+    ##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    ## 1 cp_1 - 4 = 0 0.218 0.604 -1.04  1.31    NA  1.37
 
 The default [uniform order statistics prior on change
-points](https://lindeloev.github.io/mcp/dev/articles/priors.md) has flat
-symmetric properties across the range, but an informed prior should be
-used for point-null hypothesis testing.
+points](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior)
+has flat symmetric properties across the range, but an informed prior
+should be used for point-null hypothesis testing.
 
 ## Directional and combinatoric tests
 
@@ -215,11 +219,13 @@ hypothesis(fit_info, c(
 ))
 ```
 
-    ##                                                       hypothesis     mean      lower    upper       prob       BF
-    ## 1                                                   cp_1 - 3 > 0 1.206059 -0.1302536 2.328908 0.96129167 4.769978
-    ## 2                                        cp_1 > 3.5 & cp_1 < 4.5       NA         NA       NA 0.51591667 1.734266
-    ## 3   cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5       NA         NA       NA 0.28200000 3.539735
-    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5       NA         NA       NA 0.03704167 0.623798
+    ## # A tibble: 4 × 7
+    ##   hypothesis                                                      mean     sd   lower upper   prob    BF
+    ##   <chr>                                                          <dbl>  <dbl>   <dbl> <dbl>  <dbl> <dbl>
+    ## 1 cp_1 - 3 > 0                                                    1.22  0.604 -0.0360  2.31 0.971  6.54 
+    ## 2 cp_1 > 3.5 & cp_1 < 4.5                                        NA    NA     NA      NA    0.540  1.92 
+    ## 3 cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5   NA    NA     NA      NA    0.297  3.87 
+    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5 NA    NA     NA      NA    0.0371 0.638
 
 Comparing the Bayes factors shows which hypothesis received the larger
 update from prior to posterior.
@@ -245,8 +251,10 @@ its posterior probability, and P(H) is its prior probability.
 hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 ```
 
-    ##                hypothesis mean lower upper      prob       BF
-    ## 1 cp_1 > 3.5 & cp_1 < 4.5   NA    NA    NA 0.5159167 1.734266
+    ## # A tibble: 1 × 7
+    ##   hypothesis              mean  sd    lower upper  prob    BF
+    ##   <chr>                   <lgl> <lgl> <lgl> <lgl> <dbl> <dbl>
+    ## 1 cp_1 > 3.5 & cp_1 < 4.5 NA    NA    NA    NA    0.540  1.92
 
 ``` r
 
@@ -264,7 +272,7 @@ print(c(post_prob = post_prob, BF = BF))
 ```
 
     ## post_prob        BF 
-    ## 0.5159167 1.7342663
+    ## 0.5400556 1.9202843
 
 ## Cross Validation
 
@@ -333,12 +341,12 @@ loo_info
 ```
 
     ## 
-    ## Computed from 24000 by 360 log-likelihood matrix.
+    ## Computed from 18000 by 360 log-likelihood matrix.
     ## 
     ##          Estimate   SE
     ## elpd_loo   -365.7 16.5
-    ## p_loo         2.9  0.3
-    ## looic       731.4 33.1
+    ## p_loo         2.8  0.3
+    ## looic       731.3 33.1
     ## ------
     ## MCSE of elpd_loo is 0.0.
     ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 1.0]).
@@ -371,7 +379,7 @@ loo::loo_compare(loo_default, loo_info, loo_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
 ##  model1      -0.3     0.2    0.92 |elpd_diff| < 4          
-##  model3      -4.0     2.8    0.93
+##  model3      -4.1     2.8    0.93
 ## 
 ## Diagnostic flags present.
 ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
@@ -379,14 +387,16 @@ loo::loo_compare(loo_default, loo_info, loo_simple)
 ```
 
 Aha, so the second model (“model2”, i.e., `fit_info`) passed to
-`loo_compare()` was preferred as the other models had smaller ELPDs. As
-a first rough conclusion, we’ve learned that informed priors and a
-plateau improved out-of-sample predictions.
+[`loo_compare()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+was preferred as the other models had smaller ELPDs. As a first rough
+conclusion, we’ve learned that informed priors and a plateau improved
+out-of-sample predictions.
 
-In recent versions of `loo`, `loo_compare()` reports `p_worse` (the
-estimated probability that a model is worse than the best model)
-alongside diagnostic flags (`diag_diff` and `diag_elpd`) based on
-[Sivula et al. (2025)](https://doi.org/10.1214/25-BA1569).
+In recent versions of `loo`,
+[`loo_compare()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+reports `p_worse` (the estimated probability that a model is worse than
+the best model) alongside diagnostic flags (`diag_diff` and `diag_elpd`)
+based on [Sivula et al. (2025)](https://doi.org/10.1214/25-BA1569).
 
 These diagnostics highlight when the normal approximation underlying
 `se_diff` and `p_worse` is unreliable. For example, `|elpd_diff| < 4`
@@ -411,7 +421,7 @@ loo::loo_compare(waic_default, waic_info, waic_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
 ##  model1      -0.3     0.2    0.92 |elpd_diff| < 4          
-##  model3      -4.0     2.8    0.93
+##  model3      -4.1     2.8    0.93
 ## 
 ## Diagnostic flags present.
 ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)

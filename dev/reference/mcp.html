@@ -26,25 +26,30 @@ between segments. See details or the mcp website."><meta property="og:image" con
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other"><li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -80,16 +85,17 @@ between segments. See details or <a href="https://lindeloev.github.io/mcp/">the 
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  par_x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sample <span class="op">=</span> <span class="st">"post"</span>,</span>
-<span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  chains <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  iter <span class="op">=</span> <span class="fl">3000</span>,</span>
 <span>  warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  adapt <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  inits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  jags_code <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reparam <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  diagnostics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adapt <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,7 +105,7 @@ between segments. See details or <a href="https://lindeloev.github.io/mcp/">the 
 
 <dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>A list of formulas, one for each segment, in the format
-<code>model = list(response ~ predictors, cp ~ predictors)</code>. See <a href="mcp-formula.html">mcp-formula</a> for how segments connect
+<code>model = list(response ~ predictors, ~ cp(...) + predictors)</code>, where <code>cp()</code> is optional. See <a href="mcp-formula.html">mcp-formula</a> for how segments connect
 and the full formula syntax.</p></dd>
 
 
@@ -115,7 +121,7 @@ Missing values in the response variable are imputed using the posterior predicti
 List names are parameter names (<code>cp_1</code>, <code>Intercept_1</code>, <code>x_2</code>,
 <code>sigma_1</code>, etc.) and values are a distribution string (e.g., <code>"dnorm(0, 1) T(0, )"</code>),
 a fixed value (e.g., <code>-2.1</code>), or the name of another parameter to share its value.
-Data-calibrated, regularizing defaults are used where priors are not specified;
+Weakly informative defaults are used where priors are not specified;
 see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See <a href="mcp-priors.html">mcp-priors</a> for the full syntax.</p></dd>
 
 
@@ -126,7 +132,9 @@ see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See
 
 
 <dt id="arg-par-x">par_x<a class="anchor" aria-label="anchor" href="#arg-par-x"></a></dt>
-<dd><p>String (default: <code>NULL</code> which is auto-detect).</p></dd>
+<dd><p>String. Name of the change-point variable, i.e., the data column
+on which change points are located. <code>NULL</code> (default) auto-detects it as the
+only continuous predictor in the formulas.</p></dd>
 
 
 <dt id="arg-sample">sample<a class="anchor" aria-label="anchor" href="#arg-sample"></a></dt>
@@ -139,14 +147,6 @@ will default to using the posterior. Use <code>prior = TRUE</code> to select pri
 object without sample. This is useful if you only want to check
 prior strings (<code>fit$prior</code>), the JAGS model (<code>fit$jags_code</code>), etc.</p></li>
 </ul></dd>
-
-
-<dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
-<dd><p>Deprecated and ignored. Configure parallel processing with a
-<a href="https://future.futureverse.org/reference/plan.html" class="external-link">future</a> plan instead, for example
-<code>future::plan(future::multisession, workers = 3)</code>. With the default future
-plan, chains are sampled sequentially. The argument remains available for
-backwards compatibility.</p></dd>
 
 
 <dt id="arg-chains">chains<a class="anchor" aria-label="anchor" href="#arg-chains"></a></dt>
@@ -164,14 +164,11 @@ are discarded before sampling. Set higher if needed for sampler adaptation;
 use diagnostics to assess convergence.</p></dd>
 
 
-<dt id="arg-adapt">adapt<a class="anchor" aria-label="anchor" href="#arg-adapt"></a></dt>
-<dd><p>Deprecated; use <code>warmup</code> instead.</p></dd>
-
-
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
 <dd><p>A list of initial values for the parameters. This can be useful
 if a model fails to converge. Read more in <code><a href="https://rdrr.io/pkg/rjags/man/jags.model.html" class="external-link">jags.model</a></code>.
-Defaults to <code>NULL</code>, i.e., no inits.</p></dd>
+Defaults to <code>NULL</code> where all chains start at equispaced change points and the prior medians.
+User-provided <code>inits</code> take precedence.</p></dd>
 
 
 <dt id="arg-jags-code">jags_code<a class="anchor" aria-label="anchor" href="#arg-jags-code"></a></dt>
@@ -179,6 +176,16 @@ Defaults to <code>NULL</code>, i.e., no inits.</p></dd>
 you want to tweak the code in <code>fit$jags_code</code> and run it within the <code>mcp</code>
 framework. R-side simulation and prediction methods continue to use the
 mcp-default formulas (with warning), so they may no longer match custom JAGS code.</p></dd>
+
+
+<dt id="arg-reparam">reparam<a class="anchor" aria-label="anchor" href="#arg-reparam"></a></dt>
+<dd><p>Logical. Whether to enable reparameterization for faster mixing. Ignored
+when <code>jags_code</code> is supplied. Read more in
+<a href="https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations">From formulas to sampler code</a>.</p><ul><li><p><code>TRUE</code> (default) This changes only <code>fit$jags_code</code> and sampling efficiency, not the
+model, the priors, or the posterior.</p></li>
+<li><p><code>FALSE</code> runs the plain model, except that the segment-1 intercept is still sampled at the
+midpoint of segment 1. This mostly serves the pedagogical purpose of transparency.</p></li>
+</ul></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -200,6 +207,18 @@ the model, while a list or <code>FALSE</code> overrides the diagnostic footer.</
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical. Suppress routine JAGS output and mcp sampling-status
 messages? Defaults to <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
+<dd><p>Deprecated and ignored. Configure parallel processing with a
+<a href="https://future.futureverse.org/reference/plan.html" class="external-link">future</a> plan instead, for example
+<code>future::plan(future::multisession, workers = 3)</code>. With the default future
+plan, chains are sampled sequentially. The argument remains available for
+backwards compatibility.</p></dd>
+
+
+<dt id="arg-adapt">adapt<a class="anchor" aria-label="anchor" href="#arg-adapt"></a></dt>
+<dd><p>Deprecated; use <code>warmup</code> instead.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -258,24 +277,24 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 3000 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Draws: 9000 (3 chains with iter = 3000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: ~ 0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.66 1.729 28.39 35.122 1.00     1263     2302 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.10 1.026 69.46 72.770 1.00     3108     6357 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.76 1.752 28.47 35.205 1.00     2984     4169 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.10 1.010 69.46 72.777 1.00     3519     6257 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.95 0.650  8.67 11.217 1.00     3605     6303 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.55 0.047  0.46  0.641 1.00     3062     5381  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 18.95 1.369 16.26 21.702 1.00     2373     5053 20.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.20 0.083 -0.37 -0.044 1.00     1293     2671 -0.3    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.86 0.282  3.36  4.472 1.00     4705     4252  3.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.96 0.657  8.66 11.238 1.00     5050     6982 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.55 0.047  0.46  0.645 1.00     4902     6607  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.91 1.350 11.30 16.601 1.00     2544     4746 15.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.20 0.082 -0.36 -0.042 1.00     1347     2446 -0.3    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.87 0.283  3.37  4.470 1.00     4995     4702  3.5    OK</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Visual inspection of the results</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Visualization of model fit/predictions</span></span></span>
@@ -287,85 +306,88 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-plt img"><img src="mcp-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Test a hypothesis</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 10"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      hypothesis     mean    lower    upper prob  BF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 cp_1 - 10 &gt; 0 21.65727 18.38791 25.12202    1 Inf</span>
+<span class="r-in"><span><span class="fu"><a href="hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">demo_fit</span>, <span class="st">"cp_1 &gt; 30"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   hypothesis     mean    sd lower upper  prob    BF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1 - 30 &gt; 0  1.76  1.75 -<span style="color: #BB0000;">1.53</span>  5.21 0.840  5.37</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Make predictions</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time   fitted        sd     Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 17.87692 1.0064291 15.90647 19.87063</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.41150 0.7162152 15.01126 17.83740</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.46466 0.8816487 23.74087 27.18653</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 18.20568 1.1056040 16.04201 20.37707</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 15.92854 0.7095198 14.52875 17.31987</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.48433 0.6383321 13.18504 15.68505</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response  time .mean   .sd .lower .upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9 0.995  10.9    14.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4 0.716   9.99   12.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5 0.896  23.7    27.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2 1.09   11.0    15.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>    16.2   85.9  11.0 0.712   9.55   12.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5 0.651  13.1    15.6</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time  predict       sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986 17.87340 3.995047 10.013497 25.73666</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711 16.42382 3.945918  8.673819 24.14969</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529 25.42993 3.962510 17.660021 33.26762</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964 18.25892 3.988994 10.290758 26.11628</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256 15.91635 3.964558  8.194152 23.66508</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069 14.51094 3.987088  6.769918 22.19356</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response  time .mean   .sd .lower .upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9  3.96   5.00   20.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4  3.94   3.68   19.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.4  3.97  17.7    33.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2  3.98   5.27   21.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9  3.95   3.21   18.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  4.00   6.72   22.2</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">55.545</span>, <span class="fl">80</span>, <span class="fl">132</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      time   predict       sd      Q2.5    Q97.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  55.545 22.994822 3.918535 15.189555 30.67688</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  80.000 17.166440 3.977079  9.351826 24.90561</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 132.000  6.464206 5.549632 -4.360363 17.36901</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    time .mean   .sd .lower .upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>  55.5 23.0   3.93  15.2    30.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>  80   12.2   3.98   4.35   19.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 132    1.68  5.48  -<span style="color: #BB0000;">9.12</span>   12.5</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compare to a one-intercept-only model (no change points) with default prior</span></span></span>
 <span class="r-in"><span><span class="va">model_null</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_null</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model_null</span>, data <span class="op">=</span> <span class="va">data</span>, par_x <span class="op">=</span> <span class="st">"time"</span><span class="op">)</span>  <span class="co"># fit another model here</span></span></span>
 <span class="r-in"><span><span class="va">demo_loo</span> <span class="op">=</span> <span class="fu"><a href="loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span>
 <span class="r-in"><span><span class="va">null_loo</span> <span class="op">=</span> <span class="fu"><a href="loo.mcpfit.html">loo</a></span><span class="op">(</span><span class="va">fit_null</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">loo</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo_compare</a></span><span class="op">(</span><span class="va">demo_loo</span>, <span class="va">null_loo</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA           1 k_psis &gt; 0.7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  model2     -55.0     7.9    1.00                         </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Diagnostic flags present.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> or https://mc-stan.org/loo/reference/loo-glossary.html.</span>
+<span class="r-in"><span><span class="fu"><a href="loo.mcpfit.html">loo_compare</a></span><span class="op">(</span><span class="va">demo_loo</span>, <span class="va">null_loo</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   model elpd_diff se_diff p_worse diag_diff diag_elpd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model1       0.0     0.0      NA                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  model2     -58.1     9.1    1.00                    </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect the prior. Useful for prior predictive checks.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 3000 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Draws: 9000 (3 chains with iter = 3000)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: ~ 0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable    mean   sd  lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        33.6889 23.2   2.00  83.6 1.00     8786     8787 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        66.9173 23.1  16.82  98.5 1.00     9067     8903 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1         3.4e+01 23.34   1.91  84.1 1.00     9099     8683 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2         6.7e+01 23.34  16.83  98.6 1.00     8991     9116 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable    mean   sd  lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 15.3288 16.9 -18.02  48.2 1.00     8678     8295 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.0025  0.6  -1.18   1.2 1.00     8863     8999  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 15.2069 16.9 -17.56  48.4 1.00     8296     8498 20.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3       0.0056  0.6  -1.16   1.2 1.00     9193     8752 -0.3    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      6.4442  7.0   0.19  24.5 1.00     8674     8762  3.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter     mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  1.4e+01 17.36 -19.81  47.4 1.00     9079     8921 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       1.1e-05  0.62  -1.23   1.2 1.00     8713     8812  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3  1.4e+01 17.46 -20.79  47.5 1.00     8799     8219 15.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -3.8e-03  0.62  -1.24   1.2 1.00     8718     8866 -0.3    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      6.3e+00  7.57   0.21  23.8 1.00     9162     8633  3.5    OK</span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mcp-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Show all priors. Default priors are added where you don't provide any</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                                      bounds   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                       [min(tim…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                       [cp_1, m…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 15.32512, sd = 16.86313)     none     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    normal(mean = 0, sd = 0.6026753)           none     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 15.32512, sd = 16.86313)     none     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> time_3            3 mu    normal(mean = 0, sd = 0.6026753)           none     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 6) [0.001, …</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                                        bounds </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                         [min(t…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                         [cp_1,…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> time_3            3 mu    normal(mean = 0, sd = 0.62124)               none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Set priors and re-run</span></span></span>
 <span class="r-in"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
@@ -374,10 +396,7 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(cp_1, 80)"</span>        <span class="co"># change point to segment 3 &gt; cp_1 and &lt; 80.</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span>, warmup <span class="op">=</span> <span class="fl">2000</span>, iter <span class="op">=</span> <span class="fl">6000</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some parameters may not have converged well:</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: Intercept_3 and cp_1 and cp_2 and time_2</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span>
+<span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)</span></span></span>
 <span class="r-in"><span><span class="va">model_same</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
@@ -390,22 +409,24 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-in"><span><span class="co"># Show the JAGS model</span></span></span>
 <span class="r-in"><span><span class="va">demo_fit</span><span class="op">$</span><span class="va">jags_code</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> model {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   # mcp helper values</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_0 = CONST1_</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_3 = CONST2_</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   # Change points</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_0 = min(time)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   for (cp_i_ in 1:2) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     cp_unit_[cp_i_] ~ dunif(0, 1)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = cp_0 + cp_sorted_[1] * (cp_3 - cp_0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = cp_0 + cp_sorted_[2] * (cp_3 - cp_0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_3 = max(time)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # Priors for population-level effects</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_frac_1_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 ~ dnorm(15.32512, 1/(16.86313)^2)   # Mean intercept (rstanarm default)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time_2_rise_ ~ dnorm(0, 1/(0.6026753*(cp_2-cp_1))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the rise over the segment</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time_2 = time_2_rise_ / (cp_2 - cp_1)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_3_end_ ~ dnorm(15.32512 + time_3 * (cp_3 - cp_2), 1/(16.86313)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 ~ dnorm(13.825120048974153, 1/(17.382500430759464)^2)   # Mean intercept (rstanarm default)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time_2_end_ ~ dnorm(Intercept_1, 1/(0.62123709509255609*(cp_2-cp_1))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time_2 = (time_2_end_ - (Intercept_1)) / (cp_2 - cp_1)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_3_end_ ~ dnorm(13.825120048974153 + time_3 * (cp_3 - cp_2), 1/(17.382500430759464)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_3 = Intercept_3_end_ - (time_3 * (cp_3 - cp_2))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   time_3 ~ dnorm(0, 1/(0.6026753)^2)   # Autoscaled mean coefficient (rstanarm default)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   sigma_1 ~ dt(0, 1/(6)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   time_3 ~ dnorm(0, 1/(0.62123709509255609)^2)   # Autoscaled mean coefficient (rstanarm default)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sigma_1 ~ dt(0, 1/(5.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # Model and likelihood</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   for (i_ in 1:length(time)) {</span>
@@ -425,9 +446,9 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-out co"><span class="r-pr">#&gt;</span>     link_sigma_[i_] =</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       (time[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(5)], c(sigma_1)) * 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     # Likelihood and log-density for family = gaussian()</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     # Likelihood for family = gaussian()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     mu_[i_] = link_mu_[i_]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     sigma_[i_] = max(1e-03, link_sigma_[i_])</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     sigma_[i_] = max(1e-05, link_sigma_[i_])</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     response[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>

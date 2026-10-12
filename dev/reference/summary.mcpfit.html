@@ -22,25 +22,30 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other"><li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -78,6 +83,9 @@
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># S3 method for class 'mcpsummary'</span></span>
+<span><span class="fu">print</span><span class="op">(</span><span class="va">x</span>, digits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">"mcpsummary"</span><span class="op">)</span><span class="op">$</span><span class="va">digits</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">fixef</span><span class="op">(</span><span class="va">object</span>, width <span class="op">=</span> <span class="fl">0.95</span>, prior <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, dpar <span class="op">=</span> <span class="st">"mu"</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
@@ -103,8 +111,8 @@ and 1).</p></dd>
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
 <dd><p>Non-negative integer. Number of significant digits used when
-printing the summary. Defaults to 2. The invisibly returned data frame
-retains the unrounded values.</p></dd>
+printing the summary. Defaults to 2. The returned tibble retains the
+unrounded values.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
@@ -113,7 +121,7 @@ retains the unrounded values.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical. Include the <code>segment</code> and <code>dpar</code> columns. Defaults
-to <code>FALSE</code> for a compact, v0.3.4-compatible summary.</p></dd>
+to <code>FALSE</code> for a compact summary.</p></dd>
 
 
 <dt id="arg-diagnostics">diagnostics<a class="anchor" aria-label="anchor" href="#arg-diagnostics"></a></dt>
@@ -130,28 +138,30 @@ the model, while a list or <code>FALSE</code> overrides the diagnostic footer.</
 <dd><p>Must be empty. Reserved for future use.</p></dd>
 
 
+<dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>An <code><a href="mcpfit-class.html">mcpfit</a></code> object, or an <code>mcpsummary</code> returned by <code>summary()</code>.</p></dd>
+
+
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
 <dd><p>Distributional parameter(s) whose regression coefficients to
 return. For modeled distributional parameters such as <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, these
 coefficients are on the link scale.</p></dd>
 
-
-<dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code><a href="mcpfit-class.html">mcpfit</a></code> object.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with parameter estimates and MCMC diagnostics. Rows
+    <p>An <code>mcpsummary</code> tibble with parameter estimates and MCMC diagnostics.
+It prints with model information, separate tables for change points and
+population-level parameters, and convergence warnings. Rows
 are ordered by change point first, then <code>mu</code>, then the other
 distributional parameters, then <code>ar</code>/<code>ma</code> components - each ascending by
-segment. OBS: The change point distributions are often not unimodal and
+segment. Note: The change point distributions are often not unimodal and
 symmetric so the intervals can be deceiving. Plot them using
 <code>plot_pars(fit)</code>.</p>
 <p>With <code>verbose = TRUE</code>:</p><ul><li><p><code>segment</code> is the segment the parameter belongs to.</p></li>
 <li><p><code>dpar</code> is the distributional parameter (<code>"cp"</code>, <code>"mu"</code>, <code>"sigma"</code>,
 <code>"ar"</code>, <code>"ma"</code>, etc.) the parameter belongs to. For AR/MA terms, the
-lag order is encoded in <code>variable</code>, e.g. <code>ar2_1</code>.</p></li>
+lag order is encoded in <code>parameter</code>, e.g. <code>ar2_1</code>.</p></li>
 <li><p><code>mean</code> is the posterior mean</p></li>
 <li><p><code>sd</code> is the posterior standard deviation.</p></li>
 <li><p><code>lower</code> and <code>upper</code> are the bounds of the central posterior interval
@@ -176,10 +186,12 @@ interval (<code>lower</code> to <code>upper</code>).</p></li>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
 
-<ul><li><p><code>fixef(mcpfit)</code>: Population-level fixed effects (regression coefficients) of <code>mcpfit</code>.</p></li>
+<ul><li><p><code>print(mcpsummary)</code>: Print an <code>mcpsummary</code> returned by <code>summary()</code>: model
+information, change point and population-level parameters, and diagnostics.</p></li>
+<li><p><code>fixef(mcpfit)</code>: Population-level fixed effects (regression coefficients) of <code>mcpfit</code>.</p></li>
 <li><p><code>ranef(mcpfit)</code>: Group-level deviations (random effects) of <code>mcpfit</code>.
 Change-point deviations are relative to their population change point;
-<code>cp_i_sd</code> is the scale of their latent normal distribution.</p></li>
+<code>cp_i_&lt;group&gt;_sd</code> (e.g., <code>cp_1_id_sd</code>) is the SD of their normal distribution before truncation.</p></li>
 <li><p><code>print(mcpfit)</code>: Print the posterior summary of an <code><a href="mcpfit-class.html">mcpfit</a></code> object.</p></li>
 </ul></div>
     <div class="section level2">
@@ -193,77 +205,59 @@ Change-point deviations are relative to their population change point;
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 500 from 2 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Draws: 1000 (2 chains with iter = 500)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: ~ 0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.46 1.729 28.06 34.998 1.00      726      951 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.12 1.016 69.44 72.765 1.00      867      958 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.59 1.744 28.24 34.914 1.00      950      907 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.14 1.015 69.48 72.788 1.00     1055     1029 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.05 0.648  8.78 11.324 1.00      992      921 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.53 0.046  0.44  0.619 1.00      898      858  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 17.46 1.175 15.38 19.965 1.00      799      941 20.0      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.10 0.073 -0.26  0.019 1.00      836      860 -0.3      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.89 0.276  3.38  4.466 1.00     1043     1121  3.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.95 0.665  8.49 11.223 1.00      894      973 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.54 0.047  0.46  0.634 1.00      979      776  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.94 1.367 11.30 16.700 1.00      951      824 15.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.21 0.082 -0.36 -0.044 1.00      869      837 -0.3    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.87 0.280  3.37  4.442 1.00      890      945  3.5    OK</span>
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span>, width <span class="op">=</span> <span class="fl">0.8</span>, digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>  <span class="co"># Set interval width</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 500 from 2 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Draws: 1000 (2 chains with iter = 500)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: ~ 0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.4599 1.72856 29.4131 33.5661 1.0024      726      951 30.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.1172 1.01571 69.6973 72.5154 0.9987      867      958 70.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean      sd   lower    upper   rhat ess_bulk ess_tail  sim</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.5935 1.74401 29.3232 33.82035 1.0005      950      907 30.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.1442 1.01458 69.7466 72.53458 0.9991     1055     1029 70.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.0470 0.64793  9.1995 10.8528 0.9986      992      921 10.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.5303 0.04610  0.4708  0.5878 1.0006      898      858  0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 17.4634 1.17476 15.9842 19.0219 1.0001      799      941 20.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.1021 0.07325 -0.2060 -0.0142 0.9998      836      860 -0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.8934 0.27572  3.5711  4.2535 0.9985     1043     1121  3.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean      sd   lower    upper   rhat ess_bulk ess_tail  sim</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.9465 0.66456  9.0751 10.77530 1.0033      894      973 10.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.5437 0.04660  0.4836  0.60348 0.9993      979      776  0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.9424 1.36672 12.1993 15.70817 0.9998      951      824 15.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.2066 0.08208 -0.3136 -0.09996 0.9996      869      837 -0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.8675 0.28029  3.5116  4.23835 0.9997      890      945  3.5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Get the results as a data frame</span></span></span>
+<span class="r-in"><span><span class="co"># Get the results as a tibble</span></span></span>
 <span class="r-in"><span><span class="va">results</span> <span class="op">=</span> <span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 500 from 2 chains.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.46 1.729 28.06 34.998 1.00      726      951 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.12 1.016 69.44 72.765 1.00      867      958 70.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 10.05 0.648  8.78 11.324 1.00      992      921 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.53 0.046  0.44  0.619 1.00      898      858  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 17.46 1.175 15.38 19.965 1.00      799      941 20.0      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.10 0.073 -0.26  0.019 1.00      836      860 -0.3      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.89 0.276  3.38  4.466 1.00     1043     1121  3.5    OK</span>
+<span class="r-in"><span><span class="va">results</span><span class="op">$</span><span class="va">mean</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 31.5935403 71.1441814  9.9464536  0.5437021 13.9424489 -0.2065739  3.8674841</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Group-level deviations (random effects)</span></span></span>
 <span class="r-in"><span><span class="co"># ranef(my_fit)</span></span></span>
@@ -272,24 +266,24 @@ Change-point deviations are relative to their population change point;
 <span class="r-in"><span><span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 500 from 2 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Draws: 1000 (2 chains with iter = 500)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1: response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: response ~ 1 ~ 1 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: ~ 0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        33.82751 23.81  2.01 85.25 1.00      992      948 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        65.97862 23.39 17.59 98.37 1.00      809     1067 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        33.161 22.78   2.10  82.9 1.00      901     1074 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        64.742 23.34  15.21  98.3 1.00      904      927 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     variable     mean    sd lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 14.16572 10.68 -6.80 32.94 1.00      927      667 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2      -0.00596  0.12 -0.22  0.16 1.00     1042      945  0.5      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.83889 10.09 -4.97 31.09 1.00      891      879 20.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3       0.00022  0.10 -0.18  0.20 1.00      945      854 -0.3      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      6.51879  8.85  0.28 26.16 1.00     1045     1026  3.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 13.671 18.03 -21.28  50.1 1.00     1039      982 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2      -0.020  0.61  -1.21   1.2 1.00      946     1017  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 14.016 17.63 -20.72  47.1 1.00      903      911 15.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3       0.012  0.62  -1.21   1.2 1.00      884      826 -0.3    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      5.906  6.61   0.15  22.5 1.00      901      784  3.5    OK</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

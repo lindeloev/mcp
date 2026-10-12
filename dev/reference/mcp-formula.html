@@ -26,25 +26,30 @@ the formula syntax, and the underlying model. See mcp-priors for priors on the r
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other"><li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -90,19 +95,20 @@ at the segment's change point and stop growing at the next change point.</p></li
 <li><p><strong>Joined or disjoined.</strong> Without an intercept (<code>0 + ...</code>), a segment is <em>joined</em>: it continues
 from where the earlier intercept and x-terms left off. With an intercept, it is <em>disjoined</em>
 and starts afresh.</p></li>
-</ol><p><code>sigma</code> and <code>shape</code> are required by the likelihood, so they include an intercept in segment 1.</p>
-<p><strong>Formula syntax.</strong> The general format of a segment formula is <code>response ~ cp ~ predictors</code> (e.g., <code>y ~ 1 ~ 1 + x</code>),
-except the first segment has no change point and uses <code>response ~ predictors</code>. The response and
-change-point parts can be omitted (<code>cp ~ predictor</code> assumes the same response; <code>~ predictor</code>
-assumes an intercept-only change point).</p>
+</ol><p><code>sigma</code> and <code>shape</code> are required by the likelihood, so they include an intercept in segment 1.
+Each segment after the first starts at a change point, so it always includes a change-point
+intercept (<code>cp_1</code>, <code>cp_2</code>, ...). Use <code>cp()</code> to add terms to it, e.g., <code>cp((1 | id))</code>.</p>
+<p><strong>Formula syntax.</strong> The first segment has the format <code>response ~ predictors</code>. Later segments use
+the same response, so they are one-sided, <code>~ predictors</code>, and each starts at a change point that
+can be modeled using <code>cp()</code>, e.g., <code>~ cp((1 | id)) + 0 + x</code>.</p>
 <p><strong>1. Response (segment 1 only):</strong></p><ul><li><p><code>y ~ ...</code>: Standard continuous or count response (Gaussian, Poisson, Bernoulli).</p></li>
 <li><p><code>successes | trials(total) ~ ...</code>: Binomial response (<code>family = binomial()</code>).</p></li>
 <li><p><code>y | weights(w) ~ ...</code>: Observation log-likelihood weights (multiplies each observation's
 log-likelihood contribution by <code>w &gt; 0</code>; affects posterior inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but
 not predictions).</p></li>
 <li><p><code>y | trials(total) + weights(w) ~ ...</code>: Combine response auxiliaries using <code>+</code>.</p></li>
-</ul><p><strong>2. Change-point modeling (<code>cp</code>, segments 2+):</strong></p><ul><li><p><code>1 ~ ...</code> (or omitted, e.g., <code>~ x</code>): Population-level change point (default).</p></li>
-<li><p><code>1 + (1 | id) ~ ...</code>: Group-level change-point deviations around the population change point.
+</ul><p><strong>2. Change-point modeling (<code>cp()</code>, segments 2+):</strong></p><ul><li><p><code>~ x</code> (i.e., <code>cp()</code> omitted): Population-level change point (default). Same as <code>~ cp(1) + x</code>.</p></li>
+<li><p><code>~ cp((1 | id)) + x</code>: Group-level change-point deviations around the population change point.
 <a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Read more</a>.</p></li>
 </ul><p><strong>3. Regression formula (all segments):</strong> <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a></p><ul><li><p><code>~ 1 + x</code>: Disjoined slope with a new segment intercept.</p></li>
 <li><p><code>~ 0 + x</code>: Joined slope (no new intercept).</p></li>

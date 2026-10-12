@@ -13,7 +13,7 @@ plot_pars(
   type = "combo",
   ncol = 1,
   prior = FALSE,
-  nvariables = 5,
+  npars = 5,
   ask = TRUE
 )
 ```
@@ -49,8 +49,8 @@ plot_pars(
   String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
   Common calls are "combo", "trace", and "dens_overlay". Current options
   are 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens',
-  'dens_chains', 'dens_overlay', 'hist', 'intervals', 'rank_hist',
-  'rank_overlay', 'trace', 'trace_highlight', and 'violin".
+  'dens_chains', 'dens_overlay', 'hex', 'hist', 'intervals', 'pairs',
+  'rank_hist', 'rank_overlay', 'trace', 'trace_highlight', and 'violin'.
 
 - ncol:
 
@@ -62,11 +62,12 @@ plot_pars(
   Logical. Plot prior draws (`TRUE`) instead of posterior draws
   (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
 
-- nvariables:
+- npars:
 
   Positive integer or `NULL` / `Inf`. Maximum number of parameters
   plotted per page. Set to `NULL` or `Inf` to plot all parameters on a
-  single page. The default of 5 follows `brms::plot.brmsfit()`.
+  single page. The default of 5 follows
+  [`brms::plot.brmsfit()`](https://paulbuerkner.com/brms/reference/plot.brmsfit.html).
 
 - ask:
 
@@ -91,8 +92,8 @@ In any case, if you see a few erratic lines or parameter estimates, this
 is a sign that you may want to increase argument 'warmup' and 'iter' in
 [`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
 
-Up to `nvariables` parameters are shown on each page. Multi-page plots
-are printed in sequence; in interactive use, `ask = TRUE` pauses between
+Up to `npars` parameters are shown on each page. Multi-page plots are
+printed in sequence; in interactive use, `ask = TRUE` pauses between
 pages.
 
 ## See also
@@ -118,6 +119,7 @@ plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
 plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters
 
 plot_pars(demo_fit, type = c("trace", "violin"), regex_pars = "^cp_")  # Combine plots
+
 
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))

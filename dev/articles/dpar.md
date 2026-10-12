@@ -27,7 +27,9 @@ response-calibrated scale adapts to the units of `y`, with a minimum of
 
 With an explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html)
 formula, the intercept instead defaults to `dt(0, 2.5, 3)` on
-**log-SD**, with scaled Student-t coefficient priors.
+**log-SD**, as in `brms`. Contrasts use the same prior, and slopes are
+scaled by the predictor’s SD, `dt(0, 2.5 / sd(column), 3)`. [Read
+more](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviations).
 
 ## Simple example: a change in standard deviation
 
@@ -98,17 +100,17 @@ summary(fit)
 
     ## Family: gaussian
     ## Links: mu = identity; sigma = log
-    ## Iterations: 3000 from 3 chains.
+    ## Draws: 9000 (3 chains with iter = 3000)
     ## Segments:
     ##   1: y ~ 1
-    ##   2: y ~ 1 ~ 0 + sigma(1)
+    ##   2: ~ 0 + sigma(1)
     ## 
     ## Change point parameters:
-    ##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match
+    ##    parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
     ##  cp_1        49.7 1.64  46.1  52.2 1.00     3277     3827 50.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable mean   sd lower upper rhat ess_bulk ess_tail  sim match
+    ##    parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
     ##  Intercept_1 20.1 0.82  18.5  21.7 1.00     7972     8574 20.0    OK
     ##  sigma_1      1.8 0.11   1.6   2.0 1.00     4639     4599  1.6    OK
     ##  sigma_2      2.9 0.10   2.7   3.1 1.00     5458     5230  3.0    OK
@@ -173,9 +175,9 @@ df$y = empty$simulate(
   Intercept_1 = -20, Intercept_2 = 0,
   sigma_1 = log(1), sigma_x_1 = log(2) / 15,
   sigma_2 = log(4),
-  sigma_x_3 = 0.02,
+  sigma_x_3 = 0.03,
   sigma_xE2_3 = 0.00015,
-  x_3 = 1.2
+  x_3 = 0.8
 )
 ```
 
@@ -185,7 +187,7 @@ Fit it:
 
 ``` r
 
-fit = mcp(model, data = df, iter = 10000, diagnostics = FALSE)
+fit = mcp(model, data = df, diagnostics = FALSE)
 ```
 
 Plotting a posterior predictive interval is an intuitive way to see how
@@ -220,29 +222,29 @@ summary(fit)
 
     ## Family: gaussian
     ## Links: mu = identity; sigma = log
-    ## Iterations: 10000 from 3 chains.
+    ## Draws: 9000 (3 chains with iter = 3000)
     ## Segments:
     ##   1: y ~ 1 + sigma(1 + x)
-    ##   2: y ~ 1 ~ 1 + sigma(1)
-    ##   3: y ~ 1 ~ 0 + x + sigma(0 + x + I(x^2))
-    ##   4: y ~ 1 ~ 0 + same(x)
+    ##   2: ~ 1 + sigma(1)
+    ##   3: ~ 0 + x + sigma(0 + x + I(x^2))
+    ##   4: ~ 0 + same(x)
     ## 
     ## Change point parameters:
-    ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  cp_1         4.9e+01  0.6603  4.9e+01  5.0e+01 1.00     8220     4651  5.0e+01    OK
-    ##  cp_2         8.1e+01  1.8309  7.9e+01  8.4e+01 1.01      256      140  8.0e+01    OK
-    ##  cp_3         1.4e+02 18.2840  9.3e+01  1.8e+02 1.18       12       11  1.4e+02    OK
+    ##    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
+    ##  cp_1         4.9e+01 4.4e-01  4.8e+01  5.0e+01 1.00     4143     2544  5.0e+01    OK
+    ##  cp_2         8.1e+01 2.0e+00  7.7e+01  8.4e+01 1.01     2039     3133  8.0e+01    OK
+    ##  cp_3         1.5e+02 1.4e+01  1.3e+02  1.9e+02 1.13       16       13  1.4e+02    OK
     ## 
     ## Population-level parameters:
-    ##     variable     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  Intercept_1 -2.0e+01  0.3432 -2.1e+01 -1.9e+01 1.00    21424    18774 -2.0e+01    OK
-    ##  Intercept_2  5.9e-01  1.0207 -7.7e-01  1.9e+00 1.00     8038     7658  0.0e+00    OK
-    ##  x_3          1.2e+00  0.0401  1.1e+00  1.3e+00 1.01      313      525  1.2e+00    OK
-    ##  sigma_1      1.0e-01  0.2330 -3.3e-01  5.8e-01 1.00     2042     3804  0.0e+00    OK
-    ##  sigma_x_1    4.2e-02  0.0082  2.7e-02  5.9e-02 1.00     2077     3933  4.6e-02    OK
-    ##  sigma_2      1.3e+00  0.1159  1.1e+00  1.6e+00 1.00      781     2247  1.4e+00    OK
-    ##  sigma_x_3    3.5e-02  0.0335  7.0e-03  1.5e-01 1.07       28       11  2.0e-02    OK
-    ##  sigma_xE2_3  5.1e-05  0.0002 -2.7e-04  4.8e-04 1.06       76      306  1.5e-04    OK
+    ##    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
+    ##  Intercept_1 -2.0e+01 3.5e-01 -2.1e+01 -1.9e+01 1.00     8424     8362 -2.0e+01    OK
+    ##  Intercept_2  4.8e-01 6.9e-01 -8.5e-01  1.8e+00 1.00     4199     5557  0.0e+00    OK
+    ##  x_3          7.8e-01 6.3e-02  6.5e-01  9.0e-01 1.01     1527     4773  8.0e-01    OK
+    ##  sigma_1      1.1e-01 2.4e-01 -3.3e-01  5.9e-01 1.00     4984     5447  0.0e+00    OK
+    ##  sigma_x_1    4.2e-02 8.4e-03  2.6e-02  5.9e-02 1.00     4842     4880  4.6e-02    OK
+    ##  sigma_2      1.3e+00 1.2e-01  1.1e+00  1.6e+00 1.01      319     1718  1.4e+00    OK
+    ##  sigma_x_3    3.7e-02 1.2e-02  1.4e-02  5.9e-02 1.12       19       30  3.0e-02    OK
+    ##  sigma_xE2_3  6.4e-05 2.2e-04 -3.2e-04  5.1e-04 1.14       16       20  1.5e-04    OK
 
 ``` r
 
@@ -251,11 +253,13 @@ pp_check(fit)
 
 ![](dpar_files/figure-html/unnamed-chunk-12-1.png)
 
-Parameters almost converge well (\hat{R} \le 1.01 and \text{ESS} \>
-400), but I set `diagnostics = FALSE` to quiet warnings since this is
-just a demonstration. Notice that `cp_3` and the quadratic `sigma`
-parameters have lower effective sample sizes than the others, reflecting
-greater uncertainty in detecting subtle changes in variance curvature.
+The low ESS for sigma in segment 3 reveal some unidentifiability
+concerning whether the variance increase is driven by a linear
+(`sigma_x_3`) or quadratic term (`sigma_xE2_3`). This spills over to a
+lower ESS for `cp_3` too. Other coefficients seem to be reasonably
+recovered. This is why I set `diagnostics = FALSE` to quiet warnings
+since this is just a demonstration.
+
 Let us verify this by taking a look at the posteriors and trace. For
 now, we just look at the sigmas:
 
@@ -285,27 +289,30 @@ fit$jags_code
 ```
 
     ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_4 = CONST2_
+    ##   # Change points
+    ##   cp_0 = min(x)
+    ##   for (cp_i_ in 1:3) {
+    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
+    ##   }
+    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
+    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_4 - cp_0)
+    ##   cp_2 = cp_0 + cp_sorted_[2] * (cp_4 - cp_0)
+    ##   cp_3 = cp_0 + cp_sorted_[3] * (cp_4 - cp_0)
+    ##   cp_4 = max(x)
     ## 
     ##   # Priors for population-level effects
-    ##   cp_frac_1_ ~ dbeta(1, 3)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_4 - cp_0)  # Ordered change point
-    ##   cp_frac_2_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_2 = cp_1 + cp_frac_2_ * (cp_4 - cp_1)  # Ordered change point
-    ##   cp_frac_3_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_3 = cp_2 + cp_frac_3_ * (cp_4 - cp_2)  # Ordered change point
-    ##   Intercept_1 ~ dnorm(39.06538, 1/(139.559)^2)   # Mean intercept (rstanarm default)
-    ##   Intercept_2 ~ dnorm(39.06538, 1/(139.559)^2)   # Mean intercept (rstanarm default)
-    ##   x_3_rise_ ~ dnorm(0, 1/(2.411212*(cp_3-cp_2))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the rise over the segment
-    ##   x_3 = x_3_rise_ / (cp_3 - cp_2)
-    ##   sigma_1_start_ ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept; on the level at min(x)
-    ##   sigma_1 = sigma_1_start_ - (sigma_x_1 * 1)  # Intercept at x = 0
-    ##   sigma_x_1 ~ dt(0, 1/(0.04319342)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD
+    ##   Intercept_1 ~ dnorm(24.911544437719712, 1/(117.52798194134313)^2)   # Mean intercept (rstanarm default)
+    ##   Intercept_2 ~ dnorm(24.911544437719712, 1/(117.52798194134313)^2)   # Mean intercept (rstanarm default)
+    ##   x_3_end_ ~ dnorm(Intercept_2, 1/(2.0305742544284522*(cp_3-cp_2))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
+    ##   x_3 = (x_3_end_ - (Intercept_2)) / (cp_3 - cp_2)
+    ##   sigma_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept; on the level at min(x); sampled as the value at the expected midpoint of segment 1
+    ##   sigma_1 = sigma_1_mid_ - (sigma_x_1 * (25.875))
+    ##   sigma_x_1 ~ dt(0, 1/(0.043193421279068007)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD
     ##   sigma_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
-    ##   sigma_x_3 ~ dt(0, 1/(0.04319342)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD
-    ##   sigma_xE2_3 ~ dt(0, 1/(0.0002100946)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD
+    ##   sigma_x_3_end_ ~ dt(sigma_2, 1/(0.043193421279068007*(cp_3-cp_2))^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the value at the segment end
+    ##   sigma_x_3 = (sigma_x_3_end_ - (sigma_2)) / (cp_3 - cp_2)
+    ##   sigma_xE2_3_rise_ ~ dt(0, 1/(0.0002100945749551876*(cp_3-cp_2)^2)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the rise over the segment
+    ##   sigma_xE2_3 = sigma_xE2_3_rise_ / (cp_3 - cp_2)^2
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -330,9 +337,9 @@ fit$jags_code
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(8)], c(sigma_x_3)) * x_local_3_[i_] + 
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(9)], c(sigma_xE2_3)) * x_local_3_[i_]^2
     ## 
-    ##     # Likelihood and log-density for family = gaussian()
+    ##     # Likelihood for family = gaussian()
     ##     mu_[i_] = link_mu_[i_]
-    ##     sigma_[i_] = max(1e-03, exp(link_sigma_[i_]))
+    ##     sigma_[i_] = max(1e-05, exp(link_sigma_[i_]))
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }
@@ -349,7 +356,7 @@ model = list(
   y ~ 1,
   
   # Changed standard deviation, with a group-level change point.
-  1 + (1|id) ~ 0 + sigma(1)
+  ~ cp((1|id)) + 0 + sigma(1)
 )
 ```
 
@@ -368,7 +375,7 @@ empty = mcp(model, data = df, par_x = "x", sample = FALSE)
 # Simulate data
 df$y = empty$simulate(
   empty, df, 
-  cp_1 = 130, cp_1_sd = 40,
+  cp_1 = 130, cp_1_id_sd = 40,
   Intercept_1 = 20,
   sigma_1 = log(10), sigma_2 = log(25))
 ```
@@ -379,6 +386,10 @@ Fit it:
 
 fit = mcp(model, data = df, par_x = "x")
 ```
+
+    ## Warning: Some parameters may not have converged well:
+    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1_id[3] and cp_1_id_sd
+    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 Plot it:
 
@@ -396,16 +407,18 @@ As usual, we can get the individual change points:
 ranef(fit)
 ```
 
-    ##     variable       mean       sd      lower     upper     rhat ess_bulk ess_tail        sim match
-    ## 1 cp_1_id[1]   3.208518 53.97599 -123.80777 116.95871 1.042916      715      476  -2.902793    OK
-    ## 2 cp_1_id[2] -49.238207 54.67359 -184.64457  55.62917 1.044136      727      536 -44.692962    OK
-    ## 3 cp_1_id[3]   2.233039 53.67133 -123.81857 115.78047 1.041385      790      534  -1.644795    OK
-    ## 4 cp_1_id[4]  47.920881 62.26592  -71.63198 195.63129 1.032080      504      458  41.216150    OK
-    ## 5 cp_1_id[5]   4.372002 54.86719 -120.49809 120.64593 1.033373      758      412  -5.617847    OK
-    ## 6 cp_1_id[6]   7.832260 53.76407 -116.91775 121.99790 1.037196      742      559 -47.784897    OK
-    ## 7 cp_1_id[7] -34.804901 61.10313 -189.13540  77.68395 1.044932      382      238  -8.872215    OK
-    ## 8 cp_1_id[8]  20.808166 54.00987 -100.44776 138.65007 1.034425      655      489  39.499206    OK
-    ## 9 cp_1_id[9] -30.476202 60.90628 -187.32072  81.24282 1.037093      363      258 -42.698803    OK
+    ## # A tibble: 9 × 10
+    ##   parameter    mean    sd lower upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>       <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1_id[1]   1.06  12.3 -23.7 26.3   1.00     2769     1831 -26.9 ""   
+    ## 2 cp_1_id[2]  12.1   16.4 -14.0 44.9   1.00      701      763  11.4 "OK" 
+    ## 3 cp_1_id[3]  -4.30  12.9 -32.7 14.5   1.01      823      276 -42.5 ""   
+    ## 4 cp_1_id[4]  10.4   13.9 -12.5 42.0   1.00      938     1372  11.6 "OK" 
+    ## 5 cp_1_id[5]   5.01  11.3 -17.6 25.8   1.00     1871     1560 -26.6 ""   
+    ## 6 cp_1_id[6] -11.2   12.7 -40.2  5.58  1.00      633      857 -30.0 "OK" 
+    ## 7 cp_1_id[7] -10.3   10.5 -32.8  5.36  1.00      699     1196 -24.8 "OK" 
+    ## 8 cp_1_id[8]  -1.02  10.4 -22.8 17.0   1.00     2107     1345 -28.5 ""   
+    ## 9 cp_1_id[9]  -2.10  12.1 -25.7 16.8   1.00     1553     1234 -18.3 "OK"
 
 … and verify via posterior predictive checks:
 

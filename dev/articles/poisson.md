@@ -62,22 +62,6 @@ Let us see the two intercepts (lambda in log-units) and the change point
 result = summary(fit)
 ```
 
-    ## Family: poisson
-    ## Links: mu = log
-    ## Iterations: 3000 from 3 chains.
-    ## Segments:
-    ##   1: n ~ 1
-    ##   2: n ~ 1 ~ 1
-    ## 
-    ## Change point parameters:
-    ##     variable     mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  cp_1        1890.483 2.428 1886.14 1896.42 1.00     2222     1279
-    ## 
-    ## Population-level parameters:
-    ##     variable     mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  Intercept_1    1.132 0.094    0.94    1.32 1.00     4526     4095
-    ##  Intercept_2   -0.088 0.129   -0.35    0.15 1.00     4355     5151
-
 We can see that the model ran well with good convergence and a large
 number of effective samples. At a first glance, the change point is
 estimated to lie between the years 1886 and 1896 (95% interval).
@@ -110,6 +94,9 @@ plot_pars(fit)
 
 ## Priors for Poisson models
 
+*[Brief overview of all default
+priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary-reference-table)*
+
 [`poisson()`](https://rdrr.io/r/stats/family.html) defaults to
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter \lambda. \lambda has the nice property
@@ -118,9 +105,9 @@ events in segment 1 is `exp(result$mean[2])` (3.1029864) and it is
 `exp(result$mean[3])` (0.9154709) for segment 2.
 
 The intercept prior is a normal distribution centered on the rounded
-median of `log(pmax(n, 0.1))`, with scale equal to the maximum of 2.5
-and its rounded MAD. [`pmax()`](https://rdrr.io/r/base/Extremes.html)
-keeps zeros finite and the minimum scale avoids an accidentally narrow
+median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale
+equal to the maximum of 2.5 and its rounded MAD. Replacing zeros keeps
+the log finite and the minimum scale avoids an accidentally narrow
 prior.
 
 Categorical contrasts use `dnorm(0, 2.5)`; numeric coefficients use
@@ -129,7 +116,10 @@ standard deviations similarly default to half-normal priors
 (`dnorm(0, ...) T(0, )`). Following the precedent of `rstanarm`, these
 normal defaults retain wide regularizing coverage while avoiding the
 infinite prior expected counts and explosive simulations produced by
-Student-t tails under exponentiation (used in some packages).
+Student-t tails under exponentiation (used in some packages). See
+overview of [similarities and deviations from `rstanarm` and
+`brms`](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviations)
+for log links.
 
 ``` r
 
@@ -159,15 +149,15 @@ fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x 
 ## Negative-binomial extension
 
 [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)
-uses log links for both its conditional mean `mu` and overdispersion
-`shape`, where \operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}. Its
-mean priors are the same as for
+uses log links for its conditional mean `mu` and, when modeled, its
+overdispersion `shape`, where \operatorname{Var}(y) = \mu + \mu^2 /
+\mathit{shape}. Its mean priors are the same as for
 [`poisson()`](https://rdrr.io/r/stats/family.html).
 
-When no `shape()` formula is supplied, the response-scale shape has an
-inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong
-overdispersion and the large-shape Poisson limit; `fit$prior` shows its
-log-shape representation as `dloginvgamma(0.4, 0.3)`.
+When no `shape()` formula is supplied, `shape_1` is the shape itself
+(like `sigma_1` in [`gaussian()`](https://rdrr.io/r/stats/family.html))
+with an inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both
+strong overdispersion and the large-shape Poisson limit.
 
 An explicit `shape()` formula models log-shape. Harmonizing with
 log-mean coefficients, its intercept and contrasts default to
@@ -295,13 +285,16 @@ fit$jags_code
 ```
 
     ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_2 = CONST2_
+    ##   # Change points
+    ##   cp_0 = min(date)
+    ##   for (cp_i_ in 1:1) {
+    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
+    ##   }
+    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
+    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)
+    ##   cp_2 = max(date)
     ## 
     ##   # Priors for population-level effects
-    ##   cp_frac_1_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)
-    ##   cp_1 = cp_0 + cp_frac_1_ * (cp_2 - cp_0)  # Ordered change point
     ##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
     ##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
     ## 
@@ -316,7 +309,7 @@ fit$jags_code
     ##       (date[i_] >= cp_0) * (date[i_] < cp_1) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
     ##       (date[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(2)], c(Intercept_2)) * 1
     ## 
-    ##     # Likelihood and log-density for family = poisson()
+    ##     # Likelihood for family = poisson()
     ##     mu_[i_] = exp(link_mu_[i_])
     ##     n[i_] ~ dpois(mu_[i_])
     ##   }

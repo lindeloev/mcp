@@ -7,13 +7,15 @@ such as
 [`add_predicted_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html),
 and
 [`add_linpred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html).
-These methods and workflows require the suggested package
-`{rstantools}`.
+mcp exports these generics, so they work without `{rstantools}`. If
+`{rstantools}` or `{brms}` masks them, their generics dispatch to the
+same methods.
 
 ## Usage
 
 ``` r
-posterior_epred.mcpfit(
+# S3 method for class 'mcpfit'
+posterior_epred(
   object,
   newdata = NULL,
   draws = NULL,
@@ -26,7 +28,8 @@ posterior_epred.mcpfit(
   ...
 )
 
-posterior_predict.mcpfit(
+# S3 method for class 'mcpfit'
+posterior_predict(
   object,
   newdata = NULL,
   draws = NULL,
@@ -39,7 +42,8 @@ posterior_predict.mcpfit(
   ...
 )
 
-posterior_linpred.mcpfit(
+# S3 method for class 'mcpfit'
+posterior_linpred(
   object,
   transform = FALSE,
   newdata = NULL,
@@ -51,6 +55,12 @@ posterior_linpred.mcpfit(
   seed = NULL,
   ...
 )
+
+posterior_epred(object, ...)
+
+posterior_predict(object, ...)
+
+posterior_linpred(object, ...)
 ```
 
 ## Arguments
@@ -64,6 +74,10 @@ posterior_linpred.mcpfit(
   A `tibble` or a `data.frame` containing predictors in the model.
 
   - If `NULL` (default), the original data is used.
+
+  - Grouping factors must only contain levels from the fitted data. Use
+    `group_effects = FALSE` to predict without group-level effects,
+    e.g., for new groups.
 
   - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),

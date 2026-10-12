@@ -126,7 +126,7 @@ print(fit$example_code) # See how the data was simulated
 #> # Illustrative plot
 #> if (plot) {
 #>   set.seed(42)
-#>   print(plot(fit, color_by = 'state') + ggplot2::labs(title = 'plot(fit, color_by = "state")'))
+#>   print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
 #> }
 
 # Without sampling
@@ -136,8 +136,8 @@ print(empty)
 #> Links: mu = logit
 #> Segments:
 #>   1: y | trials(N) ~ 1
-#>   2: y | trials(N) ~ 1 ~ 0 + x
-#>   3: y | trials(N) ~ 1 ~ 1 + x
+#>   2: ~ 0 + x
+#>   3: ~ 1 + x
 #> 
 #> No draws. Nothing to summarise.
 print(empty$example_code)
@@ -175,7 +175,7 @@ print(empty$example_code)
 #> }
 
 # Now sample this model
-fit2 = mcp(empty$model, empty$data, family = empty$family, warmup = 2000, iter = 6000, seed = 42)
+fit2 = mcp(empty$model, empty$data, family = empty$family, seed = 42)
 plot(fit2)
 
 # }

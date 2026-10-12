@@ -4,9 +4,14 @@
 deprecated in the future, when additional backends are added beyond
 JAGS.*
 
-For any given segment, `mcp` aims to use `brms`-like priors. `mcp`
-additionally includes priors for change points, and some
-`JAGS`-adaptations.
+`mcp`’s default priors use established defaults where possible:
+[`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html) for
+intercepts and coefficients, and
+[`brms`](https://paulbuerkner.com/brms/reference/set_prior.html) for
+scale parameters such as `sigma` and group-level SDs. Change points
+(including their group-level SDs) and autocorrelation have
+`mcp`-specific defaults, and a few other deviations are [documented
+here](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviations).
 
 ## Setting a prior
 
@@ -61,10 +66,11 @@ Other notes:
   are constrained to remain ordered within every group.
 
 - `mcp` allows inserting data-dependent values: for example, `min(x)`,
-  `max(x)`, `median(y)`, `mad(y)`, `max(x) - min(x)`, `n_segments()`,
-  and `n_cp()`. `mcp` resolves these expressions before generating JAGS
-  code. The older `mcp` v0.3.4 uppercase constants (`MINX`, `MAXX`, and
-  so on) remain temporarily supported with a deprecation warning.
+  `max(x)`, `mean(y)`, `median(y)`, `sd(y)`, `mad(y)`,
+  `max(x) - min(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these
+  expressions before generating JAGS code. The older `mcp` v0.3.4
+  uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily
+  supported with a deprecation warning.
 
 - You can fix any parameter to a specific value. Simply set it to a
   numerical value (as `cp_2` above). A constant is a 100% prior belief
@@ -98,15 +104,15 @@ prior_summary(empty_manual)  # For more details: add verbose = TRUE
     ## # A tibble: 9 × 5
     ##   parameter   segment dpar  prior                                         bounds        
     ##   <chr>         <int> <chr> <chr>                                         <chr>         
-    ## 1 cp_1              2 cp    uniform(min = 1, max = cp_2)                  [min(x), cp_2]
+    ## 1 cp_1              2 cp    uniform(min = cp_0, max = cp_2)               [min(x), cp_2]
     ## 2 cp_2              3 cp    80                                            none          
     ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf, 10]    
     ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]        
-    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.529)              none          
     ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1, Inf]    
-    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.529)              none          
     ## 8 x_3               3 mu    x_2                                           none          
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0.001, Inf]
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, Inf]
 
 ``` r
 
@@ -118,13 +124,13 @@ prior_summary(empty_default)  # For more details: add verbose = TRUE
     ##   <chr>         <int> <chr> <chr>                                         <chr>         
     ## 1 cp_1              2 cp    dirichlet(alpha = 1)                          [min(x), cp_2]
     ## 2 cp_2              3 cp    dirichlet(alpha = 1)                          [cp_1, max(x)]
-    ## 3 Intercept_1       1 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 3 Intercept_1       1 mu    normal(mean = 50.5 - x_1 * 1, sd = 72.529)    none          
     ## 4 x_1               1 mu    normal(mean = 0, sd = 2.5)                    none          
-    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.529)              none          
     ## 6 x_2               2 mu    normal(mean = 0, sd = 2.5)                    none          
-    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.52873)            none          
+    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.529)              none          
     ## 8 x_3               3 mu    normal(mean = 0, sd = 2.5)                    none          
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0.001, Inf]
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, Inf]
 
 Now, let’s simulate some data from `model`. The following priors are “at
 odds” with the actual data so as to show their effect.
@@ -149,15 +155,13 @@ head(df)
     ## 5 64.17455 33.25341
     ## 6 51.90959 30.98237
 
-Sample the prior and posterior. We give the manual fit a longer warmup
-since it is harder to find the right posterior under these weird prior
-constraints (priors will usually improve sampling efficiency).
+Sample the prior and posterior.
 
 ``` r
 
 future::plan(future::multisession, workers = 3)
-fit_manual = mcp(model, data = df, sample = "both", warmup = 3000, prior = prior)
-fit_default = mcp(model, data = df, sample = "both", warmup = 3000)
+fit_manual = mcp(model, data = df, sample = "both", prior = prior)
+fit_default = mcp(model, data = df, sample = "both")
 ```
 
 First, let’s look at the priors side by side. Notice the use of
@@ -171,10 +175,10 @@ among others.
 ``` r
 
 library(ggplot2)
-pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, nvariables = NULL) + 
+pp_default = plot_pars(fit_default, type = "dens_overlay", prior = TRUE, npars = NULL) + 
   ggtitle("Default priors")
 
-pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, nvariables = NULL) +
+pp_manual = plot_pars(fit_manual, type = "dens_overlay", prior = TRUE, npars = NULL) +
   ggtitle("Manual priors")
 
 pp_default + pp_manual
@@ -215,15 +219,15 @@ prior_summary(fit_manual, verbose = TRUE)
     ## # A tibble: 9 × 9
     ##   parameter   segment dpar  prior                                        bounds         rule                                                                description                                           source  kind        
     ##   <chr>         <int> <chr> <chr>                                        <chr>          <chr>                                                               <chr>                                                 <chr>   <chr>       
-    ## 1 cp_1              2 cp    uniform(min = 0.02388966, max = cp_2)        [min(x), cp_2] uniform(min = min(x), max = cp_2)                                   User-specified prior                                  user    distribution
+    ## 1 cp_1              2 cp    uniform(min = cp_0, max = cp_2)              [min(x), cp_2] uniform(min = min(x), max = cp_2)                                   User-specified prior                                  user    distribution
     ## 2 cp_2              3 cp    80                                           none           80                                                                  Fixed at 80                                           user    constant    
     ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                     [-Inf, 10]     normal(mean = 0, sd = 5)                                            User-specified prior                                  user    distribution
     ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                 [0, 1]         beta(shape1 = 2, shape2 = 5)                                        User-specified prior                                  user    distribution
-    ## 5 Intercept_2       2 mu    normal(mean = 24.32185, sd = 26.85637)       none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
+    ## 5 Intercept_2       2 mu    normal(mean = 24.322, sd = 26.856)           none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
     ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)   [x_1, Inf]     student_t(df = 3, location = 0, scale = 1)                          User-specified prior                                  user    distribution
-    ## 7 Intercept_3       3 mu    normal(mean = 24.32185, sd = 26.85637)       none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
+    ## 7 Intercept_3       3 mu    normal(mean = 24.322, sd = 26.856)           none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
     ## 8 x_3               3 mu    x_2                                          none           x_2                                                                 Same value as x_2                                     user    alias       
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 9.9) [0.001, Inf]   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1))) Positive residual SD calibrated on the response scale default distribution
+    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 9.9) [0, Inf]       student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1))) Positive residual SD calibrated on the response scale default distribution
 
 This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.
@@ -252,16 +256,16 @@ plot_pp_manual + plot_pp_default  # using patchwork
 You can see how the manual priors force strictly positive slopes (x_2 \>
 x_1 \> 0) that compound to span a much wider vertical range than the
 defaults, alongside an abrupt concerted change at the fixed change point
-x = 80. In contrast, the default priors stay compactly centered around
-the observed data, with zero-centered slopes and change points
-distributed smoothly across the x range.
+x = 80. In contrast, the default priors are centered on the observed
+data, with zero-centered slopes and change points distributed smoothly
+across the x range.
 
 ## Default priors on change points
 
 Change point locations must lie within the observed range
 `[min(x), max(x)]` and maintain strict order `cp_1 < cp_2 < ... < cp_n`.
 Without this rule, change point locations would be unidentifiable and
-label switching occur.
+label switching would occur.
 
 The default prior on all change points in `mcp` is **uniform order
 statistics** (`dirichlet(1)`), which treats any set of ordered change
@@ -292,16 +296,28 @@ change points:
 
 ![](priors_files/figure-html/unnamed-chunk-11-1.png)
 
-Note on implementation: Under the hood, `mcp` parameterizes this using a
-sequential stick-breaking Beta chain (z_j \sim \text{Beta}(1, N - j +
-1), \text{cp}\_j = \text{cp}\_{j-1} + z_j(\max(x) - \text{cp}\_{j-1})).
-This allows JAGS to sample the model much more efficiently.
+Note on implementation: Under the hood, `mcp` samples this as sorted
+uniform draws on the observed x-range, which JAGS samples efficiently.
+Other `dirichlet(alpha)` priors use a sequential stick-breaking Beta
+chain (z_j \sim \text{Beta}(\alpha, (N - j + 1)\alpha), \text{cp}\_j =
+\text{cp}\_{j-1} + z_j(\max(x) - \text{cp}\_{j-1})). See [From formulas
+to sampler
+code](https://lindeloev.github.io/mcp/dev/articles/implementation.md).
 
 The [Dirichlet
 distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution)
 places a joint prior on positive segment spacings that sum to the
 observed x-range. This construction also underlies monotonic effects in
-`brms` ([Bürkner & Charpentier (2019)](https://psyarxiv.com/9qkhj/)).
+`brms` ([Bürkner & Charpentier,
+2020](https://doi.org/10.1111/bmsp.12195)).
+
+For group-level change points, e.g., `cp((1 | id))`, the SD `cp_1_id_sd`
+has a half-normal default prior with a scale of a quarter of the
+expected interval in which each group’s change point can vary. With one
+change point, this is `dnorm(0, (max(x) - min(x)) / 4) T(0, )`. See
+[default priors on group-level change
+points](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#group-level-change-points)
+for the justification.
 
 ### Regularizing change points: `dirichlet(alpha)`
 
@@ -342,155 +358,18 @@ prior is used as written. Relaxing the order can cause label-switching
 between segments and make sampling difficult, so inspect the resulting
 prior carefully.
 
-## Default priors on regression parameters
+## Default priors
 
-While users primarily customize change-point priors, `mcp` automatically
-assigns weakly informative default priors to regression terms (`mu`,
-`sigma`, `shape`, `ar`, `ma`) scaled to data and predictor changes.
-While these defaults provide broad regularization, models with extreme
-uncentered covariates or unusual scales may still warrant custom priors
-and prior predictive checks. You can inspect all resolved priors for any
-fitted model using `prior_summary(fit, verbose = TRUE)`.
-
-The defaults are governed by three core principles:
-
-1.  **Link geometry determines distribution family and base scale (S):**
-    - **Linear links (identity):** Use Student-t (df = 3) with scale S =
-      \max(2.5, \operatorname{mad}(y)), matching `brms`.
-    - **Exponential / log links
-      ([`poisson()`](https://rdrr.io/r/stats/family.html),
-      [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md),
-      `gaussian(link = "log")`, modeled `shape()`):** Use broad Normal
-      priors (`dnorm`) with base scale S = 2.5 for population log-mean
-      coefficients and modeled log-shape, following the precedent of
-      [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html).
-      Under exponentiation, Normal priors substantially reduce extreme
-      multiplier tails compared with Student-t priors. Modeled
-      [`sigma()`](https://rdrr.io/r/stats/sigma.html) retains Student-t
-      (df = 3) on the log scale, matching `brms`.
-    - **Probability links (\operatorname{logit},
-      \operatorname{probit}):** Use Student-t (df = 3) with scale S =
-      1.5, which avoids placing excess prior probability mass on extreme
-      probabilities (0 and 1).
-    - **Stationary dynamics ([`ar()`](https://rdrr.io/r/stats/ar.html),
-      `ma()`):** Use zero-centered regularizing Normal priors on (-1, 1)
-      with S = 0.5 (and S/2 = 0.25 for variations) to favor stationary
-      and invertible processes.
-2.  **Predictor-change invariance ([Gelman
-    2008](https://doi.org/10.1002/sim.3107)):**
-    - Categorical contrasts operate at the link’s base scale: \beta \sim
-      \text{Dist}(0, S).
-    - Continuous slopes divide base scale by representative predictor
-      change: \beta \sim \text{Dist}(0, S / \Delta x), where \Delta x =
-      \operatorname{range}(x) (for binary and `par_x`) and
-      2\\\operatorname{sd}(x) (continuous). This ensures that slope
-      priors remain identical and comparable across models regardless of
-      the number of change points. Powers of `par_x` such as `I(x^2)`
-      grow within a segment, so they use \Delta x =
-      \operatorname{range}(x) \cdot w^{p-1} with the typical segment
-      width w = \operatorname{range}(x) / K for K segments. They thus
-      imply the same change within a typical segment as a linear slope.
-    - Group-level slope standard deviations mirror this scaling:
-      \sigma\_\beta \sim \text{Dist}(0, S / \Delta x) T(0, ).
-3.  **Empirical baseline intercept calibration and offset accounting:**
-    - Intercepts calibrate to empirical central tendency:
-      \operatorname{median}(y) for identity link, and observation-wise
-      log-rate \operatorname{median}(\log(\operatorname{pmax}(y, 0.1)) -
-      \text{offset}) for log link, with scale floored at 2.5.
-    - Contrasts and slopes remain scale-free (dimensionless) on link
-      scales.
-
-### Summary reference table
-
-General quantities used in the table below:
-
-- response scale S_y = \max(2.5, \operatorname{mad}(y))
-
-- log-rate y\_{\text{rate}} = \log(\operatorname{pmax}(y, 0.1)) -
-  \text{offset} (with \text{offset} = 0 if absent)
-
-- log-rate scale S\_{\text{rate}} = \max(2.5,
-  \operatorname{mad}(y\_{\text{rate}}))
-
-- predictor change \Delta x = \operatorname{range}(x) (binary /
-  `par_x`), \operatorname{range}(x) \cdot w^{p-1} for `par_x` powers
-  (with w = \operatorname{range}(x) / K), or 2\\\operatorname{sd}(x)
-  (other continuous).
-
-[TABLE]
-
-\* Poisson identity intercepts include positive truncation `T(0, )`.
-Group SD priors for slopes divide the base scale by \Delta x.
-
-## Default priors on group-level effects
-
-Each group-level effect has a population-level SD parameter.
-Predictor-side deviations use a zero-mean normal distribution governed
-by that SD, as in ordinary multilevel regression. With a
-multi-coefficient `||` term, every independent coefficient has its own
-SD. The SD receives a positive, weakly informative prior mirroring the
-family and link specification of the corresponding population parameter
-(e.g. half-Student-t for identity link and modeled
-[`sigma()`](https://rdrr.io/r/stats/sigma.html), half-normal for
-log-mean and modeled log-shape). For distributional parameters,
-deviations and SD are on that parameter’s link scale (for example,
-effects inside [`sigma()`](https://rdrr.io/r/stats/sigma.html) are on
-the log-SD scale).
-
-Change-point effects use the same ordinary normal hierarchy, with
-additional range and within-group ordering constraints. Therefore,
-`cp_i_sd` is the latent normal scale rather than the realized sample SD.
-See [group-level effects with
-mcp](https://lindeloev.github.io/mcp/dev/articles/group_effects.md) for
-the model equation and practical interpretation.
-
-### Deviations from brms default priors
-
-While `mcp` aligns with `brms` where possible, several defaults
-intentionally deviate:
-
-- **Proper population slopes:** `mcp` uses proper, regularizing priors
-  (Student-t or normal) scaled to predictor change rather than `brms`’s
-  improper flat priors because JAGS requires proper priors.
-- **Log-link models ([`poisson()`](https://rdrr.io/r/stats/family.html),
-  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md),
-  `gaussian(link = "log")`):** Rather than `brms`’s heavy-tailed
-  Student-t intercepts and flat coefficients, `mcp` uses broad normal
-  priors for population log-mean coefficients and modeled log-shape,
-  following the precedent of
-  [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html). For
-  fixed-scale coefficients at fixed predictor values, normal priors
-  avoid the infinite expected values of exponentiated Student-t tails
-  (\mathbb{E}\[\exp(\eta)\] = \infty). While group-level hierarchies
-  with \tau \sim \operatorname{HalfNormal}(2.5) do not guarantee finite
-  response moments everywhere (\mathbb{E}\[\exp(b)\] is only finite for
-  \tau \lesssim 1), half-normal group SDs substantially reduce extreme
-  multiplier tails compared with half-Student-t priors under
-  exponentiation, and this breadth is a deliberate, `rstanarm`-like
-  choice of weak informativeness over tighter regularization. Practical
-  prior predictive checks (`pp_check(fit, prior = TRUE)`) remain
-  recommended.
-- **Offset-adjusted count intercepts:** While both `brms` and `mcp`
-  adjust count intercepts for exposure offsets, `brms` subtracts
-  `mean(offset)` from `median(log(y))` and computes prior scale on raw
-  counts (`mad(log(y))`). When exposures vary across observations, raw
-  count dispersion can inflate the prior scale. `mcp` computes empirical
-  log-rates observation-wise (\log(\operatorname{pmax}(y, 0.1)) -
-  \text{offset}), calibrating both median location and MAD scale
-  directly to rate variation.
-- **Logit and probit links
-  ([`binomial()`](https://rdrr.io/r/stats/family.html),
-  [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)):**
-  `mcp` uses a narrower scale of 1.5 (`dt(0, 1.5, 3)`) instead of
-  `brms`’s 2.5 to avoid placing excess prior probability mass on extreme
-  probabilities (0 and 1). This added conservatism is particularly
-  warranted in change-point models, where several segments each
-  contribute their own intercept and the compounding of segment-wise
-  draws makes extreme probabilities more likely than in an ordinary
-  single-intercept GLM.
-- **Autoregressive and moving-average terms:** `mcp` uses zero-centered
-  regularizing `dnorm(0, 0.5) T(-1, 1)` priors rather than improper flat
-  priors to favor stationary and invertible dynamics.
+`mcp` assigns default priors to all parameters that you do not set in
+`mcp(..., prior = list())`. Inspect them using `prior_summary(fit)`. The
+article on [default
+priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md)
+explains how they are chosen, with a [summary
+table](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary-reference-table)
+and the [deviations from `rstanarm` and
+`brms`](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviations).
+Note that for a factor without an intercept, e.g., `y ~ 0 + state`, each
+factor level’s coefficient is an intercept and gets the intercept prior.
 
 ## JAGS code
 
@@ -502,22 +381,22 @@ fit_manual$jags_code
 ```
 
     ## model {
-    ##   # mcp helper values
-    ##   cp_0 = CONST1_
-    ##   cp_3 = CONST2_
+    ##   # Change points
+    ##   cp_0 = min(x)
+    ##   cp_1 ~ dunif(cp_0, cp_2)  # User-specified prior
+    ##   cp_2 = 80  # Fixed at 80
+    ##   cp_3 = max(x)
     ## 
     ##   # Priors for population-level effects
-    ##   cp_1 ~ dunif(CONST1_, cp_2)  # User-specified prior
-    ##   cp_2 = CONST3_  # Fixed at 80
     ##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(,10)  # User-specified prior
     ##   x_1 ~ dbeta(2, 5)  # User-specified prior
-    ##   Intercept_2_end_ ~ dnorm(24.32185 + x_2 * (cp_2 - cp_1), 1/(26.85637)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end
+    ##   Intercept_2_end_ ~ dnorm(24.321850954171083 + x_2 * (cp_2 - cp_1), 1/(26.856367009148308)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end
     ##   Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))
     ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior
-    ##   Intercept_3_end_ ~ dnorm(24.32185 + x_3 * (cp_3 - cp_2), 1/(26.85637)^2)   # Mean intercept (rstanarm default); sampled as the level at the segment end
+    ##   Intercept_3_end_ ~ dnorm(24.321850954171083 + x_3 * (cp_3 - cp_2), 1/(26.856367009148308)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end
     ##   Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
     ##   x_3 = x_2  # Same value as x_2
-    ##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0.001,)  # Positive residual SD calibrated on the response scale
+    ##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -539,9 +418,9 @@ fit_manual$jags_code
     ##     link_sigma_[i_] =
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(7)], c(sigma_1)) * 1
     ## 
-    ##     # Likelihood and log-density for family = gaussian()
+    ##     # Likelihood for family = gaussian()
     ##     mu_[i_] = link_mu_[i_]
-    ##     sigma_[i_] = max(1e-03, link_sigma_[i_])
+    ##     sigma_[i_] = max(1e-05, link_sigma_[i_])
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }

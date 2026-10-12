@@ -27,11 +27,10 @@ for priors.
   `~ shape(1)`.
 
 - *Time-series residuals:* Model serial dependence using `ar(p)` and
-  `ma(q)` terms with a generalized link-scale recurrence that spans
-  continuously across change points.
+  `ma(q)` terms with a generalized link-scale recurrence.
 
 - *Group-level effects:* Add hierarchical (random) intercepts, slopes,
-  and change points, e.g., `~ 1 + (1|id)` or `1 + (1|id) ~ 0 + x`.
+  and change points, e.g., `~ 1 + (1|id)` or `~ cp((1|id)) + 0 + x`.
 
 - *Model comparison and hypothesis testing:* Compare models using
   PSIS-LOO

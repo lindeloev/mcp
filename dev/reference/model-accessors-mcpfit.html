@@ -24,25 +24,30 @@ of observations stored in an mcpfit."><meta property="og:image" content="https:/
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling"><li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families"><li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other"><li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -113,21 +118,21 @@ number of observed response values (excluding missing responses).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Show all segment formulas</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ response ~ 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ response ~ 1 ~ 0 + time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ response ~ 1 ~ 1 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ ~0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ ~1 + time</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></span><span class="op">(</span><span class="va">demo_fit</span>, segment <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>  <span class="co"># Show the formula for segment 2</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> response ~ 1 ~ 0 + time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ~0 + time</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">family</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Show the response family and link</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Links: mu = identity; sigma = identity</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Show the top rows of fitting data</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   response     time</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 17.23552 76.33986</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 11.35171 83.51711</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.04995 60.18529</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 20.68198 74.72964</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 21.21364 85.88256</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.32282 40.05069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    response     time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 12.235516 76.33986</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  6.351706 83.51711</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 28.049953 60.18529</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 15.681983 74.72964</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 16.213643 85.88256</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 22.322824 40.05069</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Count observed response rows</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 100</span>
 </code></pre></div>

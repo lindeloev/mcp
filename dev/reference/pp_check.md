@@ -13,7 +13,7 @@ pp_check(
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  group = TRUE,
+  group_effects = TRUE,
   arma = TRUE,
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
@@ -44,6 +44,10 @@ pp_check(
   A `tibble` or a `data.frame` containing predictors in the model.
 
   - If `NULL` (default), the original data is used.
+
+  - Grouping factors must only contain levels from the fitted data. Use
+    `group_effects = FALSE` to predict without group-level effects,
+    e.g., for new groups.
 
   - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -82,19 +86,23 @@ pp_check(
   (`FALSE`, default). The selected draws must be available; prior-only
   fits require `prior = TRUE`.
 
-- group:
+- group_effects:
 
-  Group-level effects. One of:
+  Group-level effects to include. One of:
 
   - `TRUE` All group-level deviations.
 
-  - `FALSE` No group-level deviations
-    ([`c()`](https://rdrr.io/r/base/c.html)).
+  - `FALSE` or `NA` No group-level deviations, i.e., population-level
+    predictions. Like `re_formula = NA` in `{brms}`.
 
   - `"cp"` or `"predictor"`: All group-level deviations belonging to
     that part of the model.
 
-  - Character vector: Only include specified group-level parameters.
+  - Character vector of group-level parameter names, e.g.,
+    `c("cp_1_id", "x_2_id")`. `*` is a wildcard, e.g., `"state*_1_id"`
+    selects all levels of a factor and `"*_id"` selects all effects by
+    `id`. See names using `ranef(fit)`. Can be combined, e.g.,
+    `c("cp", "sigma_*")`.
 
 - arma:
 
@@ -108,13 +116,12 @@ pp_check(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires all such effects (`group = TRUE`).
+    requires all such effects (`group_effects = TRUE`).
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are group-level effects, this is the number of draws from each
-  group. `NULL` means "all". More draws trade speed for accuracy.
+  Integer or `NULL`. Number of posterior draws to return/summarise.
+  `NULL` means "all". More draws trade speed for accuracy.
 
 - nsamples:
 
@@ -122,7 +129,7 @@ pp_check(
 
 - varying:
 
-  Deprecated. Use `group` instead.
+  Deprecated. Use `group_effects` instead.
 
 - ...:
 

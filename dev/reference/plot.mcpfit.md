@@ -11,7 +11,7 @@ plot(
   q_fit = FALSE,
   q_predict = FALSE,
   facet_by = NULL,
-  color_by = NULL,
+  color_by = "auto",
   lines = 25,
   geom_data = "point",
   cp_dens = TRUE,
@@ -21,7 +21,6 @@ plot(
   ndraws = 500,
   scale = "response",
   at = NULL,
-  samples = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -31,7 +30,7 @@ plot_dpar(
   dpar = "epred",
   q_fit = FALSE,
   facet_by = NULL,
-  color_by = NULL,
+  color_by = "auto",
   lines = 25,
   cp_dens = TRUE,
   prior = FALSE,
@@ -39,8 +38,6 @@ plot_dpar(
   ndraws = 500,
   scale = "response",
   at = NULL,
-  samples = lifecycle::deprecated(),
-  nsamples = lifecycle::deprecated(),
   ...
 )
 ```
@@ -78,11 +75,10 @@ plot_dpar(
 - color_by:
 
   A character vector naming categorical predictor or grouping columns to
-  color by. If both `color_by` and `facet_by` are omitted, a sole
-  categorical predictor is colored automatically. Set `color_by = NULL`
-  explicitly to disable this. Multiple columns are combined as an
-  interaction. Curves and quantiles remain separate for grouping columns
-  not mapped to color.
+  color by. Multiple columns are combined as an interaction. Curves and
+  quantiles remain separate for grouping columns not mapped to color.
+  `"auto"` colors by the categorical predictor if the model has exactly
+  one and it is not in `facet_by`. `NULL` disables color.
 
 - lines:
 
@@ -131,13 +127,12 @@ plot_dpar(
     uses only `sigma` for residuals. For posterior evaluation of the
     original data, retained JAGS imputations supply missing GARMA
     histories. In models with group-level effects, this currently
-    requires all such effects (`group = TRUE`).
+    requires all such effects (`group_effects = TRUE`).
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws to return/summarise. If
-  there are group-level effects, this is the number of draws from each
-  group. `NULL` means "all". More draws trade speed for accuracy.
+  Integer or `NULL`. Number of posterior draws to return/summarise.
+  `NULL` means "all". More draws trade speed for accuracy.
 
 - scale:
 
@@ -158,9 +153,9 @@ plot_dpar(
   to
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md).
 
-- samples, nsamples:
+- nsamples:
 
-  Deprecated. Use `lines` instead.
+  Deprecated. Use `ndraws` instead.
 
 - ...:
 

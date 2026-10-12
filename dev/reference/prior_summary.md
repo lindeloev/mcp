@@ -5,14 +5,21 @@
 ## Usage
 
 ``` r
-prior_summary(fit, verbose = FALSE)
+prior_summary(object, ...)
+
+# S3 method for class 'mcpfit'
+prior_summary(object, verbose = FALSE, ...)
 ```
 
 ## Arguments
 
-- fit:
+- object:
 
   An `mcpfit` object.
+
+- ...:
+
+  Must be empty. Reserved for future use.
 
 - verbose:
 
@@ -33,7 +40,14 @@ Shows the effective, resolved prior distributions on the familiar
 SD/scale parameterization rather than JAGS precision. Symbolic
 expressions in bounds (e.g. `min(x)` or `max(x)`) may be retained in
 symbolic form in compact output, while `verbose = TRUE` displays the
-underlying rule, description, source, and kind.
+underlying rule, description, source, and kind. Numbers are rounded to 5
+significant digits for display. `fit$prior` holds the exact values used
+in the model. Parameter names within a prior describe its dependence on
+other parameters, e.g., the default prior on `Intercept_1` given `x_1`.
+
+`prior_summary()` shares its generic with rstantools (used by `brms` and
+`rstanarm`), so it works for all of these models regardless of package
+load order.
 
 ## See also
 
@@ -45,24 +59,24 @@ for how to specify priors.
 ``` r
 prior_summary(demo_fit)  # Show the effective priors and bounds
 #> # A tibble: 7 × 5
-#>   parameter   segment dpar  prior                                         bounds
-#>   <chr>         <int> <chr> <chr>                                         <chr> 
-#> 1 cp_1              2 cp    dirichlet(alpha = 1)                          [min(…
-#> 2 cp_2              3 cp    dirichlet(alpha = 1)                          [cp_1…
-#> 3 Intercept_1       1 mu    student_t(df = 3, location = 14.2, scale = 6) none  
-#> 4 time_2            2 mu    student_t(df = 3, location = 0, scale = 0.06… none  
-#> 5 Intercept_3       3 mu    student_t(df = 3, location = 14.2, scale = 6) none  
-#> 6 time_3            3 mu    student_t(df = 3, location = 0, scale = 0.06… none  
-#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 6)    [0.00…
+#>   parameter   segment dpar  prior                                        bounds 
+#>   <chr>         <int> <chr> <chr>                                        <chr>  
+#> 1 cp_1              2 cp    dirichlet(alpha = 1)                         [min(t…
+#> 2 cp_2              3 cp    dirichlet(alpha = 1)                         [cp_1,…
+#> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
+#> 4 time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   
+#> 5 Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   
+#> 6 time_3            3 mu    normal(mean = 0, sd = 0.62124)               none   
+#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…
 prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 #> # A tibble: 7 × 9
 #>   parameter   segment dpar  prior          bounds rule  description source kind 
 #>   <chr>         <int> <chr> <chr>          <chr>  <chr> <chr>       <chr>  <chr>
 #> 1 cp_1              2 cp    dirichlet(alp… [min(… diri… Uniform or… defau… dist…
 #> 2 cp_2              3 cp    dirichlet(alp… [cp_1… diri… Uniform or… defau… dist…
-#> 3 Intercept_1       1 mu    student_t(df … none   stud… Robustly c… defau… dist…
-#> 4 time_2            2 mu    student_t(df … none   stud… Regularizi… defau… dist…
-#> 5 Intercept_3       3 mu    student_t(df … none   stud… Robustly c… defau… dist…
-#> 6 time_3            3 mu    student_t(df … none   stud… Regularizi… defau… dist…
-#> 7 sigma_1           1 sigma student_t(df … [0.00… stud… Positive r… defau… dist…
+#> 3 Intercept_1       1 mu    normal(mean =… none   norm… Mean inter… defau… dist…
+#> 4 time_2            2 mu    normal(mean =… none   norm… Autoscaled… defau… dist…
+#> 5 Intercept_3       3 mu    normal(mean =… none   norm… Mean inter… defau… dist…
+#> 6 time_3            3 mu    normal(mean =… none   norm… Autoscaled… defau… dist…
+#> 7 sigma_1           1 sigma student_t(df … [0, I… stud… Positive r… defau… dist…
 ```

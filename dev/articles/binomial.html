@@ -45,30 +45,37 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling">
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
     <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
-    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families">
 <li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
+<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
+<li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -95,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-09-28</h4>
+            <h4 data-toc-skip class="date">2026-10-12</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -135,14 +142,14 @@ we need to simulate data.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">empty</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
-<span><span class="co">##   name        part     scope role  segment dpar  order group_col population_name</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1        cp       popu… chan…       2 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2        cp       popu… chan…       3 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1 predict… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2      predict… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3 predict… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3      predict… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
+<span><span class="co">##   parameter part  scope role  segment dpar  order group_col population_parameter</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1      cp    popu… chan…       2 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2      cp    popu… chan…       3 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercep… pred… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2    pred… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercep… pred… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3    pred… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <ul>
 <li>It takes two intercepts (<code>Intercept_*</code>), for segments 1
 and 3.</li>
@@ -164,7 +171,7 @@ be important later when we set priors.</p>
 <code class="sourceCode R"><span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span></span>
 <span>  <span class="va">empty</span>, <span class="va">df</span>, </span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">1925</span>, cp_2 <span class="op">=</span> <span class="fl">1975</span>, </span>
-<span>  Intercept_1 <span class="op">=</span> <span class="fl">2</span>, Intercept_3 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, </span>
+<span>  Intercept_1 <span class="op">=</span> <span class="fl">2</span>, Intercept_3 <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>, </span>
 <span>  year_2 <span class="op">=</span> <span class="op">-</span><span class="fl">0.1</span>, year_3 <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
@@ -186,7 +193,7 @@ be important later when we set priors.</p>
 <p>The next sections go into more detail, but let us quickly see if we
 can recover the parameters used to simulate the data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, iter <span class="op">=</span> <span class="fl">6000</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, iter <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span></code></pre></div>
 <p>We can use <code>summary</code> to see that it recovered the
 parameters to a pretty good precision. Again, recall that intercepts and
 slopes are on a <code>logit</code> scale.</p>
@@ -194,25 +201,23 @@ slopes are on a <code>logit</code> scale.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Family: binomial</span></span>
 <span><span class="co">## Links: mu = logit</span></span>
-<span><span class="co">## Iterations: 6000 from 3 chains.</span></span>
+<span><span class="co">## Draws: 30000 (3 chains with iter = 10000)</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: y | trials(N) ~ 1</span></span>
-<span><span class="co">##   2: y | trials(N) ~ 1 ~ 0 + year</span></span>
-<span><span class="co">##   3: y | trials(N) ~ 1 ~ 1 + year</span></span>
+<span><span class="co">##   2: ~ 0 + year</span></span>
+<span><span class="co">##   3: ~ 1 + year</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim match</span></span>
-<span><span class="co">##  cp_1        1921.437 2.8959 1915.489 1926.899 1.01      806     1603 1925.0    OK</span></span>
-<span><span class="co">##  cp_2        1973.509 3.2467 1961.906 1977.852 1.01      701      351 1975.0    OK</span></span>
+<span><span class="co">##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  cp_1        1921.574 2.8273 1915.779 1926.87 1.00     3989     6561 1925.0    OK</span></span>
+<span><span class="co">##  cp_2        1974.274 0.7362 1972.243 1974.98 1.00     4105     2074 1975.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##     variable     mean     sd    lower    upper rhat ess_bulk ess_tail    sim match</span></span>
-<span><span class="co">##  Intercept_1    2.176 0.1869    1.826    2.552 1.01      882     2110    2.0    OK</span></span>
-<span><span class="co">##  year_2        -0.092 0.0072   -0.106   -0.078 1.00     1673     2743   -0.1    OK</span></span>
-<span><span class="co">##  Intercept_3   -1.296 0.4847   -2.675   -0.499 1.01      560      398   -1.0    OK</span></span>
-<span><span class="co">##  year_3         0.108 0.0101    0.088    0.128 1.00      545      888    0.1    OK</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## Warning: 2 parameters show poor convergence (rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400).</span></span></code></pre>
+<span><span class="co">##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  Intercept_1    2.177 0.1860    1.835    2.57 1.00     4732     6979    2.0    OK</span></span>
+<span><span class="co">##  year_2        -0.093 0.0066   -0.106   -0.08 1.00     8028    12552   -0.1    OK</span></span>
+<span><span class="co">##  Intercept_3   -0.769 0.2264   -1.252   -0.37 1.00     1657     2343   -0.5    OK</span></span>
+<span><span class="co">##  year_3         0.111 0.0102    0.092    0.13 1.00     1019     2242    0.1    OK</span></span></code></pre>
 <p><code>summary</code> uses 95% central posterior intervals by default,
 but you can change it using <code>summary(fit, width = 0.80)</code>. If
 you have <a href="../articles/group_effects.html">group-level
@@ -241,7 +246,7 @@ well.</p>
 obvious if there was poor convergence. A more direct assessment is to
 look at the posterior distributions and trace plots:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, nvariables <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, npars <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace
 plots that look like fat caterpillars (Bayesians love fat caterpillars).
@@ -254,6 +259,8 @@ than this, so check out their documentation.</p>
 <div class="section level2">
 <h2 id="priors-for-binomial-models">Priors for binomial models<a class="anchor" aria-label="anchor" href="#priors-for-binomial-models"></a>
 </h2>
+<p><em><a href="../articles/default_priors.html#summary-reference-table">Brief
+overview of all default priors</a></em></p>
 <p><code>mcp</code> uses priors to achieve a lot of its functionality.
 See <a href="../articles/priors.html">how to set priors</a>, including
 how to fix values. Here, I post a few notes about the binomial-specific
@@ -268,47 +275,41 @@ so it ran with default priors:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span>  <span class="co"># Raw view</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># Richer view. Try adding verbose = TRUE</span></span></code></pre></div>
-<pre><code><span><span class="co">##             [,1]                  </span></span>
-<span><span class="co">## cp_1        "dirichlet(1)"        </span></span>
-<span><span class="co">## cp_2        "dirichlet(1)"        </span></span>
-<span><span class="co">## Intercept_1 "dnorm(0, 1.5)"       </span></span>
-<span><span class="co">## year_2      "dnorm(0, 0.04312197)"</span></span>
-<span><span class="co">## Intercept_3 "dnorm(0, 1.5)"       </span></span>
-<span><span class="co">## year_3      "dnorm(0, 0.04312197)"</span></span>
+<pre><code><span><span class="co">##             [,1]                            </span></span>
+<span><span class="co">## cp_1        "dirichlet(1)"                  </span></span>
+<span><span class="co">## cp_2        "dirichlet(1)"                  </span></span>
+<span><span class="co">## Intercept_1 "dnorm(0, 1.5)"                 </span></span>
+<span><span class="co">## year_2      "dnorm(0, 0.043121968093205169)"</span></span>
+<span><span class="co">## Intercept_3 "dnorm(0, 1.5)"                 </span></span>
+<span><span class="co">## year_3      "dnorm(0, 0.043121968093205169)"</span></span>
 <span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                             bounds           </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)              [min(year), cp_2]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)              [cp_1, max(year)]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 1.5)        none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    normal(mean = 0, sd = 0.04312197) none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 0, sd = 1.5)        none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    normal(mean = 0, sd = 0.04312197) none</span></span></code></pre>
-<p>The priors on change points are discussed extensively in the prior
-vignette. With the default logit link, intercepts and categorical
-contrasts use <code>dt(0, 1.5, 3)</code>. Its central 95% interval is
-approximately -4.8 to 4.8 logits, corresponding to probabilities from
-0.008 to 0.992, while its heavy tails retain support for more extreme
-values. The figure compares Student-t priors with scales 1 (red), 1.5
-(black, the <code>mcp</code> default), and 2.5 (blue), together with
-their correspondence to probabilities. The probit link currently uses
-the same numerical default for simplicity.</p>
-<p>Compared with the <code>dt(0, 2.5, 3)</code> intercept and flat
-coefficient defaults in <code>brms</code>, these proper priors mildly
-reduce extreme predictions in short segments while remaining broad and
-heavy-tailed.</p>
+<span><span class="co">##   parameter   segment dpar  prior                           bounds           </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)            [min(year), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)            [cp_1, max(year)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    normal(mean = 0, sd = 0.043122) none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    normal(mean = 0, sd = 0.043122) none</span></span></code></pre>
+<p>The priors on change points are discussed extensively in the <a href="../articles/priors.html#cp_prior">prior article</a>. With the
+default logit link, intercepts use <code>dnorm(0, 1.5)</code>, which is
+approximately uniform on the probability scale: its central 95% interval
+is approximately -2.9 to 2.9 logits, corresponding to probabilities from
+0.05 to 0.95. The probit link uses <code>dnorm(0, 1)</code>, which is
+exactly uniform on the probability scale. The figure compares normal
+priors with SD 1.5 (black, the <code>mcp</code> default) and 2.5 (blue,
+the <code>rstanarm</code> default), together with their correspondence
+to probabilities.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inverse_logit</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">scaled_t</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">scale</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt</a></span><span class="op">(</span><span class="va">x</span> <span class="op">/</span> <span class="va">scale</span>, df <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">/</span> <span class="va">scale</span></span>
 <span></span>
 <span><span class="co"># Start the plot</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>logits <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">logits</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  </span>
-<span>  <span class="co"># Plot Student-t priors. Set scale in "args"</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_function.html" class="external-link">stat_function</a></span><span class="op">(</span>fun<span class="op">=</span><span class="va">scaled_t</span>, args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, lwd<span class="op">=</span><span class="fl">2</span>, col<span class="op">=</span><span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_function.html" class="external-link">stat_function</a></span><span class="op">(</span>fun<span class="op">=</span><span class="va">scaled_t</span>, args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>scale <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span>, lwd<span class="op">=</span><span class="fl">2</span>, col<span class="op">=</span><span class="st">"black"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_function.html" class="external-link">stat_function</a></span><span class="op">(</span>fun<span class="op">=</span><span class="va">scaled_t</span>, args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>scale <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span>, lwd<span class="op">=</span><span class="fl">2</span>, col<span class="op">=</span><span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co"># Plot normal priors. Set SD in "args"</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_function.html" class="external-link">stat_function</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">dnorm</span>, args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span>, lwd <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_function.html" class="external-link">stat_function</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">dnorm</span>, args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sd <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span>, lwd <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  </span>
 <span>  <span class="co"># Set the secondary axis</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span></span>
@@ -323,18 +324,15 @@ heavy-tailed.</p>
 <p><img src="binomial_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.</p>
-<p>Numeric coefficient scales are divided by a representative change in
-their model-matrix column: its range when it has two values, and two
-standard deviations otherwise. For <a href="../articles/formulas.html#how-segments-connect">x-terms</a> such
-as <code>x</code>, <code>state:x</code>, and <code>I(x^2)</code> (with
-<code>x</code> as the change-point variable), the representative change
-is instead the observed x-span, <code>max(x) - min(x)</code>. The
-implied change across the observed x-span therefore has the same
-1.5-logit scale, regardless of the number of change points. Powers such
-as <code>I(x^2)</code> grow within a segment, so they additionally use
-the typical segment width,
-<code>(max(x) - min(x)) / n_segments()</code>, and imply the same change
-within a typical segment as a linear slope.</p>
+<p>Coefficients and categorical contrasts are autoscaled as in
+<code>rstanarm</code>: <code>dnorm(0, 1.5 / sd(column))</code> for logit
+links and <code>dnorm(0, 1 / sd(column))</code> for probit links, where
+<code>sd(column)</code> is the SD of the coefficient’s model-matrix
+column, including the 0/1 dummies of factors. For <a href="../articles/formulas.html#how-segments-connect">x-terms</a> such
+as <code>x</code> and <code>state:x</code> (with <code>x</code> as the
+change-point variable), this is <code>sd(x)</code> over all data, so
+slope priors do not depend on the number of change points. Powers such
+as <code>I(x^2)</code> use <code>sd((x - min(x))^2)</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="jags-code">JAGS code<a class="anchor" aria-label="anchor" href="#jags-code"></a>
@@ -343,21 +341,23 @@ within a typical segment as a linear slope.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">jags_code</span></span></code></pre></div>
 <pre><code><span><span class="co">## model {</span></span>
-<span><span class="co">##   # mcp helper values</span></span>
-<span><span class="co">##   cp_0 = CONST1_</span></span>
-<span><span class="co">##   cp_3 = CONST2_</span></span>
+<span><span class="co">##   # Change points</span></span>
+<span><span class="co">##   cp_0 = min(year)</span></span>
+<span><span class="co">##   for (cp_i_ in 1:2) {</span></span>
+<span><span class="co">##     cp_unit_[cp_i_] ~ dunif(0, 1)</span></span>
+<span><span class="co">##   }</span></span>
+<span><span class="co">##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span></span>
+<span><span class="co">##   cp_1 = cp_0 + cp_sorted_[1] * (cp_3 - cp_0)</span></span>
+<span><span class="co">##   cp_2 = cp_0 + cp_sorted_[2] * (cp_3 - cp_0)</span></span>
+<span><span class="co">##   cp_3 = max(year)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   cp_frac_1_ ~ dbeta(1, 2)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
-<span><span class="co">##   cp_1 = cp_0 + cp_frac_1_ * (cp_3 - cp_0)  # Ordered change point</span></span>
-<span><span class="co">##   cp_frac_2_ ~ dbeta(1, 1)  # Relative fraction of remaining span (Uniform order statistics)</span></span>
-<span><span class="co">##   cp_2 = cp_1 + cp_frac_2_ * (cp_3 - cp_1)  # Ordered change point</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept (rstanarm scaling with base 1.5)</span></span>
-<span><span class="co">##   year_2_rise_ ~ dnorm(0, 1/(0.04312197*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm scaling with base 1.5); sampled as the rise over the segment</span></span>
-<span><span class="co">##   year_2 = year_2_rise_ / (cp_2 - cp_1)</span></span>
-<span><span class="co">##   Intercept_3_end_ ~ dnorm(0 + year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept (rstanarm scaling with base 1.5); sampled as the level at the segment end</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale</span></span>
+<span><span class="co">##   year_2_end_ ~ dnorm(Intercept_1, 1/(0.043121968093205169*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling); sampled as the value at the segment end</span></span>
+<span><span class="co">##   year_2 = (year_2_end_ - (Intercept_1)) / (cp_2 - cp_1)</span></span>
+<span><span class="co">##   Intercept_3_end_ ~ dnorm(year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale; sampled as the value at the segment end</span></span>
 <span><span class="co">##   Intercept_3 = Intercept_3_end_ - (year_3 * (cp_3 - cp_2))</span></span>
-<span><span class="co">##   year_3 ~ dnorm(0, 1/(0.04312197)^2)   # Autoscaled link-scale coefficient (rstanarm scaling with base 1.5)</span></span>
+<span><span class="co">##   year_3 ~ dnorm(0, 1/(0.043121968093205169)^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(year)) {</span></span>
@@ -373,7 +373,7 @@ within a typical segment as a linear slope.</p>
 <span><span class="co">##       (year[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(3)], c(Intercept_3)) * 1 + </span></span>
 <span><span class="co">##       (year[i_] &gt;= cp_2) * inprod(rhs_matrix_[i_, c(4)], c(year_3)) * x_local_3_[i_]</span></span>
 <span><span class="co">## </span></span>
-<span><span class="co">##     # Likelihood and log-density for family = binomial()</span></span>
+<span><span class="co">##     # Likelihood for family = binomial()</span></span>
 <span><span class="co">##     mu_[i_] = ilogit(link_mu_[i_])</span></span>
 <span><span class="co">##     y[i_] ~ dbin(mu_[i_], N[i_])</span></span>
 <span><span class="co">##   }</span></span>

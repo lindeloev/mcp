@@ -11,11 +11,10 @@
   [`lm()`](https://rdrr.io/r/stats/lm.html) or
   [`glm()`](https://rdrr.io/r/stats/glm.html) for each distributional
   parameter in each segment. Explore `ex = mcp_example("multiple")` to
-  see it in action. Default priors generally align with brms, with some
-  adjustments to accommodate the change-point model. With this
-  possibility for more parameters also comes the convenient `same()`
-  which share coefficients across segments - including categorical
-  predictors and group-level effects.
+  see it in action. Default priors follow `rstanarm` and `brms` where
+  possible. With this possibility for more parameters also comes the
+  convenient `same()` which share coefficients across segments -
+  including categorical predictors and group-level effects.
 
 - **Group-level effects on RHS:** Predictor formulas now support
   group-level effects (random effects) using familiar `lme4` and `brms`
@@ -36,8 +35,11 @@
     central quantile intervals instead of HDIs.
 
   - Adding `as_draws(fit)`, `as_draws_df(fit)`, `tidy_draws(fit)`,
-    `ndraws(fit)`, rstantools linpred/epred, etc. with full S3 generic
-    registration for [posterior](https://mc-stan.org/posterior/),
+    `ndraws(fit)`, `posterior_epred(fit)`, `posterior_predict(fit)`,
+    `posterior_linpred(fit)`,
+    [`loo_compare()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
+    etc. with full S3 generic registration for
+    [posterior](https://mc-stan.org/posterior/),
     [rstantools](https://mc-stan.org/rstantools/), and
     [tidybayes](https://mjskay.github.io/tidybayes/)
     ([`spread_draws()`](https://mjskay.github.io/tidybayes/reference/spread_draws.html),
@@ -52,6 +54,9 @@
     `.residual`, `.loglik`) for
     [tidybayes](https://mjskay.github.io/tidybayes/) /
     [ggdist](https://mjskay.github.io/ggdist/) compatibility.
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    returns `.linpred` with `scale = "linear"` and `[.dpar]` for other
+    dpars (e.g., `.sigma`, `.ar1`, or `mu`).
 
   - `nsamples` soft-deprecated in favor of `ndraws`; `which_y`
     deprecated in favor of `dpar`.
@@ -70,9 +75,9 @@
   It only served the purpose of higher ESS/s at the expense of being
   mathematically unprincipled. While previous `mcp` versions supported a
   slow implementation of Dirichlet, achieving good ESS/s was made
-  possible by parameterizing the dirichlet as a sequential
-  stick-breaking Beta chain (z_j \sim \text{Beta}(1, N - j + 1)).
-  Comparing all
+  possible by sampling `dirichlet(1)` as sorted uniforms (other
+  `dirichlet(alpha)` use a sequential stick-breaking Beta chain, z_j
+  \sim \text{Beta}(\alpha, (N - j + 1) \alpha)). Comparing all
   [`mcp_example()`](https://lindeloev.github.io/mcp/dev/reference/mcp_example.md),
   estimates remain essentially identical between truncated-t and
   dirichlet. Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes
@@ -101,10 +106,14 @@
   [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
 
 - **Improved speed and robustness:** ESS/s has improved more than
-  10-fold and convergence is more likely. This due to a
-  reparameterization that keep intercepts and slopes relatively
-  independent of change points during sampling and due to (selectively)
-  using the JAGS glm module.
+  10-fold and convergence is more likely. This is due to
+  reparameterizations that keep intercepts and slopes relatively
+  independent of earlier segments during sampling and due to
+  (selectively) using the JAGS glm module. The reparameterizations do
+  not change the model or its priors. Compare `fit$jags_code` between
+  `mcp(..., reparam = FALSE)` and `mcp(..., reparam = TRUE)` (new
+  default). Read more in [From formulas to sampler
+  code](https://lindeloev.github.io/mcp/articles/implementation.html).
 
 ### Major breaking changes
 
@@ -115,29 +124,40 @@ to the previous public release (v0.3.4). Deprecation detections have
 been added until we reach 1.0.
 
 - **Renamed parameters and column names** to align with
-  [brms](https://github.com/paul-buerkner/brms) and
-  [posterior](https://mc-stan.org/posterior/):
+  [brms](https://github.com/paul-buerkner/brms): `int_i` –\>
+  `Intercept_i`; `x_1_E2` –\> `xE2_1`; `x_1_sin` –\> `sinx_1`, `cp_1_sd`
+  –\> `cp_1_id_sd` (for `(1 | id)`), etc.
 
-  - Renamed parameters to be more consistent with brms: `int_i` –\>
-    `Intercept_i`; `x_1_E2` –\> `xE2_1`; `x_1_sin` –\> `sinx_1`, etc.
+- **Renamed return column names** to align with
+  [posterior](https://mc-stan.org/posterior/) and others:
 
   - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     and
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
-    now name the parameter identifier column `variable` instead of
-    `name`, directly matching
-    [posterior](https://mc-stan.org/posterior/) and
-    [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html).
+    now name the parameter identifier column `parameter` instead of
+    `name`, matching
+    [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
+    and
+    [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md).
 
   - [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
     and
-    [`pp_eval()`](https://lindeloev.github.io/mcp/dev/reference/pp_eval.md)
-    with `summary = TRUE` now return `sd` instead of `error` for
-    posterior standard deviation (and posterior predictive standard
-    deviation), avoiding ambiguity and data column collisions.
+    [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    with `summary = TRUE` now take `width = 0.95` instead of `probs`
+    (deprecated with warning) and return the columns `.mean`, `.sd`,
+    `.lower`, and `.upper` instead of
+    `fitted`/`predict`/`residuals`/`loglik`, `error`, `Q2.5`, and
+    `Q97.5`. This matches
+    [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+    (`width`, `mean`, `sd`, `lower`, `upper`), while the dot prefix
+    prevents collisions with data columns, as in `broom::augment()`.
+    Consequently, data columns named `sd`, `fitted`, `predict`, etc. are
+    no longer rejected. For other quantiles, summarise the draws from
+    `summary = FALSE`. The evaluation-row key `data_row` is now
+    `.data_row`.
 
   - `Rhat` was renamed to `rhat` in
     [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -149,13 +169,27 @@ been added until we reach 1.0.
   - [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
     returns column `prob` instead of `p` for the posterior (or prior)
     probability of directional hypotheses, preventing confusion with
-    frequentist p-values.
+    frequentist p-values. It also returns the posterior `sd` of the
+    hypothesis, like
+    [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md).
+
+- **Change points are modeled using `cp()`:** Segments 2+ are now
+  one-sided formulas, and change points are modeled using `cp()`, e.g.,
+  `list(y ~ 1, ~ cp((1 | id)) + 0 + x)` instead of
+  `list(y ~ 1, 1 + (1 | id) ~ 0 + x)`. This avoids confusing the
+  left-hand side with the response variable. The old syntax is
+  deprecated and works with a warning that shows the new formula.
+  `formula(fit)` and `summary(fit)` show the new syntax.
 
 - **Parameters and outputs:**
 
-  - `fit$pars` was removed. Use `mcp_pars(fit)` for a canonical table of
-    model parameters and `mcp_columns(fit)` for resolved data-column
-    roles, including the automatically chosen `par_x`.
+  - `fit$pars` and `fit$mcmc_loglik` was removed and now raises a
+    helpful errors. `fit$pars` is now replaced with `mcp_pars(fit)` and
+    `mcp_columns(fit)`. `fit$mcmc_loglik` is no longer stored - generate
+    using `log_lik(fit)`.
+
+  - `mcp:::tidy_samples()` is removed. Use `as_draws_df(fit)` or
+    [`tidybayes::spread_draws()`](https://mjskay.github.io/tidybayes/reference/spread_draws.html).
 
   - [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
     now reports only population-level effects for `mu` (the primary
@@ -163,8 +197,10 @@ been added until we reach 1.0.
     parameters, AR/MA parameters, and group-effect SDs. Use
     `summary(fit)` to get all parameters.
 
-  - In general, renamed `"varying"` to `"group"`. Where `varying` was an
-    argument, it is now a deprecated alias with a warning.
+  - In general, renamed `"varying"` to `"group"`, e.g., it is now
+    `plot_pars(fit, pars = "group")` and
+    `fitted(fit, group_effects = "x_2_id")`. `varying` is a deprecated
+    alias with a warning.
 
   - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -182,6 +218,20 @@ been added until we reach 1.0.
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
     to include `segment` and `dpar` columns.
 
+  - Tibbles are generally returned instead of data.frame() for
+    readability. Tibbles are data frames, but `x[, "col"]` now returns a
+    one-column tibble instead of a vector. Use `x$col` or `x[["col"]]`
+    to get a vector. This change involves
+    [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md),
+    and
+    [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md).
+
   - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
 
 - **Functions, plotting, and workflow:**
@@ -195,7 +245,8 @@ been added until we reach 1.0.
     etc.). The argument order was changed too. The new coloring function
     (`plot(fit, color_by = "column")`) is particularly useful when
     models include categorical predictors or rhs group-level effects.
-    See `mcp_example("group_mu")` for a worked example.
+    The default `color_by = "auto"` colors by a sole categorical
+    predictor. See `mcp_example("group_mu")` for a worked example.
 
   - Parallel sampling is now controlled exclusively through the active
     [future](https://future.futureverse.org) plan. The `cores` argument
@@ -215,11 +266,13 @@ been added until we reach 1.0.
     returns expected successes and
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     returns predicted successes (`rate = FALSE`), matching
-    `posterior_epred()`, `posterior_predict()`, and brms. In v0.3.4
-    these methods defaulted to proportions. Update old scripts with
-    explicit `rate = TRUE` to retain proportions, or `rate = FALSE` to
-    select counts. An omitted `rate` warns once per session per function
-    when the requested counts differ from proportions.
+    [`posterior_epred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md),
+    [`posterior_predict()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md),
+    and brms. In v0.3.4 these methods defaulted to proportions. Update
+    old scripts with explicit `rate = TRUE` to retain proportions, or
+    `rate = FALSE` to select counts. An omitted `rate` warns once per
+    session per function when the requested counts differ from
+    proportions.
 
   - **ar(p) no longer continues into later segments:** Only terms
     included in a segment get coefficients there. While important for
@@ -247,8 +300,10 @@ been added until we reach 1.0.
     `prior = list(Intercept_2_id = "Intercept_1_id")`).
 
   - [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
-    now restricts equality tests to simple parameter contrasts and gives
-    clearer guidance on Savage-Dickey Bayes factors. Non-linear
+    takes the fit as its first argument `x` (was `fit`), matching
+    [`brms::hypothesis()`](https://paulbuerkner.com/brms/reference/hypothesis.brmsfit.html).
+    It now restricts equality tests to simple parameter contrasts and
+    gives clearer guidance on Savage-Dickey Bayes factors. Non-linear
     transformations in hypotheses like `x_1 / x_2 = 1` could previously
     be run, even though Savage-Dickey does not support it. Equality
     tests now return `prob = NA` because their Bayes factor is a model
@@ -302,17 +357,21 @@ been added until we reach 1.0.
 
 - **Fitting and priors:**
 
-  - After sampling,
-    [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) now
-    verifies that population- and group-level change points are strictly
-    ordered in every draw and that all realized change points lie within
-    the observed predictor range. If ordering is broken, wrong segments
-    apply.
-
   - Group-level change points `(1|id)` now use a standard hierarchical
     normal model sampled efficiently through their absolute locations.
-    This makes `cp_i_sd` the latent normal scale rather than the
-    realized sample SD.
+    This makes `cp_i_sd` the SD of the normal distribution before
+    truncation rather than the realized sample SD.
+
+  - The default prior on group-level change-point SDs (`cp_i_id_sd`) is
+    now `dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )`, i.e.,
+    a quarter of the expected interval in which each group’s change
+    point can vary. Under the old prior, group-level change points were
+    barely pooled, and `cp_i` and `cp_i_id_sd` were weakly identified.
+    The new prior is approximately uniform on the *realized* SD of the
+    group-level change points, which differs from `cp_i_id_sd`, the SD
+    *before truncation*. See [default
+    priors](https://lindeloev.github.io/mcp/articles/default_priors.html#group-level-change-points)
+    for the justification.
 
   - AR and MA intercepts now have zero-centered, regularizing
     `dnorm(0, 0.5) T(-1, 1)` priors, replacing independent uniform
@@ -382,7 +441,8 @@ been added until we reach 1.0.
     reproducibility across simulation, fit, and plotting.
 
   - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp
-    sampling-status messages while preserving warnings and errors.
+    sampling-status messages while preserving warnings and errors. The
+    JAGS model-compilation text is no longer printed by default.
 
   - Added `mcp(..., series = "data_column")` to identify independent
     series in models with AR/MA terms.
@@ -401,22 +461,20 @@ been added until we reach 1.0.
     supports the same arguments as
     e.g. [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 
-  - Several new arguments to `loo`. `loo(fit, pointwise = TRUE)` uses
+  - Several new arguments to `loo`. `loo(fit, by_row = TRUE)` uses
     [`loo::loo.function()`](https://mc-stan.org/loo/reference/loo.html)
-    for more memory-efficient (but slower) computation of LOO. Other new
-    arguments include the usual from
-    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    etc.: `loo(fit, ndraws = 1000)`.
+    for more memory-efficient (but slower) computation of LOO. Use
+    `loo(fit, ndraws = 1000)` to compute LOO on a subset of draws.
 
   - Methods like
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     and
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    now accept `fitted(fit, group = "cp")` and
-    `fitted(fit, group = "predictor")` as fast selectors for group-level
-    effects in the corresponding formula part. Exact group-level
-    parameter names remain supported too, `group = TRUE` selects all,
-    and
+    now select group-level effects using `group_effects` (previously
+    `varying`). `group_effects = FALSE` or `NA` gives population-level
+    predictions, `"cp"` and `"predictor"` select all group-level effects
+    in that formula part, and parameter names accept `*` wildcards,
+    e.g., `fitted(fit, group_effects = c("cp_*", "state*_1_id"))`.
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
     continues to return all group-level effects.
 
@@ -431,20 +489,15 @@ been added until we reach 1.0.
     parameter’s resolved prior and bounds;
     `prior_summary(fit, verbose = TRUE)` also shows the data-dependent
     rule, a plain-language description, source, and kind
-    (`distribution`, `alias`, `expression`, or `constant`). Default
-    priors are now resolved before JAGS code is generated, so
-    `fit$prior` and generated code no longer depend on opaque data
-    constants.
+    (`distribution`, `alias`, `expression`, or `constant`).
 
   - With the introduction of multiple regression including categorical
     predictors (including for distributional parameters) come default
-    priors. For non-`par_x` terms, numeric coefficients are now
-    auto-scaled to data and model. Briefly, based on its observed range
-    when it has two values, and two standard deviations otherwise,
-    aligning with [Gelman (2008)](https://doi.org/10.1002/sim.3107) and
-    the prior autoscaling in
-    [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html).
-    See `prior_summary(fit, verbose = TRUE)` for details.
+    priors. Coefficients are autoscaled as in
+    [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html),
+    i.e., divided by the SD of their model-matrix column (see “Priors
+    and distributions” below). See `prior_summary(fit, verbose = TRUE)`
+    for details.
 
   - Added option to test hypotheses on the prior using
     `hypothesis(fit, prior = TRUE)`.
@@ -501,9 +554,12 @@ been added until we reach 1.0.
     default prior on the segment-1 intercept applies to the level at
     `min(x)`, just as `rstanarm` and `brms` place intercept priors on
     centered predictors. `Intercept_1` is still reported at `x = 0`, as
-    in [`lm()`](https://rdrr.io/r/stats/lm.html). This greatly improves
-    sampling when `x` is far from zero, e.g., calendar years. `sigma`
-    and group-level SDs follow `brms`. See priors using
+    in [`lm()`](https://rdrr.io/r/stats/lm.html), so `fit$prior` and
+    [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
+    show its prior given the x-terms, e.g.,
+    `normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))`. This
+    greatly improves sampling when `x` is far from zero, e.g., calendar
+    years. `sigma` and group-level SDs follow `brms`. See priors using
     `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian
     `sigma_1` prior is now the same response-calibrated half-Student-t
     used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`.
@@ -517,19 +573,21 @@ been added until we reach 1.0.
     `max(time) - min(time)`, `mad(response)`, `n_segments()`, and
     `n_cp()`.
 
-  - Binomial and Bernoulli models with logit or probit links now use a
-    narrower, weakly regularizing base scale of 1.5 rather than 2.5:
-    `normal(0, 1.5)` for intercepts and `normal(0, 1.5 / sd(x))` for
-    coefficients and categorical contrasts.
+  - Binomial and Bernoulli models with logit or probit links now use
+    narrower, weakly regularizing scales than `rstanarm`’s 2.5:
+    `normal(0, 1.5)` (logit) and `normal(0, 1)` (probit) for intercepts,
+    which are approximately and exactly uniform on the probability
+    scale, respectively. Coefficients and categorical contrasts use
+    `normal(0, 1.5 / sd(x))` and `normal(0, 1 / sd(x))`.
 
   - **Gaussian models with log link (`gaussian(link = "log")`):** Now
     aligned with `mcp`’s general log-link model standards (`dnorm`
     rather than Student-t to reduce extreme multiplicative tails under
     exponentiation). Population intercepts are robustly calibrated to
-    empirical log-data (with non-positive values replaced by 0.1) and
-    shift with [`offset()`](https://rdrr.io/r/stats/offset.html), and
-    coefficients and categorical contrasts use `rstanarm`’s
-    `dnorm(0, 2.5 / sd(x))`.
+    empirical log-data (with non-positive values replaced by 0.1, as
+    `brms` does for zeros) and shift with
+    [`offset()`](https://rdrr.io/r/stats/offset.html), and coefficients
+    and categorical contrasts use `rstanarm`’s `dnorm(0, 2.5 / sd(x))`.
 
   - **Count model priors
     ([`poisson()`](https://rdrr.io/r/stats/family.html),
@@ -537,14 +595,15 @@ been added until we reach 1.0.
     In v0.3.4, log-link Poisson models used uncalibrated, unscaled
     `dnorm(0, 10)` for both intercepts and slopes. In v0.4.0, population
     log-mean intercepts are now robustly data-calibrated to
-    `dnorm(median(log(pmax(y, 0.1))), ...)` with a minimum scale of 2.5,
-    and automatically shift to the observed log-rate (\log(y) -
-    \text{offset}) when an
+    `dnorm(median(log(y)), ...)` (zeros replaced by 0.1, as in `brms`)
+    with a minimum scale of 2.5, and automatically shift to the observed
+    log-rate (\log(y) - \text{offset}) when an
     [`offset()`](https://rdrr.io/r/stats/offset.html) is present
-    (calibrating location and scale directly to rates, unlike `brms`
-    which subtracts `mean(offset)` from raw counts). Coefficients and
-    categorical contrasts now use `rstanarm`’s `dnorm(0, 2.5 / sd(x))`.
-    For the new RHS group-level features in v0.4.0, group SDs default to
+    (calibrating location and scale directly to rates, unlike `brms`,
+    which subtracts `mean(offset)` from the location but computes the
+    scale from the log-counts). Coefficients and categorical contrasts
+    now use `rstanarm`’s `dnorm(0, 2.5 / sd(x))`. For the new RHS
+    group-level features in v0.4.0, group SDs default to
     `dnorm(0, 2.5) T(0, )` (or scaled half-normals). Broad normal priors
     follow the precedent of `rstanarm`, substantially reducing extreme
     multiplicative effects and explosive prior simulations compared with
@@ -559,9 +618,11 @@ been added until we reach 1.0.
     (`sample = "post"`) and the `sample` argument is now directly passed
     to `mcp(..., sample = sample)` so `sample = TRUE` is deprecated.
 
-  - The term “ct” (for “central tendency”) has been replaced with “mu”,
-    e.g., in `plot(fit, which_y = "mu")`. These were defaults, so
-    hopefully no-one will notice the renaming.
+  - The term “ct” (for “central tendency”) has been replaced with
+    `dpar = "epred"` (the default), e.g., in
+    `plot_dpar(fit, dpar = "epred")` and `fitted(fit, dpar = "epred")`.
+    Deprecated `which_y = "ct"` is translated to `dpar = "epred"` with a
+    warning.
 
   - `fit$data` now only contains the data columns that are used in the
     model.
@@ -572,14 +633,20 @@ been added until we reach 1.0.
     and
     [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
     The old argument remains available with a soft deprecation.
+    [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    now also takes `draws_format`, e.g.,
+    `residuals(fit, summary = FALSE, draws_format = "matrix")` for a
+    draws-by-observation matrix like `brms`.
 
   - Removed `which_y` argument from
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 
-  - Disallowed non-default `group` and `arma = FALSE` in
-    [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+  - [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
     and
-    [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
+    [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+    always evaluate the fitted model, including all group-level effects
+    and AR/MA terms. Use `log_lik(fit, group_effects = FALSE)` or
+    `log_lik(fit, arma = FALSE)` for conditional log-likelihoods.
     Additionally, `loo(ndraws = ...)` now thins draws evenly across
     chains to preserve MCMC chain identities and order.
 
@@ -602,14 +669,6 @@ been added until we reach 1.0.
   (e.g. `dnorm(sd = 1, mean = 10)`) are now rejected explicitly with an
   informative error rather than being silently re-interpreted
   positionally.
-
-- Convergence diagnostics now share classification between fitting and
-  [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md).
-  Intentionally fixed group-level deviations no longer trigger false
-  convergence warnings, and stuck parameters with undefined Rhat/ESS are
-  properly reported in the
-  [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
-  footer.
 
 - `hypothesis(..., prior = TRUE)` now reports `BF = NA` rather than
   comparing prior draws with themselves and returning a Bayes factor of
@@ -657,6 +716,11 @@ been added until we reach 1.0.
 - In models going from higher-order to lower-order (`~ ar(2), ~ ar(1)`),
   the higher-order components were not turned off.
 
+- Change points without a population-level intercept (e.g.,
+  `0 + (1 | id) ~ 1`) now raise an error. Previously, `0 +` was silently
+  ignored. Group-level change points now also accept `(1 || id)`, which
+  is identical to `(1 | id)` for intercepts.
+
 - Bug only noticeable for very small samples: For Gaussian identity-link
   AR models, R-side calculations could leak residuals between posterior
   draws and omitted available partial lags for the first observations of
@@ -683,7 +747,8 @@ been added until we reach 1.0.
 - Explicitly setting `dpar = "mu"` now returns the success probability
   parameter \mu regardless of `rate`. `rate = FALSE` continues to scale
   expected response counts when evaluating `"epred"` (e.g., in
-  `posterior_epred()`), while
+  [`posterior_epred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)),
+  while
   [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   and
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
