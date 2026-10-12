@@ -3,7 +3,7 @@ title: "Missing data"
 date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Missing responses and imputation}
+  %\VignetteIndexEntry{Missing data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 editor_options: 
