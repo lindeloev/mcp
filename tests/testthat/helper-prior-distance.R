@@ -48,3 +48,20 @@ expect_prior_distance = function(fit, values, label, ignore = character()) {
   )
   invisible(distances)
 }
+
+
+#' Expect prior strings to be equal, comparing their numbers with a tolerance
+#'
+#' Data-derived numbers such as `2.5 * sd(y)` are written with 17 digits, and the
+#' last digits can differ across platforms (seen on macOS), so exact string
+#' comparisons are brittle. The text between numbers must still match exactly.
+#'
+#' @keywords internal
+#' @param object Prior string(s) or list, e.g., `fit$prior$x_1`.
+#' @param expected Expected prior string(s) or list.
+expect_prior = function(object, expected) {
+  pattern = "(?<![\\w.])\\d+\\.?\\d*(?:[eE][+-]?\\d+)?"  # Like format_prior_display()
+  numbers = function(x) as.numeric(unlist(stringr::str_extract_all(unlist(x), pattern)))
+  testthat::expect_identical(stringr::str_replace_all(unlist(object), pattern, "#"), stringr::str_replace_all(unlist(expected), pattern, "#"))
+  testthat::expect_equal(numbers(object), numbers(expected))
+}

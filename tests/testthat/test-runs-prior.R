@@ -240,8 +240,8 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     )
     # Population priors
     testthat::expect_match(fit$prior$Intercept_1, "^dnorm\\(")
-    testthat::expect_equal(fit$prior$x_1, paste0("dnorm(0, ", x_scale, ")"))
-    testthat::expect_equal(fit$prior$catB_1, paste0("dnorm(0, ", cat_scale, ")"))
+    expect_prior(fit$prior$x_1, paste0("dnorm(0, ", x_scale, ")"))
+    expect_prior(fit$prior$catB_1, paste0("dnorm(0, ", cat_scale, ")"))
 
     # Group SD priors
     testthat::expect_equal(fit$prior$Intercept_1_id_sd, "dnorm(0, 2.5) T(0, )")
@@ -357,7 +357,7 @@ testthat::test_that("offset adjusts identity-link default intercept priors to y 
     )
     for (i in 1:2) {
       adjusted = d$y - d[[c("baseline", "baseline2")[i]]]
-      testthat::expect_match(fit$prior[[paste0("Intercept_", i)]], paste0("^dnorm\\(", format_prior_number(mean(adjusted)), ", ", format_prior_number(2.5 * sd(adjusted)), "\\)"))
+      expect_prior(split_prior_truncation(fit$prior[[paste0("Intercept_", i)]])$distribution, paste0("dnorm(", format_prior_number(mean(adjusted)), ", ", format_prior_number(2.5 * sd(adjusted)), ")"))
     }
 
     ps = prior_summary(fit, verbose = TRUE)
@@ -425,13 +425,13 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   group_row = ps[ps$parameter == "groupB_1", ]
   expected_group_sd = format_prior_number(2.5 / stats::sd(d$group == "B"))
   testthat::expect_equal(group_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_group_sd, ")")))
-  testthat::expect_equal(fit$prior$groupB_1, paste0("dnorm(0, ", expected_group_sd, ")"))
+  expect_prior(fit$prior$groupB_1, paste0("dnorm(0, ", expected_group_sd, ")"))
 
   # Slope on log link uses dnorm(0, 2.5 / sd(x))
   time_row = ps[ps$parameter == "time_1", ]
   expected_slope_sd = format_prior_number(2.5 / stats::sd(d$time))
   testthat::expect_equal(time_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_slope_sd, ")")))
-  testthat::expect_equal(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
+  expect_prior(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
 
   # Group SDs are half-normals
   id_int_row = ps[ps$parameter == "Intercept_1_id_sd", ]
@@ -472,7 +472,7 @@ test_that("priors are resolved without changing their parameterization", {
   default_fit = mcp(list(y ~ 1 + x, ~ 1 + x), data, sample = FALSE)
   slope = paste0("dnorm(0, ", format_prior_number(2.5 * stats::sd(data$y) / stats::sd(data$x)), ")")
   intercept = paste0("dnorm(", format_prior_number(mean(data$y)), ", ", format_prior_number(2.5 * stats::sd(data$y)), ")")
-  expect_equal(
+  expect_prior(
     unclass(default_fit$prior),
     list(
       cp_1 = "dirichlet(1)",
@@ -496,7 +496,7 @@ test_that("priors are resolved without changing their parameterization", {
     sample = FALSE
   )
 
-  expect_equal(fit$prior$Intercept_1, paste0("dt(5.5, ", format_prior_number(stats::mad(data$y)), ", 3) T(, 9)"))
+  expect_prior(fit$prior$Intercept_1, paste0("dt(5.5, ", format_prior_number(stats::mad(data$y)), ", 3) T(, 9)"))
   expect_equal(fit$prior$x_2, "x_1/5")
   expect_equal(fit$.internal$prior_format, "jags_string_v1")
   expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
@@ -585,7 +585,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
 
   # Non-positive responses are valid: the log link applies to mu, not y.
   expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6 - x_1 * 1, 2.5)")
-  expect_equal(log_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(log_data$x)), ")"))
+  expect_prior(log_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(log_data$x)), ")"))
   expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0, )")
   expect_false(grepl("log\\(y\\)", log_fit$jags_code))
 
@@ -600,7 +600,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
     family = gaussian(link = "log"), sample = FALSE
   )
   expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5 - x_1 * 1, 11.1)")  # mad(log(y)), with no values floored
-  expect_equal(wide_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(wide_data$x)), ")"))
+  expect_prior(wide_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(wide_data$x)), ")"))
   expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0, )")
 
   zero_data = data.frame(x = 1:6, y = 0:5)
@@ -621,7 +621,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
 
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
-  expect_equal(small_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(small_data$y)), " - x_1 * 1, ", format_prior_number(2.5 * stats::sd(small_data$y)), ")"))
+  expect_prior(small_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(small_data$y)), " - x_1 * 1, ", format_prior_number(2.5 * stats::sd(small_data$y)), ")"))
   expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 })
 
@@ -630,9 +630,9 @@ test_that("x-term powers are autoscaled by the sd of the power measured from min
   data = data.frame(x = 1:10, y = 1:10)
   fit = mcp(list(y ~ 1 + x + I(x^2) + I(x^3), ~ 1), data, sample = FALSE)
   base = 2.5 * stats::sd(data$y)
-  expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd(data$x)), ")"))
-  expect_equal(fit$prior$xE2_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^2)), ")"))
-  expect_equal(fit$prior$xE3_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^3)), ")"))
+  expect_prior(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd(data$x)), ")"))
+  expect_prior(fit$prior$xE2_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^2)), ")"))
+  expect_prior(fit$prior$xE3_1, paste0("dnorm(0, ", format_prior_number(base / stats::sd((data$x - 1)^3)), ")"))
 })
 
 
@@ -650,7 +650,7 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   data = data.frame(x = 101:130, y = 1:30 + 0.5 * (1:30 > 15))
   fit = withr::with_options(list(mcp_reparam = FALSE), mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE))
   location = paste0(format_prior_number(mean(data$y)), " - x_1 * 101 - xE2_1 * 10201")
-  expect_equal(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
+  expect_prior(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
   expect_match(fit$jags_code, paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
   ps = prior_summary(fit, verbose = TRUE)
   expect_equal(ps$rule[ps$parameter == "Intercept_1"], "normal(mean = mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, sd = 2.5 * sd(y))")
@@ -746,7 +746,7 @@ test_that("a constant response uses unit scale for sd(y)-based default priors", 
   data = data.frame(x = 1:10, y = 2)
   fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
   expect_equal(fit$prior$Intercept_1, "dnorm(2 - x_1 * 1, 2.5)")
-  expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
+  expect_prior(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
 })
 
 
