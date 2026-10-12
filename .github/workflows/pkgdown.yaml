@@ -72,10 +72,21 @@ jobs:
           PKGDOWN_DEV_MODE: ${{ github.ref_name == 'main' && 'release' || 'devel' }}
         shell: Rscript {0}
 
-      - name: Deploy to GitHub Pages
-        if: github.event_name != 'pull_request'
+      # Each branch cleans only its own part of gh-pages: main the root (except dev/), dev only dev/.
+      - name: Deploy release site to GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref_name == 'main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          clean: false
+          clean: true
+          clean-exclude: dev
           branch: gh-pages
           folder: docs
+
+      - name: Deploy dev site to GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref_name != 'main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          clean: true
+          branch: gh-pages
+          folder: docs/dev
+          target-folder: dev
