@@ -794,6 +794,18 @@ test_that("find_mixture_quantile handles large count means without integer overf
 })
 
 
+test_that("find_mixture_quantile is accurate regardless of response units", {
+  family = mcpfamily(gaussian())
+  for (scale in c(1, 1e6)) {
+    dpars = list(mu = c(0, 6e-5) * scale, sigma = c(2e-5, 2e-5) * scale)
+    for (p in c(0.025, 0.975)) {
+      res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = p)
+      expect_equal(mean(stats::pnorm(res, dpars$mu, dpars$sigma)), p, tolerance = 1e-6)
+    }
+  }
+})
+
+
 test_that("format.mcpfamily and summary print all family links", {
   fam = mcpfamily(stats::gaussian())
   expect_output({ res = print(fam) }, "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
