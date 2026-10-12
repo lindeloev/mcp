@@ -31,7 +31,7 @@ test_that("interpolate_newdata() combines categorical and continuous predictors"
   expect_error(interpolate_newdata(fit, at = list(x = 2)), "Invalid: 'x'.", fixed = TRUE)
   expect_error(interpolate_newdata(fit, at = list(z = 1:2)), "must be a single number")
 
-  population = mcp_pars(fit, scope = "population")$name
+  population = mcp_pars(fit, scope = "population")$parameter
   draws = matrix(0, 1, length(population), dimnames = list(NULL, population))
   draws[, "z_1"] = 2
   draws[, "sigma_1"] = 1

@@ -27,13 +27,13 @@ test_that("Gaussian 2-changepoint model agrees with segmented()", {
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  cp1_mcp = summary_mcp$mean[summary_mcp$variable == "cp_1"]
-  cp2_mcp = summary_mcp$mean[summary_mcp$variable == "cp_2"]
-  intercept_mcp = fix_mcp$mean[fix_mcp$variable == "Intercept_1"]
-  x1_mcp = fix_mcp$mean[fix_mcp$variable == "x_1"]
-  x2_mcp = fix_mcp$mean[fix_mcp$variable == "x_2"]
-  x3_mcp = fix_mcp$mean[fix_mcp$variable == "x_3"]
-  sigma_mcp = summary_mcp$mean[summary_mcp$variable == "sigma_1"]
+  cp1_mcp = summary_mcp$mean[summary_mcp$parameter == "cp_1"]
+  cp2_mcp = summary_mcp$mean[summary_mcp$parameter == "cp_2"]
+  intercept_mcp = fix_mcp$mean[fix_mcp$parameter == "Intercept_1"]
+  x1_mcp = fix_mcp$mean[fix_mcp$parameter == "x_1"]
+  x2_mcp = fix_mcp$mean[fix_mcp$parameter == "x_2"]
+  x3_mcp = fix_mcp$mean[fix_mcp$parameter == "x_3"]
+  sigma_mcp = summary_mcp$mean[summary_mcp$parameter == "sigma_1"]
 
   # Extract segmented estimates
   psi_seg = fit_seg$psi[, "Est."]
@@ -78,12 +78,12 @@ test_that("Poisson 2-changepoint model agrees with segmented()", {
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  cp1_mcp = summary_mcp$mean[summary_mcp$variable == "cp_1"]
-  cp2_mcp = summary_mcp$mean[summary_mcp$variable == "cp_2"]
-  intercept_mcp = fix_mcp$mean[fix_mcp$variable == "Intercept_1"]
-  x1_mcp = fix_mcp$mean[fix_mcp$variable == "x_1"]
-  x2_mcp = fix_mcp$mean[fix_mcp$variable == "x_2"]
-  x3_mcp = fix_mcp$mean[fix_mcp$variable == "x_3"]
+  cp1_mcp = summary_mcp$mean[summary_mcp$parameter == "cp_1"]
+  cp2_mcp = summary_mcp$mean[summary_mcp$parameter == "cp_2"]
+  intercept_mcp = fix_mcp$mean[fix_mcp$parameter == "Intercept_1"]
+  x1_mcp = fix_mcp$mean[fix_mcp$parameter == "x_1"]
+  x2_mcp = fix_mcp$mean[fix_mcp$parameter == "x_2"]
+  x3_mcp = fix_mcp$mean[fix_mcp$parameter == "x_3"]
 
   # Extract segmented estimates
   psi_seg = fit_seg$psi[, "Est."]
@@ -127,12 +127,12 @@ test_that("Binomial 2-changepoint model agrees with segmented()", {
   # Extract mcp estimates
   fix_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  cp1_mcp = summary_mcp$mean[summary_mcp$variable == "cp_1"]
-  cp2_mcp = summary_mcp$mean[summary_mcp$variable == "cp_2"]
-  intercept_mcp = fix_mcp$mean[fix_mcp$variable == "Intercept_1"]
-  x1_mcp = fix_mcp$mean[fix_mcp$variable == "x_1"]
-  x2_mcp = fix_mcp$mean[fix_mcp$variable == "x_2"]
-  x3_mcp = fix_mcp$mean[fix_mcp$variable == "x_3"]
+  cp1_mcp = summary_mcp$mean[summary_mcp$parameter == "cp_1"]
+  cp2_mcp = summary_mcp$mean[summary_mcp$parameter == "cp_2"]
+  intercept_mcp = fix_mcp$mean[fix_mcp$parameter == "Intercept_1"]
+  x1_mcp = fix_mcp$mean[fix_mcp$parameter == "x_1"]
+  x2_mcp = fix_mcp$mean[fix_mcp$parameter == "x_2"]
+  x3_mcp = fix_mcp$mean[fix_mcp$parameter == "x_3"]
 
   # Extract segmented estimates
   psi_seg = fit_seg$psi[, "Est."]

@@ -117,7 +117,7 @@ These plots work with [group-level effects](../articles/group_effects.html) as w
 Already in the default `plot` as used above, it will be obvious if there was poor convergence. A more direct assessment is to look at the posterior distributions and trace plots:
 
 ```{r, fig.height = 10, fig.width = 6}
-plot_pars(fit, nvariables = NULL)
+plot_pars(fit, npars = NULL)
 ```
 
 Convergence is perfect here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the interval as if it was normal.

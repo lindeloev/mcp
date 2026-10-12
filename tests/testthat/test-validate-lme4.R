@@ -25,8 +25,8 @@ test_that("Gaussian random-intercept model agrees with lme4::lmer()", {
   # Extract mcp estimates
   params_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  sigma_mcp = summary_mcp$mean[summary_mcp$variable == "sigma_1"]
-  sd_mcp = summary_mcp$mean[summary_mcp$variable == "Intercept_1_id_sd"]
+  sigma_mcp = summary_mcp$mean[summary_mcp$parameter == "sigma_1"]
+  sd_mcp = summary_mcp$mean[summary_mcp$parameter == "Intercept_1_id_sd"]
 
   # Extract lmer estimates
   params_lmer = lme4::fixef(fit_lmer)
@@ -34,8 +34,8 @@ test_that("Gaussian random-intercept model agrees with lme4::lmer()", {
   sd_lmer = as.data.frame(lme4::VarCorr(fit_lmer))$sdcor[1]
 
   # Compare fixed effects (within 0.1)
-  expect_equal(params_mcp$mean[params_mcp$variable == "Intercept_1"], unname(params_lmer[1]), tolerance = 0.1)
-  expect_equal(params_mcp$mean[params_mcp$variable == "x_1"], unname(params_lmer[2]), tolerance = 0.05)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "Intercept_1"], unname(params_lmer[1]), tolerance = 0.1)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "x_1"], unname(params_lmer[2]), tolerance = 0.05)
 
   # Compare variance components
   expect_equal(sigma_mcp, sigma_lmer, tolerance = 0.05)
@@ -43,7 +43,7 @@ test_that("Gaussian random-intercept model agrees with lme4::lmer()", {
 
   # Compare random effect deviations: ranef() now follows factor levels directly
   ran_mcp = ranef(fit_mcp)
-  expect_equal(ran_mcp$variable, paste0("Intercept_1_id[", levels(df$id), "]"))
+  expect_equal(ran_mcp$parameter, paste0("Intercept_1_id[", levels(df$id), "]"))
   ranef_lmer = lme4::ranef(fit_lmer)$id[, 1]
   expect_gt(stats::cor(ranef_lmer, ran_mcp$mean), 0.99)
   expect_lt(max(abs(ranef_lmer - ran_mcp$mean)), 0.1)
@@ -77,9 +77,9 @@ test_that("Gaussian uncorrelated random intercept and slope model agrees with lm
 
   params_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  sigma_mcp = summary_mcp$mean[summary_mcp$variable == "sigma_1"]
-  sd_int_mcp = summary_mcp$mean[summary_mcp$variable == "Intercept_1_id_sd"]
-  sd_x_mcp = summary_mcp$mean[summary_mcp$variable == "x_1_id_sd"]
+  sigma_mcp = summary_mcp$mean[summary_mcp$parameter == "sigma_1"]
+  sd_int_mcp = summary_mcp$mean[summary_mcp$parameter == "Intercept_1_id_sd"]
+  sd_x_mcp = summary_mcp$mean[summary_mcp$parameter == "x_1_id_sd"]
 
   params_lmer = lme4::fixef(fit_lmer)
   sigma_lmer = stats::sigma(fit_lmer)
@@ -87,8 +87,8 @@ test_that("Gaussian uncorrelated random intercept and slope model agrees with lm
   sd_int_lmer = vc$sdcor[which(vc$var1 == "(Intercept)")]
   sd_x_lmer = vc$sdcor[which(vc$var1 == "x")]
 
-  expect_equal(params_mcp$mean[params_mcp$variable == "Intercept_1"], unname(params_lmer[1]), tolerance = 0.1)
-  expect_equal(params_mcp$mean[params_mcp$variable == "x_1"], unname(params_lmer[2]), tolerance = 0.15)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "Intercept_1"], unname(params_lmer[1]), tolerance = 0.1)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "x_1"], unname(params_lmer[2]), tolerance = 0.15)
   expect_equal(sigma_mcp, sigma_lmer, tolerance = 0.05)
   expect_equal(sd_int_mcp, sd_int_lmer, tolerance = 0.2)
   expect_equal(sd_x_mcp, sd_x_lmer, tolerance = 0.15)
@@ -119,16 +119,16 @@ test_that("Gaussian fixed change point with group intercepts agrees with lme4::l
 
   params_mcp = fixef(fit_mcp)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  sigma_mcp = summary_mcp$mean[summary_mcp$variable == "sigma_1"]
-  sd_mcp = summary_mcp$mean[summary_mcp$variable == "Intercept_1_id_sd"]
+  sigma_mcp = summary_mcp$mean[summary_mcp$parameter == "sigma_1"]
+  sd_mcp = summary_mcp$mean[summary_mcp$parameter == "Intercept_1_id_sd"]
 
   params_lmer = lme4::fixef(fit_lmer)
   sigma_lmer = stats::sigma(fit_lmer)
   sd_lmer = as.data.frame(lme4::VarCorr(fit_lmer))$sdcor[1]
 
-  expect_equal(params_mcp$mean[params_mcp$variable == "Intercept_1"], unname(params_lmer[1]), tolerance = 0.1)
-  expect_equal(params_mcp$mean[params_mcp$variable == "x_1"], unname(params_lmer[2]), tolerance = 0.05)
-  expect_equal(params_mcp$mean[params_mcp$variable == "x_2"], unname(params_lmer[2] + params_lmer[3]), tolerance = 0.05)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "Intercept_1"], unname(params_lmer[1]), tolerance = 0.1)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "x_1"], unname(params_lmer[2]), tolerance = 0.05)
+  expect_equal(params_mcp$mean[params_mcp$parameter == "x_2"], unname(params_lmer[2] + params_lmer[3]), tolerance = 0.05)
   expect_equal(sigma_mcp, sigma_lmer, tolerance = 0.05)
   expect_equal(sd_mcp, sd_lmer, tolerance = 0.35)
 })

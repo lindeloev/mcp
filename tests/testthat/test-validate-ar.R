@@ -24,7 +24,7 @@ test_that("AR inference against arima()", {
   # Parameter estimates. arima() returns c(ar1, ar2, intercept).
   params_arima = as.numeric(fit_arima$coef)
   capture.output({ summary_mcp = summary(fit_mcp) })
-  params_mcp = summary_mcp$mean[match(c("ar1_1", "ar2_1", "Intercept_1"), summary_mcp$variable)]
+  params_mcp = summary_mcp$mean[match(c("ar1_1", "ar2_1", "Intercept_1"), summary_mcp$parameter)]
   testthat::expect_equal(params_arima, params_mcp, tolerance = 0.03)
 
   # Log-likelihood
@@ -74,9 +74,9 @@ test_that("MA(1) inference against arima()", {
   )
 
   capture.output({ summary_mcp_ma = summary(fit_mcp_ma) })
-  mcp_ma1 = summary_mcp_ma$mean[summary_mcp_ma$variable == "ma1_1"]
-  mcp_int = summary_mcp_ma$mean[summary_mcp_ma$variable == "Intercept_1"]
-  mcp_sigma = summary_mcp_ma$mean[summary_mcp_ma$variable == "sigma_1"]
+  mcp_ma1 = summary_mcp_ma$mean[summary_mcp_ma$parameter == "ma1_1"]
+  mcp_int = summary_mcp_ma$mean[summary_mcp_ma$parameter == "Intercept_1"]
+  mcp_sigma = summary_mcp_ma$mean[summary_mcp_ma$parameter == "sigma_1"]
 
   expect_equal(mcp_ma1, unname(fit_arima_ma$coef["ma1"]), tolerance = 0.05)
   expect_equal(mcp_int, unname(fit_arima_ma$coef["intercept"]), tolerance = 0.05)
@@ -105,10 +105,10 @@ test_that("ARMA(1, 1) inference against arima()", {
   )
 
   capture.output({ summary_mcp_arma = summary(fit_mcp_arma) })
-  mcp_ar1 = summary_mcp_arma$mean[summary_mcp_arma$variable == "ar1_1"]
-  mcp_ma1 = summary_mcp_arma$mean[summary_mcp_arma$variable == "ma1_1"]
-  mcp_int = summary_mcp_arma$mean[summary_mcp_arma$variable == "Intercept_1"]
-  mcp_sigma = summary_mcp_arma$mean[summary_mcp_arma$variable == "sigma_1"]
+  mcp_ar1 = summary_mcp_arma$mean[summary_mcp_arma$parameter == "ar1_1"]
+  mcp_ma1 = summary_mcp_arma$mean[summary_mcp_arma$parameter == "ma1_1"]
+  mcp_int = summary_mcp_arma$mean[summary_mcp_arma$parameter == "Intercept_1"]
+  mcp_sigma = summary_mcp_arma$mean[summary_mcp_arma$parameter == "sigma_1"]
 
   expect_equal(mcp_ar1, unname(fit_arima_arma$coef["ar1"]), tolerance = 0.05)
   expect_equal(mcp_ma1, unname(fit_arima_arma$coef["ma1"]), tolerance = 0.05)

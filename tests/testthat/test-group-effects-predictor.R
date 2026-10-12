@@ -80,9 +80,9 @@ test_that("predictor group intercepts work for family dpars and group-only formu
   expect_equal(effects$name, c("Intercept_1_id", "sigma_1_id"))
   expect_true(all(is.na(effects$population_name)))
   expect_equal(effects$dpar, c("mu", "sigma"))
-  expect_equal(mcp_pars(fit, scope = "group")$name, effects$name)
+  expect_equal(mcp_pars(fit, scope = "group")$parameter, effects$name)
   expect_equal(
-    mcp_pars(fit, scope = "population")$name,
+    mcp_pars(fit, scope = "population")$parameter,
     c("Intercept_1_id_sd", "sigma_1_id_sd")
   )
   expect_equal(unpack_group_effects(fit, "predictor")$pars, effects$name)
@@ -189,7 +189,7 @@ test_that("group_effects selects by part, name, and wildcard", {
   expect_equal(select("state*_1_id"), c("stateB_1_id", "stateC_1_id"))
   expect_equal(select("cp_*"), select("cp"))
   expect_equal(select(c("cp", "sigma_*")), c("cp_1_id", "sigma_1_id"))
-  expect_equal(select(c("Intercept_1_id", "*_1_id")), mcp_pars(fit, scope = "group")$name)
+  expect_equal(select(c("Intercept_1_id", "*_1_id")), mcp_pars(fit, scope = "group")$parameter)
   expect_error(select(c("x_*", "foo")), "Unknown group-effect selection: x_* and foo.", fixed = TRUE)
 })
 
@@ -359,7 +359,7 @@ test_that("factor group coefficients sample and predict by level", {
   expect_equal(nrow(effects), 3 * length(unique(data$id)))
   expect_true(all(
     c("Intercept_1_id[a]", "stateB_1_id[a]", "stateC_1_id[a]") %in%
-      effects$variable
+      effects$parameter
   ))
 
   fitted_values = fitted(
@@ -423,7 +423,7 @@ test_that("predictor group effects use existing prediction selectors", {
 
   effects = ranef(fit)
   expect_equal(nrow(effects), length(unique(data$id)))
-  expect_true(all(grepl("^Intercept_1_id\\[", effects$variable)))
+  expect_true(all(grepl("^Intercept_1_id\\[", effects$parameter)))
 })
 
 
@@ -665,7 +665,7 @@ test_that("ranef() preserves grouping-factor level ordering", {
   )
 
   ran = ranef(fit, prior = TRUE)
-  expect_equal(ran$variable, paste0("Intercept_1_grp[", levels(df$grp), "]"))
+  expect_equal(ran$parameter, paste0("Intercept_1_grp[", levels(df$grp), "]"))
 })
 
 

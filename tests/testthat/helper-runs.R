@@ -46,7 +46,7 @@ test_runs = function(model,
   testthat::expect_false("waic" %in% names(empty), model)
   parameters = mcp_pars(empty)
   testthat::expect_true(is.data.frame(parameters), model)
-  testthat::expect_true(is.character(parameters$name), model)
+  testthat::expect_true(is.character(parameters$parameter), model)
   columns = mcp_columns(empty)
   testthat::expect_true(is.character(columns$par_x), model)
   testthat::expect_true(is.character(columns$response), model)
@@ -171,7 +171,7 @@ test_s3_methods = function(fit) {
     samples_col = .subset2(fit_to_test, col)
     testthat::expect_true(is.list(samples_col))
     testthat::expect_true(coda::is.mcmc(samples_col[[1]]))
-    testthat::expect_true(all(mcp_pars(fit_to_test, scope = "population")$name %in% colnames(samples_col[[1]])))
+    testthat::expect_true(all(mcp_pars(fit_to_test, scope = "population")$parameter %in% colnames(samples_col[[1]])))
 
     # Test mcpfit functions
     group_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
@@ -215,8 +215,8 @@ test_arma_simulation = function(fit) {
 # Tests if summary(fit) and ranef(fit) work as expected
 test_summary = function(fit, group_cols, prior = FALSE) {
   columns = mcp_columns(fit)
-  summary_cols = c('variable','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
-  verbose_summary_cols = c('variable','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
+  summary_cols = c('parameter','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
+  verbose_summary_cols = c('parameter','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
   if (!is.null(attr(fit$data[, columns$response], "simulated"))) {
     summary_cols = c(summary_cols, "sim", "match")
     verbose_summary_cols = c(verbose_summary_cols, "sim", "match")
@@ -224,7 +224,7 @@ test_summary = function(fit, group_cols, prior = FALSE) {
   result = summary(fit, prior = prior)
   output = capture.output(print(result))
   testthat::expect_named(result, summary_cols)
-  testthat::expect_true(all(result$variable %in% mcp_pars(fit, scope = "population")$name))  # All parameters
+  testthat::expect_true(all(result$parameter %in% mcp_pars(fit, scope = "population")$parameter))  # All parameters
   capture.output({ verbose_result = summary(fit, prior = prior, verbose = TRUE) })
   testthat::expect_named(verbose_result, verbose_summary_cols)
   fixed = fixef(fit, prior = prior)
@@ -234,8 +234,8 @@ test_summary = function(fit, group_cols, prior = FALSE) {
   testthat::expect_named(fixed, summary_cols)
   testthat::expect_named(fixed_verbose, verbose_summary_cols)
   pars = mcp_pars(fit)
-  expected_fixed = pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
-  testthat::expect_setequal(fixed$variable, expected_fixed)
+  expected_fixed = pars$parameter[pars$scope == "population" & pars$role == "fixed_effect"]
+  testthat::expect_setequal(fixed$parameter, expected_fixed)
 
   # If there are group-level effects
   if (length(group_cols) > 0) {
@@ -243,7 +243,7 @@ test_summary = function(fit, group_cols, prior = FALSE) {
     testthat::expect_false(any(grepl("Group-level parameters:", output, fixed = TRUE)))
     group_effects = ranef(fit, prior = prior)
     testthat::expect_equal(nlme::ranef(fit, prior = prior), group_effects)
-    testthat::expect_true(is.character(group_effects$variable))
+    testthat::expect_true(is.character(group_effects$parameter))
     testthat::expect_true(is.numeric(group_effects$mean))
     testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
     testthat::expect_equal(nlme::ranef(fit, prior = prior, verbose = TRUE), ranef(fit, prior = prior, verbose = TRUE))
@@ -265,7 +265,7 @@ test_plot_pars = function(fit, prior = FALSE) {
     fit,
     type = "dens_overlay",
     prior = prior,
-    nvariables = NULL
+    npars = NULL
   )
   testthat::expect_s3_class(gg, "ggplot")
 }
@@ -273,8 +273,8 @@ test_plot_pars = function(fit, prior = FALSE) {
 
 
 test_hypothesis = function(fit, prior) {
-  population = mcp_pars(fit, scope = "population")$name
-  group = mcp_pars(fit, scope = "group")$name
+  population = mcp_pars(fit, scope = "population")$parameter
+  group = mcp_pars(fit, scope = "group")$parameter
   # Function to test directional, interval, and point equality hypotheses
   run_test_hypothesis = function(fit, base, prior = prior) {
     hypotheses = paste0(base, " > 1")  # Directional
@@ -454,8 +454,8 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
 
 test_pp_eval = function(fit, prior = FALSE) {
   columns = mcp_columns(fit)
-  population_pars = mcp_pars(fit, scope = "population")$name
-  group_pars = mcp_pars(fit, scope = "group")$name
+  population_pars = mcp_pars(fit, scope = "population")$parameter
+  group_pars = mcp_pars(fit, scope = "group")$parameter
 
   # Test pp_eval
   test_pp_eval_func(fit, fitted, "fitted", prior = prior)

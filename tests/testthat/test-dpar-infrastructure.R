@@ -187,8 +187,8 @@ test_that("generated code separates link and distribution scales", {
   )
   expect_true(change_fit$family$dpar_specs$modeled[change_fit$family$dpar_specs$dpar == "sigma"])
 
-  expect_false(any(grepl("^link_", mcp_pars(fit, scope = "population")$name)))
-  expect_false(any(grepl("^(mu_|sigma_)\\[", mcp_pars(fit, scope = "population")$name)))
+  expect_false(any(grepl("^link_", mcp_pars(fit, scope = "population")$parameter)))
+  expect_false(any(grepl("^(mu_|sigma_)\\[", mcp_pars(fit, scope = "population")$parameter)))
 })
 
 
@@ -274,12 +274,12 @@ test_that("required dpars have an initial predictor and implicit defaults retain
   expect_silent(mcp(list(y ~ 1 + shape(0 + z)), data, family = negbinomial(), par_x = "x", sample = FALSE))
 
   fit = mcp(list(y ~ 1, ~ 1 + sigma(1), ~ 1), data, par_x = "x", sample = FALSE)
-  expect_false("sigma_3" %in% mcp_pars(fit)$name)
-  expect_true("sigma_2" %in% mcp_pars(fit)$name)
+  expect_false("sigma_3" %in% mcp_pars(fit)$parameter)
+  expect_true("sigma_2" %in% mcp_pars(fit)$parameter)
 
   implicit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", sample = FALSE)
   expect_equal(implicit$family$links["sigma"], c(sigma = "identity"))
-  expect_equal(mcp_pars(implicit)$name[grepl("^sigma", mcp_pars(implicit)$name)], "sigma_1")
+  expect_equal(mcp_pars(implicit)$parameter[grepl("^sigma", mcp_pars(implicit)$parameter)], "sigma_1")
 })
 
 
@@ -563,7 +563,7 @@ test_that("color_by controls color without pooling categorical curves", {
     sample = FALSE
   )
 
-  population = mcp_pars(fit, scope = "population")$name
+  population = mcp_pars(fit, scope = "population")$parameter
   draws = matrix(
     0,
     nrow = 20,
@@ -706,7 +706,7 @@ test_that("integer grouping factors can control plot color", {
     sample = FALSE
   )
 
-  sample_names = c(mcp_pars(fit, scope = "population")$name, "cp_1_id[1]", "cp_1_id[2]")
+  sample_names = c(mcp_pars(fit, scope = "population")$parameter, "cp_1_id[1]", "cp_1_id[2]")
   draws = matrix(
     0,
     nrow = 10,
@@ -809,7 +809,7 @@ test_that("fitted() intervals differ across group levels and contain the fitted 
   # id 1 is sometimes before and sometimes after it (mixed segment
   # membership across draws). cp_1_id[2] stays below x = 2.5 for every draw,
   # so id 2 is deterministically in segment 2.
-  sample_names = c(mcp_pars(fit, scope = "population")$name, "cp_1_id[1]", "cp_1_id[2]")
+  sample_names = c(mcp_pars(fit, scope = "population")$parameter, "cp_1_id[1]", "cp_1_id[2]")
   n_draws = 20
   draws = matrix(
     0,
@@ -855,7 +855,7 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
   )
   expect_true(all(
     c("sigma_groupB_1", "sigma_groupC_1", "sigma_groupAx_1", "sigma_groupBx_1", "sigma_groupCx_1") %in%
-      mcp_pars(fit_sigma, scope = "population")$name
+      mcp_pars(fit_sigma, scope = "population")$parameter
   ))
 
   # x is not sorted across groups here, which is irrelevant for parsing but
@@ -868,6 +868,6 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
   ))
   expect_true(all(
     c("ar1_groupB_1", "ar1_groupC_1", "ar1_groupAx_1", "ar1_groupBx_1", "ar1_groupCx_1") %in%
-      mcp_pars(fit_ar, scope = "population")$name
+      mcp_pars(fit_ar, scope = "population")$parameter
   ))
 })

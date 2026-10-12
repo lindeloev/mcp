@@ -142,34 +142,34 @@ get_segment_tables = function(model, data, family, par_x) {
 #' @param group_effects A table from `get_group_effects()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and group),
-#'   with columns `name`, `part`, `scope`, `role`, `segment`, `dpar`, `order`,
-#'   `group_col`, and `population_name`.
+#'   with columns `parameter`, `part`, `scope`, `role`, `segment`, `dpar`, `order`,
+#'   `group_col`, and `population_parameter`.
 #' @noRd
 get_pars_table = function(predictors, cps, group_effects, family) {
   cp_pars = tibble::tibble(
-    name = character(), part = character(), scope = character(), role = character(),
+    parameter = character(), part = character(), scope = character(), role = character(),
     segment = integer(), dpar = character(), order = integer(),
-    group_col = character(), population_name = character(), .tie = integer()
+    group_col = character(), population_parameter = character(), .tie = integer()
   )
   if (nrow(cps) > 0) {
     cp_pars = tibble::tibble(
-      name = cps$name, part = "cp", scope = "population", role = "change_point",
+      parameter = cps$name, part = "cp", scope = "population", role = "change_point",
       segment = cps$segment, dpar = "cp", order = NA_integer_,
-      group_col = NA_character_, population_name = NA_character_, .tie = 0L
+      group_col = NA_character_, population_parameter = NA_character_, .tie = 0L
     )
     group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
     if (nrow(group_cps) > 0) {
       cp_pars = dplyr::bind_rows(
         cp_pars,
         tibble::tibble(
-          name = group_cps$sd_name, part = "cp", scope = "population", role = "group_sd",
+          parameter = group_cps$sd_name, part = "cp", scope = "population", role = "group_sd",
           segment = group_cps$segment, dpar = "cp", order = NA_integer_,
-          group_col = group_cps$group_col, population_name = group_cps$name, .tie = 1L
+          group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1L
         ),
         tibble::tibble(
-          name = group_cps$group_name, part = "cp", scope = "group", role = "group_deviation",
+          parameter = group_cps$group_name, part = "cp", scope = "group", role = "group_deviation",
           segment = group_cps$segment, dpar = "cp", order = NA_integer_,
-          group_col = group_cps$group_col, population_name = group_cps$name, .tie = 2L
+          group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2L
         )
       )
     }
@@ -177,7 +177,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 
   predictor_pars = predictors %>%
     dplyr::transmute(
-      name = .data$code_name,
+      parameter = .data$code_name,
       part = "predictor",
       scope = "population",
       role = dplyr::case_when(
@@ -189,14 +189,14 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       dpar = .data$dpar,
       order = .data$order,
       group_col = NA_character_,
-      population_name = NA_character_,
+      population_parameter = NA_character_,
       .tie = .data$matrix_col
     )
 
   predictor_group_pars = group_effects %>%
     dplyr::filter(.data$part == "predictor") %>%
     dplyr::transmute(
-      name = .data$sd_name,
+      parameter = .data$sd_name,
       part = "predictor",
       scope = "population",
       role = "group_sd",
@@ -204,14 +204,14 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       dpar = .data$dpar,
       order = .data$order,
       group_col = .data$group_col,
-      population_name = .data$population_name,
+      population_parameter = .data$population_name,
       .tie = .data$matrix_col + 0.1
     ) %>%
     dplyr::bind_rows(
       group_effects %>%
         dplyr::filter(.data$part == "predictor") %>%
         dplyr::transmute(
-          name = .data$name,
+          parameter = .data$name,
           part = "predictor",
           scope = "group",
           role = "group_deviation",
@@ -219,7 +219,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
           dpar = .data$dpar,
           order = .data$order,
           group_col = .data$group_col,
-          population_name = .data$population_name,
+          population_parameter = .data$population_name,
           .tie = .data$matrix_col + 0.2
         )
     )
@@ -232,7 +232,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
     dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
     dplyr::arrange(.data$dpar, .data$order, .data$segment, .data$.tie) %>%
     dplyr::mutate(dpar = as.character(.data$dpar)) %>%
-    dplyr::select("name", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_name")
+    dplyr::select("parameter", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_parameter")
 }
 
 
@@ -247,10 +247,10 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.
 #' @param role Optional parameter role(s), such as `"fixed_effect"`,
 #'   `"dpar_effect"`, `"arma"`, `"group_sd"`, or `"group_deviation"`.
-#' @return A tibble with one row per parameter definition. `name` is the
+#' @return A tibble with one row per parameter definition. `parameter` is the
 #'   model parameter name; `dpar` identifies its distributional parameter or
 #'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
-#'   `group_col` and `population_name` describe group-level effects.
+#'   `group_col` and `population_parameter` describe group-level effects.
 #' @export
 #' @examples
 #' # Show every parameter in the model

@@ -47,7 +47,7 @@ test_that("Negative-binomial JAGS weights implement a likelihood power and sampl
   expect_true(is.list(fit$model))
   capture.output({ summary_fit = summary(fit) })
   expect_equal(nrow(summary_fit), 2)
-  expect_true(abs(summary_fit$mean[summary_fit$variable == "Intercept_1"] - log(200)) < 0.1)
+  expect_true(abs(summary_fit$mean[summary_fit$parameter == "Intercept_1"] - log(200)) < 0.1)
 
   expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(shape_[i_]) + loggam(y[i_] + 1) - loggam(y[i_] + shape_[i_]) - shape_[i_] * log(nb_prob_[i_]) - y[i_] * log(1 - nb_prob_[i_]))", fixed = TRUE)
   expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)

@@ -62,8 +62,8 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_equal(mcp_columns(fit)$par_x, "x")
   expect_equal(mcp_columns(fit)$response, "y")
 
-  population = mcp_pars(fit, scope = "population")$name
-  fixed = mcp_pars(fit, scope = "population", role = "fixed_effect")$name
+  population = mcp_pars(fit, scope = "population")$parameter
+  fixed = mcp_pars(fit, scope = "population", role = "fixed_effect")$parameter
   values = matrix(seq_len(3 * length(population)), nrow = 3)
   colnames(values) = population
   prior_values = values^2
@@ -101,11 +101,11 @@ test_that("fixef() and vcov() select distributional-parameter coefficients", {
   data = data.frame(x = 1:5, y = 0)
   fit = mcp(list(y ~ 1 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
   pars = mcp_pars(fit, scope = "population")
-  values = matrix(seq_len(3 * nrow(pars)), nrow = 3, dimnames = list(NULL, pars$name))
+  values = matrix(seq_len(3 * nrow(pars)), nrow = 3, dimnames = list(NULL, pars$parameter))
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
-  sigma_names = pars$name[pars$dpar == "sigma" & pars$role == "dpar_effect"]
+  sigma_names = pars$parameter[pars$dpar == "sigma" & pars$role == "dpar_effect"]
 
-  expect_setequal(fixef(fit, dpar = "sigma")$variable, sigma_names)
+  expect_setequal(fixef(fit, dpar = "sigma")$parameter, sigma_names)
   expect_equal(vcov(fit, dpar = "sigma"), stats::cov(values[, sigma_names, drop = FALSE]))
 })
 
@@ -138,7 +138,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   )
   expect_named(
     tables$parameters,
-    c("name", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_name")
+    c("parameter", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_parameter")
   )
   expect_true(all(tables$parameters$part %in% c("cp", "predictor")))
   expect_true(all(tables$parameters$scope %in% c("population", "group")))
@@ -146,7 +146,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   expect_equal(mcp_pars(fit), tables$parameters)
   expect_equal(tables$predictors$definition_name, tables$predictors$code_name)
   expect_equal(tables$group_effects$definition_name, tables$group_effects$name)
-  group = mcp_pars(fit, scope = "group")$name
+  group = mcp_pars(fit, scope = "group")$parameter
 
   expect_equal(unpack_group_effects(fit, pars = "cp")$pars, group)
   expect_null(unpack_group_effects(fit, pars = "predictor")$pars)
@@ -168,8 +168,8 @@ test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", 
   )
 
   parameters = mcp_pars(fit)
-  expect_true(all(c("shape_1", "shape_x_1") %in% parameters$name))
-  expect_equal(parameters$dpar[parameters$name == "shape_x_1"], "shape")
+  expect_true(all(c("shape_1", "shape_x_1") %in% parameters$parameter))
+  expect_equal(parameters$dpar[parameters$parameter == "shape_x_1"], "shape")
   expect_equal(mcp_columns(fit)$par_x, "x")
   expect_equal(mcp_columns(fit)$response, "y")
   expect_false("pars" %in% names(fit))
@@ -208,24 +208,24 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
     data, par_x = "x", sample = FALSE
   )
   pars = mcp_pars(fit)
-  expect_equal(pars$dpar[pars$name == "ar1_1"], "ar")
-  expect_equal(pars$order[pars$name == "ar1_1"], 1L)
-  expect_equal(pars$group_col[pars$name == "cp_1_id"], "id")
-  expect_equal(pars$population_name[pars$name == "cp_1_id"], "cp_1")
-  group_draws = unlist(lapply(pars$name[pars$scope == "group"], function(name) {
+  expect_equal(pars$dpar[pars$parameter == "ar1_1"], "ar")
+  expect_equal(pars$order[pars$parameter == "ar1_1"], 1L)
+  expect_equal(pars$group_col[pars$parameter == "cp_1_id"], "id")
+  expect_equal(pars$population_parameter[pars$parameter == "cp_1_id"], "cp_1")
+  group_draws = unlist(lapply(pars$parameter[pars$scope == "group"], function(name) {
     paste0(name, "[", c("a", "b"), "]")
   }))
-  draw_names = c(pars$name[pars$scope == "population"], group_draws)
+  draw_names = c(pars$parameter[pars$scope == "population"], group_draws)
   draws = matrix(seq_len(3 * length(draw_names)), nrow = 3, dimnames = list(NULL, draw_names))
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
   capture.output({ summary_result = summary(fit) })
-  expect_setequal(summary_result$variable, pars$name[pars$scope == "population"])
+  expect_setequal(summary_result$parameter, pars$parameter[pars$scope == "population"])
   expect_setequal(
-    fixef(fit)$variable,
-    pars$name[pars$scope == "population" & pars$role == "fixed_effect"]
+    fixef(fit)$parameter,
+    pars$parameter[pars$scope == "population" & pars$role == "fixed_effect"]
   )
-  expect_setequal(ranef(fit)$variable, group_draws)
+  expect_setequal(ranef(fit)$parameter, group_draws)
 })
 
 
@@ -354,7 +354,7 @@ test_that("group_mu example contains independent factor effects", {
   expect_s3_class(fit$example_code, "mcptext")
   expect_equal(get_fit_model_tables(fit)$cps$name, "cp_1")
   expect_equal(
-    mcp_pars(fit, scope = "group")$name,
+    mcp_pars(fit, scope = "group")$parameter,
     c("Intercept_1_id", "stateB_1_id")
   )
   expect_match(fit$example_code, "state || id", fixed = TRUE)
@@ -498,7 +498,7 @@ test_that("summaries use central intervals and posterior diagnostics", {
   width = 0.8
   result = fixef(demo_fit, width = width)
   printed = capture.output(summary(demo_fit, width = width))
-  parameter = result$variable[[1]]
+  parameter = result$parameter[[1]]
   raw = .subset2(demo_fit, "mcmc_post")
   values = unlist(lapply(raw, function(chain) chain[, parameter]))
   parameter_matrix = posterior::extract_variable_matrix(
@@ -516,8 +516,8 @@ test_that("summaries use central intervals and posterior diagnostics", {
   expect_true(any(grepl("\\b[0-9]+\\.[0-9]{2}\\b", printed)))
   expect_true(any(grepl(" 1\\.0[01] ", printed)))
   expect_true("sd" %in% names(result))
-  expect_true("variable" %in% names(result))
-  expect_false("name" %in% names(result))
+  expect_true("parameter" %in% names(result))
+  expect_false(any(c("name", "variable") %in% names(result)))
   expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
   expect_false("n.eff" %in% names(result))
 
@@ -730,7 +730,7 @@ test_that("posterior_linpred evaluates binomial models on probability scale when
   fit = mcp(list(y | trials(N) ~ 1 + x), data = data_bin, family = binomial(), sample = FALSE)
   
   # Mock 1 posterior draw where Intercept_1 = 0, x_1 = 0 -> logit(p) = 0 -> p = 0.5
-  population = mcp_pars(fit, scope = "population")$name
+  population = mcp_pars(fit, scope = "population")$parameter
   draws = matrix(rep(0, length(population)), nrow = 1)
   colnames(draws) = population
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
@@ -765,7 +765,7 @@ test_that("loo supports by_row and soft-deprecates pointwise", {
   data = data.frame(x = 1:5, y = c(2, 4, 6, 8, 10))
   fit = mcp(list(y ~ 1 + x), data = data, sample = FALSE)
   
-  population = mcp_pars(fit, scope = "population")$name
+  population = mcp_pars(fit, scope = "population")$parameter
   draws = matrix(rep(c(1, 2, 0.5), each = 5), nrow = 5)
   colnames(draws) = population
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
@@ -819,7 +819,7 @@ test_that("draw-dependent methods require explicit prior selection", {
   }
   expect_no_error(capture.output(summary(fit, prior = TRUE)))
   expect_s3_class(plot(fit, prior = TRUE), "ggplot")
-  expect_s3_class(plot_pars(fit, prior = TRUE, nvariables = NULL), "ggplot")
+  expect_s3_class(plot_pars(fit, prior = TRUE, npars = NULL), "ggplot")
   expect_message(capture.output(print(fit)), "Using prior draws")
   fit$mcmc_prior = NULL
   expect_error(summary(fit), "No posterior draws are available")

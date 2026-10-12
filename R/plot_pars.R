@@ -21,7 +21,7 @@
 #'   'trace', 'trace_highlight', and 'violin".
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
-#' @param nvariables Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
+#' @param npars Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
 #'   page. Set to \code{NULL} or \code{Inf} to plot all parameters on a single page. The default of 5 follows `brms::plot.brmsfit()`.
 #' @param ask Logical. In an interactive session, prompt before printing each
 #'   page after the first. Only used when there are multiple pages.
@@ -37,7 +37,7 @@
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'warmup' and 'iter' in \code{\link{mcp}}.
 #'
-#'   Up to `nvariables` parameters are shown on each page. Multi-page plots are
+#'   Up to `npars` parameters are shown on each page. Multi-page plots are
 #'   printed in sequence; in interactive use, `ask = TRUE` pauses between pages.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -78,7 +78,7 @@ plot_pars = function(fit,
                      type = "combo",
                      ncol = 1,
                      prior = FALSE,
-                     nvariables = 5,
+                     npars = 5,
                      ask = TRUE
 ) {
 
@@ -106,13 +106,13 @@ plot_pars = function(fit,
     stop("'combo' type cannot be combined with other types. Replace 'combo' with the types you want combo\'ed")
 
   checkmate::assert_int(ncol, lower = 1)
-  if (is.null(nvariables))
-    nvariables = Inf
-  checkmate::assert_number(nvariables, lower = 1)
+  if (is.null(npars))
+    npars = Inf
+  checkmate::assert_number(npars, lower = 1)
   checkmate::assert_flag(ask)
   checkmate::assert_flag(prior)
-  if (any(c("hex", "scatter") %in% type) && nvariables < 2)
-    stop("`nvariables` must be at least 2 for `type = 'hex'` or `type = 'scatter'`.")
+  if (any(c("hex", "scatter") %in% type) && npars < 2)
+    stop("`npars` must be at least 2 for `type = 'hex'` or `type = 'scatter'`.")
 
   # Get posterior/prior draws
   draws = posterior_draws(fit, prior = prior)
@@ -120,14 +120,14 @@ plot_pars = function(fit,
   # Handle special codes
   if ("population" %in% pars) {
     if (length(regex_pars) == 0) {
-      pars = mcp_pars(fit, scope = "population")$name
+      pars = mcp_pars(fit, scope = "population")$parameter
     } else {
       # This probably means that the user left pars as default.
       pars = character(0)
     }
   } else if ("group" %in% pars) {
     # Regex search for group-level deviations
-    regex_pars = paste0("^", mcp_pars(fit, scope = "group")$name, "\\[")
+    regex_pars = paste0("^", mcp_pars(fit, scope = "group")$parameter, "\\[")
     pars = character(0)
   }
 
@@ -147,10 +147,10 @@ plot_pars = function(fit,
     "areas", "dens", "dens_overlay", "trace", "hist", "intervals",
     "trace_highlight", "violin"
   )
-  page_pars = if (is.infinite(nvariables)) {
+  page_pars = if (is.infinite(npars)) {
     if (length(pars) > 0) list(pars) else list()
   } else {
-    split(pars, ceiling(seq_along(pars) / nvariables))
+    split(pars, ceiling(seq_along(pars) / npars))
   }
   pages = lapply(page_pars, function(this_page_pars) {
     all_plots = stats::setNames(lapply(type, function(this_type) {

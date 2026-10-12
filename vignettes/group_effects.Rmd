@@ -192,7 +192,7 @@ Prediction methods include all group-level effects by default. Set `group_effect
 Good convergence is not always as obvious as in this example. While `plot_pars(fit)` shows population-level parameters only, you can select the group-level deviations with `"group"`:
 
 ```{r}
-plot_pars(fit, pars = "group", type = "trace", ncol = 3, nvariables = NULL)
+plot_pars(fit, pars = "group", type = "trace", ncol = 3, npars = NULL)
 ```
 
 The `ncol` argument controls the number of columns. Group-level effects often have many levels, so this is useful for viewing all deviations.
@@ -200,7 +200,7 @@ The `ncol` argument controls the number of columns. Group-level effects often ha
 Using `pars = "group"` plots all group-level deviations. To select one group-level effect, use a regular expression in `regex_pars`; for example, `^` anchors the start of a parameter name:
 
 ```{r}
-plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, nvariables = NULL)
+plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, npars = NULL)
 ```
 
 You can also do posterior predictive checking with facets. I think that for the relatively univariate models supported as of `mcp` 0.3, this does not add much new information over and above `plot(fit, facet_by = "id")`, but it's a standard assessment that many will be acquainted with:

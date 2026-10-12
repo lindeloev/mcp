@@ -97,7 +97,7 @@ prior_summary.mcpfit = function(object, verbose = FALSE, ...) {
   table = fit$.internal$prior_table
 
   pars = mcp_pars(fit)
-  match_idx = match(table$parameter, pars$name)
+  match_idx = match(table$parameter, pars$parameter)
   table$segment = pars$segment[match_idx]
   table$dpar = pars$dpar[match_idx]
   table = table[order(match_idx), ]

@@ -56,9 +56,9 @@ test_that("Poisson fixed change-point inference against glm()", {
 
   mcp_fixef = fixef(fit_mcp_cp)
   estimates_mcp = c(
-    mcp_fixef$mean[mcp_fixef$variable == "Intercept_1"],
-    mcp_fixef$mean[mcp_fixef$variable == "x_1"],
-    mcp_fixef$mean[mcp_fixef$variable == "x_2"]
+    mcp_fixef$mean[mcp_fixef$parameter == "Intercept_1"],
+    mcp_fixef$mean[mcp_fixef$parameter == "x_1"],
+    mcp_fixef$mean[mcp_fixef$parameter == "x_2"]
   )
 
   estimates_glm = c(
@@ -105,8 +105,8 @@ test_that("Poisson likelihood weights against glm(weights = w)", {
   )
 
   fix_mcp_w = fixef(fit_mcp_w)
-  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "Intercept_1"], unname(coef_glm_w[1]), tolerance = 0.05)
-  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "x_1"], unname(coef_glm_w[2]), tolerance = 0.02)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$parameter == "Intercept_1"], unname(coef_glm_w[1]), tolerance = 0.05)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$parameter == "x_1"], unname(coef_glm_w[2]), tolerance = 0.02)
 
   # Log-likelihood
   loglik_mcp = mean(rowSums(log_lik(fit_mcp_w)))

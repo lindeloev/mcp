@@ -86,7 +86,7 @@ resolve_diagnostics = function(diagnostics = list()) {
 
 
 # Check MCMC diagnostic criteria for a summary data.frame.
-# - results: A data.frame with a `variable` column and optionally `rhat`, `ess_bulk`, `ess_tail`.
+# - results: A data.frame with a `parameter` column and optionally `rhat`, `ess_bulk`, `ess_tail`.
 # - diagnostics: Resolved or partial diagnostics list.
 # - fixed_pars: Parameter names for constant params (e.g. "x_2" for x_2 = 5)
 # - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
@@ -95,8 +95,8 @@ check_convergence = function(results, diagnostics = list(), fixed_pars = charact
   if (nrow(results) == 0)
     return(list(bad = logical(0), bad_names = character(0), n_bad = 0L, thresholds = ""))
 
-  base_name = sub("\\[.*\\]$", "", results$variable)
-  is_fixed = results$variable %in% fixed_pars | base_name %in% fixed_pars
+  base_name = sub("\\[.*\\]$", "", results$parameter)
+  is_fixed = results$parameter %in% fixed_pars | base_name %in% fixed_pars
 
   check_rhat = check_rhat && !is.null(diagnostics$rhat) && "rhat" %in% names(results)
   check_bulk = !is.null(diagnostics$ess_bulk) && "ess_bulk" %in% names(results)
@@ -120,7 +120,7 @@ check_convergence = function(results, diagnostics = list(), fixed_pars = charact
 
   list(
     bad = bad,
-    bad_names = results$variable[bad],
+    bad_names = results$parameter[bad],
     n_bad = sum(bad),
     thresholds = paste(thresholds, collapse = " or ")
   )
@@ -144,7 +144,8 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = cha
     rhat = posterior::rhat,
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
-  )
+  ) %>%
+    dplyr::rename(parameter = "variable")
 
   conv = check_convergence(results, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
   if (conv$n_bad == 0)

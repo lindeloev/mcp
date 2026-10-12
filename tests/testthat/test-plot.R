@@ -2,10 +2,10 @@ test_that("plot_pars() paginates without changing its single-page return", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
 
-  plots = lapply(c(5, 7), function(nvariables) {
+  plots = lapply(c(5, 7), function(npars) {
     plot_pars(
       demo_fit, type = "dens_overlay",
-      nvariables = nvariables, ask = FALSE
+      npars = npars, ask = FALSE
     )
   })
   pages = plots[[1]]
@@ -19,9 +19,9 @@ test_that("plot_pars() paginates without changing its single-page return", {
   expect_true(all(vapply(pages, inherits, logical(1), what = "ggplot")))
   expect_s3_class(plots[[2]], "ggplot")
 
-  # nvariables = NULL and nvariables = Inf plot all parameters on one page
-  p_null = plot_pars(demo_fit, type = "dens_overlay", nvariables = NULL)
-  p_inf = plot_pars(demo_fit, type = "dens_overlay", nvariables = Inf)
+  # npars = NULL and npars = Inf plot all parameters on one page
+  p_null = plot_pars(demo_fit, type = "dens_overlay", npars = NULL)
+  p_inf = plot_pars(demo_fit, type = "dens_overlay", npars = Inf)
   expect_s3_class(p_null, "ggplot")
   expect_s3_class(p_inf, "ggplot")
   expect_equal(length(unique(p_null[[1]]$data$Parameter)), 7L)
@@ -36,9 +36,9 @@ test_that("plot_pars() prefers the group selector and supports its deprecated al
   fit$.internal$model_tables$parameters = dplyr::bind_rows(
     fit$.internal$model_tables$parameters,
     tibble::tibble(
-      name = "group_par", part = "predictor", scope = "group",
+      parameter = "group_par", part = "predictor", scope = "group",
       role = "group_deviation", segment = 1L, dpar = "mu", order = NA_integer_,
-      group_col = "group", population_name = "Intercept_1"
+      group_col = "group", population_parameter = "Intercept_1"
     )
   )
   for (chain in seq_along(fit$mcmc_post))

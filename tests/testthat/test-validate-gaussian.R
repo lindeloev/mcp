@@ -26,7 +26,7 @@ test_that("Gaussian inference against lm()", {
   testthat::expect_lt(max(abs(params_mcp - params_lm)), 0.1)
 
   capture.output({ summary_mcp = summary(fit_mcp) })
-  sigma_mcp = summary_mcp$mean[summary_mcp$variable == "sigma_1"]
+  sigma_mcp = summary_mcp$mean[summary_mcp$parameter == "sigma_1"]
   testthat::expect_lt(abs(sigma_mcp - summary(fit_lm)$sigma), 0.1)
 
   # Log-likelihood
@@ -63,10 +63,10 @@ test_that("Gaussian fixed change-point inference against lm()", {
   mcp_fixef = fixef(fit_mcp_cp)
   capture.output({ mcp_summary = summary(fit_mcp_cp) })
   estimates_mcp = c(
-    mcp_fixef$mean[mcp_fixef$variable == "Intercept_1"],
-    mcp_fixef$mean[mcp_fixef$variable == "x_1"],
-    mcp_fixef$mean[mcp_fixef$variable == "x_2"],
-    mcp_summary$mean[mcp_summary$variable == "sigma_1"]
+    mcp_fixef$mean[mcp_fixef$parameter == "Intercept_1"],
+    mcp_fixef$mean[mcp_fixef$parameter == "x_1"],
+    mcp_fixef$mean[mcp_fixef$parameter == "x_2"],
+    mcp_summary$mean[mcp_summary$parameter == "sigma_1"]
   )
 
   # lm model parameterization: Intercept, x_1, x_2 (which is x_1 + delta_x), sigma
@@ -119,12 +119,12 @@ test_that("Gaussian modeled sigma against nlme::gls()", {
   )
 
   capture.output({ sum_mcp = summary(fit_mcp_sigma) })
-  mcp_sigma1 = exp(sum_mcp$mean[sum_mcp$variable == "sigma_1"])
-  mcp_sigma2 = exp(sum_mcp$mean[sum_mcp$variable == "sigma_2"])
+  mcp_sigma1 = exp(sum_mcp$mean[sum_mcp$parameter == "sigma_1"])
+  mcp_sigma2 = exp(sum_mcp$mean[sum_mcp$parameter == "sigma_2"])
 
-  expect_equal(sum_mcp$mean[sum_mcp$variable == "Intercept_1"], unname(coef_gls[1]), tolerance = 0.1)
-  expect_equal(sum_mcp$mean[sum_mcp$variable == "x_1"], unname(coef_gls[2]), tolerance = 0.05)
-  expect_equal(sum_mcp$mean[sum_mcp$variable == "x_2"], unname(coef_gls[2] + coef_gls[3]), tolerance = 0.05)
+  expect_equal(sum_mcp$mean[sum_mcp$parameter == "Intercept_1"], unname(coef_gls[1]), tolerance = 0.1)
+  expect_equal(sum_mcp$mean[sum_mcp$parameter == "x_1"], unname(coef_gls[2]), tolerance = 0.05)
+  expect_equal(sum_mcp$mean[sum_mcp$parameter == "x_2"], unname(coef_gls[2] + coef_gls[3]), tolerance = 0.05)
   expect_equal(mcp_sigma1, gls_sigma1, tolerance = 0.05)
   expect_equal(mcp_sigma2, gls_sigma2, tolerance = 0.05)
 })
@@ -155,10 +155,10 @@ test_that("Gaussian likelihood weights against lm(weights = w)", {
 
   fix_mcp_w = fixef(fit_mcp_w)
   capture.output({ sum_mcp_w = summary(fit_mcp_w) })
-  sigma_mcp_w = sum_mcp_w$mean[sum_mcp_w$variable == "sigma_1"]
+  sigma_mcp_w = sum_mcp_w$mean[sum_mcp_w$parameter == "sigma_1"]
 
-  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "Intercept_1"], unname(coef_lm_w[1]), tolerance = 0.05)
-  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "x_1"], unname(coef_lm_w[2]), tolerance = 0.02)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$parameter == "Intercept_1"], unname(coef_lm_w[1]), tolerance = 0.05)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$parameter == "x_1"], unname(coef_lm_w[2]), tolerance = 0.02)
   expect_equal(sigma_mcp_w, sigma_lm_weighted, tolerance = 0.05)
 
   loglik_expected = sum(w * dnorm(df_w$y, predict(fit_lm_w), sigma_mcp_w, log = TRUE))

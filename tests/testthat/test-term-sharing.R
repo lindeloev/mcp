@@ -7,7 +7,7 @@ test_that("shared slopes retain implicit intercepts and shared intercepts retain
 
   for (rhs in list(~ same(1) + g, ~ 0 + same(1) + g)) {
     fit = mcp(list(y ~ 1, rhs), data, par_x = "x", sample = FALSE)
-    expect_false("ga_2" %in% mcp_pars(fit)$name)
+    expect_false("ga_2" %in% mcp_pars(fit)$parameter)
     expect_equal(as.numeric(fit$simulate(fit, data, cp_1 = 6, Intercept_1 = 2,
       gb_2 = 3, gc_2 = 5, sigma_1 = 1, .type = "fitted")),
       2 + (data$x >= 6) * c(0, 3, 5)[as.integer(data$g)])
@@ -52,7 +52,7 @@ test_that("same() reuses population coefficients with x measured from the curren
   )
   tables = get_fit_model_tables(fit)
 
-  expect_setequal(mcp_pars(fit)$name, c("cp_1", "Intercept_1", "x_1", "z_1", "sigma_1"))
+  expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "Intercept_1", "x_1", "z_1", "sigma_1"))
   expect_equal(
     tables$predictors[tables$predictors$segment == 2, c("code_name", "definition_segment")],
     tibble::tibble(code_name = c("x_1", "z_1"), definition_segment = c(1L, 1L))
@@ -138,7 +138,7 @@ test_that("same() preserves source factor coding and supports explicit sources",
   )
   tables = get_fit_model_tables(fit)
 
-  expect_setequal(mcp_pars(fit)$name, c("cp_1", "cp_2", "Intercept_1", "groupb_1", "groupc_1", "sigma_1"))
+  expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "cp_2", "Intercept_1", "groupb_1", "groupc_1", "sigma_1"))
   expect_true(all(tables$predictors$code_name[tables$predictors$segment > 1 & tables$predictors$term_key == "group"] %in% c("groupb_1", "groupc_1")))
   expect_equal(unique(tables$predictors$definition_segment[tables$predictors$segment == 3]), 1L)
   expect_no_error(add_rhs_predictors(data[1:3, ], fit))
@@ -147,7 +147,7 @@ test_that("same() preserves source factor coding and supports explicit sources",
     list(y ~ 1 + x * group, ~ 0 + same(x * group)),
     data, par_x = "x", sample = FALSE
   )
-  expect_false(any(grepl("_2$", mcp_pars(interaction_fit)$name)))
+  expect_false(any(grepl("_2$", mcp_pars(interaction_fit)$parameter)))
 })
 
 
@@ -162,7 +162,7 @@ test_that("same() supports distributional and AR/MA coefficient formulas", {
     data, par_x = "x", sample = FALSE
   )
 
-  expect_false("sigma_x_2" %in% mcp_pars(dpar_fit)$name)
+  expect_false("sigma_x_2" %in% mcp_pars(dpar_fit)$parameter)
   expect_equal(
     unique(get_fit_model_tables(dpar_fit)$predictors$definition_segment[
       get_fit_model_tables(dpar_fit)$predictors$dpar == "sigma" &
@@ -170,7 +170,7 @@ test_that("same() supports distributional and AR/MA coefficient formulas", {
     ]),
     1L
   )
-  expect_false("ar1_x_2" %in% mcp_pars(arma_fit)$name)
+  expect_false("ar1_x_2" %in% mcp_pars(arma_fit)$parameter)
 })
 
 
@@ -205,8 +205,8 @@ test_that("explicit mu() syntax produces identical model tables to standard bare
 test_that("shared group blocks define one hierarchy and simulate one deviation per group", {
   data = data.frame(x = 1:12, y = 0, id = rep(c("a", "b"), 6))
   fit = mcp(list(y ~ 1 + (1 | id), ~ 0 + same((1 || id))), data, par_x = "x", sample = FALSE)
-  expect_equal(mcp_pars(fit, scope = "group")$name, "Intercept_1_id")
-  expect_equal(mcp_pars(fit, role = "group_sd")$name, "Intercept_1_id_sd")
+  expect_equal(mcp_pars(fit, scope = "group")$parameter, "Intercept_1_id")
+  expect_equal(mcp_pars(fit, role = "group_sd")$parameter, "Intercept_1_id_sd")
   for (ids in list(data$id, rep(c("new-a", "new-b"), 6))) {
     newdata = data
     newdata$id = ids

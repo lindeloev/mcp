@@ -56,7 +56,7 @@ Let us see the two intercepts (lambda in log-units) and the change point (in yea
 result = summary(fit)
 ```
 
-We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$variable == "cp_1"])` and `r round(result$upper[result$variable == "cp_1"])` (95% interval).
+We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$parameter == "cp_1"])` and `r round(result$upper[result$parameter == "cp_1"])` (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 

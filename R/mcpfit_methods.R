@@ -63,7 +63,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     selected = selected & pars$role %in% role
   if (!is.null(dpar))
     selected = selected & pars$dpar %in% dpar
-  selected_names = pars$name[selected]
+  selected_names = pars$parameter[selected]
 
   if (scope == "population") {
     get_cols = all_cols[all_cols %in% selected_names]
@@ -81,7 +81,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   # regular empty summary instead of asking posterior to summarise no draws.
   if (length(get_cols) == 0) {
     estimates = tibble::tibble(
-      variable = character(), mean = numeric(), sd = numeric(), lower = numeric(),
+      parameter = character(), mean = numeric(), sd = numeric(), lower = numeric(),
       upper = numeric(), rhat = numeric(), ess_bulk = numeric(), ess_tail = numeric()
     )
     if (verbose) {
@@ -110,6 +110,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   ) %>%
+    dplyr::rename(parameter = "variable") %>%
     dplyr::mutate(
       ess_bulk = round(.data$ess_bulk),
       ess_tail = round(.data$ess_tail)
@@ -119,8 +120,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
   # their base name; ties (levels of the same group effect) preserve their
   # incoming factor-level order from draws.
-  base_name = sub("\\[.*\\]$", "", estimates$variable)
-  match_idx = match(base_name, pars$name)
+  base_name = sub("\\[.*\\]$", "", estimates$parameter)
+  match_idx = match(base_name, pars$parameter)
   estimates$segment = pars$segment[match_idx]
   estimates$dpar = pars$dpar[match_idx]
   estimates = estimates[order(match_idx), ]
@@ -134,7 +135,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
 
     # Handle group-level deviations. Find the matching labels.
-    for (this_group_effect in mcp_pars(fit, scope = "group")$name) {
+    for (this_group_effect in mcp_pars(fit, scope = "group")$parameter) {
       if (!is.null(simulated[[this_group_effect]])) {
         # Find the needed values and labels
         value = simulated[[this_group_effect]]  # Extract simulation values
@@ -160,16 +161,16 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     # Now unpack the whole bunch to a left_join() friendly data.frame.
     simulated = unlist(simulated)  # as named vector
     simulated = data.frame(
-      variable = names(simulated),
+      parameter = names(simulated),
       sim = as.numeric(simulated),  # without row names
       stringsAsFactors = FALSE
     )
 
     # Add simulation values for comparison with the fitted parameters.
     estimates = estimates %>%
-      dplyr::left_join(simulated, by = "variable", relationship = "one-to-one") %>%
+      dplyr::left_join(simulated, by = "parameter", relationship = "one-to-one") %>%
       dplyr::mutate(
-        cp_width = ifelse(stringr::str_detect(.data$variable, "^cp_[0-9]+"), .data$upper - .data$lower, 0),
+        cp_width = ifelse(stringr::str_detect(.data$parameter, "^cp_[0-9]+"), .data$upper - .data$lower, 0),
         match = ifelse(
           .data$sim >= (.data$lower - 0.05 * .data$cp_width) &
           .data$sim <= (.data$upper + 0.05 * .data$cp_width),
@@ -186,7 +187,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   estimates = dplyr::select(
     estimates,
     dplyr::any_of(c(
-      "variable", "mean", "sd", "lower", "upper", "rhat", "ess_bulk", "ess_tail",
+      "parameter", "mean", "sd", "lower", "upper", "rhat", "ess_bulk", "ess_tail",
       "segment", "dpar", "sim", "match"
     ))
   )
@@ -225,7 +226,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   * `segment` is the segment the parameter belongs to.
 #'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
 #'     `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
-#'     lag order is encoded in `variable`, e.g. `ar2_1`.
+#'     lag order is encoded in `parameter`, e.g. `ar2_1`.
 #'   * `mean` is the posterior mean
 #'   * `sd` is the posterior standard deviation.
 #'   * `lower` and `upper` are the bounds of the central posterior interval
@@ -305,12 +306,12 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   if (!is.null(draws)) {
     result = get_summary(fit, width, scope = "population", prior = prior, verbose = verbose)
     pars = mcp_pars(fit)
-    cp_names = pars$name[pars$part == "cp" & pars$scope == "population"]
+    cp_names = pars$parameter[pars$part == "cp" & pars$scope == "population"]
 
     # Convergence warning footer
     footer = character()
     all_res = result
-    group_names = mcp_pars(fit, scope = "group")$name
+    group_names = mcp_pars(fit, scope = "group")$parameter
     if (length(group_names) > 0) {
       ran_res = get_summary(fit, width, scope = "group", prior = prior, verbose = verbose)
       footer = paste0(
@@ -345,8 +346,8 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
 #' @export
 print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
   info = attr(x, "mcpsummary")
-  if (is.null(info) || (nrow(x) > 0 && "variable" %notin% names(x)))
-    return(NextMethod())  # e.g., after dplyr::select() dropped `variable`
+  if (is.null(info) || (nrow(x) > 0 && "parameter" %notin% names(x)))
+    return(NextMethod())  # e.g., after dplyr::select() dropped `parameter`
 
   cat(info$header, sep = "\n")
   if (nrow(x) > 0) {
@@ -354,7 +355,7 @@ print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
     display = data.frame(lapply(x, format, digits = digits), check.names = FALSE)
     if ("rhat" %in% names(display))
       display$rhat = format(x$rhat, digits = digits, nsmall = digits)
-    is_cp = x$variable %in% info$cp_names
+    is_cp = x$parameter %in% info$cp_names
 
     if (any(is_cp)) {
       cat("\nChange point parameters:\n")
@@ -509,15 +510,15 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
   parameters = mcp_pars(object, scope = "population")
   if (is.null(pars)) {
     checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
-    pars = parameters$name[
+    pars = parameters$parameter[
       parameters$role %in% c("fixed_effect", "dpar_effect") &
         parameters$dpar %in% dpar
     ]
   } else if (identical(pars, "all")) {
-    pars = parameters$name
+    pars = parameters$parameter
   } else {
     checkmate::assert_character(pars, any.missing = FALSE)
-    checkmate::assert_subset(pars, parameters$name)
+    checkmate::assert_subset(pars, parameters$parameter)
   }
   if (length(pars) == 0)
     return(NULL)
@@ -540,7 +541,7 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
   checkmate::assert_true(level > 0 && level < 1, .var.name = "level")
   checkmate::assert_flag(prior)
 
-  population = mcp_pars(object, scope = "population")$name
+  population = mcp_pars(object, scope = "population")$parameter
   if (missing(parm)) {
     parm = population
   } else if (is.numeric(parm)) {

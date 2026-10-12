@@ -69,8 +69,8 @@ test_that("Binomial likelihood weights against glm(weights = w)", {
   )
 
   fix_mcp_w = fixef(fit_mcp_w)
-  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "Intercept_1"], unname(coef_glm_w[1]), tolerance = 0.05)
-  expect_equal(fix_mcp_w$mean[fix_mcp_w$variable == "x_1"], unname(coef_glm_w[2]), tolerance = 0.02)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$parameter == "Intercept_1"], unname(coef_glm_w[1]), tolerance = 0.05)
+  expect_equal(fix_mcp_w$mean[fix_mcp_w$parameter == "x_1"], unname(coef_glm_w[2]), tolerance = 0.02)
 
   # Log-likelihood
   loglik_mcp = mean(rowSums(log_lik(fit_mcp_w)))

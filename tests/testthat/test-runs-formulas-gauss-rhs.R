@@ -138,8 +138,8 @@ test_that("formula offsets work in mcp formulas", {
   )
   expect_true(grepl("offset_mu_1_\\[i_\\]", fit_gauss$jags_code))
   expect_true(grepl("offset_mu_2_\\[i_\\]", fit_gauss$jags_code))
-  expect_false("z" %in% mcp_pars(fit_gauss)$name)
-  expect_false("offset_mu_1_" %in% mcp_pars(fit_gauss)$name)
+  expect_false("z" %in% mcp_pars(fit_gauss)$parameter)
+  expect_false("offset_mu_1_" %in% mcp_pars(fit_gauss)$parameter)
 
   # Poisson with offset(log(pop))
   d_pois = data.frame(

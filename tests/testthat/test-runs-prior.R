@@ -653,7 +653,7 @@ test_that("reparameterizations imply the same priors", {
       chains = 2, iter = 5000, warmup = 200, seed = 42, quiet = TRUE
     ))
     draws = as_draws_df(fit, prior = TRUE)
-    sapply(mcp_pars(fit)$name, function(name) stats::quantile(draws[[name]], c(0.1, 0.5, 0.9)))
+    sapply(mcp_pars(fit)$parameter, function(name) stats::quantile(draws[[name]], c(0.1, 0.5, 0.9)))
   }
   q_reparam = get_quantiles(TRUE)
   q_plain = get_quantiles(FALSE)

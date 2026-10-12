@@ -99,7 +99,7 @@ Comparing the columns `mean` and `sim` we see that the AR coefficients are reaso
 For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau (`time < 74.5`) is `r round(sd(fit$data$price[fit$data$time < 74.5]), 1)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
-plot_pars(fit, nvariables = NULL)
+plot_pars(fit, npars = NULL)
 ```
 
 Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.
@@ -312,7 +312,7 @@ prior_summary(fit)
 We can also visualize the priors because we sampled the prior. `prior = TRUE` works in most `mcp` functions, including `plot()` and `summary()`.
 
 ```{r, fig.height=10, fig.width=7}
-plot_pars(fit, prior = TRUE, nvariables = NULL)
+plot_pars(fit, prior = TRUE, npars = NULL)
 ```
 
 Notice that the plot smooths the posteriors at sharp cutoffs, slightly misrepresenting the true distribution.

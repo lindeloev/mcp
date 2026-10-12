@@ -222,9 +222,9 @@ mcp_draws = function(
   if (all(population == FALSE)) {
     pars_population = c()  # Empty if no absolute group-level change points
   } else if (all(population == TRUE)) {
-    pars_population = mcp_pars(fit, scope = "population")$name
+    pars_population = mcp_pars(fit, scope = "population")$parameter
   } else if (is.character(population)) {
-    if (!all(population %in% mcp_pars(fit, scope = "population")$name))
+    if (!all(population %in% mcp_pars(fit, scope = "population")$parameter))
       stop("Not all `population` selections are population-level parameters.")
 
     pars_population = population
@@ -293,7 +293,7 @@ mcp_draws = function(
   }
 
   # Unassigned group-level deviations are simulated as zero (the population-level mean).
-  remaining_group_cols = dplyr::setdiff(mcp_pars(fit, scope = "group")$name, colnames(draws))
+  remaining_group_cols = dplyr::setdiff(mcp_pars(fit, scope = "group")$parameter, colnames(draws))
   draws[, remaining_group_cols] = 0
 
   # Return with chain etc. first
