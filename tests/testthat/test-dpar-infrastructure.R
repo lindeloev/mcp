@@ -74,24 +74,25 @@ test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)
     sample = FALSE
   )
 
-  scaled = function(dist, base, predictor_sd) {
-    tail = if (dist == "dt") ", 3)" else ")"
-    paste0(dist, "(0, ", format_prior_number(base / predictor_sd), tail)
+  # Platforms can differ in the last bit of floating-point arithmetic, so allow ~1e-15
+  expect_scaled = function(prior, dist, base, predictor_sd) {
+    expect_true(startsWith(prior, paste0(dist, "(0, ")))
+    expect_equal(as.numeric(strsplit(prior, "[(,)]")[[1]][3]), base / predictor_sd, tolerance = 1e-15)
   }
   mu_base = 2.5 * stats::sd(data$y)
   x_sd = stats::sd(data$x)
   z_sd = stats::sd(data$z)
 
-  expect_equal(fit$prior$x_1, scaled("dnorm", mu_base, x_sd))
-  expect_equal(fit$prior$xE2_1, scaled("dnorm", mu_base, stats::sd((data$x - min(data$x))^2)))
-  expect_equal(fit$prior$z_1, scaled("dnorm", mu_base, z_sd))
-  expect_equal(fit$prior$logw_1, scaled("dnorm", mu_base, stats::sd(log(data$w))))
-  expect_equal(fit$prior$b_1, scaled("dnorm", mu_base, stats::sd(data$b)))
-  expect_equal(fit$prior$gb_1, scaled("dnorm", mu_base, stats::sd(data$g == "b")))
-  expect_equal(fit$prior$xz_1, scaled("dnorm", mu_base, x_sd * z_sd))
-  expect_equal(fit$prior$zgb_1, scaled("dnorm", mu_base, stats::sd(data$z * (data$g == "b"))))
-  expect_equal(fit$prior$sigma_z_1, scaled("dt", 2.5, z_sd))
-  expect_equal(fit$prior$sigma_zx_1, scaled("dt", 2.5, x_sd * z_sd))
+  expect_scaled(fit$prior$x_1, "dnorm", mu_base, x_sd)
+  expect_scaled(fit$prior$xE2_1, "dnorm", mu_base, stats::sd((data$x - min(data$x))^2))
+  expect_scaled(fit$prior$z_1, "dnorm", mu_base, z_sd)
+  expect_scaled(fit$prior$logw_1, "dnorm", mu_base, stats::sd(log(data$w)))
+  expect_scaled(fit$prior$b_1, "dnorm", mu_base, stats::sd(data$b))
+  expect_scaled(fit$prior$gb_1, "dnorm", mu_base, stats::sd(data$g == "b"))
+  expect_scaled(fit$prior$xz_1, "dnorm", mu_base, x_sd * z_sd)
+  expect_scaled(fit$prior$zgb_1, "dnorm", mu_base, stats::sd(data$z * (data$g == "b")))
+  expect_scaled(fit$prior$sigma_z_1, "dt", 2.5, z_sd)
+  expect_scaled(fit$prior$sigma_zx_1, "dt", 2.5, x_sd * z_sd)
 })
 
 
