@@ -250,17 +250,19 @@ group_cp_truncation = function(cps, j, x_min, x_max) {
 }
 
 
+# Only stochastic distributions can be truncated, not fixed values like "cp_1 + 5" or "cp_1_id"
+is_distribution = function(prior_value) {
+  call = if (is.character(prior_value)) parse_prior_call(split_prior_truncation(prior_value)$distribution)
+  !is.null(call) && grepl("^d[A-Za-z]", call$name)
+}
+
+
 truncate_cp_prior = function(cps, j, prior_value, context) {
-  if (is.numeric(prior_value))
+  if (!is_distribution(prior_value))
     return(prior_value)
   is_bounded = stringr::str_detect(prior_value, "^\\s*(dunif|dirichlet)\\s*\\(")
   is_truncated = stringr::str_detect(prior_value, "T\\s*\\(")
   if (is_bounded || is_truncated)
-    return(prior_value)
-
-  # Only stochastic distributions can be truncated, not fixed values like "cp_1 + 5"
-  call = parse_prior_call(prior_value)
-  if (is.null(call) || !grepl("^d[A-Za-z]", call$name))
     return(prior_value)
 
   lower = if (j == 1) {
@@ -392,7 +394,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
       is_bounded = is.character(original) && stringr::str_detect(
         original, "^\\s*dunif\\s*\\(|T\\s*\\("
       )
-      if (is.character(original) && !is_bounded) {
+      if (is_distribution(original) && !is_bounded) {
         x_display = context$x_display
         prior[[group_name]] = paste0(
           original, " ", group_cp_truncation(cps, j, paste0("min(", x_display, ")"), paste0("max(", x_display, ")"))

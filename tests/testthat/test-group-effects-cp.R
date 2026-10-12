@@ -46,6 +46,17 @@ test_that("custom normal change-point hierarchies retain model bounds", {
   )
   expect_match(fit$prior$cp_1_id, "T\\(cp_0 - cp_1, cp_2 - cp_1\\)")
   expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1, .*\\) T\\(cp_0, cp_2\\)")
+
+  # Fixed values are not truncated
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    prior = list(cp_2_id = "cp_1_id"),
+    sample = FALSE
+  )
+  expect_equal(fit$prior$cp_2_id, "cp_1_id")
+  expect_match(fit$jags_code, "cp_2_id[id_] = cp_1_id[id_]", fixed = TRUE)
 })
 
 
