@@ -37,7 +37,7 @@ test_that("plot_pars() prefers the group selector and supports its deprecated al
     fit$.internal$model_tables$parameters,
     tibble::tibble(
       parameter = "group_par", part = "predictor", scope = "group",
-      role = "group_deviation", segment = 1L, dpar = "mu", order = NA_integer_,
+      role = "coefficient", segment = 1L, dpar = "mu", order = NA_integer_,
       group_col = "group", population_parameter = "Intercept_1"
     )
   )

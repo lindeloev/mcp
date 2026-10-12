@@ -167,7 +167,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
           group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1L
         ),
         tibble::tibble(
-          parameter = group_cps$group_name, part = "cp", scope = "group", role = "group_deviation",
+          parameter = group_cps$group_name, part = "cp", scope = "group", role = "change_point",
           segment = group_cps$segment, dpar = "cp", order = NA_integer_,
           group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2L
         )
@@ -180,7 +180,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       parameter = .data$code_name,
       part = "predictor",
       scope = "population",
-      role = "fixed_effect",
+      role = "coefficient",
       segment = .data$segment,
       dpar = .data$dpar,
       order = .data$order,
@@ -210,7 +210,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
           parameter = .data$name,
           part = "predictor",
           scope = "group",
-          role = "group_deviation",
+          role = "coefficient",
           segment = .data$segment,
           dpar = .data$dpar,
           order = .data$order,
@@ -245,9 +245,10 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #'
 #' @param fit An `mcpfit` object.
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.
-#' @param role Optional parameter role(s): `"change_point"`, `"fixed_effect"`
-#'   (population-level coefficients of all distributional parameters, e.g., `mu`, `sigma`, and `ar1`),
-#'   `"group_sd"`, or `"group_deviation"`.
+#' @param role Optional parameter role(s): `"change_point"`, `"coefficient"`
+#'   (regression coefficients of all distributional parameters, e.g., `mu`, `sigma`, and `ar1`),
+#'   or `"group_sd"`. Combine with `scope` to select population-level parameters or their
+#'   group-level deviations, e.g., `scope = "group", role = "change_point"` for group-level change points.
 #' @return A tibble with one row per parameter definition. `parameter` is the
 #'   model parameter name; `dpar` is its distributional parameter (e.g., `"mu"`,
 #'   `"sigma"`, or `"ar1"`; see [mcp-formula]), as accepted by the `dpar` argument of
@@ -259,7 +260,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' mcp_pars(demo_fit)
 #'
 #' # Select population-level coefficients
-#' mcp_pars(demo_fit, role = "fixed_effect")
+#' mcp_pars(demo_fit, scope = "population", role = "coefficient")
 mcp_pars = function(fit, scope = NULL, role = NULL) {
   checkmate::assert_class(fit, "mcpfit")
   if (!is.null(scope))
