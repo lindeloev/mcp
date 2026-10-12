@@ -186,7 +186,7 @@ Thanks to `same()`, there is no `z_2` or `x_3`.
 
 ## Some clarifications on formula behavior
 
-Factors use ordinary R formula coding: with treatment coding, `1 + state` gives contrasts to a reference level, while `0 + state` gives coefficients for all levels. A predictor group effect such as `(1 | id)` applies where it is included. A change-point group effect applies only at the change point where it is included; it does not introduce group effects in the predictor.
+Factors use ordinary R formula coding: with treatment coding, `1 + state` gives contrasts to a reference level, while `0 + state` gives coefficients for all levels. In segment 1, these are the intercepts of each level; in a joined segment, they are jumps from where the earlier segment left off. A predictor group effect such as `(1 | id)` applies where it is included. A change-point group effect applies only at the change point where it is included; it does not introduce group effects in the predictor.
 
 Only bare `x`, powers such as `I(x^2)`, and their interactions are x-terms. Other transformations, such as `sin(x)` and `poly(x, 2)`, use the original values of `x`, as in `lm()`, and do not join:
 

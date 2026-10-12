@@ -266,7 +266,7 @@ For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` au
 
 # Default priors
 
-`mcp` assigns default priors to all parameters that you do not set in `mcp(..., prior = list())`. Inspect them using `prior_summary(fit)`. The article on [default priors](../articles/default_priors.html) explains how they are chosen, with a [summary table](../articles/default_priors.html#summary-reference-table) and the [deviations from `rstanarm` and `brms`](../articles/default_priors.html#deviations).
+`mcp` assigns default priors to all parameters that you do not set in `mcp(..., prior = list())`. Inspect them using `prior_summary(fit)`. The article on [default priors](../articles/default_priors.html) explains how they are chosen, with a [summary table](../articles/default_priors.html#summary-reference-table) and the [deviations from `rstanarm` and `brms`](../articles/default_priors.html#deviations). Note that for a factor without an intercept, e.g., `y ~ 0 + state`, each factor level's coefficient is an intercept and gets the intercept prior.
 
 
 # JAGS code

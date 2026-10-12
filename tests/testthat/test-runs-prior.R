@@ -606,6 +606,38 @@ test_that("the prior on the level at min(x) matches the default intercept prior"
 })
 
 
+test_that("factors without an intercept get intercept priors where a segment starts at zero", {
+  data = data.frame(x = 101:200, state = factor(rep(c("A", "B"), 50)), y = rnorm(100, 50))
+  intercept = mcp(list(y ~ 1, ~ 1), data, par_x = "x", sample = FALSE)$prior$Intercept_1
+  get_prior = function(model, family = gaussian())
+    mcp(model, data, family = family, par_x = "x", sample = FALSE)$prior
+
+  # Segments that start at a fixed zero: each factor level gets the intercept prior
+  expect_equal(get_prior(list(y ~ 0 + state, ~ 1))[c("stateA_1", "stateB_1")], list(stateA_1 = intercept, stateB_1 = intercept))
+  expect_equal(get_prior(list(y ~ 0, ~ 0 + state))$stateA_2, intercept)
+  data$y = rbinom(100, 1, 0.5)
+  expect_equal(get_prior(list(y ~ 0 + state, ~ 1), bernoulli(link = "identity"))$stateA_1, "dbeta(1, 1)")
+
+  # Otherwise contrast and slope priors, e.g., jumps from an estimated value
+  expect_match(get_prior(list(y ~ 0 + x, ~ 0 + state))$stateA_2, "^dnorm\\(0, ")
+  expect_match(get_prior(list(y ~ 1, ~ 1 + state))$stateB_2, "^dnorm\\(0, ")
+  expect_match(get_prior(list(y ~ 0 + state:x, ~ 1))$stateAx_1, "^dnorm\\(0, ")
+
+  # Each factor level's prior is on its value at min(x), as for Intercept_1
+  data$y = rnorm(100, 50)
+  fit = suppressWarnings(mcp(
+    list(y ~ 0 + state + x), data, par_x = "x", sample = "prior",
+    chains = 1, iter = 4000, warmup = 100, seed = 42, quiet = TRUE
+  ))
+  draws = as_draws_df(fit, prior = TRUE)
+  for (name in c("stateA_1", "stateB_1")) {
+    level = draws[[name]] + draws$x_1 * 101
+    expect_equal(mean(level), mean(data$y), tolerance = 0.1)
+    expect_equal(stats::sd(level), 2.5 * stats::sd(data$y), tolerance = 0.1)
+  }
+})
+
+
 test_that("a constant response uses unit scale for sd(y)-based default priors", {
   data = data.frame(x = 1:10, y = 2)
   fit = mcp(list(y ~ 1 + x), data, sample = FALSE)

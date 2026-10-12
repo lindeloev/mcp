@@ -37,6 +37,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   context = prior_context(data, segments, design_specs)
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
   legacy_prior_constants(prior, context)
+  predictors$prior_type = get_prior_type(predictors)
 
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),

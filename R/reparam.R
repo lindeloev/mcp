@@ -57,16 +57,18 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
     # x-terms without other variables, in the segment that defines them
     slopes = own[own$x_factor != "1" & own_pure & own$segment == own$definition_segment, ]
 
-    # Segment 1: the intercept as the value at a fixed point
-    intercept = own$code_name[own$segment == 1 & own$par_type == "Intercept"]
+    # Segment 1: the intercept as the value at a fixed point. For a factor without an
+    # intercept (`0 + state`), each factor level has an intercept (see get_prior_type()).
     terms = slopes[slopes$segment == 1, ]
-    if (length(intercept) == 1 && nrow(terms) > 0 && is_reparam_prior(intercept)) {
-      x_max = max(context$data[[context$x_name]], na.rm = TRUE)
-      at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
-      set_aux(intercept, "mid", shift = paste0(x_terms_at(terms, at), " - (", x_terms_at(terms, "cp_0"), ")"), derive = x_terms_at(terms, at))
-    } else if (length(intercept) == 1 && !is.na(table$reference[match(intercept, table$parameter)])) {
-      # Otherwise (e.g., reparam = FALSE): only the prior placement on the value at min(x)
-      set_aux(intercept, "start", derive = table$reference[match(intercept, table$parameter)])
+    for (intercept in own$code_name[own$segment == 1 & own$prior_type == "Intercept"]) {
+      if (nrow(terms) > 0 && is_reparam_prior(intercept)) {
+        x_max = max(context$data[[context$x_name]], na.rm = TRUE)
+        at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
+        set_aux(intercept, "mid", shift = paste0(x_terms_at(terms, at), " - (", x_terms_at(terms, "cp_0"), ")"), derive = x_terms_at(terms, at))
+      } else if (!is.na(table$reference[match(intercept, table$parameter)])) {
+        # Otherwise (e.g., reparam = FALSE): only the prior placement on the value at min(x)
+        set_aux(intercept, "start", derive = table$reference[match(intercept, table$parameter)])
+      }
     }
 
     # Segments 2+ with x-terms

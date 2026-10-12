@@ -116,6 +116,30 @@ fill_predictor_scale = function(prior, matrix_data, x_factor) {
 }
 
 
+# Which default prior each coefficient gets. Default priors are looked up by par_type
+# ("Intercept", "dummy", or "slope"), and this returns the par_type to use for each row of
+# `predictors`. It is the coefficient's own par_type, with one exception: a factor without an
+# intercept (y ~ 0 + state) is coded as all intercepts. This mostly concerns segment 1,
+# but applies wherever a segment starts at zero, i.e., has no earlier intercept or x-term to
+# join, e.g., segment 2 in `list(y ~ 0, ~ 0 + state)`. In other joined segments, `0 + state`
+# gives jumps from where the earlier segment left off, which keep the contrast prior.
+get_prior_type = function(predictors) {
+  key = paste(predictors$dpar, predictors$order)
+  joins = predictors$par_type == "Intercept" | predictors$x_factor != "1"
+  starts_at_zero = vapply(seq_len(nrow(predictors)), function(i) {
+    !any(joins & key == key[i] & predictors$segment < predictors$segment[i])
+  }, logical(1))
+
+  term = paste(key, predictors$segment, predictors$term_key)
+  sums_to_one = vapply(split(predictors$matrix_data, term), function(columns) {
+    all(abs(Reduce(`+`, columns) - 1) < 1e-8, na.rm = TRUE)
+  }, logical(1))
+
+  is_factor_intercept = predictors$par_type == "dummy" & predictors$x_factor == "1" & starts_at_zero & sums_to_one[term]
+  replace(predictors$par_type, is_factor_intercept, "Intercept")
+}
+
+
 default_predictor_specs = function(predictors, family, design_specs = list()) {
   defaults = filter_default_conditions(dplyr::bind_rows(family$default_prior, default_arma_specs()), family)
 
@@ -124,7 +148,9 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
     stop_github("Default prior specifications are not unique by dpar and par_type.")
 
   joined = predictors %>%
-    dplyr::left_join(defaults, by = c("dpar", "par_type"))
+    dplyr::left_join(defaults, by = c("dpar", prior_type = "par_type"))
+  is_factor_intercept = joined$prior_type == "Intercept" & joined$par_type != "Intercept"
+  joined$description[is_factor_intercept] = paste0(joined$description[is_factor_intercept], "; one per factor level")
   if (any(is.na(joined$prior))) {
     stop_github(
       "mcp could not find a default prior for ",
@@ -139,7 +165,7 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
       spec = get_segment_offset(design_specs, "mu", joined$segment[i])
       if (!is.null(spec)) {
         sym = if (length(offset_specs) <= 1) "offset" else paste0("offset_", spec$segment)
-        if (joined$par_type[i] == "Intercept")
+        if (joined$prior_type[i] == "Intercept")
           joined$prior[i] = gsub("log(pmax(.y, 0.1))", paste0("log(pmax(.y, 0.1)) - ", sym), joined$prior[i], fixed = TRUE)
         joined$description[i] = gsub("log-count|log-mean", "log-rate", joined$description[i])
       }
@@ -397,7 +423,7 @@ add_intercept_references = function(table, predictors, context) {
   if (context$x_min == 0)
     return(table)
 
-  intercepts = predictors[predictors$segment == 1 & predictors$par_type == "Intercept" & predictors$dpar %notin% c("ar", "ma"), ]
+  intercepts = predictors[predictors$segment == 1 & predictors$prior_type == "Intercept" & predictors$dpar %notin% c("ar", "ma"), ]
   for (i in seq_len(nrow(intercepts))) {
     row = match(intercepts$code_name[i], table$parameter)
     if (is.na(row) || table$source[row] != "default" || table$kind[row] != "distribution")
