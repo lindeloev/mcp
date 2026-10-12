@@ -85,6 +85,7 @@ export(sd_to_prec)
 export(waic)
 import(patchwork)
 importFrom(bayesplot,pp_check)
+importFrom(coda,varnames)
 importFrom(dplyr,.data)
 importFrom(loo,
   loo,

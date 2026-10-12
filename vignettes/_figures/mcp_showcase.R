@@ -44,7 +44,6 @@ format_model_user = function(model) {
 
 
 # Make the base plots
-future::plan(future::multisession, workers = min(6L, future::availableCores()))
 fit_intercepts = mcp_example("intercepts")
 gg_intercepts_org = force(last_plot())  # force to avoid lazy evaluation issues with patchwork
 intercepts_model = format_model_user(fit_intercepts$model)
