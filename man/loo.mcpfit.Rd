@@ -5,6 +5,7 @@
 \alias{loo.mcpfit}
 \alias{loo}
 \alias{LOO}
+\alias{loo_compare}
 \alias{waic.mcpfit}
 \alias{waic}
 \alias{WAIC}
@@ -43,7 +44,7 @@ chains, so the actual number may be rounded. \code{NULL} uses all draws.}
 a \code{loo} or \code{psis_loo} object.
 }
 \description{
-Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
+Compare models using \code{\link[loo]{loo_compare}} (re-exported by mcp) and \code{\link[loo]{loo_model_weights}}.
 Read more in \code{\link[loo]{loo}}.
 }
 \details{
@@ -90,7 +91,7 @@ fit2 = mcp(model2, data, par_x = "x", seed = 42)
 # Compute LOO for each and compare (works for waic(fit) too)
 loo1 = loo(fit1)
 loo2 = loo(fit2)
-loo::loo_compare(loo1, loo2)
+loo_compare(loo1, loo2)
 }
 }
 \author{

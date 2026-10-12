@@ -4,6 +4,9 @@
 \alias{posterior_epred.mcpfit}
 \alias{posterior_predict.mcpfit}
 \alias{posterior_linpred.mcpfit}
+\alias{posterior_epred}
+\alias{posterior_predict}
+\alias{posterior_linpred}
 \title{Posterior prediction draws for \code{mcpfit} objects}
 \usage{
 \method{posterior_epred}{mcpfit}(
@@ -44,6 +47,12 @@
   seed = NULL,
   ...
 )
+
+posterior_epred(object, ...)
+
+posterior_predict(object, ...)
+
+posterior_linpred(object, ...)
 }
 \arguments{
 \item{object}{An \code{mcpfit} object.}
@@ -102,7 +111,8 @@ A numeric \code{N_draws} by \code{nrow(newdata)} matrix.
 Methods for the \code{{rstantools}} posterior-prediction generics. They return a
 draws-by-observation matrix and enable \code{{tidybayes}} workflows such as
 \code{add_epred_draws()}, \code{add_predicted_draws()}, and \code{add_linpred_draws()}.
-These methods and workflows require the suggested package \code{{rstantools}}.
+mcp exports these generics, so they work without \code{{rstantools}}. If \code{{rstantools}} or
+\code{{brms}} masks them, their generics dispatch to the same methods.
 }
 \details{
 For GARMA models, \code{posterior_predict()} conditions on the observed

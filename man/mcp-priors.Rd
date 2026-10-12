@@ -40,9 +40,9 @@ as \code{I(x^2)} use \code{sd((x - min(x))^2)}.
 \item \emph{Intercepts} are \code{normal(mean(y), 2.5 * sd(y))} for identity links, \code{normal(0, 1.5)} for logit, and
 \code{normal(0, 1)} for probit. The latter two are (approximately) uniform on the probability scale.
 For log links (Gaussian, Poisson, and negative binomial), intercepts are
-\code{normal(median(log(y)), max(2.5, mad(log(y))))}, rounded to one decimal and with \code{y} floored at 0.1 so that the
-log is defined. This robustly centers the prior on the typical log-response, whereas \code{rstanarm} uses
-\code{normal(0, 2.5)}.
+\code{normal(median(log(y)), max(2.5, mad(log(y))))}, rounded to one decimal and with \code{y <= 0} replaced by 0.1 so that the
+log is defined. This robustly centers the prior on the typical log-response, as in \code{brms} (which uses a
+Student-t shape and replaces zeros the same way), whereas \code{rstanarm} uses \code{normal(0, 2.5)}.
 For a factor without an intercept, e.g., \code{y ~ 0 + state}, each factor level's coefficient is an intercept and
 gets this prior where the segment starts at zero (segment 1 or joined to nothing).
 \item \emph{\code{sigma} and group-level SDs} follow \code{brms}, e.g., \code{student_t(3, 0, max(2.5, mad(y)))}, since

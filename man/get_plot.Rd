@@ -83,7 +83,6 @@ currently requires all such effects (\code{group_effects = TRUE}).
 }}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
-If there are group-level effects, this is the number of draws from each group.
 \code{NULL} means "all". More draws trade speed for accuracy.}
 
 \item{scale}{One of
