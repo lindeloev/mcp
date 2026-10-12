@@ -182,7 +182,7 @@ mcp = function(
   seed = NULL,
   diagnostics = list(),
   quiet = getOption("mcp_quiet", FALSE),
-  cores = NULL,
+  cores = lifecycle::deprecated(),
   adapt = lifecycle::deprecated()
 ) {
   custom_jags_code = !is.null(jags_code)

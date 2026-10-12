@@ -106,7 +106,7 @@ legacy_which_y = function(dots, func_name) {
 
 # Warn that the deprecated `cores` argument in mcp() is ignored
 legacy_cores = function(cores, env = rlang::caller_env(), user_env = rlang::caller_env(2)) {
-  if (is.null(cores))
+  if (!lifecycle::is_present(cores))
     return(invisible(NULL))
   if (!identical(cores, "all"))
     checkmate::assert_int(cores, lower = 1)
