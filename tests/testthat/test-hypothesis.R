@@ -17,6 +17,7 @@ test_that("hypothesis()", {
   expect_equal(res_post_only$prob, mean(cp_draws > threshold))
   expect_true(is.na(res_post_only$BF))
   expect_equal(res_post_only$mean, mean(cp_draws - threshold))
+  expect_equal(res_post_only$sd, stats::sd(cp_draws))
 
   # Equality hypothesis requires prior draws
   expect_error(

@@ -261,6 +261,7 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'   * `hypothesis` is the hypothesis; often re-arranged to test against zero.
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis, or
 #'       the prior mean when `prior = TRUE`.
+#'   * `sd` is the posterior standard deviation of ditto, or the prior SD when `prior = TRUE`.
 #'   * `lower` is the lower bound of the central posterior interval of width `width`,
 #'       or the corresponding prior interval when `prior = TRUE`.
 #'   * `upper` is the upper bound of ditto.
@@ -367,11 +368,12 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
       tail_prob = (1 - width) / 2
       estimate = list(
         effect = mean(effect),
+        sd = stats::sd(effect),
         .lower = stats::quantile(effect, tail_prob, names = FALSE),
         .upper = stats::quantile(effect, 1 - tail_prob, names = FALSE)
       )
     } else {
-      estimate = list(effect = NA, .lower = NA, .upper = NA)
+      estimate = list(effect = NA, sd = NA, .lower = NA, .upper = NA)
     }
 
     # SAVAGE-DICKEY: compute BF. Equality hypotheses always have an LHS (see validate_savage_dickey_expression()).
@@ -447,6 +449,7 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
     new_row = tibble::tibble(
       hypothesis = stringr::str_trim(expression),
       mean = estimate$effect,
+      sd = estimate$sd,
       lower = estimate$.lower,
       upper = estimate$.upper,
       prob = prob,

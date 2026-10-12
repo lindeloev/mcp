@@ -288,6 +288,7 @@ test_hypothesis = function(fit, prior) {
 
     result = suppressWarnings(hypothesis(fit, hypotheses, prior = prior))
     testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
+    testthat::expect_named(result, c("hypothesis", "mean", "sd", "lower", "upper", "prob", "BF"))
     testthat::expect_equal(suppressWarnings(hypothesis.mcpfit(fit, hypotheses, prior = prior)), result)
   }
 
