@@ -11,7 +11,7 @@
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
 #'   * Character vector of group-level parameter names, e.g., `c("cp_1_id", "x_2_id")`.
-#'     `*` is a wildcard, e.g., `"state*_1_id"` selects all levels of a factor
+#'     \lifecycle{experimental} `*` is a wildcard, e.g., `"state*_1_id"` selects all levels of a factor
 #'     and `"*_id"` selects all effects by `id`. See names using `ranef(fit)`.
 #'   Can be combined, e.g., `c("cp", "sigma_*")`.
 #' @param object An `mcpfit` object.
