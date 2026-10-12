@@ -237,7 +237,7 @@ get_segment_components = function(form_rhs, family) {
     family_call = paste0(family$family, "()")
     stop(
       paste0("`", unsupported, "()`", collapse = " and "), " is not a distributional parameter for family = ", family_call, ". ",
-      "See available parameters with `as_mcpfamily(", family_call, ")$dpars`."
+      "Available parameters: ", and_collapse(paste0("`", family$dpars, "`")), "."
     )
   }
   repeated = unique(leaf_names[duplicated(leaf_names) & leaf_names %in% wrappers])

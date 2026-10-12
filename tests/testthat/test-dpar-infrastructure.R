@@ -298,7 +298,7 @@ test_that("unsupported dpar wrappers give a family-specific error", {
     mcp(list(y ~ 1 + x + sigma(1)), data, family = poisson(), sample = FALSE),
     paste0(
       "`sigma()` is not a distributional parameter for family = poisson(). ",
-      "See available parameters with `as_mcpfamily(poisson())$dpars`."
+      "Available parameters: `mu`."
     ),
     fixed = TRUE
   )

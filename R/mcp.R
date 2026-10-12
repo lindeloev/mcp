@@ -17,9 +17,11 @@
 #'   a fixed value (e.g., `-2.1`), or the name of another parameter to share its value.
 #'   Weakly informative defaults are used where priors are not specified;
 #'   see them with [prior_summary()]. See [mcp-priors] for the full syntax.
-#' @param family A supported family: `gaussian()`, `binomial()`, `bernoulli()`,
-#'   `poisson()`, or `negbinomial()`, with a supported link function; e.g.,
-#'   `gaussian(link = "log")`.
+#' @param family A supported family and link function:
+#'   * `gaussian(link = "identity")` or `gaussian(link = "log")`
+#'   * `binomial()` or `bernoulli()` with `link = "logit"`, `"probit"`, or `"identity"`
+#'   * `poisson(link = "log")` or `poisson(link = "identity")`
+#'   * `negbinomial(link = "log", link_shape = "log")`
 #' @param par_x String. Name of the change-point variable, i.e., the data column
 #'   on which change points are located. `NULL` (default) auto-detects it as the
 #'   only continuous predictor in the formulas.
@@ -232,7 +234,7 @@ mcp = function(
 
   # Transform family to mcpfamily
   if (!is_family(family) && !is_mcpfamily(family))
-    stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), as_mcpfamily(gaussian(link = 'log')), etc.")
+    stop("`family` is not a valid family. Should be gaussian(), binomial(), gaussian(link = 'log'), etc.")
 
   family = as_mcpfamily(family)
 

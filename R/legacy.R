@@ -248,7 +248,7 @@ tidy_samples = function(...) {
 }
 
 
-# Renamed to is_mcpfit() for consistency with as_mcpfamily() and `{posterior}`. LEGACY: remove in mcp 1.0.
+# Renamed to is_mcpfit() for consistency with `{posterior}`'s is_draws(). LEGACY: remove in mcp 1.0.
 #' @rdname is_mcpfit
 #' @export
 is.mcpfit = function(x) {

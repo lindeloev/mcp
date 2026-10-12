@@ -187,7 +187,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 
-  - `is.mcpfit()` is deprecated in favor of `is_mcpfit()`, matching the new `is_mcpfamily()` and `as_mcpfamily()` and `{posterior}`'s `is_draws()`.
+  - `is.mcpfit()` is deprecated in favor of `is_mcpfit()`, matching `{posterior}`'s `is_draws()`.
 
 - **Requirements and removals:**
 
