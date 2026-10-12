@@ -193,15 +193,8 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
     unname(unlist(data_columns[setdiff(names(data_columns), c("par_x", "response", "series"))])),
     data_columns$par_x  # Don't remove par_x when it is also a rhs parameter, e.g.: y | trials(N) ~ N
   )
-  if (any(auxiliary_cols %in% names(newdata))) {
-    model_tables = get_fit_model_tables(fit)
-    response_data = get_family_response_data(fit$family, model_tables$segments, newdata)
-    response_columns = c(
-      list(y = data_columns$response),
-      as.list(get_family_aux_columns(fit$family, model_tables$segments))
-    )
-    fit$family$response$validate(rep(NA_real_, nrow(newdata)), response_data, response_columns)
-  }
+  if (any(auxiliary_cols %in% names(newdata)))
+    assert_response_data(fit$family, get_fit_model_tables(fit)$segments, newdata, response_required = FALSE)
 
   # Add response column for AR/MA models
   if (isTRUE(arma)) {

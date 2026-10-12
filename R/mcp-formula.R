@@ -40,7 +40,7 @@
 #' can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`.
 #'
 #' **1. Response (segment 1 only):**
-#' * `y ~ ...`: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
+#' * `y ~ ...`: Standard continuous, binary, or count response (Gaussian, Bernoulli, Poisson, negative binomial).
 #' * `successes | trials(total) ~ ...`: Binomial response (`family = binomial()`).
 #' * `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's
 #'   log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but

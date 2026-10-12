@@ -183,51 +183,36 @@ get_par_x = function(vars, data, par_x = NULL) {
   checkmate::assert_data_frame(data)
   checkmate::assert_string(par_x, null.ok = TRUE)
 
-  # Just check par_x
-  if (is.character(par_x)) {
-    if ((par_x %in% colnames(data)) == FALSE)
+  if (!is.null(par_x)) {
+    # Check user-supplied par_x
+    if (par_x %notin% colnames(data))
       stop("par_x = '", par_x, "' not found in data.")
-    if (is_continuous(data[, par_x]) == FALSE)
+    if (!is_continuous(data[[par_x]]))
       stop("par_x = '", par_x, "' has to be continuous. Is it binary or categorical?")
-  }
-
-  # Check for exactly one continuous predictor; exclude grouping, offset, and series variables
-  rhs_vars = setdiff(vars$predictor, vars$group)
-  data_in_rhs = data %>% dplyr::select(dplyr::all_of(rhs_vars), dplyr::all_of(par_x))
-  continuous_cols = lapply(data_in_rhs, is_continuous) %>% unlist()
-  par_x_candidates = names(continuous_cols)[continuous_cols]
-  resolved_par_x = if (is.character(par_x)) {
-    if (length(par_x_candidates) == 0) {
-      par_x
-    } else if (par_x %in% par_x_candidates) {
-      par_x
-    } else {
-      stop("Got par_x = '", par_x, "' but it does not seem to be both continuous, present in the data, and in the model. mcp identified '", par_x_candidates, "' as the only viable change point dimension(s) as the data and model is set up now.")
-    }
-  } else if (is.null(par_x)) {
-    if (length(par_x_candidates) == 0) {
-      stop("No continuous column for change points found in the formulas. Either provide mcp(..., par_x = 'my_col') or update the model.")
-    } else if (length(par_x_candidates) > 1) {
-      stop("Could not automatically determine the change point dimension (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explicitly using mcp(..., par_x = 'my_col').")
-    } else if (length(par_x_candidates) == 1) {
-      par_x_candidates
-    }
   } else {
-    stop_github("Reached the end of get_par_x() without returning par_x")
+    # Detect exactly one continuous predictor; exclude grouping, offset, and series variables
+    rhs_vars = setdiff(vars$predictor, vars$group)
+    continuous_cols = vapply(dplyr::select(data, dplyr::all_of(rhs_vars)), is_continuous, logical(1))
+    par_x_candidates = names(continuous_cols)[continuous_cols]
+    if (length(par_x_candidates) == 0)
+      stop("No continuous column for change points found in the formulas. Either provide mcp(..., par_x = 'my_col') or update the model.")
+    if (length(par_x_candidates) > 1)
+      stop("Could not automatically determine the change point dimension (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explicitly using mcp(..., par_x = 'my_col').")
+    par_x = par_x_candidates
   }
 
   # Warn if par_x is used in offset()
-  if (!is.null(resolved_par_x) && resolved_par_x %in% vars$offset) {
+  if (par_x %in% vars$offset) {
     warning(
-      "The change-point predictor '", resolved_par_x, "' is also used in offset().\n",
-      "If '", resolved_par_x, "' represents cumulative exposure/duration from time 0, note that mcp applies ",
+      "The change-point predictor '", par_x, "' is also used in offset().\n",
+      "If '", par_x, "' represents cumulative exposure/duration from time 0, note that mcp applies ",
       "the segment's rate to the entire duration rather than integrating piecewise rates over time. ",
       "Offsets are valid when rows represent discrete intervals with local exposure.",
       call. = FALSE
     )
   }
 
-  return(resolved_par_x)
+  par_x
 }
 
 
@@ -273,7 +258,7 @@ empty_predictors = function() {
 #'     coefficient. Multi-column terms share one key.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 #'   - `order`: positive integer or NA. Only relevant for `ar` and `ma`.
-#'   - `explicit`: whether the distributional parameter was supplied in the formula.
+#'   - `x_factor`: `"1"`, `"x"`, or `"x^k"`. How the coefficient is multiplied by x measured from the change point.
 #'   - `design_id`: key of the fitted component formula that produced the row.
 #'   - `design_col`: column occupied by the row in that component's model matrix.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.

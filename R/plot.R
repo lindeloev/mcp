@@ -536,14 +536,13 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
   facet_by = intersect(facet_by, group_cols)
   cp_matches_facet = cps$group_col %in% facet_by
-  cp_not_facet = cp_matches_facet == FALSE | is.na(cp_matches_facet)
-  if (all(cp_not_facet))
+  if (!any(cp_matches_facet))
     facet_by = NULL
 
   # Get group-level and population-level change-point parameter names.
   if (!is.null(facet_by)) {
-    group = stats::na.omit(cps$group_name[cp_matches_facet])
-    population = stats::na.omit(cps$name[cp_not_facet])
+    group = cps$group_name[cp_matches_facet]
+    population = cps$name[!cp_matches_facet]
   } else {
     group = NULL
     population = cps$name

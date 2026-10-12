@@ -120,8 +120,6 @@ test_runs = function(model,
       }
     }
 
-    # Assign globally so errors can be inspected upon hard fail
-
     if (is_arma(fit))
       test_arma_simulation(fit)
 
@@ -277,7 +275,7 @@ test_hypothesis = function(fit, prior) {
   population = mcp_pars(fit, scope = "population")$parameter
   group = mcp_pars(fit, scope = "group")$parameter
   # Function to test directional, interval, and point equality hypotheses
-  run_test_hypothesis = function(fit, base, prior = prior) {
+  run_test_hypothesis = function(fit, base, prior) {
     hypotheses = paste0(base, " > 1")  # Directional
     if (prior == FALSE) {
       hypotheses = c(

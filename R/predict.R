@@ -294,7 +294,7 @@ pp_eval = function(
     draws[[data_columns$response]][missing_rows] = get_imputed_response_draws(fit, draws)[missing_rows]
   }
 
-  # This is the important step!Evaluate the mcp model on newdata and draws.
+  # This is the important step! Evaluate the mcp model on newdata and draws.
   # Group-level joins are row-major, while GARMA recurrences require each
   # draw's data rows to be contiguous. Evaluate in draw/data order, then
   # restore the public row order below.

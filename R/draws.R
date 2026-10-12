@@ -205,10 +205,8 @@ niterations = posterior::niterations
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
 #'   * Character vector: Only include specified group-level parameters (`*` is a wildcard).
-#' @param absolute
-#'   * `TRUE` Returns the absolute location of all group-specific change points.
-#'   * `FALSE` Return the group-level deviations.
-#'   * Character vector: Apply the absolute transform only to these group-level parameters.
+#' @param absolute Logical. Return the absolute locations of the selected group-level change
+#'   points (`TRUE`) instead of their deviations (`FALSE`)?
 #' @param newdata Optional prediction data selecting group levels. Levels must
 #'   be in the fitted data.
 #' @return `tibble` of posterior draws in `tidybayes` format.
@@ -226,7 +224,7 @@ mcp_draws = function(
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_multi_class(population, c("logical", "character"))
   checkmate::assert_multi_class(group, c("logical", "character"), null.ok = TRUE)
-  checkmate::assert_multi_class(absolute, c("logical", "character"), null.ok = TRUE)
+  checkmate::assert_flag(absolute)
   checkmate::assert_flag(prior)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
@@ -250,26 +248,10 @@ mcp_draws = function(
     pars_population = population
   }
 
-  # Absolute effects. Results are `absolute_cps` and `absolute`.
-  if (all(absolute == TRUE)) {
-    cp_effects = group_info$effects[group_info$effects$part == "cp", , drop = FALSE]
-    absolute = cp_effects$name
-    absolute_cps = cp_effects$population_name
-  } else if (all(absolute == FALSE)) {
-    absolute_cps = NULL
-  } else if (is.character(absolute)) {
-    # Check
-    is_group_selection = absolute %in% group_info$pars
-    if (any(!is_group_selection))
-      stop("The following parameter names in `absolute` are not in `group`: ", and_collapse(absolute[!is_group_selection]))
-    absolute_effects = group_info$effects[
-      group_info$effects$name %in% absolute, , drop = FALSE
-    ]
-    if (any(absolute_effects$part != "cp"))
-      stop("`absolute` can select change-point group-level effects only.")
-
-    absolute_cps = absolute_effects$population_name
-  }
+  # Group-level change points to add to their population change points (`absolute_cps`)
+  cp_effects = group_info$effects[group_info$effects$part == "cp", , drop = FALSE]
+  absolute_groups = if (absolute) cp_effects$name else NULL
+  absolute_cps = if (absolute) cp_effects$population_name else NULL
 
   # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
   # Select draws before expanding across group levels.
@@ -308,8 +290,8 @@ mcp_draws = function(
 
   # Add population-level change points to deviations, then remove helper columns.
   if (length(absolute_cps) > 0) {
-    draws[, absolute_cps] = draws[, absolute_cps] + draws[, absolute]
-    draws = dplyr::select(draws, -dplyr::all_of(absolute))
+    draws[, absolute_cps] = draws[, absolute_cps] + draws[, absolute_groups]
+    draws = dplyr::select(draws, -dplyr::all_of(absolute_groups))
   }
 
   # Unassigned group-level deviations are simulated as zero (the population-level mean).
