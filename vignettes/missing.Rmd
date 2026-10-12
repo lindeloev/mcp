@@ -21,7 +21,7 @@ set.seed(42)
 `mcp` allows missing values (`NA`) in the response. This article covers two consequences of that:
 
 1. **Change points in voids:** Change points can be inferred in regions with no observed responses.
-2. **Imputing missing responses:** JAGS treats the missing responses as latent variables and samples them together with the model parameters. `mcp` retains these posterior imputation draws so you can inspect expected responses, imputations, and their uncertainty.
+2. **Imputing missing responses:** JAGS treats the missing responses as latent variables and samples them together with the model parameters. You can inspect expected responses with `fitted()` and the imputation distribution with `predict()`.
 
 ```{r, message=FALSE}
 library(mcp)
@@ -71,7 +71,7 @@ fit$data |> filter(is.na(y))
 
 ## Expected responses and predictions
 
-`predict()` evaluates the posterior predictive distribution at the missing rows, generating fresh simulated responses that include residual variation. The predictions come from trends in non-missing data and what they imply, given the observed covariates (`state` and `x`), for the missing rows.
+`predict()` evaluates the posterior predictive distribution at the missing rows, generating fresh simulated responses that include residual variation. The predictions come from trends in non-missing data and what they imply, given the observed covariates (`state` and `x`), for the missing rows. Without `ar()` or `ma()` terms, as here, these predictions have the same distribution as the JAGS imputations, so we use them as imputations below.
 
 ```{r}
 # Mean and 80% posterior predictive interval for missing data
