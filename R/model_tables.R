@@ -180,11 +180,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       parameter = .data$code_name,
       part = "predictor",
       scope = "population",
-      role = dplyr::case_when(
-        .data$dpar == "mu" ~ "fixed_effect",
-        .data$dpar %in% family$dpar_specs$dpar ~ "dpar_effect",
-        TRUE ~ "arma"
-      ),
+      role = ifelse(.data$dpar %in% family$dpar_specs$dpar, "fixed_effect", "arma"),
       segment = .data$segment,
       dpar = .data$dpar,
       order = .data$order,
@@ -245,8 +241,9 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #'
 #' @param fit An `mcpfit` object.
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.
-#' @param role Optional parameter role(s), such as `"fixed_effect"`,
-#'   `"dpar_effect"`, `"arma"`, `"group_sd"`, or `"group_deviation"`.
+#' @param role Optional parameter role(s): `"change_point"`, `"fixed_effect"`
+#'   (population-level coefficients of all distributional parameters, e.g., `mu` and `sigma`),
+#'   `"arma"`, `"group_sd"`, or `"group_deviation"`.
 #' @return A tibble with one row per parameter definition. `parameter` is the
 #'   model parameter name; `dpar` identifies its distributional parameter or
 #'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
@@ -257,7 +254,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' mcp_pars(demo_fit)
 #'
 #' # Select population-level coefficients
-#' mcp_pars(demo_fit, scope = "population", role = "fixed_effect")
+#' mcp_pars(demo_fit, role = "fixed_effect")
 mcp_pars = function(fit, scope = NULL, role = NULL) {
   checkmate::assert_class(fit, "mcpfit")
   if (!is.null(scope))

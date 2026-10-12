@@ -43,7 +43,7 @@ test_that("negative-binomial links are explicit and currently log-only", {
 test_that("Negative-binomial JAGS weights implement a likelihood power and sample on ordinary large counts", {
   # Test reproduction failure case: count of 200, shape 10, weight 2
   df_nb = data.frame(x = 1:5, y = rep(200, 5), w = 2)
-  fit = mcp(list(y | weights(w) ~ 1), data = df_nb, family = negbinomial(), par_x = "x", diagnostics = FALSE, quiet = TRUE)  # disabling diagnostics is justified because this tests and edge case - not the fit
+  fit = mcp(list(y | weights(w) ~ 1), data = df_nb, family = negbinomial(), par_x = "x", diagnostics = FALSE, quiet = TRUE, seed = 42)  # disabling diagnostics is justified because this tests and edge case - not the fit
   expect_true(is.list(fit$model))
   capture.output({ summary_fit = summary(fit) })
   expect_equal(nrow(summary_fit), 2)

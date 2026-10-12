@@ -233,7 +233,7 @@ test_summary = function(fit, group_cols, prior = FALSE) {
   testthat::expect_named(fixed, summary_cols)
   testthat::expect_named(fixed_verbose, verbose_summary_cols)
   pars = mcp_pars(fit)
-  expected_fixed = pars$parameter[pars$scope == "population" & pars$role == "fixed_effect"]
+  expected_fixed = pars$parameter[pars$role == "fixed_effect" & pars$dpar == "mu"]
   testthat::expect_setequal(fixed$parameter, expected_fixed)
 
   # If there are group-level effects

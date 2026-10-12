@@ -384,7 +384,7 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
   rlang::check_dots_empty()
   checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
   get_summary(
-    object, width, scope = "population", role = c("fixed_effect", "dpar_effect"),
+    object, width, scope = "population", role = "fixed_effect",
     dpar = dpar, prior = prior, verbose = verbose
   )
 }
@@ -511,7 +511,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
   if (is.null(pars)) {
     checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
     pars = parameters$parameter[
-      parameters$role %in% c("fixed_effect", "dpar_effect") &
+      parameters$role == "fixed_effect" &
         parameters$dpar %in% dpar
     ]
   } else if (identical(pars, "all")) {

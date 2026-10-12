@@ -63,7 +63,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_equal(mcp_columns(fit)$response, "y")
 
   population = mcp_pars(fit, scope = "population")$parameter
-  fixed = mcp_pars(fit, scope = "population", role = "fixed_effect")$parameter
+  fixed = with(mcp_pars(fit, role = "fixed_effect"), parameter[dpar == "mu"])
   values = matrix(seq_len(3 * length(population)), nrow = 3)
   colnames(values) = population
   prior_values = values^2
@@ -103,7 +103,7 @@ test_that("fixef() and vcov() select distributional-parameter coefficients", {
   pars = mcp_pars(fit, scope = "population")
   values = matrix(seq_len(3 * nrow(pars)), nrow = 3, dimnames = list(NULL, pars$parameter))
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
-  sigma_names = pars$parameter[pars$dpar == "sigma" & pars$role == "dpar_effect"]
+  sigma_names = pars$parameter[pars$dpar == "sigma" & pars$role == "fixed_effect"]
 
   expect_setequal(fixef(fit, dpar = "sigma")$parameter, sigma_names)
   expect_equal(vcov(fit, dpar = "sigma"), stats::cov(values[, sigma_names, drop = FALSE]))
@@ -142,7 +142,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   )
   expect_true(all(tables$parameters$part %in% c("cp", "predictor")))
   expect_true(all(tables$parameters$scope %in% c("population", "group")))
-  expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "dpar_effect", "arma", "group_sd", "group_deviation")))
+  expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "arma", "group_sd", "group_deviation")))
   expect_equal(mcp_pars(fit), tables$parameters)
   expect_equal(tables$predictors$definition_name, tables$predictors$code_name)
   expect_equal(tables$group_effects$definition_name, tables$group_effects$name)
@@ -223,7 +223,7 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
   expect_setequal(summary_result$parameter, pars$parameter[pars$scope == "population"])
   expect_setequal(
     fixef(fit)$parameter,
-    pars$parameter[pars$scope == "population" & pars$role == "fixed_effect"]
+    pars$parameter[pars$role == "fixed_effect" & pars$dpar == "mu"]
   )
   expect_setequal(ranef(fit)$parameter, group_draws)
 })
