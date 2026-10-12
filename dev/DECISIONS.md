@@ -57,3 +57,6 @@ The `sigma` prior is truncated at zero (`T(0, )`), but the residual SD in the li
 
 # 2026-10-10: No init dispersion
 JAGS 5.0 inits bounded parameters near the prior mode (zero for half-t SDs). mcp initializes all scalar nodes with numeric priors at their prior medians, keeping equispaced change points. Dispersed inits (prior quantiles per chain) were tried, but started on impossible values in too many cases (extreme scales; identity-link; etc.).
+
+# 2026-10-12: iter excludes warmup
+This behavior breaks with brms and some others. But I think it is the correct one so it is purpusefully kept like this.
