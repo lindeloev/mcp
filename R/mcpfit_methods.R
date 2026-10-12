@@ -222,11 +222,12 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   symmetric so the intervals can be deceiving. Plot them using
 #'   `plot_pars(fit)`.
 #'
-#'   With `verbose = TRUE`:
-#'   * `segment` is the segment the parameter belongs to.
-#'   * `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
-#'     `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
-#'     lag order is encoded in `parameter`, e.g. `ar2_1`.
+#'   Columns:
+#'   * `segment` (only with `verbose = TRUE`) is the segment the parameter belongs to.
+#'     For change points, it is the segment that the change point starts, e.g., 2 for `cp_1`.
+#'   * `dpar` (only with `verbose = TRUE`) is the distributional parameter (e.g., `"mu"`,
+#'     `"sigma"`, or `"ar1"`; see [mcp-formula]) as accepted by the `dpar` argument of
+#'     [fixef.mcpfit()], [fitted.mcpfit()], etc. It is `NA` for change points. See also [mcp_pars()].
 #'   * `mean` is the posterior mean
 #'   * `sd` is the posterior standard deviation.
 #'   * `lower` and `upper` are the bounds of the central posterior interval
