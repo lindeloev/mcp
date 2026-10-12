@@ -112,11 +112,13 @@ Let us see this in action:
 
 ```{r}
 model = list(y ~ 0 + x, ~ 0 + x)
-fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE, reparam = FALSE)
+old = options(mcp_reparam = FALSE)  # Write the plain model
+fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
+options(old)
 fit$jags_code
 ```
 
-We used `reparam = FALSE` to see the plain model. By default, `mcp` samples some parameters on other scales, which we will return to [below](#reparameterizations).
+We used `options(mcp_reparam = FALSE)` to see the plain model. By default, `mcp` samples some parameters on other scales, which we will return to [below](#reparameterizations).
 
 Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see this exact indicator formulation in action: `x_local_1_[i_]` and `x_local_2_[i_]` correspond to $X_{1,i}$ and $X_{2,i}$, and each segment's slope is multiplied by its activation indicator (e.g., `(x[i_] >= cp_1)`).
 
@@ -126,9 +128,9 @@ Look at the JAGS code under `# par_x local to each segment` and `# Formula for m
 
 # Reparameterizations
 
-By default (`mcp(..., reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model. Only the sampling becomes faster and converges more reliably. `reparam = FALSE` shows the plain model.
+By default (`options(mcp_reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model. Only the sampling becomes faster and converges more reliably. `options(mcp_reparam = FALSE)` shows the plain model.
 
-Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. In the plain model, an intercept is the value at the start of its segment, and a joined segment starts where the previous segment ended. So if JAGS moves a change point $\tau_k$ while holding the slopes fixed, the lines of segment $k+1$, and of all later joined segments, shift up or down. Such moves fit the data badly and are mostly rejected, so the change points and the coefficients must creep along together, which mixes slowly. With `reparam = TRUE`, `mcp` instead samples quantities that stay in place when a change point moves.
+Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. In the plain model, an intercept is the value at the start of its segment, and a joined segment starts where the previous segment ended. So if JAGS moves a change point $\tau_k$ while holding the slopes fixed, the lines of segment $k+1$, and of all later joined segments, shift up or down. Such moves fit the data badly and are mostly rejected, so the change points and the coefficients must creep along together, which mixes slowly. With reparameterizations, `mcp` instead samples quantities that stay in place when a change point moves.
 
 All reparameterizations follow from one fact: if a coefficient $\beta$ has a location-scale prior, e.g., $\beta \sim \text{Normal}(m, s)$, then for any shift $a$ and scale $b > 0$,
 
@@ -159,10 +161,10 @@ The same rules apply to distributional parameters such as `sigma(1 + x)`.
 ## Segment 1 intercept: `_mid_`
 
 ```{r, eval = FALSE}
-# reparam = FALSE
+# mcp_reparam = FALSE
 Intercept_1 ~ dnorm(0 - x_1 * 1, 1/(2.4)^2)  # JAGS uses dnorm(mean, precision) with precision = 1/SD^2. Here SD = 2.4
 
-# reparam = TRUE
+# mcp_reparam = TRUE
 Intercept_1_mid_ ~ dnorm(0 - x_1 * 1 + x_1 * (17.5), 1/(2.4)^2)
 Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))
 x_1 ~ dnorm(0, 1/(0.084)^2)
@@ -176,10 +178,10 @@ This is the same model because $u = \beta_{1,0} + \beta_{1,1} c$ is a mere shift
 ## Joined slope: `_end_`
 
 ```{r, eval = FALSE}
-# reparam = FALSE
+# mcp_reparam = FALSE
 x_2 ~ dnorm(0, 1/(0.084)^2)  # SD = 0.084
 
-# reparam = TRUE
+# mcp_reparam = TRUE
 x_2_end_ ~ dnorm(Intercept_1 + x_1 * cp_1, 1/(0.084*(cp_2-cp_1))^2)  # SD = 0.084 * (cp_2 - cp_1)
 x_2 = (x_2_end_ - (Intercept_1 + x_1 * cp_1)) / (cp_2 - cp_1)
 ```
@@ -192,10 +194,10 @@ This is the same model because the value at the segment end is the starting valu
 ## Further joined x-terms: `_rise_`
 
 ```{r, eval = FALSE}
-# reparam = FALSE
+# mcp_reparam = FALSE
 xE2_2 ~ dnorm(0, 1/(0.00082)^2)  # SD = 0.00082
 
-# reparam = TRUE
+# mcp_reparam = TRUE
 xE2_2_rise_ ~ dnorm(0, 1/(0.00082*(cp_2-cp_1)^2)^2)  # SD = 0.00082 * (cp_2 - cp_1)^2
 xE2_2 = xE2_2_rise_ / (cp_2 - cp_1)^2
 ```
@@ -208,10 +210,10 @@ This is the same model because the rise is a mere scaling ($a = 0$, $b = w_k^2$)
 ## Disjoined intercept: `_end_`
 
 ```{r, eval = FALSE}
-# reparam = FALSE
+# mcp_reparam = FALSE
 Intercept_3 ~ dnorm(0, 1/(2.4)^2)  # SD = 2.4
 
-# reparam = TRUE
+# mcp_reparam = TRUE
 Intercept_3_end_ ~ dnorm(0 + x_3 * (cp_3 - cp_2), 1/(2.4)^2)
 Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
 x_3 ~ dnorm(0, 1/(0.084)^2)

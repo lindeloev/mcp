@@ -601,7 +601,7 @@ test_that("x-term powers are autoscaled by the sd of the power measured from min
 
 test_that("default segment-1 intercept priors are placed at min(x)", {
   data = data.frame(x = 101:130, y = 1:30 + 0.5 * (1:30 > 15))
-  fit = mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE, reparam = FALSE)
+  fit = withr::with_options(list(mcp_reparam = FALSE), mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE))
   location = paste0(format_prior_number(mean(data$y)), " - x_1 * 101 - xE2_1 * 10201")
   expect_equal(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
   expect_match(fit$jags_code, paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
@@ -708,7 +708,7 @@ test_that("reparameterizations keep segment lines in place when change points mo
   expect_match(sigma_fit$jags_code, "sigma_2 = sigma_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
 
   # The plain model
-  plain_fit = mcp(model, data, par_x = "x", sample = FALSE, reparam = FALSE)
+  plain_fit = withr::with_options(list(mcp_reparam = FALSE), mcp(model, data, par_x = "x", sample = FALSE))
   expect_false(grepl("_mid_|_end_|_rise_", plain_fit$jags_code))
   expect_match(plain_fit$jags_code, "\n  x_3 ~ dnorm")
   expect_equal(plain_fit$prior, fit$prior)
@@ -726,8 +726,9 @@ test_that("reparameterizations imply the same priors", {
   data = data.frame(x = 101:200, y = rnorm(100))
   model = list(y ~ 1 + x, ~ 0 + x, ~ 1 + x + sigma(1 + x))
   get_quantiles = function(reparam) {
+    withr::local_options(mcp_reparam = reparam)
     fit = suppressWarnings(mcp(
-      model, data, par_x = "x", sample = "prior", reparam = reparam,
+      model, data, par_x = "x", sample = "prior",
       chains = 2, iter = 5000, warmup = 200, seed = 42, quiet = TRUE
     ))
     draws = as_draws_df(fit, prior = TRUE)

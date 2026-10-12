@@ -53,12 +53,6 @@
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
 #'   framework. R-side simulation and prediction methods continue to use the
 #'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
-#' @param reparam Logical. Whether to enable reparameterization for faster mixing. Ignored
-#'   when `jags_code` is supplied. Read more in
-#'   [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
-#'   * `TRUE` (default) This changes only `fit$jags_code` and sampling efficiency, not the 
-#'     model, the priors, or the posterior. 
-#'   * `FALSE` runs the plain model. This mostly serves the pedagogical purpose of transparency.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
 #'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
@@ -70,7 +64,7 @@
 #'   warnings. In [summary.mcpfit()], `NULL` inherits the settings used to fit
 #'   the model, while a list or `FALSE` overrides the diagnostic footer.
 #' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
-#'   messages? Defaults to `FALSE`.
+#'   messages? Defaults to `FALSE`. Use `options(mcp_quiet = TRUE)` to change the default for the session.
 #'
 #' @details
 #' Here is the demo model, which ships already fitted as `demo_fit` (see also `mcp_example("demo")`):
@@ -181,10 +175,9 @@ mcp = function(
   warmup = 1000,
   inits = NULL,
   jags_code = NULL,
-  reparam = TRUE,
   seed = NULL,
   diagnostics = list(),
-  quiet = FALSE,
+  quiet = getOption("mcp_quiet", FALSE),
   cores = NULL,
   adapt = lifecycle::deprecated()
 ) {
@@ -255,11 +248,11 @@ mcp = function(
   checkmate::assert_list(inits, null.ok = TRUE)
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
   diagnostics = resolve_diagnostics(diagnostics)
-  if (missing(quiet)) {
-    quiet = isTRUE(getOption("mcp.quiet", FALSE)) || identical(Sys.getenv("IN_PKGDOWN"), "true")
-  }
-  checkmate::assert_flag(reparam)
+  if (missing(quiet) && identical(Sys.getenv("IN_PKGDOWN"), "true"))
+    quiet = TRUE
   checkmate::assert_flag(quiet)
+  reparam = getOption("mcp_reparam", TRUE)  # See ?mcp-package
+  checkmate::assert_flag(reparam, .var.name = "getOption(\"mcp_reparam\")")
 
   # jags_code
   if (custom_jags_code && (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{")))

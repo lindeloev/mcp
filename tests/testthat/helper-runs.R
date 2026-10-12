@@ -55,7 +55,8 @@ test_runs = function(model,
   testthat::expect_true(is.list(empty$.internal), model)
 
   # The plain model has the same parameters and priors, without auxiliary nodes
-  plain = mcp(model = model, data = data, prior = prior, family = family, par_x = par_x, sample = FALSE, reparam = FALSE, quiet = TRUE)
+  plain = withr::with_options(list(mcp_reparam = FALSE),
+    mcp(model = model, data = data, prior = prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE))
   testthat::expect_identical(mcp_pars(plain), parameters, label = model)
   testthat::expect_identical(plain$prior, empty$prior, label = model)
   testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)

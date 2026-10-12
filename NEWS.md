@@ -24,7 +24,7 @@
 
 - **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations and used to complete response histories in AR/MA models. Predictions generate fresh replicated outcomes at every row; `predict(fit) |> filter(is.na(y))` can be used to see predictive intervals and draws at missing points, and similarly `fitted()` for expected responses. Missing AR/MA histories remain unsupported in `log_lik()`, `loo()`, and `waic()`.
 
-- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This is due to reparameterizations that keep intercepts and slopes relatively independent of earlier segments during sampling and due to (selectively) using the JAGS glm module. The reparameterizations do not change the model or its priors. Compare `fit$jags_code` between `mcp(..., reparam = FALSE)` and `mcp(..., reparam = TRUE)` (new default). Read more in [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html).
+- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This is due to reparameterizations that keep intercepts and slopes relatively independent of earlier segments during sampling and due to (selectively) using the JAGS glm module. The reparameterizations do not change the model or its priors. Compare `fit$jags_code` with `options(mcp_reparam = FALSE)` (plain model) and `options(mcp_reparam = TRUE)` (default). Read more in [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html).
 
 ## Major breaking changes
 
