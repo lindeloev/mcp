@@ -225,9 +225,8 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     id = factor(rep(1:5, each = 2)),
     y = 1:10
   )
-  rounded = function(x) as.numeric(format_prior_number(x))
   x_scale = format_prior_number(2.5 / stats::sd(d$x))
-  cat_scale = format_prior_number(2.5 / rounded(stats::sd(d$cat == "B")))
+  cat_scale = format_prior_number(2.5 / stats::sd(d$cat == "B"))
   for (fam in list(poisson(), negbinomial())) {
     fit = mcp(
       list(y ~ 1 + x + cat + (1 + x + cat || id)),
@@ -387,14 +386,14 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
 
   # Categorical contrast on log link uses dnorm(0, 2.5 / sd(dummy))
   group_row = ps[ps$parameter == "groupB_1", ]
-  expected_group_sd = format_prior_number(2.5 / as.numeric(format_prior_number(stats::sd(d$group == "B"))))
-  testthat::expect_equal(group_row$prior, paste0("normal(mean = 0, sd = ", expected_group_sd, ")"))
+  expected_group_sd = format_prior_number(2.5 / stats::sd(d$group == "B"))
+  testthat::expect_equal(group_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_group_sd, ")")))
   testthat::expect_equal(fit$prior$groupB_1, paste0("dnorm(0, ", expected_group_sd, ")"))
 
   # Slope on log link uses dnorm(0, 2.5 / sd(x))
   time_row = ps[ps$parameter == "time_1", ]
   expected_slope_sd = format_prior_number(2.5 / stats::sd(d$time))
-  testthat::expect_equal(time_row$prior, paste0("normal(mean = 0, sd = ", expected_slope_sd, ")"))
+  testthat::expect_equal(time_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_slope_sd, ")")))
   testthat::expect_equal(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
 
   # Group SDs are half-normals
@@ -403,7 +402,7 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   testthat::expect_equal(id_int_row$bounds, "[0, Inf]")
 
   id_time_row = ps[ps$parameter == "time_1_id_sd", ]
-  testthat::expect_equal(id_time_row$prior, paste0("normal(mean = 0, sd = ", expected_slope_sd, ")"))
+  testthat::expect_equal(id_time_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_slope_sd, ")")))
   testthat::expect_equal(id_time_row$bounds, "[0, Inf]")
 
   # Sigma_1 uses response-scale half-Student-t
@@ -460,7 +459,7 @@ test_that("priors are resolved without changing their parameterization", {
     sample = FALSE
   )
 
-  expect_equal(fit$prior$Intercept_1, "dt(5.5, 3.7065, 3) T(, 9)")
+  expect_equal(fit$prior$Intercept_1, paste0("dt(5.5, ", format_prior_number(stats::mad(data$y)), ", 3) T(, 9)"))
   expect_equal(fit$prior$x_2, "x_1/5")
   expect_equal(fit$.internal$prior_format, "jags_string_v1")
   expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
@@ -493,6 +492,22 @@ test_that("priors are resolved without changing their parameterization", {
 })
 
 
+test_that("resolved priors keep full precision regardless of options(digits)", {
+  withr::local_options(digits = 3)
+  data = data.frame(x = c(1, 2, 4, 7.3, 8, 9), y = 1:6)
+  fit = mcp(list(y ~ 1 + x), data, sample = FALSE, prior = list(Intercept_1 = "dnorm(0, 1/3)"))
+  slope_sd = 2.5 * stats::sd(data$y) / stats::sd(data$x)
+  expect_equal(fit$prior$Intercept_1, "dnorm(0, 0.33333333333333331)")
+  expect_identical(as.numeric(sub("dnorm\\(0, (.*)\\)", "\\1", fit$prior$x_1)), slope_sd)
+  expect_match(fit$jags_code, paste0("x_1 ~ dnorm(0, 1/(", format_prior_number(slope_sd), ")^2)"), fixed = TRUE)
+
+  # Only prior_summary() is rounded for display
+  ps = prior_summary(fit)
+  expect_equal(ps$prior[ps$parameter == "Intercept_1"], "normal(mean = 0, sd = 0.33333)")
+  expect_equal(ps$prior[ps$parameter == "x_1"], paste0("normal(mean = 0, sd = ", signif(slope_sd, 5), ")"))
+})
+
+
 test_that("change point priors refer to the exact data limits cp_0 and cp_K", {
   data = data.frame(x = c(0.618632254190743, 2:9, 9.87654321), y = 1:10)
   fit = mcp(
@@ -501,7 +516,7 @@ test_that("change point priors refer to the exact data limits cp_0 and cp_K", {
   )
   expect_equal(fit$prior$cp_1, "dunif(cp_0, 5)")
   expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(cp_1, cp_3)")
-  expect_equal(fit$prior$Intercept_1, "dnorm(0.6186323, 1)")
+  expect_equal(fit$prior$Intercept_1, "dnorm(0.618632254190743, 1)")
   expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_1,cp_3)  # User-specified prior with required bounds added by mcp\n  cp_3 = max(x)\n", fixed = TRUE)
 })
 

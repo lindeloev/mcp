@@ -74,23 +74,22 @@ test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)
     sample = FALSE
   )
 
-  rounded = function(x) as.numeric(format_prior_number(x))
   scaled = function(dist, base, predictor_sd) {
     tail = if (dist == "dt") ", 3)" else ")"
     paste0(dist, "(0, ", format_prior_number(base / predictor_sd), tail)
   }
   mu_base = 2.5 * stats::sd(data$y)
   x_sd = stats::sd(data$x)
-  z_sd = rounded(stats::sd(data$z))
+  z_sd = stats::sd(data$z)
 
   expect_equal(fit$prior$x_1, scaled("dnorm", mu_base, x_sd))
   expect_equal(fit$prior$xE2_1, scaled("dnorm", mu_base, stats::sd((data$x - min(data$x))^2)))
   expect_equal(fit$prior$z_1, scaled("dnorm", mu_base, z_sd))
-  expect_equal(fit$prior$logw_1, scaled("dnorm", mu_base, rounded(stats::sd(log(data$w)))))
-  expect_equal(fit$prior$b_1, scaled("dnorm", mu_base, rounded(stats::sd(data$b))))
-  expect_equal(fit$prior$gb_1, scaled("dnorm", mu_base, rounded(stats::sd(data$g == "b"))))
+  expect_equal(fit$prior$logw_1, scaled("dnorm", mu_base, stats::sd(log(data$w))))
+  expect_equal(fit$prior$b_1, scaled("dnorm", mu_base, stats::sd(data$b)))
+  expect_equal(fit$prior$gb_1, scaled("dnorm", mu_base, stats::sd(data$g == "b")))
   expect_equal(fit$prior$xz_1, scaled("dnorm", mu_base, x_sd * z_sd))
-  expect_equal(fit$prior$zgb_1, scaled("dnorm", mu_base, rounded(stats::sd(data$z * (data$g == "b")))))
+  expect_equal(fit$prior$zgb_1, scaled("dnorm", mu_base, stats::sd(data$z * (data$g == "b"))))
   expect_equal(fit$prior$sigma_z_1, scaled("dt", 2.5, z_sd))
   expect_equal(fit$prior$sigma_zx_1, scaled("dt", 2.5, x_sd * z_sd))
 })

@@ -4,7 +4,8 @@
 # resolved values stored in fit$prior and the metadata shown by prior_summary().
 # JAGS precision conversion remains a separate final code-generation step.
 
-# Format one numeric prior value for stable display and generated code.
+# Serialize one numeric prior value for fit$prior and generated code.
+# Uses the shortest exact representation, independent of options(digits).
 format_prior_number = function(x) {
   if (length(x) != 1 || !is.numeric(x))
     stop_github("Expected one numeric prior value.")
@@ -12,7 +13,28 @@ format_prior_number = function(x) {
     return(if (is.nan(x)) "NaN" else "NA")
   if (is.infinite(x))
     return(ifelse(x > 0, "Inf", "-Inf"))
-  format(signif(x, 15), scientific = FALSE, trim = TRUE)
+  x = as.double(x)
+  out = sprintf("%.15g", x)
+  if (as.numeric(out) != x)
+    out = sprintf("%.17g", x)
+  out
+}
+
+
+# Deparse a prior expression without rounding numbers (deparse() uses 15 digits).
+deparse_prior = function(expr) {
+  out = deparse1(expr, backtick = TRUE)
+  if (nzchar(out) && !identical(str2lang(out), expr))
+    out = deparse1(expr, backtick = TRUE, control = c("keepNA", "keepInteger", "niceNames", "showAttributes", "digits17"))
+  out
+}
+
+
+# Round numbers in prior strings for display in prior_summary(). Values used in the model remain exact.
+format_prior_display = function(x, digits = 5) {
+  stringr::str_replace_all(x, "(?<![\\w.])\\d+\\.?\\d*(?:[eE][+-]?\\d+)?", function(num) {
+    vapply(as.numeric(num), function(value) format_prior_number(signif(value, digits)), character(1))
+  })
 }
 
 
@@ -87,7 +109,7 @@ parse_prior_call = function(x) {
     target = if (name == "T") "truncation" else "distributions"
     stop("Named arguments are not supported in prior ", target, ": '", trimws(x), "'.")
   }
-  args = vapply(call_args, function(arg) deparse1(arg, backtick = TRUE), character(1), USE.NAMES = FALSE)
+  args = vapply(call_args, deparse_prior, character(1), USE.NAMES = FALSE)
   list(name = name, args = args)
 }
 
@@ -165,7 +187,7 @@ resolve_prior_expression = function(x, context) {
   resolved = resolve_prior_ast(expr, context)
   if (is.numeric(resolved))
     return(format_prior_number(resolved))
-  paste(deparse(resolved, width.cutoff = 500L), collapse = "")
+  deparse_prior(resolved)
 }
 
 
@@ -308,15 +330,15 @@ compile_prior_record = function(parameter, code, all_names, context, source,
       distribution = if (source == "default") "Family-defined default prior" else "User-specified prior",
       alias = paste0("Same value as ", trimws(display_original)),
       expression = "Deterministic expression",
-      constant = paste0("Fixed at ", resolved)
+      constant = paste0("Fixed at ", format_prior_display(resolved))
     )
   }
 
   tibble::tibble(
     parameter = parameter,
-    prior = if (kind == "distribution") human_prior_call(resolved) else resolved,
-    bounds = prior_bounds(display_original, parameter, all_names, context),
-    rule = rule,
+    prior = format_prior_display(if (kind == "distribution") human_prior_call(resolved) else resolved),
+    bounds = format_prior_display(prior_bounds(display_original, parameter, all_names, context)),
+    rule = format_prior_display(rule),
     description = description,
     source = source,
     kind = kind,

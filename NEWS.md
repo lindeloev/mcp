@@ -137,7 +137,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Priors and hypotheses:**
 
-  - Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`). Default priors are now resolved before JAGS code is generated, so `fit$prior` and generated code no longer depend on opaque data constants.
+  - Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`).
 
   - With the introduction of multiple regression including categorical predictors (including for distributional parameters) come default priors. Coefficients are autoscaled as in [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html), i.e., divided by the SD of their model-matrix column (see "Priors and distributions" below). See `prior_summary(fit, verbose = TRUE)` for details.
 

@@ -64,6 +64,8 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #' parameterization rather than JAGS precision. Symbolic expressions in bounds
 #' (e.g. `min(x)` or `max(x)`) may be retained in symbolic form in compact output,
 #' while `verbose = TRUE` displays the underlying rule, description, source, and kind.
+#' Numbers are rounded to 5 significant digits for display. `fit$prior` holds the exact
+#' values used in the model.
 #'
 #' `prior_summary()` shares its generic with \pkg{rstantools} (used by `brms` and `rstanarm`), so it
 #' works for all of these models regardless of package load order.
