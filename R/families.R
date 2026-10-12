@@ -236,7 +236,7 @@ mcpfamily_gaussian = function(family) {
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled mean coefficient (rstanarm default)", "always"
     )
   } else {
-    log_y = "log(pmax(.y, 0.1))"
+    log_y = "log(ifelse(.y <= 0, 0.1, .y))"
     mu_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
       "mu", "Intercept", paste0("dnorm(round(median(", log_y, "), 1), max(2.5, round(mad(", log_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-mean intercept with a minimum scale of 2.5", "always",
@@ -500,7 +500,7 @@ mcpfamily_poisson = function(family) {
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled count coefficient on the response scale", "always"
     )
   } else if (family$link == "log") {
-    count_y = "log(pmax(.y, 0.1))"
+    count_y = "log(ifelse(.y <= 0, 0.1, .y))"
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
       "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
@@ -575,7 +575,7 @@ mcpfamily_negbinomial = function(family) {
   if (family$link != "log" || family$link_shape != "log")
     stop("Negative-binomial models currently require log links for both mu and shape.")
 
-  count_y = "log(pmax(.y, 0.1))"
+  count_y = "log(ifelse(.y <= 0, 0.1, .y))"
   default_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
     "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",

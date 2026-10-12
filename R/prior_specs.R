@@ -166,7 +166,7 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
       if (!is.null(spec)) {
         sym = if (length(offset_specs) <= 1) "offset" else paste0("offset_", spec$segment)
         if (joined$prior_type[i] == "Intercept")
-          joined$prior[i] = gsub("log(pmax(.y, 0.1))", paste0("log(pmax(.y, 0.1)) - ", sym), joined$prior[i], fixed = TRUE)
+          joined$prior[i] = gsub("log(ifelse(.y <= 0, 0.1, .y))", paste0("log(ifelse(.y <= 0, 0.1, .y)) - ", sym), joined$prior[i], fixed = TRUE)
         joined$description[i] = gsub("log-count|log-mean", "log-rate", joined$description[i])
       }
     }

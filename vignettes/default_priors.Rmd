@@ -42,7 +42,7 @@ General quantities used in the table below:
 
 - log-rate scale $S_{\text{rate}} = \max(2.5, \operatorname{mad}(y_{\text{rate}}))$
 
-- log-rate $y_{\text{rate}} = \log(\operatorname{pmax}(y, 0.1)) - \text{offset}$ (with $\text{offset} = 0$ if absent)
+- log-rate $y_{\text{rate}} = \log(y) - \text{offset}$, with $y \le 0$ replaced by 0.1, as `brms` does for zeros (and $\text{offset} = 0$ if absent)
 
 
 | Parameter & Link | Intercept | Coefficients | Group SD ($\sigma_{\text{group}}$) | Precedent |

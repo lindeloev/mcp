@@ -382,7 +382,7 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   ps = prior_summary(fit, verbose = TRUE)
   int_row = ps[ps$parameter == "Intercept_1", ]
   testthat::expect_match(int_row$prior, "^normal\\(mean = [0-9.]+ - time_1 \\* 1, sd = [0-9.]+\\)$")
-  testthat::expect_match(int_row$rule, "log\\(pmax\\(y, 0.1\\)\\)")
+  testthat::expect_match(int_row$rule, "log(ifelse(y <= 0, 0.1, y))", fixed = TRUE)
 
   # Categorical contrast on log link uses dnorm(0, 2.5 / sd(dummy))
   group_row = ps[ps$parameter == "groupB_1", ]
@@ -562,7 +562,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
     list(y ~ 1 + x), wide_data,
     family = gaussian(link = "log"), sample = FALSE
   )
-  expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5 - x_1 * 1, 7.1)")
+  expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5 - x_1 * 1, 11.1)")  # mad(log(y)), with no values floored
   expect_equal(wide_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(wide_data$x)), ")"))
   expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0, )")
 
@@ -572,6 +572,15 @@ test_that("Gaussian defaults use coherent response and link scales", {
     family = gaussian(link = "log"), sample = FALSE
   )
   expect_equal(zero_fit$prior$Intercept_1, "dnorm(0.9 - x_1 * 1, 2.5)")
+
+  # Positive responses below 0.1 are not floored, so the location is scale-free (as in brms)
+  tiny_data = data.frame(x = 1:6, y = c(1, 2, 3, 4, 5, 6) / 1000)
+  tiny_fit = mcp(
+    list(y ~ 1 + x), tiny_data,
+    family = gaussian(link = "log"), sample = FALSE
+  )
+  tiny_prior = prior_summary(tiny_fit)$prior[prior_summary(tiny_fit)$parameter == "Intercept_1"]
+  expect_equal(tiny_prior, paste0("normal(mean = ", round(median(log(tiny_data$y)), 1), " - x_1 * 1, sd = 2.5)"))
 
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)

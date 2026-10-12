@@ -125,7 +125,7 @@ allowed_data_expression = function(expr, data_names) {
   fun = as.character(expr[[1]])
   if (fun %notin% c(
     "+", "-", "*", "/", "^", "(", "log", "exp", "sqrt", "abs",
-    "min", "max", "pmin", "pmax", "round"
+    "min", "max", "pmin", "pmax", "round", "ifelse", "<="
   )) return(FALSE)
   all(vapply(as.list(expr)[-1], allowed_data_expression, logical(1), data_names = data_names))
 }
