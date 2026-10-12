@@ -601,7 +601,8 @@ fitted.mcpfit = function(
 #' Methods for the `{rstantools}` posterior-prediction generics. They return a
 #' draws-by-observation matrix and enable `{tidybayes}` workflows such as
 #' `add_epred_draws()`, `add_predicted_draws()`, and `add_linpred_draws()`.
-#' These methods and workflows require the suggested package `{rstantools}`.
+#' mcp exports these generics, so they work without `{rstantools}`. If `{rstantools}` or
+#' `{brms}` masks them, their generics dispatch to the same methods.
 #'
 #' @param object An `mcpfit` object.
 #' @inheritParams pp_eval
@@ -639,6 +640,7 @@ fitted.mcpfit = function(
 #'   inverse-linked parameter directly, evaluating success probabilities \eqn{\mu}
 #'   in \eqn{[0, 1]} rather than counts.
 #' @seealso [fitted.mcpfit()], [predict.mcpfit()]
+#' @export
 #' @exportS3Method rstantools::posterior_epred
 posterior_epred.mcpfit = function(
   object,
@@ -670,6 +672,7 @@ posterior_epred.mcpfit = function(
 
 
 #' @rdname posterior_epred.mcpfit
+#' @export
 #' @exportS3Method rstantools::posterior_predict
 posterior_predict.mcpfit = function(
   object,
@@ -700,6 +703,7 @@ posterior_predict.mcpfit = function(
 
 
 #' @rdname posterior_epred.mcpfit
+#' @export
 #' @exportS3Method rstantools::posterior_linpred
 posterior_linpred.mcpfit = function(
   object,
@@ -782,6 +786,32 @@ posterior_prediction_matrix = function(
     scale = scale,
     .garma_replicate = !conditional
   )
+}
+
+
+# If mcp masks the rstantools generics below, forward e.g. brmsfit objects to them
+#' @rdname posterior_epred.mcpfit
+#' @export
+posterior_epred = function(object, ...) {
+  if (!inherits(object, "mcpfit") && isNamespaceLoaded("rstantools"))
+    return(rstantools::posterior_epred(object, ...))
+  UseMethod("posterior_epred")
+}
+
+#' @rdname posterior_epred.mcpfit
+#' @export
+posterior_predict = function(object, ...) {
+  if (!inherits(object, "mcpfit") && isNamespaceLoaded("rstantools"))
+    return(rstantools::posterior_predict(object, ...))
+  UseMethod("posterior_predict")
+}
+
+#' @rdname posterior_epred.mcpfit
+#' @export
+posterior_linpred = function(object, ...) {
+  if (!inherits(object, "mcpfit") && isNamespaceLoaded("rstantools"))
+    return(rstantools::posterior_linpred(object, ...))
+  UseMethod("posterior_linpred")
 }
 
 
