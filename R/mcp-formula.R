@@ -63,7 +63,7 @@
 #' * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD).
 #'   [Read more](https://lindeloev.github.io/mcp/articles/dpar.html).
 #' * `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series residuals on the link scale
-#'   (accepts regression formulas, `series = id`, and `threshold`; include them in every segment where they apply).
+#'   (accepts regression formulas; include them in every segment where they apply). Set `series = id` and `threshold` once in any term; they apply to all segments.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/arma.html).
 #' * `~ 1 + same(x)` or `0 + same(z, as = 1)`: Reuse a coefficient from the preceding segment (default)
 #'   or from segment `as`. Reused coefficients are estimated jointly from all segments where they are

@@ -454,36 +454,13 @@ get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
 
 
 
-# Build the observation-threshold formula used by GARMA terms
-#
-# A threshold supplied with an AR or MA term applies until the next such
-# term. The first supplied threshold also applies to earlier observations so
-# they can safely be used as lags.
-get_garma_threshold_jagscode = function(segments, predictors, par_x) {
-  threshold_table = predictors %>%
-    dplyr::filter(.data$dpar %in% c("ar", "ma"), !is.na(.data$threshold)) %>%
-    dplyr::distinct(.data$segment, .data$threshold) %>%
-    dplyr::arrange(.data$segment)
-
-  if (nrow(threshold_table) == 0)
+# Build the observation-threshold node used by GARMA terms. One threshold applies to all segments.
+get_garma_threshold_jagscode = function(predictors) {
+  threshold = unique(stats::na.omit(predictors$threshold))
+  if (length(threshold) == 0)
     return("")
-  if (anyDuplicated(threshold_table$segment))
-    stop_github("Found multiple GARMA thresholds in one segment.")
 
-  threshold_code = stats::setNames(segments$cp_code_form, segments$segment)
-  threshold_parts = character(nrow(threshold_table))
-  for (i in seq_len(nrow(threshold_table))) {
-    lower = if (i == 1) "" else paste0("(", par_x, "[i_] >= ", threshold_code[[as.character(threshold_table$segment[i])]], ") * ")
-    upper = if (i == nrow(threshold_table)) "" else paste0("(", par_x, "[i_] < ", threshold_code[[as.character(threshold_table$segment[i + 1])]], ") * ")
-    threshold_value = sprintf("%.15g", threshold_table$threshold[i])
-    threshold_parts[i] = paste0("  ", lower, upper, threshold_value)
-  }
-
-  paste0(
-    "\n\n# GARMA observation threshold\n",
-    "garma_threshold_[i_] =\n",
-    paste0(threshold_parts, collapse = " +\n")
-  )
+  paste0("\n\n# GARMA observation threshold\ngarma_threshold_[i_] = ", sprintf("%.15g", threshold))
 }
 
 

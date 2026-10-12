@@ -767,16 +767,6 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
       dplyr::bind_rows()
   }
 
-  # AR and MA use the same transformed observation, so their threshold must be
-  # shared within a segment. One explicitly supplied value applies to both.
-  supplied_thresholds = unique(stats::na.omit(c(components$ar$threshold, components$ma$threshold)))
-  if (length(supplied_thresholds) > 1)
-    stop("ar() and ma() must use the same `threshold` within a segment.")
-
-  # Most users need no threshold argument; resolve the common default here.
-  segment_threshold = if (length(supplied_thresholds) == 1) supplied_thresholds else 0.1
-  arma_pars = lapply(arma_pars, dplyr::mutate, threshold = segment_threshold)
-
   ##########
   # RETURN #
   ##########
@@ -808,8 +798,13 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     dplyr::mutate(matrix_col = dplyr::row_number())
 
   assert_unique_predictor_names(definition_rows(predictors))
-  if ("threshold" %notin% names(predictors))
-    predictors$threshold = rep(NA_real_, nrow(predictors))
+
+  # AR and MA transform the same response history, so one threshold applies to all segments.
+  thresholds = unique(unlist(lapply(components, function(x) stats::na.omit(c(x$ar$threshold, x$ma$threshold)))))
+  if (length(thresholds) > 1)
+    stop("Only one `threshold` value can be specified across all ar() and ma() terms.")
+  threshold = if (length(thresholds) == 1) thresholds else 0.1  # Default
+  predictors$threshold = ifelse(predictors$dpar %in% c("ar", "ma"), threshold, NA_real_)
 
   # How long each population term applies. x-terms and intercepts join later segments until the
   # next intercept for the same dpar and AR/MA lag, which starts a disjoined segment. AR/MA terms

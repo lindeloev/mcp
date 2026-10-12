@@ -56,7 +56,7 @@ GARMA currently supports only the default links for `gaussian()` (identity), `bi
 
 The transformed observation $y^*_t$ keeps log and logit residuals finite when observations lie on the domain boundary of the link function, using a threshold constant $c$ (default `threshold = 0.1`). For Poisson and negative-binomial models, zero counts are replaced by $c$, so $y^*_t = \max(y_t, c)$. For binomial models, observed success counts are constrained to $[c, n_t - c]$ before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*_t$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
 
-The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, threshold = 0.01) + ma(1)`. AR and MA share one threshold within a segment, and the threshold may differ between segments. Supplying different AR and MA thresholds in the same segment is an error.
+The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, threshold = 0.01) + ma(1)`. Like `series`, the threshold is set once and applies to all `ar()` and `ma()` terms in all segments, since they transform the same response history. Supplying different thresholds is an error.
 
 # Simple example
 

@@ -283,8 +283,7 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
   expect_match(poisson_fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
   expect_match(binomial_fit$jags_code, "garma_y_\\[i_\\] = min\\(max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\), N\\[i_\\] - garma_threshold_\\[i_\\]\\) / N\\[i_\\]")
   expect_match(binomial_fit$jags_code, "garma_link_y_\\[i_\\] = logit\\(garma_y_\\[i_\\]\\)")
-  expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] < cp_1\\) \\* 0\\.1")
-  expect_match(segmented_fit$jags_code, "\\(x\\[i_\\] >= cp_1\\) \\* 0\\.2")
+  expect_match(segmented_fit$jags_code, "garma_threshold_\\[i_\\] = 0\\.2\n")
 })
 
 

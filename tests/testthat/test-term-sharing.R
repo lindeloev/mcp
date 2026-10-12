@@ -27,7 +27,7 @@ test_that("AR sharing resolves every lag and preserves current segment transitio
     paste0(".pred_", get_predictor_design_names(tables$predictors, tables$group_effects)))
   expect_equal(values$ar1_, rep(0.3, 12))
   expect_equal(values$ar2_, rep(-0.1, 12))
-  expect_equal(values$garma_threshold_, ifelse(data$x < 6, 0.1, 0.2))
+  expect_equal(values$garma_threshold_, rep(0.2, 12))
   expect_error(mcp(list(y ~ 1 + ar(1), ~ 1 + ar(2, same(1))),
     data, par_x = "x", sample = FALSE), "lag 2")
 

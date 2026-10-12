@@ -66,7 +66,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
   }, character(1))
   formula_jags_dpars = paste0(formula_jags_dpars_list, collapse = "\n\n")
 
-  garma_threshold_str = get_garma_threshold_jagscode(segments, predictors, par_x)
+  garma_threshold_str = get_garma_threshold_jagscode(predictors)
 
   # Concatenate and return
   formula_jags = paste0(local_x_str, garma_threshold_str, "\n\n", formula_jags_dpars)

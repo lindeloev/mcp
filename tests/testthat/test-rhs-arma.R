@@ -155,52 +155,30 @@ test_that("MA order errors describe MA syntax", {
 })
 
 
-test_that("GARMA thresholds default to 0.1 and can vary by segment", {
-  data = data.frame(x = 1:6, y = 1:6)
-  predictors = get_predictors(
-    list(
-      y ~ ar(1),
-      ~ ar(1, 1 + x, threshold = 0.2)
-    ),
-    data,
-    mcpfamily(gaussian()),
-    par_x = "x"
-  )
-
-  thresholds = predictors %>%
-    dplyr::filter(.data$dpar == "ar") %>%
-    dplyr::distinct(.data$segment, .data$threshold)
-  expect_equal(thresholds$threshold, c(0.1, 0.2))
-
-  expect_error(
-    get_predictors(list(y ~ ar(1, threshold = 0)), data, mcpfamily(gaussian()), "x"),
-    "`threshold` in ar() must be one number between 0 and 1.",
-    fixed = TRUE
-  )
-})
-
-
-test_that("AR and MA share one threshold within a segment", {
+test_that("One GARMA threshold applies to all segments and defaults to 0.1", {
   data = data.frame(x = 1:6, y = 1:6)
   family = mcpfamily(gaussian())
+  get_thresholds = function(model) {
+    predictors = get_predictors(model, data, family, par_x = "x")
+    unique(predictors$threshold[predictors$dpar %in% c("ar", "ma")])
+  }
 
-  predictors = get_predictors(
-    list(y ~ ar(1, threshold = 0.2) + ma(1)),
-    data,
-    family,
-    par_x = "x"
-  )
-  expect_equal(unique(predictors$threshold[predictors$dpar == "ar"]), 0.2)
-  expect_equal(unique(predictors$threshold[predictors$dpar == "ma"]), 0.2)
+  expect_equal(get_thresholds(list(y ~ ar(1), ~ ar(1, 1 + x))), 0.1)
+  expect_equal(get_thresholds(list(y ~ ar(1), ~ ar(1, 1 + x, threshold = 0.2) + ma(1))), 0.2)
 
   expect_error(
-    get_predictors(
-      list(y ~ ar(1, threshold = 0.2) + ma(1, threshold = 0.3)),
-      data,
-      family,
-      par_x = "x"
-    ),
-    "ar() and ma() must use the same `threshold` within a segment.",
+    get_predictors(list(y ~ ar(1, threshold = 0.2) + ma(1, threshold = 0.3)), data, family, "x"),
+    "Only one `threshold` value can be specified across all ar() and ma() terms.",
+    fixed = TRUE
+  )
+  expect_error(
+    get_predictors(list(y ~ ar(1, threshold = 0.2), ~ ar(1, threshold = 0.3)), data, family, "x"),
+    "Only one `threshold` value can be specified across all ar() and ma() terms.",
+    fixed = TRUE
+  )
+  expect_error(
+    get_predictors(list(y ~ ar(1, threshold = 0)), data, family, "x"),
+    "`threshold` in ar() must be one number between 0 and 1.",
     fixed = TRUE
   )
 })

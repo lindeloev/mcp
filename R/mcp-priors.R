@@ -8,14 +8,13 @@
 #' @details
 #' Each value in the list is either
 #'
-#'  * A distribution in `mcp`'s JAGS-string syntax (e.g.,
+#'  * A distribution (e.g.,
 #'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
-#'      conventional prior distribution. Weakly informative defaults
+#'      conventional prior distribution. This is not strictly JAGS, since `mcp` uses conventional distribution scales rather than JAGS precision:
+#'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
+#'      log-SD for `dlnorm()`. Weakly informative defaults
 #'      are used where priors are not specified. These are designed for stable
 #'      estimation and prediction, but should be justified before hypothesis testing.
-#'      `mcp` uses conventional distribution scales rather than JAGS precision:
-#'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
-#'      log-SD for `dlnorm()`.
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), equating parameters via JAGS.
 #'      Note that sharing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)

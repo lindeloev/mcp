@@ -104,7 +104,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Generalized AR/MA:**
 
-  - Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., threshold = 0.1)` by default to keep observations finite on the link scale. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `series = <column>`.
+  - Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., threshold = 0.1)` by default to keep observations finite on the link scale. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `ar(..., series = <column>)`. Set `series` and `threshold` once in any `ar()` or `ma()` term; they apply to all segments.
 
   - GARMA observation thresholds are now validated with family-appropriate bounds: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
 
@@ -120,8 +120,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
   - Use `mcp(..., seed = 42)` or `set.seed(42)` before `mcp()` for reproducible JAGS sampling, whether chains run sequentially or in parallel. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
 
   - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors. The JAGS model-compilation text is no longer printed by default.
-
-  - Added `mcp(..., series = "data_column")` to identify independent series in models with AR/MA terms.
 
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not stored. Use `log_lik(fit)` to compute it, or call `loo(fit)` or `waic(fit)` directly.
 
