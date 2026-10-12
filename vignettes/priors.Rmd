@@ -25,7 +25,7 @@ set.seed(42)
 
 # Setting a prior
 
-`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are JAGS code. Here is a fairly complicated example, to demonstrate the various ways priors can be used:
+`mcp` takes priors in the form of a named list. The names are the parameter names, and the values are distribution strings, fixed values, or the names of other parameters. Here is a fairly complicated example, to demonstrate the various ways priors can be used:
 
 ```{r}
 model = list(
@@ -45,7 +45,7 @@ prior = list(
 )
 ```
 
-The values use mcp's JAGS-string syntax, so JAGS distributions are generally allowed. See the [JAGS user manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf) for more details. Prior strings use R-like conventional distribution scales even though JAGS has a different parameterization underneath: SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and log-SD for `dlnorm()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
+Distribution strings use JAGS names and argument order, including `T()` truncation, so JAGS distributions are generally allowed (see the [JAGS user manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf)). However, they are not JAGS code: `mcp` uses conventional scales instead of JAGS precision, i.e., SD for `dnorm()`, SD on the log scale for `dlnorm()` (`sdlog` in `stats::dlnorm()`), and scale for `dt()`, `ddexp()`, and `dlogis()`. When generating JAGS code, `mcp` converts these to inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse scale for `ddexp()` and `dlogis()`. You can inspect the translation by comparing `fit$prior` with `fit$jags_code`.
 
 Other notes:
 

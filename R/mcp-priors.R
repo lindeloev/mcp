@@ -8,19 +8,19 @@
 #' @details
 #' Each value in the list is either
 #'
-#'  * A distribution (e.g.,
-#'      `Intercept_1 = "dnorm(0, 1) T(0,)"`) indicating a
-#'      conventional prior distribution. This is not strictly JAGS, since `mcp` uses conventional distribution scales rather than JAGS precision:
-#'      SD for `dnorm()`, scale for `dt()`, `ddexp()`, and `dlogis()`, and
-#'      log-SD for `dlnorm()`. Weakly informative defaults
-#'      are used where priors are not specified. These are designed for stable
-#'      estimation and prediction, but should be justified before hypothesis testing.
+#'  * A distribution string (e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`). Distributions use JAGS names
+#'      and argument order, including `T()` truncation, but with conventional scales instead of JAGS
+#'      precision: SD for `dnorm()`, SD on the log scale for `dlnorm()` (`sdlog` in [stats::dlnorm()]),
+#'      and scale for `dt()`, `ddexp()`, and `dlogis()`. Change points also accept `dirichlet(alpha)`,
+#'      and all priors accept data-dependent terms such as `sd(y)` (see below).
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
-#'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), equating parameters via JAGS.
+#'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), sharing that parameter's value.
 #'      Note that sharing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
 #'      is generally preferred. If two group-level deviations are shared via the prior,
 #'      they will need to have the same grouping variable.
 #'
+#' Weakly informative defaults are used where priors are not specified. These are designed for stable
+#' estimation and prediction, but should be justified before hypothesis testing.
 #' Default priors follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with
 #' a few documented deviations:
 #'
