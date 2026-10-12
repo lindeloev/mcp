@@ -382,7 +382,7 @@ print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
 #' @exportS3Method nlme::fixef
 fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...) {
   rlang::check_dots_empty()
-  checkmate::assert_subset(dpar, stats::na.omit(mcp_pars(object)$dpar))
+  checkmate::assert_subset(dpar, c(object$family$dpars, stats::na.omit(mcp_pars(object)$dpar)))
   get_summary(
     object, width, scope = "population", role = "fixed_effect",
     dpar = dpar, prior = prior, verbose = verbose
@@ -509,7 +509,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
   checkmate::assert_flag(prior)
   parameters = mcp_pars(object, scope = "population")
   if (is.null(pars)) {
-    checkmate::assert_subset(dpar, stats::na.omit(parameters$dpar))
+    checkmate::assert_subset(dpar, c(object$family$dpars, stats::na.omit(parameters$dpar)))
     pars = parameters$parameter[
       parameters$role == "fixed_effect" &
         parameters$dpar %in% dpar
