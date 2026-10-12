@@ -29,8 +29,10 @@
 #'      where \eqn{s_y = \mathrm{sd}(y)}{s_y = sd(y)} for identity links and \eqn{s_y = 1}{s_y = 1} for other links.
 #'      \eqn{\mathrm{sd}(\mathrm{column})}{sd(column)} is the SD of the coefficient's model-matrix column, including
 #'      the 0/1 dummies of factors. This makes the prior largely invariant to the units of `x` and `y`. Logit and
-#'      probit links use 1.5 and 1 instead of 2.5. For x-terms, `sd(x)` is taken over all data, and powers such
-#'      as `I(x^2)` use `sd((x - min(x))^2)`.
+#'      probit links use 1.5 and 1 instead of 2.5. For x-terms, `sd(column)` is `sd(x)` over all data (powers such
+#'      as `I(x^2)` use `sd((x - min(x))^2)`) times the SD of the term without `x`, e.g., `sd(x) * sd(z)`
+#'      for `x:z`. 0/1 indicators such as the dummies in `x:state` contribute a factor of 1. Unlike `rstanarm`, this
+#'      does not depend on the location of `x` and `z`.
 #'  * *Intercepts* are `normal(mean(y), 2.5 * sd(y))` for identity links, `normal(0, 1.5)` for logit, and
 #'      `normal(0, 1)` for probit. The latter two are (approximately) uniform on the probability scale.
 #'      For log links (Gaussian, Poisson, and negative binomial), intercepts are
@@ -39,6 +41,8 @@
 #'      Student-t shape and replaces zeros the same way), whereas `rstanarm` uses `normal(0, 2.5)`.
 #'      For a factor without an intercept, e.g., `y ~ 0 + state`, each factor level's coefficient is an intercept and
 #'      gets this prior where the segment starts at zero (segment 1 or joined to nothing).
+#'      With an `offset()`, the intercept location and scale are computed from the offset-adjusted response,
+#'      `y - offset` for identity links and `log(y) - offset` for log links.
 #'  * *`sigma` and group-level SDs* follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`, since
 #'      half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
 #'

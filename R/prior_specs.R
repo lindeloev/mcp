@@ -160,16 +160,22 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
     )
   }
 
-  # Offset adjustments for log-link mu intercepts
-  if (identical(family$link, "log")) {
-    offset_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
-    for (i in which(joined$dpar == "mu")) {
-      spec = get_segment_offset(design_specs, "mu", joined$segment[i])
-      if (!is.null(spec)) {
-        sym = if (length(offset_specs) <= 1) "offset" else paste0("offset_", spec$segment)
+  # Calibrate mu intercepts on the offset-adjusted response, e.g., mean(y - offset)
+  # for identity links and log(y) - offset for log links
+  offset_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
+  for (i in which(joined$dpar == "mu")) {
+    spec = get_segment_offset(design_specs, "mu", joined$segment[i])
+    if (!is.null(spec)) {
+      sym = if (length(offset_specs) <= 1) "offset" else paste0("offset_", spec$segment)
+      if (identical(family$link, "log")) {
         if (joined$prior_type[i] == "Intercept")
           joined$prior[i] = gsub("log(ifelse(.y <= 0, 0.1, .y))", paste0("log(ifelse(.y <= 0, 0.1, .y)) - ", sym), joined$prior[i], fixed = TRUE)
         joined$description[i] = gsub("log-count|log-mean", "log-rate", joined$description[i])
+      } else if (joined$prior_type[i] == "Intercept") {
+        joined$prior[i] = gsub("(.y)", paste0("(.y - ", sym, ")"), joined$prior[i], fixed = TRUE)
+        # Positive identity-link means (Poisson) allow negative intercepts down to -offset
+        joined$prior[i] = sub("T(0, )", paste0("T(-min(", sym, "), )"), joined$prior[i], fixed = TRUE)
+        joined$description[i] = sub("Positive count intercept", "Count intercept relative to the offset", joined$description[i], fixed = TRUE)
       }
     }
   }

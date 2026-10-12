@@ -357,7 +357,7 @@ compile_prior_specs = function(specs, all_names, context) {
       # A constant response (e.g., a placeholder before simulating data) has no
       # scale. Use 1 instead, as rstanarm does for non-Gaussian families.
       if (!isTRUE(context$y_sd > 0))
-        code = gsub("sd(.y)", "1", code, fixed = TRUE)
+        code = gsub("sd\\(\\.y( - offset(_[0-9]+)?)?\\)", "1", code)
       code = instantiate_prior_template(code, context)
     }
     compile_prior_record(

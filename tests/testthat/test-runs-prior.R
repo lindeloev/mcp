@@ -335,6 +335,39 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
 })
 
 
+testthat::test_that("offset adjusts identity-link default intercept priors to y - offset", {
+  d = data.frame(
+    x = 1:30,
+    y = 1000 + c(rep(5, 10), rep(10, 10), rep(20, 10)),
+    baseline = 1000 + rep(0:2, 10),
+    baseline2 = 990
+  )
+
+  for (fam in list(gaussian(), poisson(link = "identity"))) {
+    fit = mcp(
+      list(y ~ 1 + offset(baseline), ~ 1 + offset(baseline2)),
+      data = d,
+      par_x = "x",
+      family = fam,
+      sample = FALSE
+    )
+    for (i in 1:2) {
+      adjusted = d$y - d[[c("baseline", "baseline2")[i]]]
+      testthat::expect_match(fit$prior[[paste0("Intercept_", i)]], paste0("^dnorm\\(", format_prior_number(mean(adjusted)), ", ", format_prior_number(2.5 * sd(adjusted)), "\\)"))
+    }
+
+    ps = prior_summary(fit, verbose = TRUE)
+    testthat::expect_match(ps$rule[ps$parameter == "Intercept_1"], "mean(y - offset_1)", fixed = TRUE)
+
+    # Positive means (Poisson) truncate the intercept at -offset rather than 0
+    if (fam$family == "poisson") {
+      testthat::expect_match(fit$prior$Intercept_1, paste0("T(-", min(d$baseline), ", )"), fixed = TRUE)
+      testthat::expect_match(fit$prior$Intercept_2, paste0("T(-", min(d$baseline2), ", )"), fixed = TRUE)
+    }
+  }
+})
+
+
 testthat::test_that("offsets on other distributional parameters do not overwrite mu intercept priors", {
   d = data.frame(
     x = 1:10,

@@ -58,7 +58,7 @@ General quantities used in the table below:
 | **Autocorrelation** (`ar()`, `ma()`) | `normal(0, 0.5) T(-1, 1)` | contrasts: `normal(0, 0.25)`<br>slopes: `normal(0, 0.25 / sd(column))` | — | |
 | **Change points** (`cp_i`) | `dirichlet(1)` | — | `normal(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
 
-\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`. † Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations).
+\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. † Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations).
 
 
 # Default priors on group-level effects
@@ -85,6 +85,9 @@ The prior is half-normal rather than the half-Student-t used for predictor group
 - **Log links (`poisson()`, `negbinomial()`, `gaussian(link = "log")`):** Coefficients follow `rstanarm`. The intercept is centered on the data, as in `brms`, so that it adapts to the magnitude of the counts. But it has normal tails rather than `brms`'s Student-t tails, because exponentiated Student-t tails imply infinite expected counts ($\mathbb{E}[\exp(\eta)] = \infty$). For the same reason, group-level SDs are half-normal. With an `offset()`, the intercept is a log-rate, so `mcp` computes its location and scale from the observed log-rates, $\log(y) - \text{offset}$. `brms` subtracts `mean(offset)` from the location but computes the scale from the log-counts, so its prior widens when exposures vary, even if the rates do not.
 
 - **Identity link for `poisson()`:** `rstanarm` applies its unscaled defaults, e.g., `normal(0, 2.5)` for the intercept, which ignore the magnitude of the counts. `mcp` uses the Gaussian defaults instead, which are on the response scale.
+
+- **Offsets with identity links:** `rstanarm` centers the intercept on `mean(y)`, ignoring `offset()`. But with an `offset()`, the intercept describes $y - \text{offset}$, so `mcp` computes its location and scale from $y - \text{offset}$, just as for log links. `brms` subtracts `mean(offset)` from the location but computes the scale from $y$.
+
 
 - **Intercept placement:** `rstanarm` and `brms` place the intercept prior on centered predictors. `mcp` places the default prior on `Intercept_1` at $\min(x)$ for x-terms but does not center other predictors, so the prior applies where they are zero. If such a predictor is far from zero, e.g., age in years, center it before fitting or set a prior on `Intercept_1`. Read more about the [the mcp model](../articles/formulas.html).
 
