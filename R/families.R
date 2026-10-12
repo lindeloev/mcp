@@ -91,7 +91,8 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
     )),
     validate = function(y, data, response_columns) invisible(TRUE),  # Default to no validation
     observed = function(y, data, rate) y,
-    probability = function(rate) FALSE
+    probability = function(rate) FALSE,
+    is_discrete = FALSE  # Integer-valued responses? Used for predictive quantiles and weights
   )
 
   # Fill in missing top-level response elements
@@ -184,6 +185,33 @@ standardize_family_default_priors = function(defaults) {
 }
 
 
+# Default mu priors for log links, robustly centered on the log-response. `what` names the
+# response in descriptions, e.g., "count" in "log-count intercept".
+log_mu_priors = function(what) {
+  log_y = "log(ifelse(.y <= 0, 0.1, .y))"
+  tibble::tribble(
+    ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+    "mu", "Intercept", paste0("dnorm(round(median(", log_y, "), 1), max(2.5, round(mad(", log_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", paste0("Robustly centered log-", what, " intercept with a minimum scale of 2.5"), "always",
+    "mu", "dummy", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5) T(0, )", paste0("Autoscaled log-", what, " contrast (rstanarm default)"), "always",
+    "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", paste0("Autoscaled log-", what, " coefficient (rstanarm default)"), "always"
+  )
+}
+
+
+# Default mu priors for logit and probit links. The intercept prior is approximately (logit)
+# or exactly (probit) uniform on the probability scale.
+probability_mu_priors = function(link) {
+  scale = if (link == "logit") "1.5" else "1"
+  uniform = if (link == "logit") "approximately uniform" else "uniform"
+  tibble::tribble(
+    ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
+    "mu", "Intercept", paste0("dnorm(0, ", scale, ")"), paste0("dt(0, ", scale, ", 3) T(0, )"), paste0("Link-scale intercept, ", uniform, " on the probability scale"), "always",
+    "mu", "dummy", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, ", 3) T(0, )"), "Autoscaled link-scale contrast (rstanarm autoscaling)", "always",
+    "mu", "slope", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled link-scale coefficient (rstanarm autoscaling)", "always"
+  )
+}
+
+
 mcpfamily_gaussian = function(family) {
   if (family$link %notin% c("identity", "log"))
     stop("mcp has no default priors for gaussian(link = \"", family$link, "\") so it's likely not supported.")
@@ -198,13 +226,7 @@ mcpfamily_gaussian = function(family) {
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled mean coefficient (rstanarm default)", "always"
     )
   } else {
-    log_y = "log(ifelse(.y <= 0, 0.1, .y))"
-    mu_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dnorm(round(median(", log_y, "), 1), max(2.5, round(mad(", log_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-mean intercept with a minimum scale of 2.5", "always",
-      "mu", "dummy", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5) T(0, )", "Autoscaled log-mean contrast (rstanarm default)", "always",
-      "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Autoscaled log-mean coefficient (rstanarm default)", "always"
-    )
+    mu_prior = log_mu_priors("mean")
   }
 
   sigma_prior = tibble::tribble(
@@ -285,15 +307,7 @@ mcpfamily_binomial = function(family) {
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled success-probability coefficient", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
-    # Intercept prior is approximately (logit) or exactly (probit) uniform on the probability scale
-    scale = if (family$link == "logit") "1.5" else "1"
-    uniform = if (family$link == "logit") "approximately uniform" else "uniform"
-    default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dnorm(0, ", scale, ")"), paste0("dt(0, ", scale, ", 3) T(0, )"), paste0("Link-scale intercept, ", uniform, " on the probability scale"), "always",
-      "mu", "dummy", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, ", 3) T(0, )"), "Autoscaled link-scale contrast (rstanarm autoscaling)", "always",
-      "mu", "slope", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled link-scale coefficient (rstanarm autoscaling)", "always"
-    )
+    default_prior = probability_mu_priors(family$link)
   } else {
     stop("mcp has no default priors for binomial(link = \"", family$link, "\") so it's likely not supported.")
   }
@@ -382,15 +396,7 @@ mcpfamily_bernoulli = function(family) {
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled P(y = TRUE) coefficient", "always"
     )
   } else if (family$link %in% c("logit", "probit")) {
-    # Intercept prior is approximately (logit) or exactly (probit) uniform on the probability scale
-    scale = if (family$link == "logit") "1.5" else "1"
-    uniform = if (family$link == "logit") "approximately uniform" else "uniform"
-    default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dnorm(0, ", scale, ")"), paste0("dt(0, ", scale, ", 3) T(0, )"), paste0("Link-scale intercept, ", uniform, " on the probability scale"), "always",
-      "mu", "dummy", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, ", 3) T(0, )"), "Autoscaled link-scale contrast (rstanarm autoscaling)", "always",
-      "mu", "slope", paste0("dnorm(0, ", scale, " / predictor_scale())"), paste0("dt(0, ", scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled link-scale coefficient (rstanarm autoscaling)", "always"
-    )
+    default_prior = probability_mu_priors(family$link)
   } else {
     stop("mcp has no default priors for bernoulli(link = \"", family$link, "\") so it's likely not supported.")
   }
@@ -462,13 +468,7 @@ mcpfamily_poisson = function(family) {
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled count coefficient on the response scale", "always"
     )
   } else if (family$link == "log") {
-    count_y = "log(ifelse(.y <= 0, 0.1, .y))"
-    default_prior = tibble::tribble(
-      ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
-      "mu", "dummy", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5) T(0, )", "Autoscaled log-count contrast (rstanarm default)", "always",
-      "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Autoscaled log-count coefficient (rstanarm default)", "always"
-    )
+    default_prior = log_mu_priors("count")
   } else {
     stop("mcp has no default priors for poisson(link = \"", family$link, "\") so it's likely not supported.")
   }
@@ -537,17 +537,14 @@ mcpfamily_negbinomial = function(family) {
   if (family$link != "log" || family$link_shape != "log")
     stop("Negative-binomial models currently require log links for both mu and shape.")
 
-  count_y = "log(ifelse(.y <= 0, 0.1, .y))"
-  default_prior = tibble::tribble(
+  shape_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "mu", "Intercept", paste0("dnorm(round(median(", count_y, "), 1), max(2.5, round(mad(", count_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", "Robustly centered log-count intercept with a minimum scale of 2.5", "always",
-    "mu", "dummy", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5) T(0, )", "Autoscaled log-count contrast (rstanarm default)", "always",
-    "mu", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Autoscaled log-count coefficient (rstanarm default)", "always",
     "shape", "Intercept", "dinvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape (brms default)", "constant",
     "shape", "Intercept", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Weakly regularizing modeled log-shape intercept", "modeled",
     "shape", "dummy", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Regularizing shape contrast on the log scale", "always",
     "shape", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Regularizing log-shape coefficient scaled by the predictor SD", "always"
   )
+  default_prior = dplyr::bind_rows(log_mu_priors("count"), shape_prior)
   response = list(
     validate = function(y, data, response_columns) {
       checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
@@ -800,11 +797,7 @@ get_link_function = function(link, inverse = FALSE) {
 #' @noRd
 format.mcpfamily = function(x, ...) {
   rlang::check_dots_empty()
-  dpar_links = if (!is.null(x$dpar_specs)) {
-    paste0(x$dpar_specs$dpar, " = ", x$dpar_specs$link, collapse = "; ")
-  } else {
-    paste0("mu = ", x$link)
-  }
+  dpar_links = paste0(x$dpar_specs$dpar, " = ", x$dpar_specs$link, collapse = "; ")
   paste0("Family: ", x$family, "\nLinks: ", dpar_links)
 }
 
