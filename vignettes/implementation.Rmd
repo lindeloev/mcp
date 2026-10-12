@@ -123,77 +123,101 @@ Look at the JAGS code under `# par_x local to each segment` and `# Formula for m
 You will find the exact same formula for `y_ = ...` if you do `print(fit$simulate)`, though this function contains a whole lot of other stuff too.
 
 
+
 # Reparameterizations
 
-By default (`mcp(..., reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model. Only the sampling becomes faster and converges more reliably. `reparam = FALSE` shows the plain model, except that the segment-1 intercept is still sampled at the midpoint of segment 1 because sampling is otherwise very slow when $x$ is far from zero. Here are excerpts of `fit$jags_code` for `list(y ~ 1 + x, ~ 0 + x, ~ 1 + x)` with `x = 1:100`, first with `reparam = FALSE`:
+By default (`mcp(..., reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model. Only the sampling becomes faster and converges more reliably. `reparam = FALSE` shows the plain model, except that the segment-1 intercept is still sampled at the midpoint of segment 1 because sampling is otherwise very slow when $x$ is far from zero.
 
-```{r, eval = FALSE}
-Intercept_1_mid_ ~ dnorm(0 - x_1 * 1 + x_1 * (17.5), 1/(2.5)^2)  # Prior on the value at min(x) = 1
-Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))  # Also with reparam = FALSE
-x_1 ~ dnorm(0, 1/(0.087)^2)
-x_2 ~ dnorm(0, 1/(0.087)^2)
-Intercept_3 ~ dnorm(0, 1/(2.5)^2)
-x_3 ~ dnorm(0, 1/(0.087)^2)
-```
+Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. In the plain model, an intercept is the value at the start of its segment, and a joined segment starts where the previous segment ended. So if JAGS moves a change point $\tau_k$ while holding the slopes fixed, the lines of segment $k+1$, and of all later joined segments, shift up or down. Such moves fit the data badly and are mostly rejected, so the change points and the coefficients must creep along together, which mixes slowly. With `reparam = TRUE`, `mcp` instead samples quantities that stay in place when a change point moves.
 
-And with `reparam = TRUE`:
+All reparameterizations follow from one fact: if a coefficient $\beta$ has a location-scale prior, e.g., $\beta \sim \text{Normal}(m, s)$, then for any shift $a$ and scale $b > 0$,
 
-```{r, eval = FALSE}
-# Segment 1: intercept sampled as the value at x = 17.5
-Intercept_1_mid_ ~ dnorm(0 - x_1 * 1 + x_1 * (17.5), 1/(2.5)^2)
-Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))
-x_1 ~ dnorm(0, 1/(0.087)^2)
+$$u = a + b \beta \quad \sim \quad \text{Normal}(a + b m, \; b s).$$
 
-# Joined segment: slope sampled as the value at the segment end
-x_2_end_ ~ dnorm(Intercept_1 + x_1 * cp_1, 1/(0.087*(cp_2-cp_1))^2)
-x_2 = (x_2_end_ - (Intercept_1 + x_1 * cp_1)) / (cp_2 - cp_1)
+So JAGS can sample $u$ with this prior and derive $\beta = (u - a) / b$, and $\beta$ has exactly its original prior. This holds when $a$ and $b$ depend on other parameters, such as change points and other coefficients, because the prior on $\beta$ given those parameters is unchanged. Here is what `mcp` samples, with segment widths $w_k = \tau_k - \tau_{k-1}$ and $\alpha_k$ being the value where segment $k$ starts:
 
-# Disjoined segment: intercept sampled as the value at the segment end
-Intercept_3_end_ ~ dnorm(0 + x_3 * (cp_3 - cp_2), 1/(2.5)^2)
-Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
-x_3 ~ dnorm(0, 1/(0.087)^2)
-```
-
-
-## Why this is easier for the sampler
-
-Like most Gibbs samplers, JAGS updates one parameter at a time while holding the others fixed. In the plain model, an intercept is the value at the start of its segment, and a joined segment starts where the previous segment ended. So if JAGS moves a change point $\tau_k$ while holding the slopes fixed, the lines of segment $k+1$, and of all later joined segments, shift up or down. Such moves fit the data badly and are mostly rejected, so the change points and the coefficients must creep along together, which mixes slowly.
-
-With `reparam = TRUE`, `mcp` instead samples quantities that stay in place when a change point moves:
-
-- **Joined segments:** The value at the segment end, $e_k$. Moving $\tau_{k-1}$ now pivots segment $k$ around its end, so later segments stay in place.
-- **Disjoined segments:** The value at the segment end, $e_k$. Then segment $k$'s line, $e_k + \beta_{k,1}(x - \tau_k)$, does not depend on $\tau_{k-1}$ at all.
-- **Segment 1:** The value at the fixed point $c = \min(x) + (\max(x) - \min(x)) / (2K)$, which is the midpoint of segment 1 under the `dirichlet(1)` prior. Like centering $x$ in ordinary regression, this makes the intercept and slope less correlated.
-
-Further x-terms in joined segments (e.g., `I(x^2)`) are sampled as their rise over the segment, $\beta w_k^2$. The same rules apply to distributional parameters such as `sigma(1 + x)`.
-
-
-## Why this is the same model
-
-All of the above follow from one fact: if a coefficient $\beta$ has a location-scale prior, e.g., $\beta \sim \text{Normal}(m, s)$, then for any $a$ and $w > 0$,
-
-$$u = a + w \beta \quad \sim \quad \text{Normal}(a + w m, \; w s).$$
-
-So JAGS can sample $u$ with this prior and derive $\beta = (u - a) / w$, and $\beta$ has exactly its original prior. This holds when $a$ and $w$ depend on other parameters, such as change points and other coefficients, because the prior on $\beta$ given those parameters is unchanged. Here is what `mcp` samples, with segment widths $w_k = \tau_k - \tau_{k-1}$ and $v_{k-1}$ being the value where segment $k$ starts:
-
-| Coefficient | Sampled $u$ | $a$ | $w$ |
+| Coefficient | Sampled $u$ | $a$ | $b$ |
 |---|---|---|---|
 | Segment 1 intercept $\beta_{1,0}$ | Value at $c$ | $\beta_{1,1} c$ | $1$ |
-| Joined slope $\beta_{k,1}$ | Value at segment end $e_k = v_{k-1} + \beta_{k,1} w_k$ | $v_{k-1}$ | $w_k$ |
+| Joined slope $\beta_{k,1}$ | Value at segment end $e_k = \alpha_k + \beta_{k,1} w_k$ | $\alpha_k$ | $w_k$ |
 | Joined `I(x^2)` term $\beta_{k,2}$ | Rise $\beta_{k,2} w_k^2$ | $0$ | $w_k^2$ |
 | Disjoined intercept $\beta_{k,0}$ | Value at segment end $e_k = \beta_{k,0} + \beta_{k,1} w_k$ | $\beta_{k,1} w_k$ | $1$ |
 
-Let us verify this for the joined slope, where the sampled value at the segment end depends on both the starting value and the segment width:
+We will go through them one by one for this model with `x = 1:100`:
 
 ```{r}
-s = 0.5  # Prior SD of the slope
-start = rnorm(100000, 10, 3)  # Value where the segment starts (set by earlier segments)
-width = runif(100000, 0.5, 50)  # Segment widths (set by the change points)
-end = rnorm(100000, mean = start, sd = s * width)  # Sampled value at the segment end
-slope = (end - start) / width  # Derived slope
-
-c(mean = mean(slope), sd = sd(slope))  # Normal(0, 0.5), as for the plain slope
-c(cor(slope, start), cor(slope, width))  # ... regardless of start and width
+model = list(
+  y ~ 1 + x,  # x_1 = 17.5
+  ~ 0 + x + I(x^2),
+  ~ 1 + x
+)
 ```
 
-`mcp` only reparameterizes its default `dnorm()` and `dt()` priors, and for the segment-1 intercept also truncated and `dunif()` priors, since a shift ($w = 1$) moves their bounds by $a$ too. User-specified priors are sampled as written, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.
+The same rules apply to distributional parameters such as `sigma(1 + x)`.
+
+
+## Segment 1 intercept: `_mid_`
+
+```{r, eval = FALSE}
+Intercept_1_mid_ ~ dnorm(0 - x_1 * 1 + x_1 * (17.5), 1/(2.4)^2)  # JAGS uses dnorm(mean, precision) with precision = 1/SD^2. Here SD = 2.4
+Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))
+x_1 ~ dnorm(0, 1/(0.084)^2)
+```
+
+JAGS samples the value of segment 1 at the fixed point $c = \min(x) + (\max(x) - \min(x)) / (2K)$, which is the midpoint of segment 1 under the `dirichlet(1)` prior. Here, $c = 1 + (100 - 1) / (2 \cdot 3) = 17.5$. `Intercept_1` is derived from it. Like centering $x$ in ordinary regression, this makes the intercept and slope less correlated. In the plain model, the intercept is the value at $x = 0$, which can be far from the data. Then every change in the slope must be met by a large opposite change in the intercept, and a sampler that updates one at a time moves in tiny steps. Because this is so slow, `mcp` samples the segment-1 intercept this way even with `reparam = FALSE`.
+
+This is the same model because $u = \beta_{1,0} + \beta_{1,1} c$ is a mere shift ($a = \beta_{1,1} c$, $b = 1$), so the prior on `Intercept_1` is unchanged. The prior on `Intercept_1` is on the value at $\min(x) = 1$, hence the `- x_1 * 1` in the prior mean. A shift moves bounds by $a$ too, so this also works for truncated and `dunif()` priors.
+
+
+## Joined slope: `_end_`
+
+```{r, eval = FALSE}
+# reparam = FALSE
+x_2 ~ dnorm(0, 1/(0.084)^2)  # SD = 0.084
+
+# reparam = TRUE
+x_2_end_ ~ dnorm(Intercept_1 + x_1 * cp_1, 1/(0.084*(cp_2-cp_1))^2)  # SD = 0.084 * (cp_2 - cp_1)
+x_2 = (x_2_end_ - (Intercept_1 + x_1 * cp_1)) / (cp_2 - cp_1)
+```
+
+JAGS samples the value at the end of segment 2, $e_2$, and derives the slope `x_2` from it. In the plain model, moving $\tau_1$ shifts segment 2 up or down, together with all later joined segments. Now, moving $\tau_1$ pivots segment 2 around its end, so later segments stay in place.
+
+This is the same model because the value at the segment end is the starting value plus the slope times the segment width, $e_k = \alpha_k + \beta_{k,1} w_k$. Here, $\alpha_2$ = `Intercept_1 + x_1 * cp_1` and $w_2$ = `cp_2 - cp_1`. With $a = \alpha_k$ and $b = w_k$, the prior on $e_k$ is centered on $\alpha_k + w_k m$ with SD $w_k s$, as in the JAGS code above. The derived slope `x_2` has its original prior, whatever the change points and the earlier coefficients are.
+
+
+## Further joined x-terms: `_rise_`
+
+```{r, eval = FALSE}
+# reparam = FALSE
+xE2_2 ~ dnorm(0, 1/(0.00082)^2)  # SD = 0.00082
+
+# reparam = TRUE
+xE2_2_rise_ ~ dnorm(0, 1/(0.00082*(cp_2-cp_1)^2)^2)  # SD = 0.00082 * (cp_2 - cp_1)^2
+xE2_2 = xE2_2_rise_ / (cp_2 - cp_1)^2
+```
+
+Further x-terms in joined segments, here `I(x^2)`, are sampled as their rise over the segment, $\beta_{k,2} w_k^2$. This is how much the term adds to the value at the segment end. Together with the slope's `_end_` node, the value at the segment end then stays in place when a change point moves, so later joined segments stay in place too.
+
+This is the same model because the rise is a mere scaling ($a = 0$, $b = w_k^2$), so the prior SD is scaled by $w_k^2$ in the JAGS code above, and `xE2_2` has its original prior.
+
+
+## Disjoined intercept: `_end_`
+
+```{r, eval = FALSE}
+# reparam = FALSE
+Intercept_3 ~ dnorm(0, 1/(2.4)^2)  # SD = 2.4
+
+# reparam = TRUE
+Intercept_3_end_ ~ dnorm(0 + x_3 * (cp_3 - cp_2), 1/(2.4)^2)
+Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
+x_3 ~ dnorm(0, 1/(0.084)^2)
+```
+
+JAGS samples the value at the end of segment 3, $e_3$, and derives `Intercept_3` from it. In the plain model, `Intercept_3` is the value where segment 3 starts, so moving $\tau_2$ while holding `Intercept_3` and `x_3` fixed shifts the whole line of segment 3 sideways. Now, segment 3's line, $e_3 + \beta_{3,1}(x - \tau_3)$, does not depend on $\tau_2$ at all.
+
+This is the same model because $e_k = \beta_{k,0} + \beta_{k,1} w_k$ is a mere shift ($a = \beta_{k,1} w_k$, $b = 1$), so the prior on `Intercept_3` is unchanged.
+
+
+## When mcp does not reparameterize
+
+`mcp` only reparameterizes its default `dnorm()` and `dt()` priors, and for the segment-1 intercept also truncated and `dunif()` priors. User-specified priors are sampled as written, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.
