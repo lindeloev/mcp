@@ -52,20 +52,10 @@ negbinomial = function(link = "log", link_shape = "log") {
 
 
 # Convert a standard R family object (e.g., `binomial(link = "identity")`) into the
-# `mcpfamily` used internally by mcp. Not exported until user-supplied families are supported.
+# `mcpfamily` used internally by mcp. Built-in families are (re)built from their family and
+# link(s), so this is idempotent. Not exported until user-supplied families are supported.
 as_mcpfamily = function(x) {
   checkmate::assert_true(is_family(x), .var.name = "x")
-
-  if (inherits(x, "mcpfamily")) {
-    link_matches = is.null(x$links) || (
-      identical(unname(x$link), unname(x$links[["mu"]])) &&
-      (is.null(x$link_shape) || identical(unname(x$link_shape), x$dpar_specs$link_modeled[x$dpar_specs$dpar == "shape"]))
-    )
-    if (link_matches) {
-      assert_mcpfamily(x)
-      return(x)
-    }
-  }
 
   switch(
     x$family,
@@ -74,7 +64,7 @@ as_mcpfamily = function(x) {
     bernoulli = mcpfamily_bernoulli(x),
     poisson = mcpfamily_poisson(x),
     negbinomial = mcpfamily_negbinomial(x),
-    new_mcpfamily(x)
+    if (is_mcpfamily(x)) assert_mcpfamily(x) else new_mcpfamily(x)
   )
 }
 
