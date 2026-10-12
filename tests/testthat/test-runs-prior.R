@@ -599,6 +599,16 @@ test_that("x-term powers are autoscaled by the sd of the power measured from min
 })
 
 
+test_that("x-interactions are autoscaled by two-valued numeric variables but not by indicators", {
+  data = data.frame(x = 1:10, y = 1:10, z = rep(c(100, 200), 5), b = rep(0:1, 5))
+  fit = mcp(list(y ~ 1 + x:z + x:b, ~ 1), data, sample = FALSE)
+  prior_sd = function(prior) as.numeric(sub("dnorm\\(0, (.*)\\)", "\\1", prior))
+  base = 2.5 * stats::sd(data$y) / stats::sd(data$x)
+  expect_equal(prior_sd(fit$prior$xz_1), base / stats::sd(data$z))
+  expect_equal(prior_sd(fit$prior$xb_1), base)
+})
+
+
 test_that("default segment-1 intercept priors are placed at min(x)", {
   data = data.frame(x = 101:130, y = 1:30 + 0.5 * (1:30 > 15))
   fit = withr::with_options(list(mcp_reparam = FALSE), mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE))

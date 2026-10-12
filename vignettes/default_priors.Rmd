@@ -23,7 +23,7 @@ Priors for hypothesis tests should be informed by the problem at hand.
 The default priors follow three principles:
 
 1. **Coefficient priors are autoscaled as in [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html):** For the mean (`mu`), $$\beta \sim \text{Normal}\left(0, \frac{2.5 \cdot s_y}{\operatorname{sd}(\text{column})}\right)$$ where $s_y = \operatorname{sd}(y)$ for identity links and $s_y = 1$ for other links (logit and probit links use 1.5 and 1 instead of 2.5; see [deviations](#deviations)). $\operatorname{sd}(\text{column})$ is the SD of the coefficient's model-matrix column, including the 0/1 dummies of factors. This makes the prior largely invariant to the units of $x$ and $y$, e.g., whether time is measured in seconds or minutes. A priori, a change of one SD in a predictor changes the response (on the link scale) by less than $5 \cdot s_y$ with 95% probability.
-   - For x-terms, $\operatorname{sd}(x)$ is computed over all data, so slope priors do not depend on the number or location of change points. Powers such as `I(x^2)` use $\operatorname{sd}((x - \min(x))^2)$, and interactions such as `x:group` use $\operatorname{sd}(x)$.
+   - For x-terms, $\operatorname{sd}(x)$ is computed over all data, so slope priors do not depend on the number or location of change points. Powers such as `I(x^2)` use $\operatorname{sd}((x - \min(x))^2)$. Interactions such as `x:z` multiply by the SD of the term without $x$, $\operatorname{sd}(x) \cdot \operatorname{sd}(z)$, while 0/1 indicators such as the dummies in `x:group` contribute a factor of 1 (see [deviations](#deviations)).
 
    - The autoscaling does not account for segment length. If you expect steep slopes or strong curvature within short segments, consider setting a wider prior.
 
@@ -87,6 +87,8 @@ The prior is half-normal rather than the half-Student-t used for predictor group
 - **Identity link for `poisson()`:** `rstanarm` applies its unscaled defaults, e.g., `normal(0, 2.5)` for the intercept, which ignore the magnitude of the counts. `mcp` uses the Gaussian defaults instead, which are on the response scale.
 
 - **Intercept placement:** `rstanarm` and `brms` place the intercept prior on centered predictors. `mcp` places the default prior on `Intercept_1` at $\min(x)$ for x-terms but does not center other predictors, so the prior applies where they are zero. If such a predictor is far from zero, e.g., age in years, center it before fitting or set a prior on `Intercept_1`. Read more about the [the mcp model](../articles/formulas.html).
+
+- **x-term interactions:** `rstanarm` scales `x:z` by the SD of the model-matrix column, $\operatorname{sd}(x \cdot z)$, which depends on the location of $x$ and $z$. For example, it is around 1000 for `x:group` when $x$ is calendar years. Since x-terms are measured from the change point, the location of $x$ is not meaningful here. `mcp` instead uses $\operatorname{sd}(x) \cdot \operatorname{sd}(z)$, where 0/1 indicators contribute a factor of 1, so the prior applies per SD of $x$ and $z$.
 
 - **Proper coefficient priors:** `brms` uses improper flat priors on coefficients, which JAGS does not support. `mcp` uses `rstanarm`'s instead.
 

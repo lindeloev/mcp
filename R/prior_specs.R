@@ -72,8 +72,10 @@ default_cp_specs = function(cps, context) {
 default_predictor_scale = function(matrix_data, x_factor) {
   values = stats::na.omit(as.numeric(matrix_data))
   n_unique = length(unique(values))
-  # For x-terms, a factor dummy (as in x:state) only selects rows, so the column sd is close to sd(x).
-  data_scale = if (n_unique <= 1 || (n_unique == 2 && x_factor != "1")) 1 else stats::sd(values)
+  # For x-terms, a 0/1 indicator (as in x:state) only selects rows, so the column sd is close to sd(x).
+  # Other two-valued columns, e.g., z in {100, 200}, carry units and are scaled.
+  is_indicator = all(values %in% c(0, 1))
+  data_scale = if (n_unique <= 1 || (is_indicator && x_factor != "1")) 1 else stats::sd(values)
 
   parts = character()
   if (x_factor != "1") {
