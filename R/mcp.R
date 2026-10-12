@@ -7,8 +7,7 @@
 #' @aliases mcp
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
 #'   with syntactic column names.
-#'   Missing values in the response variable are imputed using the posterior predictive.
-#'   \code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.
+#'   Missing values in the response variable are imputed jointly with the parameters.
 #' @param model A list of formulas, one for each segment, in the format
 #'   `model = list(response ~ predictors, ~ cp(...) + predictors)`, where `cp()` is optional. See [mcp-formula] for how segments connect
 #'   and the full formula syntax.

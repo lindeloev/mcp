@@ -258,6 +258,11 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
   if (is_bounded || is_truncated)
     return(prior_value)
 
+  # Only stochastic distributions can be truncated, not fixed values like "cp_1 + 5"
+  call = parse_prior_call(prior_value)
+  if (is.null(call) || !grepl("^d[A-Za-z]", call$name))
+    return(prior_value)
+
   lower = if (j == 1) {
     paste0("min(", context$x_display, ")")
   } else {

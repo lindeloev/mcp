@@ -81,6 +81,10 @@ good_prior = list(
   list(
     cp_1 = "dirichlet(10)",  # Dirichlet prior on change points
     cp_2 = "dirichlet(10)"
+  ),
+  list(
+    cp_1 = "dnorm(0, 1)",
+    cp_2 = "cp_1 + 1"  # Fixed change point relative to another
   )
 )
 

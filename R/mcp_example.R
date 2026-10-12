@@ -237,8 +237,9 @@ data$y = empty$simulate(empty, data,
 missing_rows = c(8, 19, 27:31, 68, 84, 96)
 data$y[missing_rows] = NA
 
-# Run sampling; JAGS retains posterior draws for the missing responses
-# See them using fitted(fit, newdata = fit$data[is.na(fit$data$y), ], summary = FALSE)
+# Run sampling; JAGS imputes the missing responses jointly with the parameters
+# Predictions at these rows follow the same distribution as the imputations (no AR/MA):
+# predict(fit, newdata = fit$data[is.na(fit$data$y), ], summary = FALSE)
 fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 
 # Illustrative plot
