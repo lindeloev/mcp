@@ -1,8 +1,8 @@
 test_that("families define dpars independently of prior rows", {
-  gaussian_family = mcpfamily(gaussian())
-  poisson_family = mcpfamily(poisson())
+  gaussian_family = as_mcpfamily(gaussian())
+  poisson_family = as_mcpfamily(poisson())
   mean_only_families = list(
-    binomial = mcpfamily(binomial()),
+    binomial = as_mcpfamily(binomial()),
     bernoulli = bernoulli()
   )
 
@@ -30,7 +30,7 @@ test_that("families define dpars independently of prior rows", {
   expect_equal(poisson_family$dpar_specs$link, "log")
   expect_equal(poisson_family$dpars, "mu")
 
-  # Compact prior tables are standardized in mcpfamily().
+  # Compact prior tables are standardized in as_mcpfamily().
   standardized_prior = standardize_family_default_priors(data.frame(
     dpar = "mu",
     par_type = "Intercept",
@@ -98,15 +98,15 @@ test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)
 
 test_that("built-in families implement the shared internal contract", {
   families = list(
-    mcpfamily(gaussian()),
-    mcpfamily(binomial()),
+    as_mcpfamily(gaussian()),
+    as_mcpfamily(binomial()),
     bernoulli(),
-    mcpfamily(poisson()),
+    as_mcpfamily(poisson()),
     negbinomial()
   )
 
   for (family in families) {
-    expect_true(is.mcpfamily(family))
+    expect_true(is_mcpfamily(family))
     expect_identical(assert_mcpfamily(family), family)
     expect_true(is.function(family$r$epred))
     expect_true(is.function(family$r$log_lik))
@@ -119,8 +119,8 @@ test_that("built-in families implement the shared internal contract", {
     expect_true(is.function(family$response$probability))
   }
 
-  expect_true(is.function(mcpfamily(gaussian())$garma$observed_r))
-  expect_null(mcpfamily(gaussian(link = "log"))$garma)
+  expect_true(is.function(as_mcpfamily(gaussian())$garma$observed_r))
+  expect_null(as_mcpfamily(gaussian(link = "log"))$garma)
 })
 
 
@@ -134,10 +134,10 @@ test_that("family prior builders determine their supported links", {
   unsupported_negbinomial = negbinomial()
   unsupported_negbinomial$link = "identity"
 
-  expect_error(mcpfamily(unsupported_gaussian), "no default priors for gaussian")
-  expect_error(mcpfamily(unsupported_binomial), "no default priors for binomial")
-  expect_error(mcpfamily(unsupported_poisson), "no default priors for poisson")
-  expect_error(mcpfamily(unsupported_negbinomial), "require log links")
+  expect_error(as_mcpfamily(unsupported_gaussian), "no default priors for gaussian")
+  expect_error(as_mcpfamily(unsupported_binomial), "no default priors for binomial")
+  expect_error(as_mcpfamily(unsupported_poisson), "no default priors for poisson")
+  expect_error(as_mcpfamily(unsupported_negbinomial), "require log links")
 })
 
 
@@ -194,7 +194,7 @@ test_that("generated code separates link and distribution scales", {
 
 test_that("included dpar wrappers use the generic formula path", {
   data = data.frame(x = 1:4, y = c(2, 3, 5, 7))
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
   family$dpar_specs = dplyr::bind_rows(
     family$dpar_specs,
     new_dpar_spec("aux", "log", implicit = TRUE)
@@ -252,7 +252,7 @@ test_that("distributional population terms apply only where included", {
   shape = get_predictors(
     list(y ~ 1 + shape(1 + z), ~ 0 + shape(0 + z)),
     data,
-    mcpfamily(negbinomial()),
+    as_mcpfamily(negbinomial()),
     par_x = "x"
   )
   expect_lifetimes(shape, c(shape_z_1 = 2L))
@@ -298,7 +298,7 @@ test_that("unsupported dpar wrappers give a family-specific error", {
     mcp(list(y ~ 1 + x + sigma(1)), data, family = poisson(), sample = FALSE),
     paste0(
       "`sigma()` is not a distributional parameter for family = poisson(). ",
-      "See available parameters with `mcpfamily(poisson())$dpars`."
+      "See available parameters with `as_mcpfamily(poisson())$dpars`."
     ),
     fixed = TRUE
   )
@@ -312,7 +312,7 @@ test_that("unsupported dpar wrappers give a family-specific error", {
 
 
 test_that("AR and MA component names are reserved", {
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
   family$dpar_specs = dplyr::bind_rows(
     family$dpar_specs,
     new_dpar_spec("ma", "identity")

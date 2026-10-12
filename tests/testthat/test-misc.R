@@ -16,9 +16,9 @@ test_that("Link functions", {
   expect_equal(fam_b$linkinv(-40), stats::plogis(-40))
   fam_p = bernoulli("probit")
   expect_equal(fam_p$linkinv(-10), stats::pnorm(-10))
-  fam_pois = mcpfamily(poisson("log"))
+  fam_pois = as_mcpfamily(poisson("log"))
   expect_equal(fam_pois$linkinv(-40), exp(-40))
-  fam_bin = mcpfamily(binomial("logit"))
+  fam_bin = as_mcpfamily(binomial("logit"))
   expect_equal(fam_bin$linkinv(-40), stats::plogis(-40))
 })
 
@@ -36,8 +36,8 @@ test_that("log_lik evaluates unclamped mathematical inverse links", {
 })
 
 test_that("families", {
-  expect_true(is.mcpfamily(bernoulli()))
-  expect_false(is.mcpfamily(gaussian()))
+  expect_true(is_mcpfamily(bernoulli()))
+  expect_false(is_mcpfamily(gaussian()))
 })
 
 
@@ -381,8 +381,9 @@ test_that("Simple mcpfit methods", {
   expect_equal(niterations(demo_fit), 500)
   expect_equal(nchains(demo_fit), 2)
 
-  expect_true(is.mcpfit(demo_fit))
-  expect_false(is.mcpfit(mtcars))
+  expect_true(is_mcpfit(demo_fit))
+  expect_false(is_mcpfit(mtcars))
+  lifecycle::expect_deprecated(expect_true(is.mcpfit(demo_fit)))
 
   # Unsupported generics point to the supported alternatives
   expect_error(coef(demo_fit), "fixef(fit)", fixed = TRUE)
@@ -792,7 +793,7 @@ test_that("loo supports by_row and soft-deprecates pointwise", {
 
 
 test_that("find_mixture_quantile handles large count means without integer overflow", {
-  family = mcpfamily(poisson())
+  family = as_mcpfamily(poisson())
   dpars = list(mu = c(1e8, 1.5e9))
   res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = 0.975)
   expect_true(is.numeric(res) && is.finite(res) && res > 1.5e9)
@@ -801,7 +802,7 @@ test_that("find_mixture_quantile handles large count means without integer overf
 
 
 test_that("find_mixture_quantile is accurate regardless of response units", {
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
   for (scale in c(1, 1e6)) {
     dpars = list(mu = c(0, 6e-5) * scale, sigma = c(2e-5, 2e-5) * scale)
     for (p in c(0.025, 0.975)) {
@@ -813,7 +814,7 @@ test_that("find_mixture_quantile is accurate regardless of response units", {
 
 
 test_that("format.mcpfamily and summary print all family links", {
-  fam = mcpfamily(stats::gaussian())
+  fam = as_mcpfamily(stats::gaussian())
   expect_output({ res = print(fam) }, "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
   expect_identical(res, fam)
   expect_error(print(fam, extra = 1), class = "rlang_error")

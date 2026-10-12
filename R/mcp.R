@@ -189,7 +189,7 @@ mcp = function(
   # CHECK INPUTS #
   ################
   # Check model
-  checkmate::assert_true(is.mcpmodel(model), .var.name = "model")
+  checkmate::assert_true(is_mcpmodel(model), .var.name = "model")
   assert_rel(model)
 
   # Check data and data-model correspondence
@@ -229,10 +229,10 @@ mcp = function(
   validate_prior_v1(prior)
 
   # Transform family to mcpfamily
-  if (!is.family(family) && !is.mcpfamily(family))
-    stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), mcpfamily(gaussian(link = 'log')), etc.")
+  if (!is_family(family) && !is_mcpfamily(family))
+    stop("`family` is not a valid family or mcpfamily. Should be gaussian(), binomial(), as_mcpfamily(gaussian(link = 'log')), etc.")
 
-  family = mcpfamily(family)
+  family = as_mcpfamily(family)
 
   # More checking...
   checkmate::assert(

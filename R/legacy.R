@@ -5,7 +5,7 @@
 # Check if an mcpfit object was created with mcp < 0.4.0
 legacy_is_mcpfit = function(fit) {
   tables = fit$.internal$model_tables
-  !is.mcpfamily(fit$family) || is.null(tables) || is.null(tables$parameters) ||
+  !is_mcpfamily(fit$family) || is.null(tables) || is.null(tables$parameters) ||
     !"role" %in% names(tables$parameters)
 }
 
@@ -245,4 +245,13 @@ legacy_mcpfit_field = function(name) {
 # Defunct internal helper for MCMC draw extraction, advertised as `mcp:::tidy_samples()` in v0.3.4. LEGACY: remove in mcp 1.0.
 tidy_samples = function(...) {
   lifecycle::deprecate_stop("0.4.0", "tidy_samples()", I("as_draws_df() or tidybayes::spread_draws()"))
+}
+
+
+# Renamed to is_mcpfit() for consistency with as_mcpfamily() and `{posterior}`. LEGACY: remove in mcp 1.0.
+#' @rdname is_mcpfit
+#' @export
+is.mcpfit = function(x) {
+  lifecycle::deprecate_warn("0.4.0", "is.mcpfit()", "is_mcpfit()")
+  is_mcpfit(x)
 }

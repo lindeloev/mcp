@@ -72,7 +72,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Explicit prior draw selection: Methods requiring draws now require posterior draws by default and error if they are unavailable. Use `prior = TRUE` to select prior draws; prior-only fits no longer trigger an automatic fallback. This also applies to draw-count methods.
 
-  - The arguments for `fit$simulate()` have all changed to accommodate multiple (categorical) predictors. `fit$simulate(fit, data, ..., .type = "predict")` is the new argument structure. Note that (1) it now requires `fit` as the first argument, (2) it requires `data.frame` or `tibble` as the second argument instead of just a vector of `par_x`, (3) further arguments are prefixed with a "." to avoid name conflicts internally in mcp. `...` are the model parameters as usual. `fit$simulate()` now also preserve shared group effects specified in priors (e.g., `prior = list(Intercept_2_id = "Intercept_1_id")`).
+  - The arguments for `fit$simulate()` have all changed to accommodate multiple (categorical) predictors. `fit$simulate(fit, newdata, ..., .type = "predict")` is the new argument structure. Note that (1) it now requires `fit` as the first argument, (2) it requires `data.frame` or `tibble` as the second argument instead of just a vector of `par_x`, (3) further arguments are prefixed with a "." to avoid name conflicts internally in mcp. `...` are the model parameters as usual. `fit$simulate()` now also preserve shared group effects specified in priors (e.g., `prior = list(Intercept_2_id = "Intercept_1_id")`).
 
   - `hypothesis()` takes the fit as its first argument `x` (was `fit`), matching `brms::hypothesis()`. It now restricts equality tests to simple parameter contrasts and gives clearer guidance on Savage-Dickey Bayes factors. Non-linear transformations in hypotheses like `x_1 / x_2 = 1` could previously be run, even though Savage-Dickey does not support it. Equality tests now return `prob = NA` because their Bayes factor is a model comparison, not a posterior parameter probability. Density estimates are more robust, warn when evaluating Savage-Dickey Bayes factors on default priors, and warn about sparse tails.
 
@@ -119,7 +119,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Use `mcp(..., seed = 42)` or `set.seed(42)` before `mcp()` for reproducible JAGS sampling, whether chains run sequentially or in parallel. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
 
-  - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors. The JAGS model-compilation text is no longer printed by default.
+  - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors. Use `options(mcp_quiet = TRUE)` to make this the default for the session. The JAGS model-compilation text is no longer printed by default.
 
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not stored. Use `log_lik(fit)` to compute it, or call `loo(fit)` or `waic(fit)` directly.
 
@@ -185,6 +185,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 
+  - `is.mcpfit()` is deprecated in favor of `is_mcpfit()`, matching the new `is_mcpfamily()` and `as_mcpfamily()` and `{posterior}`'s `is_draws()`.
+
 - **Requirements and removals:**
 
   - mcp now requires R \>= 4.1.0, matching its use of the native pipe (`|>`).
@@ -225,7 +227,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - The quantiles from `fitted()` and `predict()` for group-level change-point models ignored the group level and were identical across levels.
 
-- Explicitly setting `dpar = "mu"` now returns the success probability parameter $\mu$ regardless of `rate`. `rate = FALSE` continues to scale expected response counts when evaluating `"epred"` (e.g., in `posterior_epred()`), while `fitted()` and `predict()` retain their default proportion scale (`rate = TRUE`).
+- Explicitly setting `dpar = "mu"` now returns the success probability parameter $\mu$ regardless of `rate`. `rate` only affects `"epred"` and predictions, where the default `rate = FALSE` returns counts (e.g., in `fitted()`, `predict()`, and `posterior_epred()`).
 
 - Now works for 200+ characters formulas too.
 

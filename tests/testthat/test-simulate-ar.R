@@ -3,7 +3,7 @@ garma_ar_part = function(resid_abs, ar_list, series_id = NULL) {
   n = length(resid_abs)
   mcp:::simulate_garma(
     base_link_mu = rep(0, n), ar_list = ar_list, ma_list = list(),
-    threshold = rep(0.1, n), family = mcpfamily(gaussian()),
+    threshold = rep(0.1, n), family = as_mcpfamily(gaussian()),
     dpars = list(sigma = rep(1, n)), y = resid_abs, series_id = series_id
   )$resid_garma
 }
@@ -81,7 +81,7 @@ test_that("generated AR residuals use the same partial-lag recursion", {
   set.seed(42)
   result = mcp:::simulate_garma(
     base_link_mu = rep(0, 4), ar_list = ar_list, ma_list = list(),
-    threshold = rep(0.1, 4), family = mcpfamily(gaussian()),
+    threshold = rep(0.1, 4), family = as_mcpfamily(gaussian()),
     dpars = list(sigma = rep(1, 4))
   )
 

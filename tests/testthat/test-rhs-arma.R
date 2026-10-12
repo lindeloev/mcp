@@ -3,7 +3,7 @@ test_that("AR and MA terms are parsed as separate model components", {
   predictors = get_predictors(
     list(y ~ 1 + x + ar(2, 1 + x) + ma(1, 0 + x)),
     data,
-    mcpfamily(gaussian()),
+    as_mcpfamily(gaussian()),
     par_x = "x"
   )
 
@@ -19,7 +19,7 @@ test_that("AR and MA terms are parsed as separate model components", {
 
 test_that("AR and MA each allow one term per segment", {
   data = data.frame(x = 1:6, y = 1:6)
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
 
   expect_error(
     get_predictors(list(y ~ ar(1) + ar(2)), data, family, par_x = "x"),
@@ -37,7 +37,7 @@ test_that("AR and MA each allow one term per segment", {
 
 test_that("including a lower-order AR/MA turns off higher lags", {
   data = data.frame(x = 1:6, y = 1:6)
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
 
   predictors = get_predictors(
     list(y ~ ar(2), ~ ar(1)), data, family, par_x = "x"
@@ -77,7 +77,7 @@ test_that("including a lower-order AR/MA turns off higher lags", {
 
 test_that("ar(0) and ma(0) turn off AR/MA components", {
   data = data.frame(x = 1:6, y = 1:6)
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
 
   zeroed_ar = get_predictors(
     list(y ~ 1 + x + ar(2), ~ 0 + x + ar(0)), data, family, par_x = "x"
@@ -125,7 +125,7 @@ test_that("positive-order AR/MA zero formulas are joined to the earlier intercep
 test_that("AR/MA components are off until included again", {
   data = data.frame(x = 1:9, y = rep(c(1, 2, 3), 3))
   predictors = get_predictors(
-    list(y ~ ar(1), ~ 0, ~ ar(1)), data, mcpfamily(gaussian()), par_x = "x"
+    list(y ~ ar(1), ~ 0, ~ ar(1)), data, as_mcpfamily(gaussian()), par_x = "x"
   )
   expect_equal(
     stats::setNames(predictors$next_segment[predictors$dpar == "ar"], predictors$code_name[predictors$dpar == "ar"]),
@@ -146,7 +146,7 @@ test_that("MA order errors describe MA syntax", {
     get_predictors(
       list(y ~ ma(x)),
       data,
-      mcpfamily(gaussian()),
+      as_mcpfamily(gaussian()),
       par_x = "x"
     ),
     "Must be ma(order) or ma(order, formula)",
@@ -157,7 +157,7 @@ test_that("MA order errors describe MA syntax", {
 
 test_that("One GARMA threshold applies to all segments and defaults to 0.1", {
   data = data.frame(x = 1:6, y = 1:6)
-  family = mcpfamily(gaussian())
+  family = as_mcpfamily(gaussian())
   get_thresholds = function(model) {
     predictors = get_predictors(model, data, family, par_x = "x")
     unique(predictors$threshold[predictors$dpar %in% c("ar", "ma")])

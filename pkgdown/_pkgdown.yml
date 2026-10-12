@@ -38,7 +38,7 @@ reference:
       - prior_summary
       - print.mcplist
       - print.mcptext
-      - is.mcpfit
+      - is_mcpfit
       - model-accessors-mcpfit
 
   - title: Documentation on mcp()
@@ -87,7 +87,7 @@ reference:
     contents:
       - bernoulli
       - negbinomial
-      - mcpfamily
+      - as_mcpfamily
 
   - title: Help and demos
     desc: Some showcases of typical mcp analyses. Most of these are discussed on the [front page](https://lindeloev.github.io/mcp).

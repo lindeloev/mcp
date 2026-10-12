@@ -120,7 +120,7 @@ test_that("conditional GARMA evaluation resets vectorized ordered series", {
     ar_list = list(ar1_ = rep(0.5, length(y))),
     ma_list = list(ma1_ = rep(0.25, length(y))),
     threshold = rep(0.1, length(y)),
-    family = mcpfamily(gaussian()),
+    family = as_mcpfamily(gaussian()),
     dpars = list(mu = base_link_mu, sigma = rep(1, length(y))),
     y = y,
     series_id = series_id
@@ -345,7 +345,7 @@ test_that("one GARMA recurrence handles generated, supplied, and partial histori
   ma = list(ma1_ = rep(-0.2, n), ma2_ = seq(0, 0.1, length.out = n))
   threshold = rep(c(0.1, 0.2), each = 6)
   for (family in list(gaussian(), poisson(), binomial(), negbinomial())) {
-    family = mcpfamily(family)
+    family = as_mcpfamily(family)
     data = if (family$family == "binomial") list(trials = rep(c(3, 7), 6)) else list()
     args = list(base_link_mu = base, ar_list = ar, ma_list = ma,
                 threshold = threshold, family = family, series_id = series,

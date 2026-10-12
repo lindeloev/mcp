@@ -162,7 +162,7 @@ test_that("ar() and ma() require a family GARMA implementation", {
   data = data.frame(x = 1:4, y = 1:4)
   family = gaussian(link = "log")
 
-  expect_null(mcpfamily(family)$garma)
+  expect_null(as_mcpfamily(family)$garma)
   expect_s3_class(
     mcp(list(y ~ 1 + x), data, family = family, par_x = "x", sample = FALSE),
     "mcpfit"

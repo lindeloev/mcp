@@ -102,7 +102,7 @@ test_that("redefinitions replace complete formula terms", {
       ~ 0 + x + group + poly(z, 2)
     ),
     data,
-    mcpfamily(gaussian()),
+    as_mcpfamily(gaussian()),
     par_x = "x",
     check_rank = FALSE
   )
@@ -117,7 +117,7 @@ test_that("redefinitions replace complete formula terms", {
   reset = get_predictors(
     list(y ~ 1 + z, ~ 1, ~ 0 + z),
     data,
-    mcpfamily(gaussian()),
+    as_mcpfamily(gaussian()),
     par_x = "x"
   )
   expect_lifetimes(reset, c(z_1 = 2L))

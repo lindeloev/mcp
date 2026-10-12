@@ -596,10 +596,10 @@ print.mcpfit = function(x, ...) {
 
 #' Checks if the Argument is an `mcpfit` Object
 #'
-#' @aliases is.mcpfit
+#' @aliases is_mcpfit
 #' @param x An `R` object.
 #' @return Logical scalar (`TRUE` if `x` is an `mcpfit` object, `FALSE` otherwise).
 #' @export
-is.mcpfit = function(x) {
+is_mcpfit = function(x) {
   inherits(x, "mcpfit")
 }

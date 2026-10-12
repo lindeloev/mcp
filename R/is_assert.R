@@ -2,7 +2,7 @@
 # -----------------
 
 # Check if object is an mcp family
-is.family = function(x) {
+is_family = function(x) {
   if (inherits(x, "family") == FALSE)
     return(FALSE)
 
@@ -13,7 +13,7 @@ is.family = function(x) {
 }
 
 # Check if object is a valid mcp model formula list
-is.mcpmodel = function(x) {
+is_mcpmodel = function(x) {
   checkmate::assert_list(x, min.len = 1)
 
   for (segment in x) {

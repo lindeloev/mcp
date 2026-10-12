@@ -15,7 +15,7 @@ bernoulli = function(link = "logit") {
 
   family = stats::binomial(link = link)
   family$family = "bernoulli"
-  mcpfamily(family)
+  as_mcpfamily(family)
 }
 
 
@@ -47,11 +47,11 @@ negbinomial = function(link = "log", link_shape = "log") {
 
   family = list(family = "negbinomial", link = link, link_shape = link_shape)
   class(family) = "family"
-  mcpfamily(family)
+  as_mcpfamily(family)
 }
 
 
-#' Create or Test Objects of Class "mcpfamily"
+#' Convert to or Test Objects of Class "mcpfamily"
 #'
 #' \lifecycle{experimental}
 #'
@@ -66,7 +66,7 @@ negbinomial = function(link = "log", link_shape = "log") {
 #' Note: `mcpfamily` objects are shipped with mcp - there is not (yet) support for user-supplied
 #' families.
 #'
-#' @aliases mcpfamily
+#' @aliases as_mcpfamily
 #' @param x A family object, e.g., `binomial(link = "identity")`.
 #' @seealso \code{\link{family}}
 #' @encoding UTF-8
@@ -75,14 +75,14 @@ negbinomial = function(link = "log", link_shape = "log") {
 #' @examples
 #' # mcp() converts supported standard family objects automatically
 #' data = data.frame(time = 1:6, y = exp(seq(0, 1, length.out = 6)))
-#' my_normal = mcpfamily(stats::gaussian(link = "log"))
+#' my_normal = as_mcpfamily(stats::gaussian(link = "log"))
 #' fit = mcp(list(y ~ 1), data, family = my_normal, par_x = "time", sample = FALSE)
 #' family(fit)  # Show the mcp family retained in the fit
 #'
 #' # The converted object can also be inspected directly
-#' mcpfamily(stats::binomial())$dpars  # Show its distributional parameters
-mcpfamily = function(x) {
-  checkmate::assert_true(is.family(x), .var.name = "x")
+#' as_mcpfamily(stats::binomial())$dpars  # Show its distributional parameters
+as_mcpfamily = function(x) {
+  checkmate::assert_true(is_family(x), .var.name = "x")
 
   if (inherits(x, "mcpfamily")) {
     link_matches = is.null(x$links) || (
@@ -831,7 +831,7 @@ get_link_function = function(link, inverse = FALSE) {
 
 
 #' @aliases format.mcpfamily
-#' @describeIn mcpfamily Format an `mcpfamily` object.
+#' @describeIn as_mcpfamily Format an `mcpfamily` object.
 #' @param ... Must be empty. Reserved for future use.
 #' @export
 format.mcpfamily = function(x, ...) {
@@ -846,7 +846,7 @@ format.mcpfamily = function(x, ...) {
 
 
 #' @aliases print.mcpfamily
-#' @describeIn mcpfamily Print an `mcpfamily` object.
+#' @describeIn as_mcpfamily Print an `mcpfamily` object.
 #' @export
 print.mcpfamily = function(x, ...) {
   rlang::check_dots_empty()
@@ -855,10 +855,10 @@ print.mcpfamily = function(x, ...) {
 }
 
 
-#' @aliases is.mcpfamily
-#' @describeIn mcpfamily Checks whether x is an `mcpfamily`.
+#' @aliases is_mcpfamily
+#' @describeIn as_mcpfamily Checks whether x is an `mcpfamily`.
 #' @export
-is.mcpfamily = function(x) {
+is_mcpfamily = function(x) {
   inherits(x, "mcpfamily")
 }
 
@@ -866,7 +866,7 @@ is.mcpfamily = function(x) {
 # Check that an mcpfamily implements the complete mcp family contract. Returns `x` invisibly.
 assert_mcpfamily = function(x) {
   checkmate::assert_class(x, "mcpfamily")
-  checkmate::assert_true(is.family(x), .var.name = "x")
+  checkmate::assert_true(is_family(x), .var.name = "x")
   checkmate::assert_data_frame(x$default_prior)
   assert_data_cols(x$default_prior, c("dpar", "par_type", "prior"))
   assert_dpar_specs(x$dpar_specs)
