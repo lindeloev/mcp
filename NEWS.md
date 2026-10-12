@@ -70,7 +70,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - **ar(p) no longer continues into later segments:** Only terms included in a segment get coefficients there. While important for the new multiple-regression functionality, the only backward incompatibility is that in a model like `model = list(y ~ 1 + ar(1), ~ 0)`, the AR would continue into segment 2. The equivalent model in v0.4+ is `~ 0 + ar(1, 0)` in segment 2.
 
-  - Explicit prior draw selection: Methods requiring draws now require posterior draws by default and error if they are unavailable. Use `prior = TRUE` to select prior draws; prior-only fits no longer trigger an automatic fallback. This also applies to draw-count methods.
+  - Explicit prior draw selection: Methods requiring draws now require posterior draws by default and error if they are unavailable. Use `prior = TRUE` to select prior draws; prior-only fits no longer trigger an automatic fallback. This also applies to draw-count methods, and `print(fit)` shows only the model unless `prior = TRUE`.
 
   - The arguments for `fit$simulate()` have all changed to accommodate multiple (categorical) predictors. `fit$simulate(fit, newdata, ..., .type = "predict")` is the new argument structure. Note that (1) it now requires `fit` as the first argument, (2) it requires `data.frame` or `tibble` as the second argument instead of just a vector of `par_x`, (3) further arguments are prefixed with a "." to avoid name conflicts internally in mcp. `...` are the model parameters as usual. `fit$simulate()` now also preserve shared group effects specified in priors (e.g., `prior = list(Intercept_2_id = "Intercept_1_id")`).
 

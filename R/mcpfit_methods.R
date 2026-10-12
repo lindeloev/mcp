@@ -332,7 +332,11 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   } else {
     result = tibble::tibble()
     cp_names = character()
-    footer = "No draws. Nothing to summarise."
+    footer = if (!prior && !is.null(mcmclist_draws(fit, prior = TRUE, error = FALSE))) {
+      "No posterior draws. Use `summary(fit, prior = TRUE)` to summarise the prior draws."
+    } else {
+      paste0("No ", if (prior) "prior" else "posterior", " draws. Nothing to summarise.")
+    }
   }
 
   attr(result, "mcpsummary") = list(header = header, cp_names = cp_names, footer = footer, digits = digits)
@@ -578,19 +582,12 @@ coef.mcpfit = function(object, ...) {
 
 
 #' @aliases print print.mcpfit
-#' @describeIn summary.mcpfit Print the posterior summary of an \code{\link{mcpfit}} object.
+#' @describeIn summary.mcpfit Print the posterior summary of an \code{\link{mcpfit}} object,
+#'   or the prior summary with `prior = TRUE`. Without the requested draws, only the model is shown.
 #' @param x An \code{\link{mcpfit}} object, or an `mcpsummary` returned by `summary()`.
 #' @export
 print.mcpfit = function(x, ...) {
-  args = list(...)
-  if (isTRUE(args$prior))
-    mcmclist_draws(x, prior = TRUE)
-  if (!isTRUE(args$prior) && !coda::is.mcmc.list(.subset2(x, "mcmc_post")) &&
-      coda::is.mcmc.list(.subset2(x, "mcmc_prior"))) {
-    message("Posterior was not drawn. Using prior draws. Set `prior = TRUE` to mute this message.")
-    args$prior = TRUE
-  }
-  print(do.call(summarize_mcpfit, c(list(object = x), args)))
+  print(summarize_mcpfit(x, ...))
   invisible(x)
 }
 

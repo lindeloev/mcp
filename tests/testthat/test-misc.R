@@ -863,7 +863,8 @@ test_that("draw-dependent methods require explicit prior selection", {
   expect_no_error(capture.output(summary(fit, prior = TRUE)))
   expect_s3_class(plot(fit, prior = TRUE), "ggplot")
   expect_s3_class(plot_pars(fit, prior = TRUE, npars = NULL), "ggplot")
-  expect_message(capture.output(print(fit)), "Using prior draws")
+  expect_output(print(fit), "No posterior draws. Use `summary(fit, prior = TRUE)`", fixed = TRUE)
+  expect_output(print(fit, prior = TRUE), "Change point parameters:", fixed = TRUE)
   fit$mcmc_prior = NULL
   expect_error(summary(fit), "No posterior draws are available")
   expect_error(as_draws(fit, prior = TRUE), "No prior draws are available")
