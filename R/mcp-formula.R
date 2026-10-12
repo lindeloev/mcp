@@ -60,7 +60,8 @@
 #'   (`scale()`, `poly()`, `splines::ns()`). Bases are evaluated before sampling and reused for `newdata`.
 #' * `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for independent slopes and intercepts).
 #'   [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
-#' * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD).
+#' * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD), with parameters
+#'   `sigma_Intercept_2` and `sigma_x_2`. Without `sigma()` anywhere in the model, `sigma_1` is the residual SD itself.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/dpar.html).
 #' * `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series residuals on the link scale
 #'   (accepts regression formulas; include them in every segment where they apply). Set `series = id` and `threshold` once in any term; they apply to all segments.

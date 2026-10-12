@@ -176,13 +176,13 @@ test_that("generated code separates link and distribution scales", {
   expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
   expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
   expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
-  expect_equal(fit$prior$sigma_1, "dt(-sigma_x_1 * 1, 2.5, 3)")
+  expect_equal(fit$prior$sigma_Intercept_1, "dt(-sigma_x_1 * 1, 2.5, 3)")
   expect_equal(fit$prior$sigma_x_1, paste0("dt(0, ", format_prior_number(2.5 / stats::sd(data$x)), ", 3)"))
   expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
 
   expect_equal(change_fit$family$links["sigma"], c(sigma = "log"))
   expect_equal(
-    unname(unlist(change_fit$prior[c("sigma_1", "sigma_2")])),
+    unname(unlist(change_fit$prior[c("sigma_Intercept_1", "sigma_Intercept_2")])),
     rep("dt(0, 2.5, 3)", 2)
   )
   expect_true(change_fit$family$dpar_specs$modeled[change_fit$family$dpar_specs$dpar == "sigma"])
@@ -211,7 +211,7 @@ test_that("included dpar wrappers use the generic formula path", {
   expect_setequal(unique(predictors$dpar), c("mu", "sigma", "aux"))
   expect_equal(
     predictors$code_name[predictors$dpar == "aux"],
-    c("aux_1", "aux_x_1")
+    c("aux_Intercept_1", "aux_x_1")
   )
 })
 
@@ -243,7 +243,7 @@ test_that("distributional population terms apply only where included", {
     data,
     cp_1 = 3.5, cp_2 = 5.5,
     Intercept_1 = 0, Intercept_2 = 0,
-    sigma_1 = 0.5, sigma_z_1 = 1, sigma_z_3 = 2,
+    sigma_Intercept_1 = 0.5, sigma_z_1 = 1, sigma_z_3 = 2,
     .type = "fitted", .dpar = "sigma", .scale = "linear"
   )
   expected = 0.5 + ifelse(data$x < 3.5, data$z, ifelse(data$x < 5.5, 0, 2 * data$z))
@@ -274,8 +274,8 @@ test_that("required dpars have an initial predictor and implicit defaults retain
   expect_silent(mcp(list(y ~ 1 + shape(0 + z)), data, family = negbinomial(), par_x = "x", sample = FALSE))
 
   fit = mcp(list(y ~ 1, ~ 1 + sigma(1), ~ 1), data, par_x = "x", sample = FALSE)
-  expect_false("sigma_3" %in% mcp_pars(fit)$parameter)
-  expect_true("sigma_2" %in% mcp_pars(fit)$parameter)
+  expect_false("sigma_Intercept_3" %in% mcp_pars(fit)$parameter)
+  expect_true("sigma_Intercept_2" %in% mcp_pars(fit)$parameter)
 
   implicit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", sample = FALSE)
   expect_equal(implicit$family$links["sigma"], c(sigma = "identity"))
@@ -340,7 +340,7 @@ test_that("R-side dpar evaluation supports link and response scales", {
     data,
     Intercept_1 = log(2),
     x_1 = 0,
-    sigma_1 = 1,
+    sigma_Intercept_1 = 1,
     .type = "fitted",
     .dpar = "mu"
   )
@@ -351,7 +351,7 @@ test_that("R-side dpar evaluation supports link and response scales", {
   expect_equal(as.numeric(linear), rep(log(2), nrow(data)))
 
   args$Intercept_1 = 0
-  args$sigma_1 = log(3)
+  args$sigma_Intercept_1 = log(3)
   args$.dpar = "sigma"
   sigma_response = rlang::exec(fit$simulate, !!!args, .scale = "response")
   sigma_linear = rlang::exec(fit$simulate, !!!args, .scale = "linear")
@@ -435,7 +435,7 @@ test_that("distributional parameters use the same evaluation identity", {
   draws = cbind(
     Intercept_1 = rep(0, 4),
     groupB_1 = rep(10, 4),
-    sigma_1 = rep(0, 4),
+    sigma_Intercept_1 = rep(0, 4),
     sigma_groupB_1 = rep(log(3), 4)
   )
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))

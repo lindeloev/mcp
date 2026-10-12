@@ -252,10 +252,10 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     family = negbinomial(),
     sample = FALSE
   )
-  testthat::expect_equal(fit_shape$prior$shape_1, "dnorm(-shape_x_1 * 1, 2.5)")
+  testthat::expect_equal(fit_shape$prior$shape_Intercept_1, "dnorm(-shape_x_1 * 1, 2.5)")
   testthat::expect_equal(fit_shape$prior$shape_x_1, paste0("dnorm(0, ", x_scale, ")"))
   testthat::expect_equal(fit_shape$prior$shape_catB_1, "dnorm(0, 2.5)")
-  testthat::expect_equal(fit_shape$prior$shape_1_id_sd, "dnorm(0, 2.5) T(0, )")
+  testthat::expect_equal(fit_shape$prior$shape_Intercept_1_id_sd, "dnorm(0, 2.5) T(0, )")
   testthat::expect_equal(fit_shape$prior$shape_x_1_id_sd, paste0("dnorm(0, ", x_scale, ") T(0, )"))
   testthat::expect_equal(fit_shape$prior$shape_catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
 })
@@ -360,7 +360,7 @@ testthat::test_that("offsets on other distributional parameters do not overwrite
     sample = FALSE
   )
   testthat::expect_equal(fit2$prior$Intercept_1, "dnorm(0, 2.5)")
-  testthat::expect_equal(fit2$prior$shape_1, "dnorm(0, 2.5)")
+  testthat::expect_equal(fit2$prior$shape_Intercept_1, "dnorm(0, 2.5)")
 })
 
 
@@ -705,7 +705,7 @@ test_that("reparameterizations keep segment lines in place when change points mo
   expect_match(fit$jags_code, "xE2_3 = xE2_3_rise_ / (cp_3 - cp_2)^2", fixed = TRUE)
   # Distributional parameters follow the same rules
   sigma_fit = mcp(list(y ~ 1, ~ 0 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
-  expect_match(sigma_fit$jags_code, "sigma_2 = sigma_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
+  expect_match(sigma_fit$jags_code, "sigma_Intercept_2 = sigma_Intercept_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
 
   # The plain model
   plain_fit = withr::with_options(list(mcp_reparam = FALSE), mcp(model, data, par_x = "x", sample = FALSE))

@@ -77,13 +77,13 @@ test_that("predictor group intercepts work for family dpars and group-only formu
   )
   effects = get_fit_model_tables(fit)$group_effects
 
-  expect_equal(effects$name, c("Intercept_1_id", "sigma_1_id"))
+  expect_equal(effects$name, c("Intercept_1_id", "sigma_Intercept_1_id"))
   expect_true(all(is.na(effects$population_name)))
   expect_equal(effects$dpar, c("mu", "sigma"))
   expect_equal(mcp_pars(fit, scope = "group")$parameter, effects$name)
   expect_equal(
     mcp_pars(fit, scope = "population")$parameter,
-    c("Intercept_1_id_sd", "sigma_1_id_sd")
+    c("Intercept_1_id_sd", "sigma_Intercept_1_id_sd")
   )
   expect_equal(unpack_group_effects(fit, "predictor")$pars, effects$name)
   expect_null(unpack_group_effects(fit, "cp")$pars)
@@ -91,13 +91,13 @@ test_that("predictor group intercepts work for family dpars and group-only formu
   expect_named(
     fit$prior,
     c(
-      "Intercept_1_id_sd", "sigma_1_id_sd",
-      "Intercept_1_id", "sigma_1_id"
+      "Intercept_1_id_sd", "sigma_Intercept_1_id_sd",
+      "Intercept_1_id", "sigma_Intercept_1_id"
     ),
     ignore.order = TRUE
   )
   expect_match(fit$jags_code, "Intercept_1_id\\[id_\\] ~")
-  expect_match(fit$jags_code, "sigma_1_id\\[id_\\] ~")
+  expect_match(fit$jags_code, "sigma_Intercept_1_id\\[id_\\] ~")
   expect_false(grepl("Intercept_1_id_uncentered", fit$jags_code, fixed = TRUE))
 
   set.seed(42)
@@ -105,13 +105,13 @@ test_that("predictor group intercepts work for family dpars and group-only formu
     fit,
     group_data,
     Intercept_1_id_sd = 1,
-    sigma_1_id_sd = 0.5,
+    sigma_Intercept_1_id_sd = 0.5,
     .type = "fitted"
   )
   simulation = attr(simulated, "simulated")
   expect_equal(as.numeric(simulated), simulation$Intercept_1_id)
   expect_equal(simulation$Intercept_1_id_sd, 1)
-  expect_equal(simulation$sigma_1_id_sd, 0.5)
+  expect_equal(simulation$sigma_Intercept_1_id_sd, 0.5)
   expect_equal(
     simulation$Intercept_1_id[group_data$id == "a"],
     rep(simulation$Intercept_1_id[1], 4)
@@ -188,7 +188,7 @@ test_that("group_effects selects by part, name, and wildcard", {
 
   expect_equal(select("state*_1_id"), c("stateB_1_id", "stateC_1_id"))
   expect_equal(select("cp_*"), select("cp"))
-  expect_equal(select(c("cp", "sigma_*")), c("cp_1_id", "sigma_1_id"))
+  expect_equal(select(c("cp", "sigma_*")), c("cp_1_id", "sigma_Intercept_1_id"))
   expect_equal(select(c("Intercept_1_id", "*_1_id")), mcp_pars(fit, scope = "group")$parameter)
   expect_error(select(c("x_*", "foo")), "Unknown group-effect selection: x_* and foo.", fixed = TRUE)
 })
@@ -296,7 +296,7 @@ test_that("population intercepts end local group slopes of the same dpar", {
     fit,
     data,
     cp_1 = 2.5, cp_2 = 7.5,
-    sigma_1 = 1, sigma_2 = 1, Intercept_3 = 0,
+    sigma_Intercept_1 = 1, sigma_Intercept_2 = 1, Intercept_3 = 0,
     x_1_id_sd = 1,
     .type = "fitted"
   )

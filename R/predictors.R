@@ -364,7 +364,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 
   # Replace (Intercept) with Intercept
   is_intercept = pars == "(Intercept)"
-  intercept_name = ifelse(dpar == "mu", "Intercept", "")
+  intercept_name = ifelse(dpar %in% c("ar", "ma"), "", "Intercept")
   pars[is_intercept] = intercept_name
 
   # display_name
@@ -793,6 +793,11 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         check_rank, previous = parsed_predictors))
   }
   parsed_predictors = dplyr::arrange(parsed_predictors, .data$dpar, .data$segment)
+
+  # An implicit dpar without a formula anywhere is the parameter itself, e.g., sigma_1
+  # rather than the link-scale intercept sigma_Intercept_1 of a modeled sigma().
+  unmodeled = parsed_predictors$dpar %in% setdiff(family$dpars, c("mu", unlist(lapply(components, names))))
+  parsed_predictors[unmodeled, c("display_name", "code_name", "definition_name")] = paste0(parsed_predictors$dpar[unmodeled], "_1")
   predictors = parsed_predictors %>%
     dplyr::filter(.data$par_type != "offset") %>%
     dplyr::mutate(matrix_col = dplyr::row_number())

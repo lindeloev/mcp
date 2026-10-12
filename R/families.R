@@ -31,7 +31,7 @@ bernoulli = function(link = "logit") {
 #' @details `shape` is required by the likelihood, so it includes an intercept in segment 1.
 #'   Later segments that do not include `shape()` are joined. For example, `y ~ 1 + x + shape(1 + x)`
 #'   models both the mean and shape. Regression coefficients for both dpars are
-#'   on their link scales.
+#'   on their link scales, e.g., `shape_Intercept_1` and `shape_x_1`.
 #'
 #'   Without `shape()`, `shape_1` is the shape itself with an `inv_gamma(0.4, 0.3)` prior,
 #'   as in `brms`, much like the implicit `sigma_1` in `gaussian()`.

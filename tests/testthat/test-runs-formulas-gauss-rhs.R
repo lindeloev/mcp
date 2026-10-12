@@ -84,7 +84,7 @@ test_that("x-terms end at a disjoined segment even without an earlier intercept"
   expect_lifetimes(fit, c(x_1 = 3L, x_2 = 3L))
 
   fitted = fit$simulate(fit, data, cp_1 = 3.5, cp_2 = 5.5, x_1 = 1, x_2 = 2, Intercept_3 = 10,
-    sigma_1 = 1, sigma_3 = 1, .type = "fitted")
+    sigma_Intercept_1 = 1, sigma_Intercept_3 = 1, .type = "fitted")
   expected = ifelse(data$x < 5.5, pmin(data$x, 3.5) + 2 * pmax(data$x - 3.5, 0), 10)
   expect_equal(as.numeric(fitted), expected)
 })
@@ -211,7 +211,7 @@ test_that("formula offsets work in mcp formulas", {
     fit_sigma,
     d,
     cp_1 = 10.5,
-    Intercept_1 = 0, x_1 = 0, sigma_1 = 0,
+    Intercept_1 = 0, x_1 = 0, sigma_Intercept_1 = 0,
     x_2 = 0,
     .type = "fitted", .dpar = "sigma", .scale = "linear"
   )

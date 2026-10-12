@@ -312,8 +312,8 @@ data$y = empty$simulate(empty, data,
     cp_2 = 75,
     Intercept_1 = 25,
     x_3 = 1,
-    sigma_1 = log(4),
-    sigma_2 = log(25),
+    sigma_Intercept_1 = log(4),
+    sigma_Intercept_2 = log(25),
     sigma_x_2 = log(3.5 / 25) / (75 - 24.5)
   )
 

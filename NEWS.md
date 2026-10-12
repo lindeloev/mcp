@@ -84,7 +84,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Dropped support for `mcp(..., data = NULL)`. You now must provide some mock-up data to inform `mcp` about the types and levels of the predictor columns. See, e.g., `mcp_example("intercepts")$example_code` for a simple example or `mcp_example("multiple")$example_code` for a more involved example. All docs have been updated appropriately.
 
-  - Gaussian models with an explicit `sigma()` formula now model the residual standard deviation with a log link, as in `brms`. Models without an explicit `sigma()` are unchanged: `sigma_1` remains the residual SD itself with the response-scale half-Student-t prior.
+  - Gaussian models with an explicit `sigma()` formula now model the residual standard deviation with a log link, as in `brms`. To make the scale visible, its intercepts are named `sigma_Intercept_i` (previously `sigma_i`), matching `Intercept_i`, while slopes keep their names (e.g., `sigma_x_2`) and are now on the log scale. Models without an explicit `sigma()` are unchanged: `sigma_1` remains the residual SD itself with the response-scale half-Student-t prior.
 
   - `y | weights(w)` now specifies observation log-likelihood weights rather than Gaussian-only precision weights (which previously scaled the residual SD as `sigma / sqrt(w)`). Unlike `brms`, weights must be strictly positive due to JAGS requirements (cannot be zero). Predictive draws and expectations now use the distribution parameters directly while `log_lik()` multiplies observation log-densities by `w`.
 

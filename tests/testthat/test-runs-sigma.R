@@ -36,7 +36,7 @@ test_that("fixed residual SDs must be positive", {
   expect_silent(
     mcp(
       list(y ~ 1 + sigma(1)), data,
-      par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
+      par_x = "x", prior = list(sigma_Intercept_1 = 0), sample = FALSE
     )
   )
 })

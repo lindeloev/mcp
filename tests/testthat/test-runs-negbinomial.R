@@ -144,7 +144,7 @@ test_that("modeled shape uses link-scale coefficient priors", {
   )
 
   expect_equal(fit$family$links, c(mu = "log", shape = "log"))
-  expect_equal(fit$prior$shape_1, "dnorm(-shape_x_1 * 1, 2.5)")
+  expect_equal(fit$prior$shape_Intercept_1, "dnorm(-shape_x_1 * 1, 2.5)")
   expect_equal(
     fit$prior$shape_x_1,
     paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")")

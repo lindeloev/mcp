@@ -119,8 +119,8 @@ test_that("Gaussian modeled sigma against nlme::gls()", {
   )
 
   capture.output({ sum_mcp = summary(fit_mcp_sigma) })
-  mcp_sigma1 = exp(sum_mcp$mean[sum_mcp$parameter == "sigma_1"])
-  mcp_sigma2 = exp(sum_mcp$mean[sum_mcp$parameter == "sigma_2"])
+  mcp_sigma1 = exp(sum_mcp$mean[sum_mcp$parameter == "sigma_Intercept_1"])
+  mcp_sigma2 = exp(sum_mcp$mean[sum_mcp$parameter == "sigma_Intercept_2"])
 
   expect_equal(sum_mcp$mean[sum_mcp$parameter == "Intercept_1"], unname(coef_gls[1]), tolerance = 0.1)
   expect_equal(sum_mcp$mean[sum_mcp$parameter == "x_1"], unname(coef_gls[2]), tolerance = 0.05)

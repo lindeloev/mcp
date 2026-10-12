@@ -140,9 +140,9 @@ model = list(
 
 # 5. Distributional parameters and AR/MA
 model = list(
-  y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_1, sigma_x_1); AR(1) (ar1_1)
+  y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_Intercept_1, sigma_x_1); AR(1) (ar1_1)
     ~ 0 + x + ar(1, 1 + x),  # At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)
-    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_3; AR not included
+    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_Intercept_3; AR not included
     ~ 0 + ma(2)              # At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)
 )
 ```
@@ -158,8 +158,8 @@ model = list(
     ~ 1 + same(x + z),           # Reuse x_2 and z_1
     ~ 0 + same(x, as = 1) + same(state, as = 2), # Reuse x_1 and segment 2 factor coding/coefficients
     ~ 0 + same((1|id), as = 1),  # Reuse segment 1 group deviations and SD
-    ~ 1 + sigma(0 + x),          # New log-SD slope sigma_x_6, joined to initial sigma_1
-    ~ 0 + sigma(1 + same(x))     # New log-SD intercept sigma_7; reuse sigma_x_6
+    ~ 1 + sigma(0 + x),          # New log-SD slope sigma_x_6, joined to initial sigma_Intercept_1
+    ~ 0 + sigma(1 + same(x))     # New log-SD intercept sigma_Intercept_7; reuse sigma_x_6
 )
 ```
 

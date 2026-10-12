@@ -168,7 +168,7 @@ test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", 
   )
 
   parameters = mcp_pars(fit)
-  expect_true(all(c("shape_1", "shape_x_1") %in% parameters$parameter))
+  expect_true(all(c("shape_Intercept_1", "shape_x_1") %in% parameters$parameter))
   expect_equal(parameters$dpar[parameters$parameter == "shape_x_1"], "shape")
   expect_equal(mcp_columns(fit)$par_x, "x")
   expect_equal(mcp_columns(fit)$response, "y")
@@ -188,7 +188,7 @@ test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", 
   expect_equal(
     as.numeric(fit$simulate(
       fit, data.frame(x = 1:2),
-      Intercept_1 = 0, x_1 = 0, shape_1 = 0, shape_x_1 = 0,
+      Intercept_1 = 0, x_1 = 0, shape_Intercept_1 = 0, shape_x_1 = 0,
       .type = "fitted"
     )),
     c(1, 1)

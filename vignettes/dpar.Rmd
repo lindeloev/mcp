@@ -52,7 +52,7 @@ empty = mcp(model, data = df, sample = FALSE, par_x = "x")
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 50, Intercept_1 = 20, 
-  sigma_1 = log(5), sigma_2 = log(20))
+  sigma_Intercept_1 = log(5), sigma_Intercept_2 = log(20))
 
 head(df)
 ```
@@ -69,7 +69,7 @@ We plot a posterior predictive interval to show the effect of the changing stand
 plot(fit, q_predict = TRUE)
 ```
 
-We can see all parameters are well recovered (compare `sim` to `mean`). Like the other parameters, the `sigma`s are named after the segment where they were instantiated. There will always be a `sigma_1`.
+We can see all parameters are well recovered (compare `sim` to `mean`). Like the other parameters, the `sigma`s are named after the segment where they were instantiated. There will always be a `sigma_Intercept_1` because `sigma` is required by the likelihood.
 
 ```{r, R.options = list(width = 9999)}
 summary(fit)
@@ -82,10 +82,10 @@ We can model changes in `sigma` alone or together with changes in the mean. The 
 ```{r}
 model = list(
   # 1. Increasing standard deviation.
-  y ~ 1 + sigma(1 + x),  # Intercept_1, sigma_1, sigma_x_1
+  y ~ 1 + sigma(1 + x),  # Intercept_1, sigma_Intercept_1, sigma_x_1
   
   # 2. Abrupt change in mean and standard deviation.
-  ~ 1 + sigma(1),  # At cp_1: Intercept_2, sigma_2
+  ~ 1 + sigma(1),  # At cp_1: Intercept_2, sigma_Intercept_2
   
   # 3. Joined slope on mean; log-SD changes as a second-order polynomial.
   ~ 0 + x + sigma(0 + x + I(x^2)),  # At cp_2: x_3, sigma_x_3, sigma_xE2_3
@@ -100,7 +100,7 @@ Notice a few things here:
 - `same(x)` ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Sharing the slope effectively removes the change point in the mean (read more about [formulas in mcp](../articles/formulas.html)).
 - Segment 4: `sigma` is required by the likelihood, so it cannot be turned off. A segment that does not include `sigma()` is joined, so the log-SD plateaus here.
 
-In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However, `sigma_Intercept_i` is just too verbose, so log-SD intercepts are simply called `sigma_i`, where i is the segment number.
+In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD intercept in segment 2 is `sigma_Intercept_2` and the log-SD slope on `x` in segment 3 is `sigma_x_3`. In models without `sigma()`, the residual SD itself is simply `sigma_1`.
 
 ## Simulate data
 
@@ -116,8 +116,8 @@ df$y = empty$simulate(
   empty, df,
   cp_1 = 50, cp_2 = 80, cp_3 = 140,
   Intercept_1 = -20, Intercept_2 = 0,
-  sigma_1 = log(1), sigma_x_1 = log(2) / 15,
-  sigma_2 = log(4),
+  sigma_Intercept_1 = log(1), sigma_x_1 = log(2) / 15,
+  sigma_Intercept_2 = log(4),
   sigma_x_3 = 0.03,
   sigma_xE2_3 = 0.00015,
   x_3 = 0.8
@@ -201,7 +201,7 @@ df$y = empty$simulate(
   empty, df, 
   cp_1 = 130, cp_1_id_sd = 40,
   Intercept_1 = 20,
-  sigma_1 = log(10), sigma_2 = log(25))
+  sigma_Intercept_1 = log(10), sigma_Intercept_2 = log(25))
 ```
 
 Fit it:

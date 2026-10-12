@@ -11,8 +11,8 @@ models_group_effects = list(
     newdata = group_fit_data,
     simulated = list(
       Intercept_1 = 10,
-      sigma_1 = log(2),
-      sigma_1_id_sd = 0.35
+      sigma_Intercept_1 = log(2),
+      sigma_Intercept_1_id_sd = 0.35
     ),
     chains = 2,
     warmup = 500,
