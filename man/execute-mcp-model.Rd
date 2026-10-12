@@ -80,6 +80,7 @@ log_lik(object, ...)
   group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
+  draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
   probs = lifecycle::deprecated(),
@@ -92,6 +93,8 @@ log_lik(object, ...)
 \item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model.
 \itemize{
 \item If \code{NULL} (default), the original data is used.
+\item Grouping factors must only contain levels from the fitted data. Use \code{group_effects = FALSE}
+to predict without group-level effects, e.g., for new groups.
 \item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{residuals()}, \code{log_lik()},
 and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
@@ -147,7 +150,7 @@ currently requires all such effects (\code{group_effects = TRUE}).
 If there are group-level effects, this is the number of draws from each group.
 \code{NULL} means "all". More draws trade speed for accuracy.}
 
-\item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE} (for \code{fitted()}, \code{predict()}, and \code{log_lik()}). \code{residuals()} always returns tidy output.}
+\item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
@@ -229,7 +232,7 @@ During migration from v0.3.4, an omitted \code{rate} warns once per session per
 function when counts differ from proportions. Explicit \code{rate} settings do not warn.
 
 \code{residuals(fit)} is equivalent to \code{fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)} (or \code{newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)}),
-but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred', draws_format = 'tidy'}.
+but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred'}.
 
 \code{log_lik()} defaults to an unsummarised draws-by-observation matrix, as used
 by \code{loo} and other posterior workflows. Non-default \code{group_effects} and \code{arma}

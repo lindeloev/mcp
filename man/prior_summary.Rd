@@ -2,12 +2,17 @@
 % Please edit documentation in R/prior.R
 \name{prior_summary}
 \alias{prior_summary}
+\alias{prior_summary.mcpfit}
 \title{Summarise priors used by an mcp model}
 \usage{
-prior_summary(fit, verbose = FALSE)
+prior_summary(object, ...)
+
+\method{prior_summary}{mcpfit}(object, verbose = FALSE, ...)
 }
 \arguments{
-\item{fit}{An \code{mcpfit} object.}
+\item{object}{An \code{mcpfit} object.}
+
+\item{...}{Must be empty. Reserved for future use.}
 
 \item{verbose}{Logical. Include rule, description, source, and kind.}
 }
@@ -25,6 +30,12 @@ Shows the effective, resolved prior distributions on the familiar SD/scale
 parameterization rather than JAGS precision. Symbolic expressions in bounds
 (e.g. \code{min(x)} or \code{max(x)}) may be retained in symbolic form in compact output,
 while \code{verbose = TRUE} displays the underlying rule, description, source, and kind.
+Numbers are rounded to 5 significant digits for display. \code{fit$prior} holds the exact
+values used in the model. Parameter names within a prior describe its dependence on
+other parameters, e.g., the default prior on \code{Intercept_1} given \code{x_1}.
+
+\code{prior_summary()} shares its generic with \pkg{rstantools} (used by \code{brms} and \code{rstanarm}), so it
+works for all of these models regardless of package load order.
 }
 \examples{
 prior_summary(demo_fit)  # Show the effective priors and bounds

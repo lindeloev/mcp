@@ -9,7 +9,7 @@ negbinomial(link = "log", link_shape = "log")
 \arguments{
 \item{link}{Link function for \code{mu}.}
 
-\item{link_shape}{Link function for \code{shape}.}
+\item{link_shape}{Link function for \code{shape} when it is modeled using \code{shape()}.}
 }
 \description{
 Parameterized as \code{mu} (the conditional mean) and \code{shape} (the same quantity
@@ -21,6 +21,9 @@ the Poisson variance as \code{shape} approaches infinity.
 Later segments that do not include \code{shape()} are joined. For example, \code{y ~ 1 + x + shape(1 + x)}
 models both the mean and shape. Regression coefficients for both dpars are
 on their link scales.
+
+Without \code{shape()}, \code{shape_1} is the shape itself with an \code{inv_gamma(0.4, 0.3)} prior,
+as in \code{brms}, much like the implicit \code{sigma_1} in \code{gaussian()}.
 }
 \examples{
 # Fit an overdispersed count model with the default log links

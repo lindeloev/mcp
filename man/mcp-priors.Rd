@@ -39,13 +39,20 @@ probit links use 1.5 and 1 instead of 2.5. For x-terms, \code{sd(x)} is taken ov
 as \code{I(x^2)} use \code{sd((x - min(x))^2)}.
 \item \emph{Intercepts} are \code{normal(mean(y), 2.5 * sd(y))} for identity links, \code{normal(0, 1.5)} for logit, and
 \code{normal(0, 1)} for probit. The latter two are (approximately) uniform on the probability scale.
+For log links (Gaussian, Poisson, and negative binomial), intercepts are
+\code{normal(median(log(y)), max(2.5, mad(log(y))))}, rounded to one decimal and with \code{y} floored at 0.1 so that the
+log is defined. This robustly centers the prior on the typical log-response, whereas \code{rstanarm} uses
+\code{normal(0, 2.5)}.
+For a factor without an intercept, e.g., \code{y ~ 0 + state}, each factor level's coefficient is an intercept and
+gets this prior where the segment starts at zero (segment 1 or joined to nothing).
 \item \emph{\code{sigma} and group-level SDs} follow \code{brms}, e.g., \code{student_t(3, 0, max(2.5, mad(y)))}, since
 half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
 }
 
 Like \code{rstanarm} and \code{brms}, which place intercept priors on centered predictors, the default prior on
 the segment-1 intercept applies to the level at the start of the segment, \code{min(x)}. The reported
-\code{Intercept_1} is still at \code{x = 0}, as in \code{\link[=lm]{lm()}}. Later segments' intercepts are at their change point.
+\code{Intercept_1} is still at \code{x = 0}, as in \code{\link[=lm]{lm()}}, so its prior is given the x-terms, e.g.,
+\code{dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))} in \code{fit$prior}. Later segments' intercepts are at their change point.
 Unlike in \code{rstanarm} and \code{brms}, other predictors are not centered, so the prior applies where they are zero.
 If such a predictor is far from zero, center it before fitting or set a prior on \code{Intercept_1}.
 User-specified intercept priors apply to \code{Intercept_1} as written. The autoscaling does not account for

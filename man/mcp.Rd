@@ -87,7 +87,8 @@ when \code{jags_code} is supplied. Read more in
 \itemize{
 \item \code{TRUE} (default) This changes only \code{fit$jags_code} and sampling efficiency, not the
 model, the priors, or the posterior.
-\item \code{FALSE} runs the plain model. This mostly serves the pedagogical purpose of transparency.
+\item \code{FALSE} runs the plain model, except that the segment-1 intercept is still sampled at the
+midpoint of segment 1. This mostly serves the pedagogical purpose of transparency.
 }}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number

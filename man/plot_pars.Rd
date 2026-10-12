@@ -12,7 +12,7 @@ plot_pars(
   type = "combo",
   ncol = 1,
   prior = FALSE,
-  nvariables = 5,
+  npars = 5,
   ask = TRUE
 )
 }
@@ -36,14 +36,14 @@ points, "^my_group_effect" plots all levels of a particular group-level effect, 
 Common calls are "combo", "trace", and "dens_overlay". Current options are
 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 'dens_overlay', 'hex', 'hist', 'intervals', 'pairs', 'rank_hist', 'rank_overlay',
-'trace', 'trace_highlight', and 'violin".}
+'trace', 'trace_highlight', and 'violin'.}
 
 \item{ncol}{Number of columns in plot. This is useful when you have many
 parameters and only one plot \code{type}.}
 
 \item{prior}{Logical. Plot prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)? Useful for \code{mcp(..., sample = "both")}.}
 
-\item{nvariables}{Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
+\item{npars}{Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per
 page. Set to \code{NULL} or \code{Inf} to plot all parameters on a single page. The default of 5 follows \code{brms::plot.brmsfit()}.}
 
 \item{ask}{Logical. In an interactive session, prompt before printing each
@@ -67,7 +67,7 @@ are also a number of useful plots in the \pkg{coda} package, i.e.,
 In any case, if you see a few erratic lines or parameter estimates, this is
 a sign that you may want to increase argument 'warmup' and 'iter' in \code{\link{mcp}}.
 
-Up to \code{nvariables} parameters are shown on each page. Multi-page plots are
+Up to \code{npars} parameters are shown on each page. Multi-page plots are
 printed in sequence; in interactive use, \code{ask = TRUE} pauses between pages.
 }
 \examples{

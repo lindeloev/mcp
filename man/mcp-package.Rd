@@ -23,7 +23,7 @@ See \code{\link[=mcp]{mcp()}} to fit models, \link{mcp-formula} for the model an
 \item \emph{Distributional regression:} Model residual variance and other distributional parameters across segments,
 e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}.
 \item \emph{Time-series residuals:} Model serial dependence using \code{ar(p)} and \code{ma(q)} terms with a generalized link-scale
-recurrence that spans continuously across change points.
+recurrence.
 \item \emph{Group-level effects:} Add hierarchical (random) intercepts, slopes, and change points, e.g., \code{~ 1 + (1|id)}
 or \code{~ cp((1|id)) + 0 + x}.
 \item \emph{Model comparison and hypothesis testing:} Compare models using PSIS-LOO (\code{loo()}) or WAIC (\code{waic()}), and test hypotheses

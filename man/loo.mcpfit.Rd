@@ -44,7 +44,7 @@ a \code{loo} or \code{psis_loo} object.
 }
 \description{
 Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
-more in \code{\link[loo]{loo}}.
+Read more in \code{\link[loo]{loo}}.
 }
 \details{
 Observationwise PSIS-LOO and WAIC are problematic for AR/MA models

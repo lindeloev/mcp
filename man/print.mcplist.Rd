@@ -8,7 +8,7 @@
 \method{print}{mcplist}(x, ...)
 }
 \arguments{
-\item{x}{An \code{\link{mcpfit}} object.}
+\item{x}{An \code{\link{mcpfit}} object, or an \code{mcpsummary} returned by \code{summary()}.}
 
 \item{...}{Must be empty. Reserved for future use.}
 }

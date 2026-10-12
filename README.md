@@ -145,12 +145,12 @@ summary(fit)
     ##   3: ~ 1 + time
     ## 
     ## Change point parameters:
-    ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+    ##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
     ##  cp_1        31.70 1.777 28.31 35.259 1.00     3211     4153 30.0    OK
     ##  cp_2        71.16 0.997 69.47 72.765 1.00     3792     6331 70.0    OK
     ## 
     ## Population-level parameters:
-    ##     variable  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
+    ##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
     ##  Intercept_1  9.95 0.652  8.65 11.200 1.00     4613     6693 10.0    OK
     ##  time_2       0.55 0.048  0.46  0.643 1.00     5251     6627  0.5    OK
     ##  Intercept_3 13.94 1.333 11.32 16.585 1.00     2471     4562 15.0    OK
@@ -204,10 +204,10 @@ example, what is the evidence (given priors) that the first change point
 hypothesis(fit, "cp_1 > 30")
 ```
 
-    ## # A tibble: 1 × 6
-    ##   hypothesis     mean lower upper  prob    BF
-    ##   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 - 30 > 0  1.70 -1.69  5.26 0.829  5.03
+    ## # A tibble: 1 × 7
+    ##   hypothesis     mean    sd lower upper  prob    BF
+    ##   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    ## 1 cp_1 - 30 > 0  1.70  1.78 -1.69  5.26 0.829  5.18
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)

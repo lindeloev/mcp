@@ -6,12 +6,12 @@
 \alias{hypothesis.mcpfit}
 \title{Test Hypotheses Concerning Individual Parameters}
 \usage{
-hypothesis(fit, ...)
+hypothesis(x, ...)
 
-\method{hypothesis}{mcpfit}(fit, hypotheses, width = 0.95, prior = FALSE, ...)
+\method{hypothesis}{mcpfit}(x, hypotheses, width = 0.95, prior = FALSE, ...)
 }
 \arguments{
-\item{fit}{An \code{\link{mcpfit}} object.}
+\item{x}{An \code{\link{mcpfit}} object.}
 
 \item{...}{Must be empty. Reserved for future use.}
 
@@ -31,9 +31,9 @@ draws from \code{mcp(sample = "both")}. For example:
 than or equal to 3.
 \item \code{"Intercept_1 > -2 & Intercept_1 < 2"}: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: be creative.
-\item \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
+\item \code{"`cp_1_id[John]` > `cp_1_id[Mary]`"}: John's change point is later than Mary's, as estimated
 through the group-level change-point deviation for \code{id} at change point 1 (starting segment 2).
-Note that \code{``} are required when using \verb{[i]}.
+Note that \code{``} are required around names with \verb{[level]}.
 }
 
 \strong{Equality hypotheses} use the equal sign (=) and a Savage-Dickey density
@@ -69,6 +69,7 @@ A tibble with a row per hypothesis and the following columns:
 \item \code{hypothesis} is the hypothesis; often re-arranged to test against zero.
 \item \code{mean} is the posterior mean of the left-hand side of the hypothesis, or
 the prior mean when \code{prior = TRUE}.
+\item \code{sd} is the posterior standard deviation of ditto, or the prior SD when \code{prior = TRUE}.
 \item \code{lower} is the lower bound of the central posterior interval of width \code{width},
 or the corresponding prior interval when \code{prior = TRUE}.
 \item \code{upper} is the upper bound of ditto.

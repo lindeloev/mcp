@@ -4,6 +4,7 @@
 \name{summary.mcpfit}
 \alias{summary.mcpfit}
 \alias{summary}
+\alias{print.mcpsummary}
 \alias{fixef.mcpfit}
 \alias{fixef}
 \alias{ranef.mcpfit}
@@ -22,6 +23,8 @@
   ...
 )
 
+\method{print}{mcpsummary}(x, digits = attr(x, "mcpsummary")$digits, ...)
+
 \method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...)
 
 \method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
@@ -35,13 +38,13 @@
 and 1).}
 
 \item{digits}{Non-negative integer. Number of significant digits used when
-printing the summary. Defaults to 2. The invisibly returned tibble
-retains the unrounded values.}
+printing the summary. Defaults to 2. The returned tibble retains the
+unrounded values.}
 
 \item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 
 \item{verbose}{Logical. Include the \code{segment} and \code{dpar} columns. Defaults
-to \code{FALSE} for a compact, v0.3.4-compatible summary.}
+to \code{FALSE} for a compact summary.}
 
 \item{diagnostics}{Named list of diagnostic warning thresholds. Available
 elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
@@ -53,17 +56,19 @@ the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
 \item{...}{Must be empty. Reserved for future use.}
 
+\item{x}{An \code{\link{mcpfit}} object, or an \code{mcpsummary} returned by \code{summary()}.}
+
 \item{dpar}{Distributional parameter(s) whose regression coefficients to
 return. For modeled distributional parameters such as \code{sigma()}, these
 coefficients are on the link scale.}
-
-\item{x}{An \code{\link{mcpfit}} object.}
 }
 \value{
-A tibble with parameter estimates and MCMC diagnostics. Rows
+An \code{mcpsummary} tibble with parameter estimates and MCMC diagnostics.
+It prints with model information, separate tables for change points and
+population-level parameters, and convergence warnings. Rows
 are ordered by change point first, then \code{mu}, then the other
 distributional parameters, then \code{ar}/\code{ma} components - each ascending by
-segment. OBS: The change point distributions are often not unimodal and
+segment. Note: The change point distributions are often not unimodal and
 symmetric so the intervals can be deceiving. Plot them using
 \code{plot_pars(fit)}.
 
@@ -72,7 +77,7 @@ With \code{verbose = TRUE}:
 \item \code{segment} is the segment the parameter belongs to.
 \item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},
 \code{"ar"}, \code{"ma"}, etc.) the parameter belongs to. For AR/MA terms, the
-lag order is encoded in \code{variable}, e.g. \code{ar2_1}.
+lag order is encoded in \code{parameter}, e.g. \code{ar2_1}.
 \item \code{mean} is the posterior mean
 \item \code{sd} is the posterior standard deviation.
 \item \code{lower} and \code{upper} are the bounds of the central posterior interval
@@ -105,11 +110,14 @@ Summarise parameter estimates and model diagnostics.
 }
 \section{Functions}{
 \itemize{
+\item \code{print(mcpsummary)}: Print an \code{mcpsummary} returned by \code{summary()}: model
+information, change point and population-level parameters, and diagnostics.
+
 \item \code{fixef(mcpfit)}: Population-level fixed effects (regression coefficients) of \code{mcpfit}.
 
 \item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
 Change-point deviations are relative to their population change point;
-\code{cp_i_sd} is the SD of their normal distribution before truncation.
+\verb{cp_i_<group>_sd} (e.g., \code{cp_1_id_sd}) is the SD of their normal distribution before truncation.
 
 \item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
 
@@ -121,6 +129,7 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 
 # Get the results as a tibble
 results = summary(demo_fit)
+results$mean
 
 # Group-level deviations (random effects)
 # ranef(my_fit)

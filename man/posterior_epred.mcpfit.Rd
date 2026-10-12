@@ -51,6 +51,8 @@
 \item{newdata}{A \code{tibble} or a \code{data.frame} containing predictors in the model.
 \itemize{
 \item If \code{NULL} (default), the original data is used.
+\item Grouping factors must only contain levels from the fitted data. Use \code{group_effects = FALSE}
+to predict without group-level effects, e.g., for new groups.
 \item For models with \code{ar()} or \code{ma()}: \code{fitted()}, \code{residuals()}, \code{log_lik()},
 and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
