@@ -345,7 +345,7 @@ JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional re
 
 # JAGS code
 
-Here is the JAGS code for the autocorrelation-only change above, i.e., the one with a shared slope going from one AR(1) coefficient to another. You can print `fit$simulate` and see that it runs much of the same code.
+Here is the JAGS code for the autocorrelation-only change above, i.e., the one with a shared slope going from one AR(1) coefficient to another. `fitted()`, `predict()`, etc. evaluate the same formulas in R; see [the model in R](../articles/implementation.html#the-model-in-r).
 
 ```{r}
 fit$jags_code
