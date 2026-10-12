@@ -68,12 +68,16 @@ not predictions).
 \item \code{~ 1}: Plateau (intercept only, no slope).
 \item \code{~ x:state + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
 (\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
+\item \code{~ 1 + offset(log(exposure))}: Offset with a fixed coefficient of 1. If one segment includes an offset,
+all segments must include one. The same applies within \code{sigma()}, etc., and within \code{ar()}/\code{ma()} in the
+segments that include them.
 \item \code{~ 1 + (1 | id)}: Group-level intercepts (or \code{(1 + x || id)} for independent slopes and intercepts).
 \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
-\item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD).
+\item \code{~ sigma(1 + x)}: Distributional parameters on the link scale (e.g., log residual SD), with parameters
+\code{sigma_Intercept_2} and \code{sigma_x_2}. Without \code{sigma()} anywhere in the model, \code{sigma_1} is the residual SD itself.
 \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \code{~ ar(1) + ma(1)}: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, \code{series = id}, and \code{threshold}; include them in every segment where they apply).
+(accepts regression formulas; include them in every segment where they apply). Set \code{series = id} and \code{threshold} once in any term; they apply to all segments.
 \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 \item \code{~ 1 + same(x)} or \code{0 + same(z, as = 1)}: Reuse a coefficient from the preceding segment (default)
 or from segment \code{as}. Reused coefficients are estimated jointly from all segments where they are
@@ -105,6 +109,8 @@ The inverse-linked parameter is \eqn{\mu_i = g^{-1}(\eta_i)} via link function \
 representing the expected response for most families (or the success probability for binomial models,
 where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
 and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
+Since each of them has its own segmented linear predictor, \code{mcp} calls them all distributional parameters (\code{dpar}):
+\code{mu}, \code{sigma}, \code{shape}, and each AR/MA lag (\code{ar1}, \code{ar2}, \code{ma1}, ...), e.g., \code{fitted(fit, dpar = "ar1")} or \code{fixef(fit, dpar = "sigma")}.
 See more details on the \href{https://lindeloev.github.io/mcp/articles/formulas.html}{mcp website}.
 }
 

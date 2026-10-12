@@ -17,10 +17,9 @@ mcp(
   warmup = 1000,
   inits = NULL,
   jags_code = NULL,
-  reparam = TRUE,
   seed = NULL,
   diagnostics = list(),
-  quiet = FALSE,
+  quiet = getOption("mcp_quiet", FALSE),
   cores = NULL,
   adapt = lifecycle::deprecated()
 )
@@ -32,8 +31,7 @@ and the full formula syntax.}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
 with syntactic column names.
-Missing values in the response variable are imputed using the posterior predictive.
-\code{\link{fitted.mcpfit}} or \code{\link{predict.mcpfit}} details how to see the imputed values.}
+Missing values in the response variable are imputed jointly with the parameters.}
 
 \item{prior}{Named list, e.g., \code{prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")}.
 List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
@@ -42,9 +40,13 @@ a fixed value (e.g., \code{-2.1}), or the name of another parameter to share its
 Weakly informative defaults are used where priors are not specified;
 see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.}
 
-\item{family}{A supported family: \code{gaussian()}, \code{binomial()}, \code{bernoulli()},
-\code{poisson()}, or \code{negbinomial()}, with a supported link function; e.g.,
-\code{gaussian(link = "log")}.}
+\item{family}{A supported family and link function:
+\itemize{
+\item \code{gaussian(link = "identity")} or \code{gaussian(link = "log")}
+\item \code{binomial()} or \code{bernoulli()} with \code{link = "logit"}, \code{"probit"}, or \code{"identity"}
+\item \code{poisson(link = "log")} or \code{poisson(link = "identity")}
+\item \code{negbinomial(link = "log", link_shape = "log")}
+}}
 
 \item{par_x}{String. Name of the change-point variable, i.e., the data column
 on which change points are located. \code{NULL} (default) auto-detects it as the
@@ -71,8 +73,11 @@ The total number of draws is \code{iter * chains}.}
 are discarded before sampling. Set higher if needed for sampler adaptation;
 use diagnostics to assess convergence.}
 
-\item{inits}{A list of initial values for the parameters. This can be useful
-if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
+\item{inits}{A named list of initial values for the parameters, e.g., \code{list(Intercept_1 = 10)},
+or a list of such lists with one per chain. This can be useful if a model fails to converge.
+Names must be stochastic nodes in \code{fit$jags_code} (lines with \code{~}). Change points, fixed parameters,
+and parameters that \code{mcp} samples via reparameterization (e.g., \code{Intercept_3} is sampled as
+\code{Intercept_3_end_}) cannot be initialized directly. See \code{mcp_reparam} in \link{mcp-package}.
 Defaults to \code{NULL} where all chains start at equispaced change points and the prior medians.
 User-provided \code{inits} take precedence.}
 
@@ -80,16 +85,6 @@ User-provided \code{inits} take precedence.}
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
 framework. R-side simulation and prediction methods continue to use the
 mcp-default formulas (with warning), so they may no longer match custom JAGS code.}
-
-\item{reparam}{Logical. Whether to enable reparameterization for faster mixing. Ignored
-when \code{jags_code} is supplied. Read more in
-\href{https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations}{From formulas to sampler code}.
-\itemize{
-\item \code{TRUE} (default) This changes only \code{fit$jags_code} and sampling efficiency, not the
-model, the priors, or the posterior.
-\item \code{FALSE} runs the plain model, except that the segment-1 intercept is still sampled at the
-midpoint of segment 1. This mostly serves the pedagogical purpose of transparency.
-}}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. If \code{NULL} (default), the seed is drawn from R's random-number generator,
@@ -104,7 +99,7 @@ warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inheri
 the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 
 \item{quiet}{Logical. Suppress routine JAGS output and mcp sampling-status
-messages? Defaults to \code{FALSE}.}
+messages? Defaults to \code{FALSE}. Use \code{options(mcp_quiet = TRUE)} to change the default for the session.}
 
 \item{cores}{Deprecated and ignored. Configure parallel processing with a
 \link[future:plan]{future} plan instead, for example

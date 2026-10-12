@@ -19,7 +19,7 @@ matrix?}
 \item{pars}{Optional names of population-level parameters to extract, or
 \code{"all"} for all population-level parameters.}
 
-\item{dpar}{Distributional parameter(s) to select when \code{pars = NULL}.}
+\item{dpar}{Distributional parameter(s) to select when \code{pars = NULL}, e.g., \code{"mu"}, \code{"sigma"}, or \code{"ar1"}.}
 
 \item{prior}{Logical. Use prior draws instead of posterior draws?}
 

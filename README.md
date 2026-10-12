@@ -386,7 +386,7 @@ debugging](https://lindeloev.github.io/mcp/articles/tips.html)
   iterations, `mcp(..., warmup = 500)`.
 
 - Help convergence along using
-  `mcp(..., inits = list(cp_1 = 20, Intercept_2 = -3))`.
+  `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`.
 
 - Most errors will be caused by circularly defined priors.
 
@@ -415,16 +415,16 @@ head(fitted(fit, summary = FALSE))  # column .epred
 ```
 
     ## # A tibble: 6 × 14
-    ##   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
-    ##    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-    ## 1      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
-    ## 2      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
-    ## 3      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
-    ## 4      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
-    ## 5      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
-    ## 6      1          1     1  31.4  70.5        9.78  0.549        14.0 -0.226
-    ## # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
-    ## #   .data_row <int>, .epred <dbl>
+    ##   response  time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1
+    ##      <dbl> <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>
+    ## 1     12.2  76.3         1      1          1     1  31.4  70.5        9.78
+    ## 2     12.2  76.3         1      1          2     2  30.4  70.5        9.43
+    ## 3     12.2  76.3         1      1          3     3  31.6  72.6       10.3 
+    ## 4     12.2  76.3         1      1          4     4  31.0  71.1        9.59
+    ## 5     12.2  76.3         1      1          5     5  32.0  69.7       10.1 
+    ## 6     12.2  76.3         1      1          6     6  32.5  71.3       11.1 
+    ## # ℹ 5 more variables: time_2 <dbl>, Intercept_3 <dbl>, time_3 <dbl>,
+    ## #   sigma_1 <dbl>, .epred <dbl>
 
 # Citation
 

@@ -13,6 +13,9 @@
 \alias{as_draws_array}
 \alias{as_draws_matrix}
 \alias{as_draws_rvars}
+\alias{as.matrix.mcpfit}
+\alias{as.array.mcpfit}
+\alias{as.data.frame.mcpfit}
 \title{Extract MCMC Draws from \code{mcpfit} Objects}
 \usage{
 \method{as_draws}{mcpfit}(x, prior = FALSE, ...)
@@ -26,6 +29,12 @@ as_draws_array(x, ...)
 as_draws_matrix(x, ...)
 
 as_draws_rvars(x, ...)
+
+\method{as.matrix}{mcpfit}(x, prior = FALSE, ...)
+
+\method{as.array}{mcpfit}(x, prior = FALSE, ...)
+
+\method{as.data.frame}{mcpfit}(x, row.names = NULL, optional = FALSE, prior = FALSE, ...)
 }
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
@@ -34,12 +43,19 @@ as_draws_rvars(x, ...)
 (\code{FALSE})? Errors if the requested draws are unavailable.}
 
 \item{...}{Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.}
+
+\item{row.names, optional}{Unused. For compatibility with \code{\link[=as.data.frame]{as.data.frame()}}.}
 }
 \value{
 A \pkg{posterior} \code{draws} object or a \pkg{coda} \code{mcmc.list} object.
+\code{as.matrix()} returns a draws-by-parameter matrix, \code{as.array()} an iteration-by-chain-by-parameter
+array, and \code{as.data.frame()} a draws-by-parameter data frame. The data frame has no chain information,
+so use \code{as_draws_df()} for chain-aware diagnostics such as \code{posterior::rhat()}.
 }
 \description{
 Extract posterior or prior draws using \pkg{posterior}, \pkg{coda}, or the optional \pkg{tidybayes} package's S3 generics.
+Base R's \code{as.matrix()}, \code{as.array()}, and \code{as.data.frame()} return plain draws, like in \pkg{rstanarm} and \pkg{brms},
+so \pkg{bayesplot} functions work directly on the fit.
 }
 \examples{
 # Default posterior draws, with one row per iteration and chain
@@ -50,6 +66,10 @@ head(as_draws_df(demo_fit))  # Convert draws to a data frame
 as_draws_matrix(demo_fit)[1:3, 1:3]  # Matrix of draws by parameter
 as_draws_array(demo_fit)[1:2, , 1:2]  # Iteration-by-chain-by-parameter array
 as_draws_rvars(demo_fit)[c("cp_1", "cp_2")]  # Random-variable representation
+
+# Base R formats, e.g., for bayesplot
+as.matrix(demo_fit)[1:3, 1:3]  # Plain matrix of draws by parameter
+bayesplot::mcmc_trace(demo_fit, pars = c("cp_1", "cp_2"))
 
 # mcp also supports the coda and tidybayes conventions
 head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object

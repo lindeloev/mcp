@@ -132,7 +132,7 @@ predictions. Like \code{re_formula = NA} in \code{{brms}}.
 \item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
 \item Character vector of group-level parameter names, e.g., \code{c("cp_1_id", "x_2_id")}.
-\code{*} is a wildcard, e.g., \code{"state*_1_id"} selects all levels of a factor
+\lifecycle{experimental} \code{*} is a wildcard, e.g., \code{"state*_1_id"} selects all levels of a factor
 and \code{"*_id"} selects all effects by \code{id}. See names using \code{ranef(fit)}.
 Can be combined, e.g., \code{c("cp", "sigma_*")}.
 }}
@@ -198,7 +198,8 @@ evaluated quantity otherwise.
 With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
 columns are dot-prefixed to avoid collisions with data columns.
 \item If \code{summary = FALSE} and \code{draws_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
-draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows. If there are
+draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows, ordered by
+\code{.data_row} and then \code{.draw}. If there are
 group-level effects, the returned data is expanded with the relevant levels for each row.
 
 The return columns are:

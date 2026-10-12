@@ -60,3 +60,6 @@ JAGS 5.0 inits bounded parameters near the prior mode (zero for half-t SDs). mcp
 
 # 2026-10-12: iter excludes warmup
 This behavior breaks with brms and some others. But I think it is the correct one so it is purpusefully kept like this.
+
+# 2026-10-12: Formula environments will not be included
+Base R allows using variables from the calling environment in formulas. mcp requires formula terms to be present in data. For now, this behavior will be kept. Including the environment in formulas leads to strange situations, e.g., shipping development environments to CRAN; shipping potential sensitive data, etc.

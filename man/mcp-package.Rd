@@ -33,6 +33,19 @@ or \code{~ cp((1|id)) + 0 + x}.
 See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples.
 }
 
+\section{Options}{
+
+\itemize{
+\item \code{mcp_quiet}: Logical. The default of \code{mcp(..., quiet)}. \code{options(mcp_quiet = TRUE)} suppresses routine JAGS output
+and mcp sampling-status messages for the session.
+\item \code{mcp_reparam}: Logical. \code{TRUE} (default) lets \code{\link[=mcp]{mcp()}} sample some default priors on scales that mix
+faster. This changes only \code{fit$jags_code} and sampling efficiency, not the model, the priors, or the posterior.
+\code{options(mcp_reparam = FALSE)} writes the plain model, which is mostly useful for seeing how \code{mcp} works.
+Ignored when \code{jags_code} is supplied. Read more in
+\href{https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations}{From formulas to sampler code}.
+}
+}
+
 \references{
 \itemize{
 \item Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.

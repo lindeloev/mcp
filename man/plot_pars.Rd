@@ -59,8 +59,8 @@ cases.
 }
 \details{
 For other \code{type}, it calls \code{bayesplot::mcmc_type()}. Use these
-directly on \code{coda::as.mcmc(fit)} or \code{as_draws(fit)} if you want finer
-control of plotting, e.g., \code{bayesplot::mcmc_dens(coda::as.mcmc(fit))}. There
+directly on \code{fit} if you want finer
+control of plotting, e.g., \code{bayesplot::mcmc_dens(fit)}. There
 are also a number of useful plots in the \pkg{coda} package, i.e.,
 \code{coda::gelman.plot(coda::as.mcmc(fit))} and \code{coda::crosscorr.plot(coda::as.mcmc(fit))}
 

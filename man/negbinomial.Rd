@@ -20,7 +20,7 @@ the Poisson variance as \code{shape} approaches infinity.
 \code{shape} is required by the likelihood, so it includes an intercept in segment 1.
 Later segments that do not include \code{shape()} are joined. For example, \code{y ~ 1 + x + shape(1 + x)}
 models both the mean and shape. Regression coefficients for both dpars are
-on their link scales.
+on their link scales, e.g., \code{shape_Intercept_1} and \code{shape_x_1}.
 
 Without \code{shape()}, \code{shape_1} is the shape itself with an \code{inv_gamma(0.4, 0.3)} prior,
 as in \code{brms}, much like the implicit \code{sigma_1} in \code{gaussian()}.

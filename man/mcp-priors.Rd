@@ -12,21 +12,20 @@ Use \code{\link[=prior_summary]{prior_summary()}} to see the resolved priors of 
 \details{
 Each value in the list is either
 \itemize{
-\item A distribution in \code{mcp}'s JAGS-string syntax (e.g.,
-\code{Intercept_1 = "dnorm(0, 1) T(0,)"}) indicating a
-conventional prior distribution. Weakly informative defaults
-are used where priors are not specified. These are designed for stable
-estimation and prediction, but should be justified before hypothesis testing.
-\code{mcp} uses conventional distribution scales rather than JAGS precision:
-SD for \code{dnorm()}, scale for \code{dt()}, \code{ddexp()}, and \code{dlogis()}, and
-log-SD for \code{dlnorm()}.
+\item A distribution string (e.g., \code{Intercept_1 = "dnorm(0, 1) T(0, )"}). Distributions use JAGS names
+and argument order, including \code{T()} truncation, but with conventional scales instead of JAGS
+precision: SD for \code{dnorm()}, SD on the log scale for \code{dlnorm()} (\code{sdlog} in \code{\link[stats:dlnorm]{stats::dlnorm()}}),
+and scale for \code{dt()}, \code{ddexp()}, and \code{dlogis()}. Change points also accept \code{dirichlet(alpha)},
+and all priors accept data-dependent terms such as \code{sd(y)} (see below).
 \item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
-\item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), equating parameters via JAGS.
+\item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), sharing that parameter's value.
 Note that sharing coefficients via \code{same()} in the segment formulas (e.g., \code{~ same(1)})
 is generally preferred. If two group-level deviations are shared via the prior,
 they will need to have the same grouping variable.
 }
 
+Weakly informative defaults are used where priors are not specified. These are designed for stable
+estimation and prediction, but should be justified before hypothesis testing.
 Default priors follow \code{rstanarm} for intercepts and coefficients and \code{brms} for scale parameters, with
 a few documented deviations:
 \itemize{
@@ -35,8 +34,10 @@ a few documented deviations:
 where \eqn{s_y = \mathrm{sd}(y)}{s_y = sd(y)} for identity links and \eqn{s_y = 1}{s_y = 1} for other links.
 \eqn{\mathrm{sd}(\mathrm{column})}{sd(column)} is the SD of the coefficient's model-matrix column, including
 the 0/1 dummies of factors. This makes the prior largely invariant to the units of \code{x} and \code{y}. Logit and
-probit links use 1.5 and 1 instead of 2.5. For x-terms, \code{sd(x)} is taken over all data, and powers such
-as \code{I(x^2)} use \code{sd((x - min(x))^2)}.
+probit links use 1.5 and 1 instead of 2.5. For x-terms, \code{sd(column)} is \code{sd(x)} over all data (powers such
+as \code{I(x^2)} use \code{sd((x - min(x))^2)}) times the SD of the term without \code{x}, e.g., \code{sd(x) * sd(z)}
+for \code{x:z}. 0/1 indicators such as the dummies in \code{x:state} contribute a factor of 1. Unlike \code{rstanarm}, this
+does not depend on the location of \code{x} and \code{z}.
 \item \emph{Intercepts} are \code{normal(mean(y), 2.5 * sd(y))} for identity links, \code{normal(0, 1.5)} for logit, and
 \code{normal(0, 1)} for probit. The latter two are (approximately) uniform on the probability scale.
 For log links (Gaussian, Poisson, and negative binomial), intercepts are
@@ -45,17 +46,23 @@ log is defined. This robustly centers the prior on the typical log-response, as 
 Student-t shape and replaces zeros the same way), whereas \code{rstanarm} uses \code{normal(0, 2.5)}.
 For a factor without an intercept, e.g., \code{y ~ 0 + state}, each factor level's coefficient is an intercept and
 gets this prior where the segment starts at zero (segment 1 or joined to nothing).
+With an \code{offset()}, the intercept location and scale are computed from the offset-adjusted response,
+\code{y - offset} for identity links and \code{log(y) - offset} for log links.
 \item \emph{\code{sigma} and group-level SDs} follow \code{brms}, e.g., \code{student_t(3, 0, max(2.5, mad(y)))}, since
 half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
+For \code{mu} with a log link and for modeled \code{shape}, group-level SDs are half-normal instead, e.g., \verb{normal(0, 2.5) T(0, )},
+because exponentiated heavy tails imply extreme group multipliers.
 }
 
 Like \code{rstanarm} and \code{brms}, which place intercept priors on centered predictors, the default prior on
-the segment-1 intercept applies to the level at the start of the segment, \code{min(x)}. The reported
+the segment-1 intercept applies to the value at the start of the segment, \code{min(x)}. The reported
 \code{Intercept_1} is still at \code{x = 0}, as in \code{\link[=lm]{lm()}}, so its prior is given the x-terms, e.g.,
 \code{dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))} in \code{fit$prior}. Later segments' intercepts are at their change point.
+Likewise, factor levels and contrasts with their own x-terms apply at \code{min(x)}, e.g., \code{stateb_1} in \code{y ~ 1 + state * x}
+gets \code{dnorm(-stateb.x_1 * min(x), ...)}.
 Unlike in \code{rstanarm} and \code{brms}, other predictors are not centered, so the prior applies where they are zero.
 If such a predictor is far from zero, center it before fitting or set a prior on \code{Intercept_1}.
-User-specified intercept priors apply to \code{Intercept_1} as written. The autoscaling does not account for
+User-specified intercept priors apply directly to \code{Intercept_1} (at \code{x = 0}). The autoscaling does not account for
 segment length. If you expect steep slopes or strong curvature within short segments, consider setting a
 wider prior.
 

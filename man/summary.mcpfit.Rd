@@ -59,8 +59,8 @@ the model, while a list or \code{FALSE} overrides the diagnostic footer.}
 \item{x}{An \code{\link{mcpfit}} object, or an \code{mcpsummary} returned by \code{summary()}.}
 
 \item{dpar}{Distributional parameter(s) whose regression coefficients to
-return. For modeled distributional parameters such as \code{sigma()}, these
-coefficients are on the link scale.}
+return, e.g., \code{"mu"}, \code{"sigma"}, or \code{"ar1"} (see \link{mcp-formula}). For modeled
+distributional parameters such as \code{sigma()}, these coefficients are on the link scale.}
 }
 \value{
 An \code{mcpsummary} tibble with parameter estimates and MCMC diagnostics.
@@ -72,12 +72,13 @@ segment. Note: The change point distributions are often not unimodal and
 symmetric so the intervals can be deceiving. Plot them using
 \code{plot_pars(fit)}.
 
-With \code{verbose = TRUE}:
+Columns:
 \itemize{
-\item \code{segment} is the segment the parameter belongs to.
-\item \code{dpar} is the distributional parameter (\code{"cp"}, \code{"mu"}, \code{"sigma"},
-\code{"ar"}, \code{"ma"}, etc.) the parameter belongs to. For AR/MA terms, the
-lag order is encoded in \code{parameter}, e.g. \code{ar2_1}.
+\item \code{segment} (only with \code{verbose = TRUE}) is the segment the parameter belongs to.
+For change points, it is the segment that the change point starts, e.g., 2 for \code{cp_1}.
+\item \code{dpar} (only with \code{verbose = TRUE}) is the distributional parameter (e.g., \code{"mu"},
+\code{"sigma"}, or \code{"ar1"}; see \link{mcp-formula}) as accepted by the \code{dpar} argument of
+\code{\link[=fixef.mcpfit]{fixef.mcpfit()}}, \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, etc. It is \code{NA} for change points. See also \code{\link[=mcp_pars]{mcp_pars()}}.
 \item \code{mean} is the posterior mean
 \item \code{sd} is the posterior standard deviation.
 \item \code{lower} and \code{upper} are the bounds of the central posterior interval

@@ -11,13 +11,16 @@ mcp_pars(fit, scope = NULL, role = NULL)
 
 \item{scope}{Optional parameter scope(s): \code{"population"} or \code{"group"}.}
 
-\item{role}{Optional parameter role(s), such as \code{"fixed_effect"},
-\code{"dpar_effect"}, \code{"arma"}, \code{"group_sd"}, or \code{"group_deviation"}.}
+\item{role}{Optional parameter role(s): \code{"change_point"}, \code{"coefficient"}
+(regression coefficients of all distributional parameters, e.g., \code{mu}, \code{sigma}, and \code{ar1}),
+or \code{"group_sd"}. Combine with \code{scope} to select population-level parameters or their
+group-level deviations, e.g., \verb{scope = "group", role = "change_point"} for group-level change points.}
 }
 \value{
 A tibble with one row per parameter definition. \code{parameter} is the
-model parameter name; \code{dpar} identifies its distributional parameter or
-component (\code{"cp"}, \code{"ar"}, or \code{"ma"}); \code{order} gives an AR/MA lag;
+model parameter name; \code{dpar} is its distributional parameter (e.g., \code{"mu"},
+\code{"sigma"}, or \code{"ar1"}; see \link{mcp-formula}), as accepted by the \code{dpar} argument of
+\code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=fixef.mcpfit]{fixef.mcpfit()}}, etc., and \code{NA} for change points;
 \code{group_col} and \code{population_parameter} describe group-level effects.
 }
 \description{
@@ -32,5 +35,5 @@ works before sampling and is the stable way to discover model parameters.
 mcp_pars(demo_fit)
 
 # Select population-level coefficients
-mcp_pars(demo_fit, scope = "population", role = "fixed_effect")
+mcp_pars(demo_fit, scope = "population", role = "coefficient")
 }
