@@ -188,7 +188,7 @@ standardize_family_default_priors = function(defaults) {
 # Default mu priors for log links, robustly centered on the log-response. `what` names the
 # response in descriptions, e.g., "count" in "log-count intercept".
 log_mu_priors = function(what) {
-  log_y = "log(ifelse(.y <= 0, 0.1, .y))"
+  log_y = "log(ifelse(.y <= 0, 0.1, .y)) - .offset"
   tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
     "mu", "Intercept", paste0("dnorm(round(median(", log_y, "), 1), max(2.5, round(mad(", log_y, "), 1)))"), "dnorm(0, 2.5) T(0, )", paste0("Robustly centered log-", what, " intercept with a minimum scale of 2.5"), "always",
@@ -221,7 +221,7 @@ mcpfamily_gaussian = function(family) {
   if (family$link == "identity") {
     mu_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dnorm(mean(.y), 2.5 * sd(.y))", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Mean intercept (rstanarm default)", "always",
+      "mu", "Intercept", "dnorm(mean(.y - .offset), 2.5 * sd(.y - .offset))", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Mean intercept (rstanarm default)", "always",
       "mu", "dummy", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Autoscaled mean contrast (rstanarm default)", "always",
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled mean coefficient (rstanarm default)", "always"
     )
@@ -463,7 +463,7 @@ mcpfamily_poisson = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dnorm(mean(.y), 2.5 * sd(.y)) T(0, )", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive count intercept on the response scale", "always",
+      "mu", "Intercept", "dnorm(mean(.y - .offset), 2.5 * sd(.y - .offset)) T(-min(.offset), )", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Count intercept on the response scale with a positive mean", "always",
       "mu", "dummy", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Autoscaled count contrast on the response scale", "always",
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled count coefficient on the response scale", "always"
     )

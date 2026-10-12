@@ -265,7 +265,7 @@ testthat::test_that("default log-count priors use normal population slopes/contr
 })
 
 
-testthat::test_that("offset adjusts default intercept priors to log-rate", {
+testthat::test_that("offset adjusts default log-link intercept priors to log(y) - offset", {
   d = data.frame(
     x = 1:30,
     y = c(rep(5, 10), rep(10, 10), rep(20, 10)),
@@ -289,7 +289,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     ps = prior_summary(fit, verbose = TRUE)
     int_row = ps[ps$parameter == "Intercept_1", ]
     testthat::expect_match(int_row$rule, "- offset", fixed = TRUE)
-    testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5; on the value at min(x)")
+    testthat::expect_match(int_row$description, "^Robustly centered log-(count|mean) intercept with a minimum scale of 2.5; adjusted for the offset; on the value at min\\(x\\)$")
 
     # A later segment must include its own offset.
     fit_multi = mcp(
@@ -312,7 +312,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_equal(fit_multi$prior$Intercept_3, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
 
     ps_multi = prior_summary(fit_multi, verbose = TRUE)
-    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5; on the value at min(x)")
+    testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_1"], "^Robustly centered log-(count|mean) intercept with a minimum scale of 2.5; adjusted for the offset; on the value at min\\(x\\)$")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
 

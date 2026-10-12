@@ -41,7 +41,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
-    default_predictor_specs(predictors, family, design_specs),
+    default_predictor_specs(predictors, family, context),
     default_group_specs(group_effects, family)
   )
   specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)

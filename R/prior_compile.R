@@ -50,12 +50,14 @@ prior_context = function(data, segments, design_specs = list()) {
   y_name = segments$y[1]
   x = data[[x_name]]
 
-  # mu offsets are available as `offset` or `offset_<segment>` in default prior expressions
-  for (s in Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu"), design_specs)) {
-    if (any(s$offset_data != 0)) {
-      data[[paste0("offset_", s$segment)]] = s$offset_data
-      data$offset = s$offset_data
-    }
+  # mu offsets are available as `offset` or `offset_<segment>` in prior expressions.
+  # `offsets` names the symbol for each segment, e.g., c(`1` = "offset_1", `2` = "offset_2").
+  mu_offsets = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
+  offsets = character()
+  for (s in mu_offsets) {
+    data[[paste0("offset_", s$segment)]] = s$offset_data
+    data$offset = s$offset_data
+    offsets[[as.character(s$segment)]] = if (length(mu_offsets) == 1) "offset" else paste0("offset_", s$segment)
   }
 
   list(
@@ -66,6 +68,7 @@ prior_context = function(data, segments, design_specs = list()) {
     y_display = display_data_name(y_name),
     x_min = min(x, na.rm = TRUE),
     y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_name]]), na.rm = TRUE)),
+    offsets = offsets,
     n_cp = nrow(segments) - 1,
     n_segments = nrow(segments)
   )

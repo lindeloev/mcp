@@ -90,12 +90,13 @@ default_predictor_scale = function(matrix_data, x_factor) {
 }
 
 
-# Retrieve the offset spec included for a specific dpar and segment, if any.
-get_segment_offset = function(design_specs, dpar, segment) {
-  specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, dpar) && s$segment == segment, design_specs)
-  if (length(specs) == 0) return(NULL)
-  spec = specs[[1]]
-  if (is.null(spec$offset_data) || all(spec$offset_data == 0)) NULL else spec
+# Replace `.offset` in default mu priors with the segment's offset symbol (see prior_context()),
+# so priors are calibrated on the offset-adjusted response, e.g., mean(y - offset) or
+# log(y) - offset. Without an offset, `.offset` terms are removed.
+fill_offset = function(prior, offset) {
+  no_offset = gsub("-min(.offset)", "0", prior, fixed = TRUE)  # e.g., T(-min(.offset), ) --> T(0, )
+  no_offset = gsub(" - .offset", "", no_offset, fixed = TRUE)  # e.g., mean(.y - .offset) --> mean(.y)
+  ifelse(is.na(offset), no_offset, stringr::str_replace_all(prior, stringr::fixed(".offset"), offset))
 }
 
 
@@ -142,7 +143,7 @@ get_prior_type = function(predictors) {
 }
 
 
-default_predictor_specs = function(predictors, family, design_specs = list()) {
+default_predictor_specs = function(predictors, family, context) {
   defaults = filter_default_conditions(dplyr::bind_rows(family$default_prior, default_arma_specs()), family)
 
   keys = paste(defaults$dpar, defaults$par_type)
@@ -160,25 +161,11 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
     )
   }
 
-  # Calibrate mu intercepts on the offset-adjusted response, e.g., mean(y - offset)
-  # for identity links and log(y) - offset for log links
-  offset_specs = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
-  for (i in which(joined$dpar == "mu")) {
-    spec = get_segment_offset(design_specs, "mu", joined$segment[i])
-    if (!is.null(spec)) {
-      sym = if (length(offset_specs) <= 1) "offset" else paste0("offset_", spec$segment)
-      if (identical(family$link, "log")) {
-        if (joined$prior_type[i] == "Intercept")
-          joined$prior[i] = gsub("log(ifelse(.y <= 0, 0.1, .y))", paste0("log(ifelse(.y <= 0, 0.1, .y)) - ", sym), joined$prior[i], fixed = TRUE)
-        joined$description[i] = gsub("log-count|log-mean", "log-rate", joined$description[i])
-      } else if (joined$prior_type[i] == "Intercept") {
-        joined$prior[i] = gsub("(.y)", paste0("(.y - ", sym, ")"), joined$prior[i], fixed = TRUE)
-        # Positive identity-link means (Poisson) allow negative intercepts down to -offset
-        joined$prior[i] = sub("T(0, )", paste0("T(-min(", sym, "), )"), joined$prior[i], fixed = TRUE)
-        joined$description[i] = sub("Positive count intercept", "Count intercept relative to the offset", joined$description[i], fixed = TRUE)
-      }
-    }
-  }
+  # Calibrate mu priors on the offset-adjusted response. Only mu offsets are used.
+  offset = ifelse(joined$dpar == "mu", context$offsets[as.character(joined$segment)], NA_character_)
+  is_adjusted = !is.na(offset) & grepl(".offset", joined$prior, fixed = TRUE)
+  joined$description[is_adjusted] = paste0(joined$description[is_adjusted], "; adjusted for the offset")
+  joined$prior = fill_offset(joined$prior, offset)
 
   joined$prior = fill_predictor_scale(joined$prior, joined$matrix_data, joined$x_factor)
 
