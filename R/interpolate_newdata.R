@@ -87,7 +87,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 
 #' Returns a tibble with all combos of predictors
 #'
-#' \lifecycle{experimental}
+#' `r lifecycle::badge("experimental")`
 #'
 #' This function synthesizes predictors for all combinations of predictor values.
 #' It is used internally in `plot.mcpfit()` and may be useful if you want to

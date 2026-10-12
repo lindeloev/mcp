@@ -132,7 +132,7 @@ predictions. Like \code{re_formula = NA} in \code{{brms}}.
 \item \code{"cp"} or \code{"predictor"}: All group-level deviations belonging to that part of
 the model.
 \item Character vector of group-level parameter names, e.g., \code{c("cp_1_id", "x_2_id")}.
-\lifecycle{experimental} \code{*} is a wildcard, e.g., \code{"state*_1_id"} selects all levels of a factor
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} \code{*} is a wildcard, e.g., \code{"state*_1_id"} selects all levels of a factor
 and \code{"*_id"} selects all effects by \code{id}. See names using \code{ranef(fit)}.
 Can be combined, e.g., \code{c("cp", "sigma_*")}.
 }}

@@ -23,7 +23,7 @@ other distributional parameters, then \code{ar}/\code{ma} components - each with
 \code{segment} and \code{dpar} columns.
 }
 \description{
-\lifecycle{experimental}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
 Shows the effective, resolved prior distributions on the familiar SD/scale

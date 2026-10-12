@@ -14,7 +14,7 @@ A named list with \code{par_x}, \code{response}, and \code{series}, plus any
 family-defined response-auxiliary column roles.
 }
 \description{
-\lifecycle{experimental}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
 Return the resolved data-column roles for an \code{mcpfit} object. In particular,

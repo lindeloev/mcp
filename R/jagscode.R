@@ -378,9 +378,9 @@ jags_scale_exponent = function(dist) {
 }
 
 
-#' Transform an mcp prior to the parameterization used by JAGS.
+#' Transform an mcp prior to the parameterization used by JAGS
 #'
-#' \lifecycle{deprecated}
+#' `r lifecycle::badge("deprecated")`
 #'
 #' This function is deprecated. JAGS uses precision rather than SD for some
 #' distributions. For example, this function converts

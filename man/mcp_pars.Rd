@@ -24,7 +24,7 @@ model parameter name; \code{dpar} is its distributional parameter (e.g., \code{"
 \code{group_col} and \code{population_parameter} describe group-level effects.
 }
 \description{
-\lifecycle{experimental}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
 Return the canonical parameter definitions for an \code{mcpfit} object. This
