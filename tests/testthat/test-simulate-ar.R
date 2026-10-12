@@ -104,6 +104,6 @@ test_that("pp_eval keeps posterior draws in separate AR series", {
 
   result = fitted(fit, summary = FALSE, width = FALSE)
 
-  expect_equal(result$.draw, rep(1:2, each = 3))
-  expect_equal(result$.epred, rep(c(0, 0.5, 1), 2))
+  expect_equal(result$.draw, rep(1:2, 3))
+  expect_equal(result$.epred, rep(c(0, 0.5, 1), each = 2))
 })

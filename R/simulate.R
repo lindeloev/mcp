@@ -503,21 +503,21 @@ simulate_atomic = function(fit,
 #' Auto-completion of named arguments  makes it easier to call from, e.g., RStudio.
 #' This is typically stored as `fit$simulate()`.
 #'
-#' @param cps Output of `get_segment_tables()`.
-#' @param predictors Output of `get_predictors()`.
-#' @param group_effects The output of `get_group_effects()`.
+#' @param parameters Output of `get_pars_table()`.
 #' @return An R function.
 #' @noRd
-get_fitsimulate = function(cps, predictors, group_effects) {
-  # List of argument names. Group-level SDs default to 0 (no group-level deviations).
-  args_required = c(cps$name, predictors$name)
-  args_default = group_effects$sd_name
+get_fitsimulate = function(parameters) {
+  # Population-level parameters in mcp_pars() order. Group-level SDs default to 0 (no group-level deviations).
+  parameters = parameters[parameters$scope == "population", ]
+  is_sd = parameters$role == "group_sd"
+  args_required = parameters$parameter[!is_sd]
+  args_pars = stats::setNames(rep(alist(x = )["x"], nrow(parameters)), parameters$parameter)
+  args_pars[is_sd] = list(0)
 
   # Assemble formal arguments
   args_formals = c(
     alist(fit = , newdata = ),
-    stats::setNames(rep(alist(x = )["x"], length(args_required)), args_required),
-    stats::setNames(rep(list(0), length(args_default)), args_default),
+    args_pars,
     alist(.type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response")
   )
 

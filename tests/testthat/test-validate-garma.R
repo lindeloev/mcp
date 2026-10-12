@@ -195,7 +195,7 @@ test_that("prediction interfaces share conditional and replicated GARMA behavior
     newdata = data.frame(x = data$x), conditional = FALSE
   )
 
-  expect_equal(conditional$.prediction, rep(c(0, 5, 10), 2), tolerance = 0.01)
+  expect_equal(conditional$.prediction, rep(c(0, 5, 10), each = 2), tolerance = 0.01)
   expect_equal(unname(replicated), matrix(0, nrow = 2, ncol = 3), tolerance = 0.01)
   expect_equal(predictor_only, replicated)
 
@@ -230,7 +230,7 @@ test_that("prior predict uses the same explicit replication setting", {
   fit$mcmc_prior = coda::mcmc.list(coda::mcmc(fixed_draws))
 
   conditional = predict(fit, prior = TRUE, summary = FALSE)
-  expect_equal(conditional$.prediction, rep(c(0, 5, 10), 2), tolerance = 0.01)
+  expect_equal(conditional$.prediction, rep(c(0, 5, 10), each = 2), tolerance = 0.01)
   set.seed(42)
   predicted = predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, width = FALSE)
   set.seed(42)

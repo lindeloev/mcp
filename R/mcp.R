@@ -372,7 +372,9 @@ mcp = function(
       recover_levels(data, group_definitions)
 
     class(draws) = "mcmc.list"
-    draws
+
+    # JAGS sorts nodes alphabetically. Order them like mcp_pars() instead, keeping group levels in data order.
+    draws[, order(match(sub("\\[.*", "", coda::varnames(draws)), parameters$parameter)), drop = FALSE]
   }
 
   # Sample posterior
@@ -422,6 +424,7 @@ mcp = function(
   ##########
   # Return canonical formulas attached to .GlobalEnv to avoid environment bloat
   model = lapply(segments$form, stats::as.formula, env = globalenv())
+  prior = prior[order(match(names(prior), parameters$parameter))]  # Order like mcp_pars()
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing
@@ -441,7 +444,7 @@ mcp = function(
 
     # Extracted model
     jags_code = jags_code,
-    simulate = get_fitsimulate(cps, predictor_definitions, group_definitions),
+    simulate = get_fitsimulate(parameters),
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.

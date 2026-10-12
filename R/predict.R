@@ -90,7 +90,8 @@
 #'     columns are dot-prefixed to avoid collisions with data columns.
 #'
 #'   * If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
-#'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are
+#'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows, ordered by
+#'     `.data_row` and then `.draw`. If there are
 #'     group-level effects, the returned data is expanded with the relevant levels for each row.
 #'
 #'     The return columns are:
@@ -386,9 +387,13 @@ pp_eval = function(
     }
     return(dplyr::select(df_return, -".data_row"))
   } else if (draws_format == "tidy") {
+    # Order like tidybayes: all draws for each data row; then newdata, draw index, parameter (mcp_pars() order), and value columns
+    row_order = order(draws$.data_row, draws$.draw)
+    draws = draws[row_order, ] %>%
+      dplyr::relocate(dplyr::all_of(colnames(newdata_return)), ".chain", ".iteration", ".draw", dplyr::any_of(mcp_pars(fit)$parameter))
     if (.return_dpars) {
-      if (!is.null(dpars_values)) attr(draws, "dpars") = dpars_values
-      if (!is.null(response_data_values)) attr(draws, "response_data") = response_data_values
+      if (!is.null(dpars_values)) attr(draws, "dpars") = lapply(dpars_values, function(v) v[row_order])
+      if (!is.null(response_data_values)) attr(draws, "response_data") = lapply(response_data_values, function(v) v[row_order])
     }
     return(draws)
   } else if (draws_format == "matrix") {

@@ -54,7 +54,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - In general, renamed `"varying"` to `"group"`, e.g., it is now `plot_pars(fit, pars = "group")` and `fitted(fit, group_effects = "x_2_id")`. `varying` is a deprecated alias with a warning.
 
-  - `summary()`, `fixef()`, and `ranef()`, `prior_summary()`, and everything else now return rows in a canonical order instead of the previous incidental (near-alphabetical) order; `ranef()` orders group levels following the grouping factor's levels in the fitting data. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
+  - `summary()`, `fixef()`, `ranef()`, `prior_summary()`, `as_draws()`, `fit$prior`, `fit$simulate()`, and everything else now order parameters canonically as in `mcp_pars()` instead of the previous incidental (near-alphabetical) order; group levels follow the grouping factor's levels in the fitting data. Draws from `fitted()`, `predict()`, etc. with `summary = FALSE` are ordered by data row, then draw, as in `{tidybayes}`. Use `verbose = TRUE` with `summary()`, `fixef()`, or `ranef()` to include `segment` and `dpar` columns.
 
   - Tibbles are generally returned instead of data.frame() for readability. Tibbles are data frames, but `x[, "col"]` now returns a one-column tibble instead of a vector. Use `x$col` or `x[["col"]]` to get a vector. This change involves `summary()`, `fixef()`, `ranef()`, `fitted()`, `predict()`, `residuals()`, `hypothesis()`, and `interpolate_newdata()`. 
 
