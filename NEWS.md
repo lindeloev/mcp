@@ -34,13 +34,13 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Renamed return column names** to align with `{posterior}` and others:
 
-  - `summary()`, `fixef()`, and `ranef()` now name the parameter identifier column `variable` instead of `name`, directly matching `{posterior}` and `posterior::summarise_draws()`.
+  - `summary()`, `fixef()`, and `ranef()` now name the parameter identifier column `parameter` instead of `name`, matching `prior_summary()` and `mcp_pars()`.
 
   - `fitted()`, `predict()`, `residuals()`, and `log_lik()` with `summary = TRUE` now take `width = 0.95` instead of `probs` (deprecated with warning) and return the columns `.mean`, `.sd`, `.lower`, and `.upper` instead of `fitted`/`predict`/`residuals`/`loglik`, `error`, `Q2.5`, and `Q97.5`. This matches `summary()` (`width`, `mean`, `sd`, `lower`, `upper`), while the dot prefix prevents collisions with data columns, as in `broom::augment()`. Consequently, data columns named `sd`, `fitted`, `predict`, etc. are no longer rejected. For other quantiles, summarise the draws from `summary = FALSE`. The evaluation-row key `data_row` is now `.data_row`.
 
   - `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
 
-  - `hypothesis()` returns column `prob` instead of `p` for the posterior (or prior) probability of directional hypotheses, preventing confusion with frequentist p-values.
+  - `hypothesis()` returns column `prob` instead of `p` for the posterior (or prior) probability of directional hypotheses, preventing confusion with frequentist p-values. It also returns the posterior `sd` of the hypothesis, like `summary()`.
 
 - **Change points are modeled using `cp()`:** Segments 2+ are now one-sided formulas, and change points are modeled using `cp()`, e.g., `list(y ~ 1, ~ cp((1 | id)) + 0 + x)` instead of `list(y ~ 1, 1 + (1 | id) ~ 0 + x)`. This avoids confusing the left-hand side with the response variable. The old syntax is deprecated and works with a warning that shows the new formula. `formula(fit)` and `summary(fit)` show the new syntax.
 
@@ -179,7 +179,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `fit$data` now only contains the data columns that are used in the model.
 
-  - `draws_format` replaces `samples_format` in `fitted()`, `predict()`, and `log_lik()`. The old argument remains available with a soft deprecation.
+  - `draws_format` replaces `samples_format` in `fitted()`, `predict()`, and `log_lik()`. The old argument remains available with a soft deprecation. `residuals()` now also takes `draws_format`, e.g., `residuals(fit, summary = FALSE, draws_format = "matrix")` for a draws-by-observation matrix like `brms`.
 
   - Removed `which_y` argument from `predict()`.
 

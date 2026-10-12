@@ -4,7 +4,7 @@
 #' Information Criteria for Model Comparison
 #'
 #' Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
-#' more in \code{\link[loo]{loo}}.
+#' Read more in \code{\link[loo]{loo}}.
 #'
 #' @aliases loo LOO loo.mcpfit
 #' @param x An \code{\link{mcpfit}} object.
@@ -232,9 +232,9 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'       than or equal to 3.
 #'   * `"Intercept_1 > -2 & Intercept_1 < 2"`: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 #'   * `"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"`: be creative.
-#'   * \code{"`cp_1_id[1]` > `cp_1_id[2]`"}: id1 is greater than id2, as estimated
+#'   * \code{"`cp_1_id[John]` > `cp_1_id[Mary]`"}: John's change point is later than Mary's, as estimated
 #'       through the group-level change-point deviation for `id` at change point 1 (starting segment 2).
-#'       Note that \code{``} are required when using `[i]`.
+#'       Note that \code{``} are required around names with `[level]`.
 #'
 #'   **Equality hypotheses** use the equal sign (=) and a Savage-Dickey density
 #'   ratio: posterior density divided by prior density at the tested point equality

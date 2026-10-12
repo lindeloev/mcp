@@ -209,7 +209,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   unrounded values.
 #' @param prior Logical. Summarise prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
-#'   to `FALSE` for a compact, v0.3.4-compatible summary.
+#'   to `FALSE` for a compact summary.
 #' @inheritParams mcp
 #' @param ... Must be empty. Reserved for future use.
 #'
@@ -218,7 +218,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   population-level parameters, and convergence warnings. Rows
 #'   are ordered by change point first, then `mu`, then the other
 #'   distributional parameters, then `ar`/`ma` components - each ascending by
-#'   segment. OBS: The change point distributions are often not unimodal and
+#'   segment. Note: The change point distributions are often not unimodal and
 #'   symmetric so the intervals can be deceiving. Plot them using
 #'   `plot_pars(fit)`.
 #'
@@ -392,7 +392,7 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 #' @aliases ranef ranef.mcpfit
 #' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
 #'   Change-point deviations are relative to their population change point;
-#'   `cp_i_sd` is the SD of their normal distribution before truncation.
+#'   `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their normal distribution before truncation.
 #' @export ranef
 #' @exportS3Method nlme::ranef
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {

@@ -18,7 +18,7 @@
 #'   Common calls are "combo", "trace", and "dens_overlay". Current options are
 #'   'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens', 'dens_chains',
 #'   'dens_overlay', 'hex', 'hist', 'intervals', 'pairs', 'rank_hist', 'rank_overlay', 
-#'   'trace', 'trace_highlight', and 'violin".
+#'   'trace', 'trace_highlight', and 'violin'.
 #' @param ncol Number of columns in plot. This is useful when you have many
 #'   parameters and only one plot `type`.
 #' @param npars Positive integer or \code{NULL} / \code{Inf}. Maximum number of parameters plotted per

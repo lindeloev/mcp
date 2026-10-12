@@ -16,7 +16,7 @@
 #' * *Distributional regression:* Model residual variance and other distributional parameters across segments,
 #'   e.g., `~ sigma(1 + x)` or `~ shape(1)`.
 #' * *Time-series residuals:* Model serial dependence using `ar(p)` and `ma(q)` terms with a generalized link-scale
-#'   recurrence that spans continuously across change points.
+#'   recurrence.
 #' * *Group-level effects:* Add hierarchical (random) intercepts, slopes, and change points, e.g., `~ 1 + (1|id)`
 #'   or `~ cp((1|id)) + 0 + x`.
 #' * *Model comparison and hypothesis testing:* Compare models using PSIS-LOO (`loo()`) or WAIC (`waic()`), and test hypotheses
