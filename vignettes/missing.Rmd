@@ -1,5 +1,5 @@
 ---
-title: "Missing responses and imputation"
+title: "Missing data"
 date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -18,11 +18,10 @@ if (requireNamespace("pkgload", quietly = TRUE)) {
 set.seed(42)
 ```
 
-`mcp` allows missing values in the response. JAGS treats the unknown responses as latent variables and samples them together with the model parameters. `mcp` retains those posterior imputation draws for later use. This article shows how to inspect expected responses, posterior imputations, and their uncertainty.
+`mcp` allows missing values (`NA`) in the response. This article covers two consequences of that:
 
-# An example with missing responses
-
-The built-in example has a change in slope, a strong difference between two states, scattered missing responses, and a short run of missing responses. First, let's fit the example and visualize it:
+1. **Change points in voids:** Change points can be inferred in regions with no observed responses.
+2. **Imputing missing responses:** JAGS treats the missing responses as latent variables and samples them together with the model parameters. `mcp` retains these posterior imputation draws so you can inspect expected responses, imputations, and their uncertainty.
 
 ```{r, message=FALSE}
 library(mcp)
@@ -30,20 +29,47 @@ library(dplyr)
 library(ggplot2)
 ```
 
+
+# Inferring change points in voids
+
+Sometimes the interest is not in recovering individual missing responses, but in how gaps in the data affect inference about the change points. To demonstrate this, `mcp_example("void")` takes the data from `mcp_example("demo")` and sets the responses near both change points to `NA` (`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to the full data and the bottom panel the fit with the voids:
+
+```{r, results=FALSE, message=FALSE, fig.height=7}
+fit_void = mcp_example("void")
+```
+
+Notice that `mcp` can infer change points in regions with no observed data. The first change point joins a plateau to a slope. Its location in the void is mostly informed by extrapolating the two segments until they meet, and the uncertainty is greater than in the full data because fewer data inform these trends. In principle, it could be known to great precision if the segments' trends were very well defined.
+
+The second change point is different because segment 3 is disjoined from segment 2. There is nothing in the void that tells where the jump happened, so the change point posterior is roughly uniform across the void. This is true for any gap between data: the narrow gap between two neighboring data points (top panel) also yields a uniform-like posterior, just on a much smaller range.
+
+We can quantify how much of each change point posterior is within its void using `hypothesis()`:
+
+```{r, R.options = list(width = 9999)}
+hypothesis(fit_void, c(
+  "cp_1 > 25 & cp_1 < 42",
+  "cp_2 > 70 & cp_2 < 80"
+))
+```
+
+
+# Imputing missing responses
+
+## An example with missing responses
+
+The built-in example has a change in slope, a strong difference between two states, scattered missing responses, and a short run of missing responses:
+
 ```{r, results=FALSE, message=FALSE}
 fit = mcp_example("missing")
 ```
 
-The ordinary plot shows the observed responses and model estimates. Missing responses are omitted. See below how they can be visualized.
-
-The underlying data contain some missing responses in `y`:
+The ordinary plot shows the observed responses and model estimates but omits missing responses. [Below](#visualizing-imputations), we add them to the plot. These are the rows with missing responses in `y`:
 
 ```{r}
 fit$data |> filter(is.na(y))
 ```
 
 
-# Expected responses and predictions
+## Expected responses and predictions
 
 `predict()` evaluates the posterior predictive distribution at the missing rows, generating fresh simulated responses that include residual variation. The predictions come from trends in non-missing data and what they imply, given the observed covariates (`state` and `x`), for the missing rows.
 
@@ -63,7 +89,7 @@ fitted(fit, width = 0.8) |>
 ```
 
 
-# Visualize imputations on the model plot
+## Visualizing imputations
 
 Imputations are not added to `plot()` automatically. Since `plot()` returns a ggplot, it is easy to extend. Here an `×` marks the posterior mean and a vertical line shows the central 80% imputation interval:
 
@@ -103,7 +129,7 @@ ggplot(missing_draws, aes(x = .prediction)) +
 ```
 
 
-## Making probabilistic statements about missing responses
+## Probabilistic statements about missing responses
 
 Sometimes, the missing response is of direct interest. For example, you may want to know the probability that a missing response is above a threshold. You can use `predict()` with `summary = FALSE` to get all posterior predictive draws and then calculate probabilities of various statements. For example:
 
@@ -118,36 +144,16 @@ missing_draws |>
 ```
 
 
-## Other continuous predictors
+## Imputations and other continuous predictors
 
 Plotting differs from `fitted()` and `predict()` in one respect: The smooth curves in `plot()` are evaluated on data made by `interpolate_newdata()`, which keeps additional continuous predictors (i.e., predictors not assigned an aesthetic) at their observed means by default, or at values supplied through the `at`-argument. The plot caption reports these fixed values.
 
 The imputation markers above are different: `predict(fit)` evaluates the original data, so every missing row uses its own predictor values. If another continuous predictor is especially important, an imputation may therefore lie away from a curve drawn at that predictor's mean. This is expected, just as an observed response with unusual predictor values may lie away from that curve. Use `plot(fit, at = ...)` or `interpolate_newdata(fit, at = ...)` or make separate plots when those differences deserve emphasis.
 
 
-# Missing data around change points
+# Supported models and limitations
 
-Sometimes the interest is not in recovering individual missing responses, but in how gaps in the data affect inference about the change points. To demonstrate this, `mcp_example("void")` takes the data from `mcp_example("demo")` and removes the responses near both change points (`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to the full data and the bottom panel the fit with the voids:
-
-```{r, results=FALSE, message=FALSE, fig.height=7}
-fit_void = mcp_example("void")
-```
-
-Notice that `mcp` can infer change points in regions with no missing data. The greater uncertainty in the change point location between segment 1 and 2 comes mostly from linear extrapolation between the segments and less data. In principle, it could be known to great precision if the segments' trends were very well defined. 
-
-The location of the disjoined change between segment 2 and 3 is different: the location is unknowable for disjoined segments in a void, and the change point posterior reflects that. Any distance between data is a void for disjoined segments. This can be seen in the uniform-like change point posterior both for the large void (bottom panel) and the simple between-datapoints void (top panel).
-
-We can quantify how much of the change point posteriors is within each actual void using `hypothesis()`:
-
-```{r, R.options = list(width = 9999)}
-hypothesis(fit_void, c(
-  "cp_1 > 25 & cp_1 < 42",
-  "cp_2 > 70 & cp_2 < 80"
-))
-```
-
-
-# What else can be modeled?
+## Supported model features
 
 Missing responses work with the usual `mcp` model features. For example, you can:
 
@@ -159,7 +165,7 @@ Missing responses work with the usual `mcp` model features. For example, you can
 The predictors required by the model must themselves be observed. `mcp` currently imputes missing responses, not missing predictor values, and it does not model the process that caused responses to be missing. As with ordinary regression using incomplete outcomes, interpretation relies on the missing responses being reasonably explained by the observed predictors and model structure.
 
 
-# Model evaluation and time-series histories
+## Model evaluation and time series
 
 Missing rows are not treated as observed contributions to `log_lik()`, `loo()`, or `waic()`. For ordinary non-AR/MA models, the remaining observed rows can still be used for these calculations.
 
@@ -168,7 +174,7 @@ AR/MA models need extra care because a missing response can become part of the h
 The [time-series article](../articles/arma.html) discusses this. Use `predict(fit, conditional = FALSE)` or `posterior_predict(fit, conditional = FALSE)` to generate fresh replicated series recursively. Their histories are generated rather than taken from the observed responses. The default predictions condition on observed responses and retained imputations as histories, but still generate fresh outcomes at every row.
 
 
-# Original data versus new data
+## Predictions for new data
 
 In AR/MA models, the retained JAGS draws belong to the missing rows in the original fitted data and supply their histories. For the non-AR/MA example in this article, predictions for genuinely new data are ordinary posterior predictions, evaluated just like predictions at the missing rows:
 
