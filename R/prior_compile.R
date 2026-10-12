@@ -74,8 +74,9 @@ prior_context = function(data, segments, design_specs = list()) {
 
 # Substitute the actual predictor and response names into a prior template.
 instantiate_prior_template = function(x, context) {
-  x = stringr::str_replace_all(x, stringr::fixed(".x"), context$x_display)
-  stringr::str_replace_all(x, stringr::fixed(".y"), context$y_display)
+  # Whole names only, e.g., not the ".x" in "stateb.x_1"
+  x = stringr::str_replace_all(x, "(?<![[:alnum:]._])\\.x(?![[:alnum:]._])", context$x_display)
+  stringr::str_replace_all(x, "(?<![[:alnum:]._])\\.y(?![[:alnum:]._])", context$y_display)
 }
 
 

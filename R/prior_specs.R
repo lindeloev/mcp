@@ -426,18 +426,31 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 }
 
 
-# Place default segment-1 intercept priors on the level at the segment start,
-# min(x), like brms and rstanarm place them on centered predictors. The reported
-# intercept remains at x = 0 (as in lm()), so its prior is conditional on the
-# segment's x-terms, e.g., "dnorm(mean(.y) - x_1 * min(.x), 2.5 * sd(.y))".
-# Other predictors are at 0.
+# Segment-1 x-terms that change the coefficient `name` along x. These have the same
+# model-matrix column apart from x, e.g., `stateb.x` for `stateb` in `1 + state * x`.
+# Intercepts (incl. each level in `0 + state`) also have x-terms without other variables, e.g., `x`.
+get_x_partners = function(predictors, name) {
+  i = match(name, predictors$name)
+  own = predictors$matrix_data[[i]]
+  is_partner = vapply(predictors$matrix_data, function(values) {
+    isTRUE(all.equal(values, own)) || (predictors$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE))
+  }, logical(1))
+  predictors[predictors$segment == 1 & predictors$dpar == predictors$dpar[i] & predictors$x_factor != "1" & is_partner, ]
+}
+
+
+# Place default segment-1 priors on the value at the segment start, min(x), like
+# brms and rstanarm place intercept priors on centered predictors. The reported
+# coefficients remain at x = 0 (as in lm()), so their priors are conditional on the
+# coefficients' x-terms, e.g., "dnorm(mean(.y) - x_1 * min(.x), 2.5 * sd(.y))" or
+# "dnorm(0 - stateb.x_1 * min(.x), ...)". Other predictors are at 0.
 add_intercept_references = function(specs, predictors, context) {
   if (context$x_min == 0)
     return(specs)
 
-  intercepts = predictors[predictors$segment == 1 & predictors$prior_type == "Intercept" & predictors$dpar %notin% c("ar", "ma"), ]
-  for (i in seq_len(nrow(intercepts))) {
-    row = match(intercepts$name[i], specs$parameter)
+  coefs = predictors[predictors$segment == 1 & predictors$x_factor == "1" & predictors$dpar %notin% c("ar", "ma"), ]
+  for (i in seq_len(nrow(coefs))) {
+    row = match(coefs$name[i], specs$parameter)
     if (is.na(row) || specs$source[row] != "default")
       next
     parts = split_prior_truncation(specs$code[row])
@@ -445,10 +458,7 @@ add_intercept_references = function(specs, predictors, context) {
     if (is.null(call) || call$name %notin% c("dnorm", "dt", "dunif"))
       next
 
-    # x-terms of the same dpar without other variables (a model-matrix column of ones)
-    terms = predictors[predictors$segment == 1 & predictors$dpar == intercepts$dpar[i] & predictors$x_factor != "1", ]
-    is_pure = vapply(terms$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
-    terms = terms[is_pure, ]
+    terms = get_x_partners(predictors, coefs$name[i])
     if (nrow(terms) == 0)
       next
 
@@ -463,7 +473,8 @@ add_intercept_references = function(specs, predictors, context) {
       bounds = vapply(parse_prior_call(parts$truncation)$args, shift, character(1))
       specs$code[row] = paste0(specs$code[row], " T(", paste(bounds, collapse = ", "), ")")
     }
-    specs$description[row] = paste0(specs$description[row], "; on the level at min(", context$x_display, ")")
+    what = if (coefs$prior_type[i] == "Intercept") "level" else "difference"
+    specs$description[row] = paste0(specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
   }
   specs
 }

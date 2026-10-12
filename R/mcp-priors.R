@@ -50,6 +50,8 @@
 #' the segment-1 intercept applies to the level at the start of the segment, `min(x)`. The reported
 #' `Intercept_1` is still at `x = 0`, as in [lm()], so its prior is given the x-terms, e.g.,
 #' `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))` in `fit$prior`. Later segments' intercepts are at their change point.
+#' Likewise, factor levels and contrasts with their own x-terms apply at `min(x)`, e.g., `stateb_1` in `y ~ 1 + state * x`
+#' gets `dnorm(-stateb.x_1 * min(x), ...)`.
 #' Unlike in `rstanarm` and `brms`, other predictors are not centered, so the prior applies where they are zero.
 #' If such a predictor is far from zero, center it before fitting or set a prior on `Intercept_1`.
 #' User-specified intercept priors apply to `Intercept_1` as written. The autoscaling does not account for

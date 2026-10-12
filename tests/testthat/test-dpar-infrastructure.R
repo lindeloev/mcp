@@ -76,7 +76,7 @@ test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)
 
   # Platforms can differ in the last bit of floating-point arithmetic, so allow ~1e-15
   expect_scaled = function(prior, dist, base, predictor_sd) {
-    expect_true(startsWith(prior, paste0(dist, "(0, ")))
+    expect_true(startsWith(prior, paste0(dist, "(")))
     expect_equal(as.numeric(strsplit(prior, "[(,)]")[[1]][3]), base / predictor_sd, tolerance = 1e-15)
   }
   mu_base = 2.5 * stats::sd(data$y)
@@ -93,6 +93,8 @@ test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)
   expect_scaled(fit$prior$z.gb_1, "dnorm", mu_base, stats::sd(data$z * (data$g == "b")))
   expect_scaled(fit$prior$sigma_z_1, "dt", 2.5, z_sd)
   expect_scaled(fit$prior$sigma_z.x_1, "dt", 2.5, x_sd * z_sd)
+  expect_true(startsWith(fit$prior$x_1, "dnorm(0, "))
+  expect_true(startsWith(fit$prior$z_1, paste0("dnorm(-x.z_1 * ", min(data$x), ", ")))  # On the z-effect at min(x)
 })
 
 

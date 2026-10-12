@@ -18,6 +18,7 @@
 #
 # - Segment 1: The intercept as the value at a fixed point, the expected midpoint of
 #   segment 1 under the dirichlet(1) prior, min(x) + (max(x) - min(x)) / (2 * K).
+#   Likewise for other coefficients with x-terms, e.g., `stateb` in `1 + state * x`.
 # - Joined segments: The lowest-degree x-term as the value at the segment end, and
 #   further x-terms (e.g., I(x^2)) as their rise over the segment.
 # - Disjoined segments: The intercept as the value at the segment end.
@@ -58,14 +59,14 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
     # x-terms without other variables, in the segment that defines them
     slopes = own[own$x_factor != "1" & own_pure & own$segment == own$definition_segment, ]
 
-    # Segment 1: the intercept as the value at a fixed point. For a factor without an
-    # intercept (`0 + state`), each factor level has an intercept (see get_prior_type()).
-    terms = slopes[slopes$segment == 1, ]
-    for (intercept in own$name[own$segment == 1 & own$prior_type == "Intercept"]) {
-      if (nrow(terms) > 0 && is_reparam_prior(intercept, segment_1 = TRUE)) {
+    # Segment 1: the intercept as the value at a fixed point. Likewise for other coefficients
+    # with x-terms, e.g., `stateb` with `stateb.x` in `1 + state * x` (see get_x_partners()).
+    for (coef in own$name[own$segment == 1 & own$x_factor == "1"]) {
+      terms = get_x_partners(own, coef)
+      if (nrow(terms) > 0 && is_reparam_prior(coef, segment_1 = TRUE)) {
         x_max = max(context$data[[context$x_name]], na.rm = TRUE)
         at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
-        set_aux(intercept, "mid", shift = x_terms_at(terms, at), derive = x_terms_at(terms, at))
+        set_aux(coef, "mid", shift = x_terms_at(terms, at), derive = x_terms_at(terms, at))
       }
     }
 

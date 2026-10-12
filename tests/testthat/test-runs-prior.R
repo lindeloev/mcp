@@ -667,6 +667,17 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   expect_equal(bernoulli_fit$prior$Intercept_1, "dunif(-x_1 * 101, 1 - x_1 * 101)")
   expect_match(bernoulli_fit$jags_code, "Intercept_1_mid_ ~ dunif(", fixed = TRUE)
 
+  # Factor levels and contrasts with their own x-terms are placed at min(x) too
+  data$state = rep(c("a", "b"), 15)
+  level_fit = mcp(list(y ~ 0 + state + state:x), data, sample = FALSE)
+  expect_match(level_fit$prior$stateb_1, " - stateb.x_1 * 101, ", fixed = TRUE)
+  expect_match(level_fit$jags_code, "stateb_1_mid_ ~ dnorm(", fixed = TRUE)
+  contrast_fit = mcp(list(y ~ 1 + state * x), data, sample = FALSE)
+  expect_match(contrast_fit$prior$stateb_1, "dnorm(-stateb.x_1 * 101, ", fixed = TRUE)
+  expect_match(contrast_fit$jags_code, "stateb_1_mid_ ~ dnorm(", fixed = TRUE)
+  ps = prior_summary(contrast_fit, verbose = TRUE)
+  expect_match(ps$description[ps$parameter == "stateb_1"], "on the difference at min(x)", fixed = TRUE)
+
   # User-specified intercept priors stay on the intercept at x = 0
   user_fit = mcp(list(y ~ 1 + x), data, prior = list(Intercept_1 = "dnorm(0, 10)"), sample = FALSE)
   expect_match(user_fit$jags_code, "Intercept_1 ~ dnorm(", fixed = TRUE)
