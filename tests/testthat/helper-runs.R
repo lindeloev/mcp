@@ -369,10 +369,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     try(func(fit, prior = prior), silent = TRUE)
   }
   if (inherits(result, "try-error")) {
-    error_message = as.character(result)
-    is_count_family = fit$family$family %in% c("poisson", "negbinomial")
-    expected_error_count = "Modelled extremely large count mean"  # A test-specific side-effect of the small data and short sampling.
-    testthat::expect_true(!is_count_family | stringr::str_detect(error_message, stringr::fixed(expected_error_count)))
+    testthat::fail(as.character(result))
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
@@ -549,27 +546,14 @@ test_pp_eval = function(fit, prior = FALSE) {
   }
 
   if (inherits(pp_default, "try-error")) {
-    error_message = as.character(pp_default)
-
-    # Expected count-family errors from the intentionally tiny data, extremely
-    # short sampling, and broad prior predictive distributions.
-    if (fit$family$family %in% c("poisson", "negbinomial")) {
-      testthat::expect_true(stringr::str_detect(error_message, "Modelled extremely large count mean"))
-    } else {
-      # Fail otherwise
-      testthat::fail(error_message)
-    }
+    testthat::fail(as.character(pp_default))
   } else {
     testthat::expect_s3_class(pp_default, "ggplot")
     # bayesplot::pp_check dispatches to pp_check.mcpfit
     if (length(group_pars) == 0) {
       pp_bayesplot = try(suppressWarnings(bayesplot::pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)
       if (inherits(pp_bayesplot, "try-error")) {
-        if (fit$family$family %in% c("poisson", "negbinomial")) {
-          testthat::expect_true(stringr::str_detect(as.character(pp_bayesplot), "Modelled extremely large count mean"))
-        } else {
-          testthat::fail(as.character(pp_bayesplot))
-        }
+        testthat::fail(as.character(pp_bayesplot))
       } else {
         testthat::expect_s3_class(pp_bayesplot, "ggplot")
       }

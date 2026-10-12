@@ -799,6 +799,11 @@ test_that("find_mixture_quantile handles large count means without integer overf
   res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = 0.975)
   expect_true(is.numeric(res) && is.finite(res) && res > 1.5e9)
   expect_true(mean(stats::ppois(res, dpars$mu)) >= 0.975 && mean(stats::ppois(res - 1, dpars$mu)) < 0.975)
+
+  # Above 2^53, integers are not representable, so the search must stop at a relative tolerance
+  res = mcp:::find_mixture_quantile(family, list(mu = c(1, 1e16)), data = NULL, p = 0.975)
+  expect_equal(res, stats::qpois(0.95, 1e16), tolerance = 1e-9)
+  expect_error(mcp:::find_mixture_quantile(family, list(mu = c(1, Inf)), data = NULL, p = 0.975), "overflowed to Inf")
 })
 
 

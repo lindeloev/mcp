@@ -205,6 +205,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - `residuals()` now uses the conventional `observed - fitted` sign. Previously, `mcp` residuals used `fitted - observed`.
 
+- Poisson and negative binomial predictions no longer fail when a single draw implies a count mean above 2,146,275,819. This was common for prior predictions with default log-link priors.
+
 - Fixed several posterior predictive check and information-criterion bugs present in v0.3.4. From most to least serious:
 
   - For missing data: Missing responses were scored in WAIC/LOO as if their JAGS-imputed values had been observed. Fix: missing responses remain latent in JAGS but are excluded from observed-data PPC, log-likelihood, WAIC, and LOO calculations.

@@ -324,10 +324,11 @@ find_mixture_quantile = function(family, dpars, data, p) {
   if (!isTRUE(family$response$is_discrete))
     return(stats::uniroot(function(y) mix_cdf(y) - p, bracket, extendInt = "upX", tol = .Machine$double.eps)$root)
 
-  # Discrete: binary search for the smallest integer with mix_cdf(y) >= p
+  # Discrete: binary search for the smallest integer with mix_cdf(y) >= p.
+  # Above 2^53, doubles cannot represent all integers, so stop at a relative tolerance.
   lo = bracket[1]
   hi = bracket[2]
-  while (lo < hi) {
+  while (hi - lo > max(1, hi * 1e-12)) {
     mid = floor((lo + hi) / 2)
     if (mix_cdf(mid) >= p) {
       hi = mid
@@ -335,7 +336,7 @@ find_mixture_quantile = function(family, dpars, data, p) {
       lo = mid + 1
     }
   }
-  lo
+  if (lo < hi && mix_cdf(lo) < p) hi else lo
 }
 
 

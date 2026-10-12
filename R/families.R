@@ -174,8 +174,8 @@ jags_weighted_likelihood = function(label, weights, neg_log_density) {
 
 
 validate_count_mean = function(mu) {
-  if (any(mu > 2146275819, na.rm = TRUE))
-    stop("Modelled extremely large count mean (> 2146275819).")
+  if (any(is.infinite(mu)))
+    stop("Modelled count mean overflowed to Inf. Consider narrower priors.")
   invisible(TRUE)
 }
 
