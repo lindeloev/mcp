@@ -395,8 +395,14 @@ test_that("Simple mcpfit methods", {
 
   # Unsupported generics point to the supported alternatives
   expect_error(coef(demo_fit), "fixef(fit)", fixed = TRUE)
-  expect_error(as.matrix(demo_fit), "as_draws_matrix(fit)", fixed = TRUE)
-  expect_error(as.array(demo_fit), "as_draws_array(fit)", fixed = TRUE)
+
+  # Base R coercions return plain draws, like rstanarm and brms, so bayesplot works on the fit
+  expect_identical(class(as.matrix(demo_fit)), c("matrix", "array"))
+  expect_identical(as.matrix(demo_fit), unclass(as_draws_matrix(demo_fit)))
+  expect_identical(posterior::nchains(posterior::as_draws_matrix(as.matrix(demo_fit))), nchains(demo_fit))  # Chain-aware rhat etc.
+  expect_equal(as.array(demo_fit, prior = TRUE), unclass(as_draws_array(demo_fit, prior = TRUE)))
+  expect_identical(colnames(as.data.frame(demo_fit)), mcp_pars(demo_fit)$parameter)
+  expect_s3_class(bayesplot::mcmc_trace(demo_fit, pars = "cp_1"), "ggplot")
 })
 
 test_that("posterior draws accessor preserves the stored chains", {

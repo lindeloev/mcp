@@ -28,6 +28,8 @@ posterior_draws = function(fit, prior = FALSE, error = TRUE) {
 #' Extract MCMC Draws from `mcpfit` Objects
 #'
 #' Extract posterior or prior draws using \pkg{posterior}, \pkg{coda}, or the optional \pkg{tidybayes} package's S3 generics.
+#' Base R's `as.matrix()`, `as.array()`, and `as.data.frame()` return plain draws, like in \pkg{rstanarm} and \pkg{brms},
+#' so \pkg{bayesplot} functions work directly on the fit.
 #'
 #' @aliases as_draws as_draws.mcpfit as_draws_df.mcpfit as_draws_array.mcpfit as_draws_matrix.mcpfit as_draws_rvars.mcpfit as.mcmc.mcpfit tidy_draws.mcpfit
 #' @param x An \code{\link{mcpfit}} object.
@@ -35,6 +37,9 @@ posterior_draws = function(fit, prior = FALSE, error = TRUE) {
 #'   (`FALSE`)? Errors if the requested draws are unavailable.
 #' @param ... Passed to \pkg{posterior} or \pkg{tidybayes} format conversion functions.
 #' @return A \pkg{posterior} `draws` object or a \pkg{coda} `mcmc.list` object.
+#'   `as.matrix()` returns a draws-by-parameter matrix, `as.array()` an iteration-by-chain-by-parameter
+#'   array, and `as.data.frame()` a draws-by-parameter data frame. The data frame has no chain information,
+#'   so use `as_draws_df()` for chain-aware diagnostics such as `posterior::rhat()`.
 #' @examples
 #' # Default posterior draws, with one row per iteration and chain
 #' draws = as_draws(demo_fit)  # Return a posterior::draws object
@@ -44,6 +49,10 @@ posterior_draws = function(fit, prior = FALSE, error = TRUE) {
 #' as_draws_matrix(demo_fit)[1:3, 1:3]  # Matrix of draws by parameter
 #' as_draws_array(demo_fit)[1:2, , 1:2]  # Iteration-by-chain-by-parameter array
 #' as_draws_rvars(demo_fit)[c("cp_1", "cp_2")]  # Random-variable representation
+#'
+#' # Base R formats, e.g., for bayesplot
+#' as.matrix(demo_fit)[1:3, 1:3]  # Plain matrix of draws by parameter
+#' bayesplot::mcmc_trace(demo_fit, pars = c("cp_1", "cp_2"))
 #'
 #' # mcp also supports the coda and tidybayes conventions
 #' head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
@@ -99,14 +108,24 @@ as.mcmc.mcpfit = function(x, prior = FALSE, ...) {
   mcmclist_draws(x, prior = prior)
 }
 
-# Fail helpfully instead of coercing the fit object itself
+# Base R coercions return plain draws, like rstanarm and brms. This also makes bayesplot::mcmc_*(fit) work.
+#' @rdname as_draws.mcpfit
 #' @export
-as.matrix.mcpfit = function(x, ...) {
-  stop("Use `as_draws_matrix(fit)` to get draws as a matrix.", call. = FALSE)
+as.matrix.mcpfit = function(x, prior = FALSE, ...) {
+  unclass(as_draws_matrix.mcpfit(x, prior = prior, ...))  # Keeps attr "nchains" for posterior::rhat() etc.
 }
+
+#' @rdname as_draws.mcpfit
 #' @export
-as.array.mcpfit = function(x, ...) {
-  stop("Use `as_draws_array(fit)` to get draws as an array.", call. = FALSE)
+as.array.mcpfit = function(x, prior = FALSE, ...) {
+  unclass(as_draws_array.mcpfit(x, prior = prior, ...))
+}
+
+#' @rdname as_draws.mcpfit
+#' @param row.names,optional Unused. For compatibility with [as.data.frame()].
+#' @export
+as.data.frame.mcpfit = function(x, row.names = NULL, optional = FALSE, prior = FALSE, ...) {
+  as.data.frame(as.matrix.mcpfit(x, prior = prior, ...))
 }
 
 #' @exportS3Method tidybayes::tidy_draws
