@@ -45,6 +45,8 @@
 #'      `y - offset` for identity links and `log(y) - offset` for log links.
 #'  * *`sigma` and group-level SDs* follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`, since
 #'      half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
+#'      For `mu` with a log link and for modeled `shape`, group-level SDs are half-normal instead, e.g., `normal(0, 2.5) T(0, )`,
+#'      because exponentiated heavy tails imply extreme group multipliers.
 #'
 #' Like `rstanarm` and `brms`, which place intercept priors on centered predictors, the default prior on
 #' the segment-1 intercept applies to the level at the start of the segment, `min(x)`. The reported
