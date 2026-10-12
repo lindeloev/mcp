@@ -275,7 +275,7 @@ mcpfamily_gaussian = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 0)
+      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 0, floor = 1e-5)
     ),
     default_prior = default_prior,
     response = list(),
@@ -622,9 +622,10 @@ mcpfamily_negbinomial = function(family) {
 
 
 # Describe a distributional parameter. `lower` is the exclusive lower bound of its
-# support (e.g., 0 for sigma). It bounds constant priors and floors observation-level values.
+# support (e.g., 0 for sigma) and bounds constant priors. `floor` is an optional numerical
+# floor on observation-level values (see dev/DECISIONS.md for sigma).
 new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor = FALSE, lower = NA_real_,
-                          link_modeled = link) {
+                          link_modeled = link, floor = NA_real_) {
   tibble::tibble(
     dpar = dpar,
     link = link,
@@ -633,7 +634,8 @@ new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor
     modeled = FALSE,
     implicit = implicit,
     require_initial_predictor = require_initial_predictor,
-    lower = lower
+    lower = lower,
+    floor = floor
   )
 }
 
@@ -686,7 +688,7 @@ assert_dpar_specs = function(x) {
   checkmate::assert_data_frame(x)
   required = c(
     "dpar", "link", "link_constant", "link_modeled", "modeled",
-    "implicit", "require_initial_predictor", "lower"
+    "implicit", "require_initial_predictor", "lower", "floor"
   )
   assert_data_cols(x, required)
 
@@ -714,6 +716,8 @@ assert_dpar_specs = function(x) {
     stop("`family$dpar_specs$require_initial_predictor` must be logical without missing values.")
   if (!is.numeric(x$lower))
     stop("`family$dpar_specs$lower` must be numeric.")
+  if (!is.numeric(x$floor))
+    stop("`family$dpar_specs$floor` must be numeric.")
 
   TRUE
 }

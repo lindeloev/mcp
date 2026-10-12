@@ -188,6 +188,8 @@ test_arma_simulation = function(fit) {
   control_args = c("fit", "newdata", ".type", ".rate", ".dpar", ".arma", ".scale")
   component_args = setdiff(names(formals(fit$simulate)), control_args)
   component_values = stats::setNames(as.list(rep(0, length(component_args))), component_args)
+  bounded = names(get_constant_dpar_bounds(fit$family))  # e.g., shape_1 = 0 is outside the support
+  component_values[sub("_[0-9]+$", "", component_args) %in% bounded] = 1
   call = c(
     list(fit = fit, newdata = fit$data),
     component_values,

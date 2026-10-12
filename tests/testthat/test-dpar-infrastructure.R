@@ -192,6 +192,17 @@ test_that("generated code separates link and distribution scales", {
 })
 
 
+test_that("only dpars with a numerical floor are floored", {
+  data = data.frame(x = 1:6, y = c(1, 2, 1, 3, 2, 4))
+  fit = mcp(list(y ~ 1), data, family = negbinomial(), par_x = "x", sample = FALSE)
+  expect_match(fit$jags_code, "shape_\\[i_\\] = link_shape_\\[i_\\]\n")
+  expect_false(grepl("max\\(1e", fit$jags_code))
+
+  dpars = add_response_dpars(list(link_mu_ = 0, link_shape_ = 1e-8), fit$family)
+  expect_equal(dpars$shape_, 1e-8)
+})
+
+
 test_that("included dpar wrappers use the generic formula path", {
   data = data.frame(x = 1:4, y = c(2, 3, 5, 7))
   family = as_mcpfamily(gaussian())

@@ -196,8 +196,8 @@ add_response_dpars = function(dpar_values, family) {
       stop_github("Missing link-scale values for dpar '", dpar, "'.")
 
     response = get_link_function(spec$link, inverse = TRUE)(dpar_values[[link_name]])
-    if (!is.na(spec$lower))
-      response = pmax(spec$lower + 1e-5, response)
+    if (!is.na(spec$floor))
+      response = pmax(spec$floor, response)
     dpar_values[[response_name]] = response
   }
 

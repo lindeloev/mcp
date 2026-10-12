@@ -193,8 +193,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
       link_code,
       paste0(linkinv_str, "(", link_code, ")")
     )
-    if (!is.na(spec$lower))  # Floor just above the exclusive bound, as in add_response_dpars()
-      response_code = paste0("max(", format(spec$lower + 1e-5, scientific = TRUE), ", ", response_code, ")")
+    if (!is.na(spec$floor))  # Numerical floor, as in add_response_dpars()
+      response_code = paste0("max(", format(spec$floor, scientific = TRUE), ", ", response_code, ")")
 
     mm = paste0(mm, dpar, "_[i_] = ", response_code, "\n    ")
   }
