@@ -101,7 +101,7 @@ intercept (<code>cp_1</code>, <code>cp_2</code>, ...). Use <code>cp()</code> to 
 <p><strong>Formula syntax.</strong> The first segment has the format <code>response ~ predictors</code>. Later segments use
 the same response, so they are one-sided, <code>~ predictors</code>, and each starts at a change point that
 can be modeled using <code>cp()</code>, e.g., <code>~ cp((1 | id)) + 0 + x</code>.</p>
-<p><strong>1. Response (segment 1 only):</strong></p><ul><li><p><code>y ~ ...</code>: Standard continuous or count response (Gaussian, Poisson, Bernoulli).</p></li>
+<p><strong>1. Response (segment 1 only):</strong></p><ul><li><p><code>y ~ ...</code>: Standard continuous, binary, or count response (Gaussian, Bernoulli, Poisson, negative binomial).</p></li>
 <li><p><code>successes | trials(total) ~ ...</code>: Binomial response (<code>family = binomial()</code>).</p></li>
 <li><p><code>y | weights(w) ~ ...</code>: Observation log-likelihood weights (multiplies each observation's
 log-likelihood contribution by <code>w &gt; 0</code>; affects posterior inference and <code><a href="execute-mcp-model.html">log_lik()</a></code>, but
@@ -115,12 +115,16 @@ not predictions).</p></li>
 <li><p><code>~ 1</code>: Plateau (intercept only, no slope).</p></li>
 <li><p><code>~ x:state + I(x^2) + exp(z)</code>: Extended terms, interactions, and R-side bases
 (<code><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale()</a></code>, <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code>, <code><a href="https://rdrr.io/r/splines/ns.html" class="external-link">splines::ns()</a></code>). Bases are evaluated before sampling and reused for <code>newdata</code>.</p></li>
+<li><p><code>~ 1 + offset(log(exposure))</code>: Offset with a fixed coefficient of 1. If one segment includes an offset,
+all segments must include one. The same applies within <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, etc., and within <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>/<code>ma()</code> in the
+segments that include them.</p></li>
 <li><p><code>~ 1 + (1 | id)</code>: Group-level intercepts (or <code>(1 + x || id)</code> for independent slopes and intercepts).
 <a href="https://lindeloev.github.io/mcp/articles/group_effects.html">Read more</a>.</p></li>
-<li><p><code>~ sigma(1 + x)</code>: Distributional parameters on the link scale (e.g., log residual SD).
+<li><p><code>~ sigma(1 + x)</code>: Distributional parameters on the link scale (e.g., log residual SD), with parameters
+<code>sigma_Intercept_2</code> and <code>sigma_x_2</code>. Without <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> anywhere in the model, <code>sigma_1</code> is the residual SD itself.
 <a href="https://lindeloev.github.io/mcp/articles/dpar.html">Read more</a>.</p></li>
 <li><p><code>~ ar(1) + ma(1)</code>: Autoregressive and moving-average time-series residuals on the link scale
-(accepts regression formulas, <code>series = id</code>, and <code>threshold</code>; include them in every segment where they apply).
+(accepts regression formulas; include them in every segment where they apply). Set <code>series = id</code> and <code>threshold</code> once in any term; they apply to all segments.
 <a href="https://lindeloev.github.io/mcp/articles/arma.html">Read more</a>.</p></li>
 <li><p><code>~ 1 + same(x)</code> or <code>0 + same(z, as = 1)</code>: Reuse a coefficient from the preceding segment (default)
 or from segment <code>as</code>. Reused coefficients are estimated jointly from all segments where they are
@@ -147,6 +151,8 @@ They use their original values and are not part of \(\alpha_k\), which is why th
 representing the expected response for most families (or the success probability for binomial models,
 where the expected count is \(n_i \mu_i\)). Distributional parameters (<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, <code>shape()</code>, etc.)
 and autoregressive terms (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>, <code>ma()</code>) follow this exact same segmented structure on their respective link scales.
+Since each of them has its own segmented linear predictor, <code>mcp</code> calls them all distributional parameters (<code>dpar</code>):
+<code>mu</code>, <code>sigma</code>, <code>shape</code>, and each AR/MA lag (<code>ar1</code>, <code>ar2</code>, <code>ma1</code>, ...), e.g., <code>fitted(fit, dpar = "ar1")</code> or <code>fixef(fit, dpar = "sigma")</code>.
 See more details on the <a href="https://lindeloev.github.io/mcp/articles/formulas.html">mcp website</a>.</p>
     </div>
     <div class="section level2">

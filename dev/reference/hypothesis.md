@@ -154,9 +154,9 @@ hypothesis(demo_fit, "cp_1 > 30")
 # Combine directional statements for an interval (a ROPE-style hypothesis)
 hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
 #> # A tibble: 1 × 7
-#>   hypothesis            mean  sd    lower upper  prob    BF
-#>   <chr>                 <lgl> <lgl> <lgl> <lgl> <dbl> <dbl>
-#> 1 cp_1 > 20 & cp_1 < 30 NA    NA    NA    NA    0.172  1.16
+#>   hypothesis             mean    sd lower upper  prob    BF
+#>   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1 cp_1 > 20 & cp_1 < 30    NA    NA    NA    NA 0.172  1.16
 
 # Evaluate several directional hypotheses at once
 hypothesis(demo_fit, c("cp_1 > 30", "cp_2 > 70"))

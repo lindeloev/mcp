@@ -161,10 +161,10 @@ residuals(
     that part of the model.
 
   - Character vector of group-level parameter names, e.g.,
-    `c("cp_1_id", "x_2_id")`. `*` is a wildcard, e.g., `"state*_1_id"`
-    selects all levels of a factor and `"*_id"` selects all effects by
-    `id`. See names using `ranef(fit)`. Can be combined, e.g.,
-    `c("cp", "sigma_*")`.
+    `c("cp_1_id", "x_2_id")`. **\[experimental\]** `*` is a wildcard,
+    e.g., `"state*_1_id"` selects all levels of a factor and `"*_id"`
+    selects all effects by `id`. See names using `ranef(fit)`. Can be
+    combined, e.g., `c("cp", "sigma_*")`.
 
 - arma:
 
@@ -219,8 +219,7 @@ residuals(
 
 - dpar:
 
-  What distributional parameter to evaluate. This is only relevant when
-  `type == "fitted"`. E.g.,
+  What distributional parameter to evaluate. E.g.,
 
   - `"epred"` (default): Expected response from the full model (or
     `NULL` for compatibility with brms etc.).
@@ -241,8 +240,7 @@ residuals(
     inverse link function.
 
   - `"linear"`: return on the linear-predictor (link) scale, where the
-    linear trends are modeled. A linear scale is only applicable when
-    `type == "fitted"` and `dpar` is not `NULL`.
+    linear trends are modeled.
 
 ## Value
 
@@ -253,8 +251,8 @@ residuals(
   - `.mean`: The mean of the draws.
 
   - `.sd`: The SD of the draws. With posterior draws (the default), this
-    is the posterior predictive SD for `type = "predict"` and the
-    posterior SD of the evaluated quantity otherwise.
+    is the posterior predictive SD for `predict()` and the posterior SD
+    of the evaluated quantity otherwise.
 
   - `.lower` and `.upper`: The bounds of the central interval given in
     `width`.
@@ -264,9 +262,9 @@ residuals(
 
 - If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes`
   `tibble` with all the posterior draws (`Nd`) evaluated at each row in
-  `newdata` (`Nn`), i.e., with `Nd x Nn` rows. If there are group-level
-  effects, the returned data is expanded with the relevant levels for
-  each row.
+  `newdata` (`Nn`), i.e., with `Nd x Nn` rows, ordered by `.data_row`
+  and then `.draw`. If there are group-level effects, the returned data
+  is expanded with the relevant levels for each row.
 
   The return columns are:
 
@@ -284,8 +282,8 @@ residuals(
     `.loglik`.
 
 - If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X
-  `nrows(newdata)` matrix with fitted/predicted values (depending on
-  `type`). This format is used by `brms` and it's useful as `yrep` in
+  `nrows(newdata)` matrix with fitted/predicted values (depending on the
+  function). This format is used by `brms` and it's useful as `yrep` in
   `bayesplot::ppc_*` functions.
 
 ## Details
@@ -405,16 +403,16 @@ head(predict(demo_fit, prior = TRUE))  # Prior predictive
 #> 6    22.3   40.1  14.2  22.5  -30.0   58.3
 head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 #> # A tibble: 6 × 14
-#>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
-#>    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-#> 1      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 2      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 3      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 4      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 5      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 6      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> # ℹ 5 more variables: sigma_1 <dbl>, response <dbl>, time <dbl>,
-#> #   .data_row <int>, .epred <dbl>
+#>   response  time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1
+#>      <dbl> <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>
+#> 1     12.2  76.3         1      1          1     1  28.6  71.6        8.78
+#> 2     12.2  76.3         1      1          2     2  35.2  72.0        9.62
+#> 3     12.2  76.3         1      1          3     3  30.7  72.6        9.86
+#> 4     12.2  76.3         1      1          4     4  29.4  72.0        9.64
+#> 5     12.2  76.3         1      1          5     5  30.5  72.2       10.2 
+#> 6     12.2  76.3         1      1          6     6  34.8  70.4       10.5 
+#> # ℹ 5 more variables: time_2 <dbl>, Intercept_3 <dbl>, time_3 <dbl>,
+#> #   sigma_1 <dbl>, .epred <dbl>
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
@@ -467,15 +465,15 @@ fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses f
 #> 6    NA    30 B      39.8 0.759   38.3   41.3
 fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 #> # A tibble: 6 × 14
-#>   .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1     y
-#>    <int>      <int> <int> <dbl>       <dbl> <dbl>    <dbl>  <dbl>   <dbl> <dbl>
-#> 1      1          1     1  57.9        11.1 0.192     22.0 -0.360    4.13    NA
-#> 2      1          1     1  57.9        11.1 0.192     22.0 -0.360    4.13    NA
-#> 3      1          1     1  57.9        11.1 0.192     22.0 -0.360    4.13    NA
-#> 4      1          1     1  57.9        11.1 0.192     22.0 -0.360    4.13    NA
-#> 5      1          1     1  57.9        11.1 0.192     22.0 -0.360    4.13    NA
-#> 6      1          1     1  57.9        11.1 0.192     22.0 -0.360    4.13    NA
-#> # ℹ 4 more variables: x <int>, state <fct>, .data_row <int>, .epred <dbl>
+#>       y     x state .data_row .chain .iteration .draw  cp_1 Intercept_1   x_1
+#>   <dbl> <int> <fct>     <int>  <int>      <int> <int> <dbl>       <dbl> <dbl>
+#> 1    NA     8 B             8      1          1     1  57.9        11.1 0.192
+#> 2    NA     8 B             8      1          2     2  59.6        10.7 0.203
+#> 3    NA     8 B             8      1          3     3  55.9        12.4 0.175
+#> 4    NA     8 B             8      1          4     4  57.0        10.9 0.209
+#> 5    NA     8 B             8      1          5     5  59.4        11.7 0.176
+#> 6    NA     8 B             8      1          6     6  56.9        12.9 0.138
+#> # ℹ 4 more variables: stateB_1 <dbl>, x_2 <dbl>, sigma_1 <dbl>, .epred <dbl>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #> # A tibble: 6 × 7
 #>       y     x state .mean   .sd .lower .upper

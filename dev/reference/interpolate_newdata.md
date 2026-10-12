@@ -109,15 +109,15 @@ head(fitted(demo_fit, newdata))
 prediction = predict(demo_fit, newdata, summary = FALSE)
 head(prediction)
 #> # A tibble: 6 × 13
-#>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3
-#>    <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>  <dbl>
-#> 1      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 2      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 3      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 4      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 5      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> 6      1          1     1  28.6  71.6        8.78  0.508        16.8 -0.372
-#> # ℹ 4 more variables: sigma_1 <dbl>, time <dbl>, .data_row <int>,
+#>    time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2
+#>   <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>
+#> 1 0.619         1      1          1     1  28.6  71.6        8.78  0.508
+#> 2 0.619         1      1          2     2  35.2  72.0        9.62  0.564
+#> 3 0.619         1      1          3     3  30.7  72.6        9.86  0.538
+#> 4 0.619         1      1          4     4  29.4  72.0        9.64  0.472
+#> 5 0.619         1      1          5     5  30.5  72.2       10.2   0.502
+#> 6 0.619         1      1          6     6  34.8  70.4       10.5   0.551
+#> # ℹ 4 more variables: Intercept_3 <dbl>, time_3 <dbl>, sigma_1 <dbl>,
 #> #   .prediction <dbl>
 
 # Custom plot

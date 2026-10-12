@@ -44,6 +44,7 @@
     [tidybayes](https://mjskay.github.io/tidybayes/)
     ([`spread_draws()`](https://mjskay.github.io/tidybayes/reference/spread_draws.html),
     [`gather_draws()`](https://mjskay.github.io/tidybayes/reference/spread_draws.html)).
+    `bayesplot::mcmc_trace(fit)` etc. work too now.
 
   - Per-draw methods (`summary = FALSE` in
     [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -91,7 +92,9 @@
   `mcp(..., family = negbinomial())`. NB (and Poisson) can now model
   rates and exposure because
   [`offset()`](https://rdrr.io/r/stats/offset.html) is now supported in
-  formulas - also for other families.
+  formulas - also for other families. If one segment includes an
+  [`offset()`](https://rdrr.io/r/stats/offset.html), all segments must
+  include one.
 
 - **Missing response imputation:** Missing responses are now retained as
   posterior JAGS imputations and used to complete response histories in
@@ -110,9 +113,10 @@
   reparameterizations that keep intercepts and slopes relatively
   independent of earlier segments during sampling and due to
   (selectively) using the JAGS glm module. The reparameterizations do
-  not change the model or its priors. Compare `fit$jags_code` between
-  `mcp(..., reparam = FALSE)` and `mcp(..., reparam = TRUE)` (new
-  default). Read more in [From formulas to sampler
+  not change the model or its priors. Compare `fit$jags_code` with
+  `options(mcp_reparam = FALSE)` (plain model) and
+  `options(mcp_reparam = TRUE)` (default). Read more in [From formulas
+  to sampler
   code](https://lindeloev.github.io/mcp/articles/implementation.html).
 
 ### Major breaking changes
@@ -126,7 +130,8 @@ been added until we reach 1.0.
 - **Renamed parameters and column names** to align with
   [brms](https://github.com/paul-buerkner/brms): `int_i` –\>
   `Intercept_i`; `x_1_E2` –\> `xE2_1`; `x_1_sin` –\> `sinx_1`, `cp_1_sd`
-  –\> `cp_1_id_sd` (for `(1 | id)`), etc.
+  –\> `cp_1_id_sd` (for `(1 | id)`), etc. Interactions join their parts
+  with a dot, e.g., `x:stateB` –\> `x.stateB_1`.
 
 - **Renamed return column names** to align with
   [posterior](https://mc-stan.org/posterior/) and others:
@@ -204,14 +209,20 @@ been added until we reach 1.0.
 
   - [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
-    and
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md),
-    and everything else now return rows in a canonical order instead of
-    the previous incidental (near-alphabetical) order;
-    [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
-    orders group levels following the grouping factor’s levels in the
-    fitting data. Use `verbose = TRUE` with
+    [`as_draws()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md),
+    `fit$prior`, `fit$simulate()`, and everything else now order
+    parameters canonically as in
+    [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
+    instead of the previous incidental (near-alphabetical) order; group
+    levels follow the grouping factor’s levels in the fitting data.
+    Draws from
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    etc. with `summary = FALSE` are ordered by data row, then draw, as
+    in [tidybayes](https://mjskay.github.io/tidybayes/). Use
+    `verbose = TRUE` with
     [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
     or
@@ -286,11 +297,12 @@ been added until we reach 1.0.
     posterior draws by default and error if they are unavailable. Use
     `prior = TRUE` to select prior draws; prior-only fits no longer
     trigger an automatic fallback. This also applies to draw-count
-    methods.
+    methods, and `print(fit)` shows only the model unless
+    `prior = TRUE`.
 
   - The arguments for `fit$simulate()` have all changed to accommodate
     multiple (categorical) predictors.
-    `fit$simulate(fit, data, ..., .type = "predict")` is the new
+    `fit$simulate(fit, newdata, ..., .type = "predict")` is the new
     argument structure. Note that (1) it now requires `fit` as the first
     argument, (2) it requires `data.frame` or `tibble` as the second
     argument instead of just a vector of `par_x`, (3) further arguments
@@ -332,11 +344,13 @@ been added until we reach 1.0.
 
   - Gaussian models with an explicit
     [`sigma()`](https://rdrr.io/r/stats/sigma.html) formula now model
-    the residual standard deviation with a log link, as in `brms`.
-    Models without an explicit
-    [`sigma()`](https://rdrr.io/r/stats/sigma.html) are unchanged:
-    `sigma_1` remains the residual SD itself with the response-scale
-    half-Student-t prior.
+    the residual standard deviation with a log link, as in `brms`. To
+    make the scale visible, its intercepts are named `sigma_Intercept_i`
+    (previously `sigma_i`), matching `Intercept_i`, while slopes keep
+    their names (e.g., `sigma_x_2`) and are now on the log scale. Models
+    without an explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html)
+    are unchanged: `sigma_1` remains the residual SD itself with the
+    response-scale half-Student-t prior.
 
   - `y | weights(w)` now specifies observation log-likelihood weights
     rather than Gaussian-only precision weights (which previously scaled
@@ -399,7 +413,9 @@ been added until we reach 1.0.
     default to keep observations finite on the link scale. Added
     moving-average terms with `ma(q)`, which can be used alone or
     combined with `ar(p)` in each segment. Independent time series can
-    be separated using `series = <column>`.
+    be separated using `ar(..., series = <column>)`. Set `series` and
+    `threshold` once in any [`ar()`](https://rdrr.io/r/stats/ar.html) or
+    `ma()` term; they apply to all segments.
 
   - GARMA observation thresholds are now validated with
     family-appropriate bounds: strictly below 0.5 for
@@ -441,11 +457,10 @@ been added until we reach 1.0.
     reproducibility across simulation, fit, and plotting.
 
   - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp
-    sampling-status messages while preserving warnings and errors. The
-    JAGS model-compilation text is no longer printed by default.
-
-  - Added `mcp(..., series = "data_column")` to identify independent
-    series in models with AR/MA terms.
+    sampling-status messages while preserving warnings and errors. Use
+    `options(mcp_quiet = TRUE)` to make this the default for the
+    session. The JAGS model-compilation text is no longer printed by
+    default.
 
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before
     because the log-likelihood is not stored. Use `log_lik(fit)` to
@@ -545,8 +560,9 @@ been added until we reach 1.0.
     standard deviation of the predictor’s model-matrix column, including
     dummy variables for factors. For the change-point variable, `sd(x)`
     is taken over all data (so slope priors do not depend on the number
-    of change points), and powers such as `I(x^2)` use
-    `sd((x - min(x))^2)`. Version 0.3.4 used
+    of change points), powers such as `I(x^2)` use `sd((x - min(x))^2)`,
+    and interactions such as `x:z` use `sd(x) * sd(z)` (or just `sd(x)`
+    for 0/1 dummies as in `x:state`). Version 0.3.4 used
     `dt(0, sd(y) / (max(x) - min(x)), 3)` for Gaussian slopes, which is
     about 9 times narrower for evenly spread `x` and noticeably shrank
     steep slopes in short segments. Intercepts also follow `rstanarm`
@@ -559,7 +575,9 @@ been added until we reach 1.0.
     show its prior given the x-terms, e.g.,
     `normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))`. This
     greatly improves sampling when `x` is far from zero, e.g., calendar
-    years. `sigma` and group-level SDs follow `brms`. See priors using
+    years. Likewise for factor levels and contrasts with their own
+    x-terms, e.g., `stateb_1` in `y ~ 1 + state * x`. `sigma` and
+    group-level SDs follow `brms`. See priors using
     `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian
     `sigma_1` prior is now the same response-calibrated half-Student-t
     used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`.
@@ -624,6 +642,10 @@ been added until we reach 1.0.
     Deprecated `which_y = "ct"` is translated to `dpar = "epred"` with a
     warning.
 
+  - `mcp(..., inits)` can only set stochastic nodes in `fit$jags_code`.
+    Change points (e.g., `cp_1`) and parameters reparameterized for
+    faster sampling can no longer be initialized directly.
+
   - `fit$data` now only contains the data columns that are used in the
     model.
 
@@ -653,6 +675,12 @@ been added until we reach 1.0.
   - New `mcpfit` objects no longer include empty `$loo` and `$waic`
     components.
 
+  - [`is.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.md)
+    is deprecated in favor of
+    [`is_mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.md),
+    matching [posterior](https://mc-stan.org/posterior/)’s
+    [`is_draws()`](https://mc-stan.org/posterior/reference/draws.html).
+
 - **Requirements and removals:**
 
   - mcp now requires R \>= 4.1.0, matching its use of the native pipe
@@ -681,6 +709,10 @@ been added until we reach 1.0.
 - [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   now uses the conventional `observed - fitted` sign. Previously, `mcp`
   residuals used `fitted - observed`.
+
+- Poisson and negative binomial predictions no longer fail when a single
+  draw implies a count mean above 2,146,275,819. This was common for
+  prior predictions with default log-link priors.
 
 - Fixed several posterior predictive check and information-criterion
   bugs present in v0.3.4. From most to least serious:
@@ -745,14 +777,12 @@ been added until we reach 1.0.
   identical across levels.
 
 - Explicitly setting `dpar = "mu"` now returns the success probability
-  parameter \mu regardless of `rate`. `rate = FALSE` continues to scale
-  expected response counts when evaluating `"epred"` (e.g., in
-  [`posterior_epred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)),
-  while
-  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  parameter \mu regardless of `rate`. `rate` only affects `"epred"` and
+  predictions, where the default `rate = FALSE` returns counts (e.g., in
+  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
   and
-  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  retain their default proportion scale (`rate = TRUE`).
+  [`posterior_epred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)).
 
 - Now works for 200+ characters formulas too.
 

@@ -79,27 +79,28 @@ Use <code><a href="prior_summary.html">prior_summary()</a></code> to see the res
 
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Each value in the list is either</p><ul><li><p>A distribution in <code>mcp</code>'s JAGS-string syntax (e.g.,
-<code>Intercept_1 = "dnorm(0, 1) T(0,)"</code>) indicating a
-conventional prior distribution. Weakly informative defaults
-are used where priors are not specified. These are designed for stable
-estimation and prediction, but should be justified before hypothesis testing.
-<code>mcp</code> uses conventional distribution scales rather than JAGS precision:
-SD for <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code>, scale for <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code>, <code>ddexp()</code>, and <code><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">dlogis()</a></code>, and
-log-SD for <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code>.</p></li>
+    <p>Each value in the list is either</p><ul><li><p>A distribution string (e.g., <code>Intercept_1 = "dnorm(0, 1) T(0, )"</code>). Distributions use JAGS names
+and argument order, including <code><a href="https://rdrr.io/r/base/logical.html" class="external-link">T()</a></code> truncation, but with conventional scales instead of JAGS
+precision: SD for <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code>, SD on the log scale for <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code> (<code>sdlog</code> in <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">stats::dlnorm()</a></code>),
+and scale for <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code>, <code>ddexp()</code>, and <code><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">dlogis()</a></code>. Change points also accept <code>dirichlet(alpha)</code>,
+and all priors accept data-dependent terms such as <code>sd(y)</code> (see below).</p></li>
 <li><p>A numerical value (e.g., <code>Intercept_1 = -2.1</code>) indicating a fixed value.</p></li>
-<li><p>A model parameter name (e.g., <code>Intercept_2 = "Intercept_1"</code>), equating parameters via JAGS.
+<li><p>A model parameter name (e.g., <code>Intercept_2 = "Intercept_1"</code>), sharing that parameter's value.
 Note that sharing coefficients via <code>same()</code> in the segment formulas (e.g., <code>~ same(1)</code>)
 is generally preferred. If two group-level deviations are shared via the prior,
 they will need to have the same grouping variable.</p></li>
-</ul><p>Default priors follow <code>rstanarm</code> for intercepts and coefficients and <code>brms</code> for scale parameters, with
+</ul><p>Weakly informative defaults are used where priors are not specified. These are designed for stable
+estimation and prediction, but should be justified before hypothesis testing.
+Default priors follow <code>rstanarm</code> for intercepts and coefficients and <code>brms</code> for scale parameters, with
 a few documented deviations:</p><ul><li><p><em>Coefficients</em> are autoscaled as in <code>rstanarm</code>. For the mean (<code>mu</code>),
 $$\beta \sim \mathrm{Normal}\left(0, \frac{2.5 \cdot s_y}{\mathrm{sd}(\mathrm{column})}\right)$$
 where \(s_y = \mathrm{sd}(y)\) for identity links and \(s_y = 1\) for other links.
 \(\mathrm{sd}(\mathrm{column})\) is the SD of the coefficient's model-matrix column, including
 the 0/1 dummies of factors. This makes the prior largely invariant to the units of <code>x</code> and <code>y</code>. Logit and
-probit links use 1.5 and 1 instead of 2.5. For x-terms, <code>sd(x)</code> is taken over all data, and powers such
-as <code>I(x^2)</code> use <code>sd((x - min(x))^2)</code>.</p></li>
+probit links use 1.5 and 1 instead of 2.5. For x-terms, <code>sd(column)</code> is <code>sd(x)</code> over all data (powers such
+as <code>I(x^2)</code> use <code>sd((x - min(x))^2)</code>) times the SD of the term without <code>x</code>, e.g., <code>sd(x) * sd(z)</code>
+for <code>x:z</code>. 0/1 indicators such as the dummies in <code>x:state</code> contribute a factor of 1. Unlike <code>rstanarm</code>, this
+does not depend on the location of <code>x</code> and <code>z</code>.</p></li>
 <li><p><em>Intercepts</em> are <code>normal(mean(y), 2.5 * sd(y))</code> for identity links, <code>normal(0, 1.5)</code> for logit, and
 <code>normal(0, 1)</code> for probit. The latter two are (approximately) uniform on the probability scale.
 For log links (Gaussian, Poisson, and negative binomial), intercepts are
@@ -107,16 +108,22 @@ For log links (Gaussian, Poisson, and negative binomial), intercepts are
 log is defined. This robustly centers the prior on the typical log-response, as in <code>brms</code> (which uses a
 Student-t shape and replaces zeros the same way), whereas <code>rstanarm</code> uses <code>normal(0, 2.5)</code>.
 For a factor without an intercept, e.g., <code>y ~ 0 + state</code>, each factor level's coefficient is an intercept and
-gets this prior where the segment starts at zero (segment 1 or joined to nothing).</p></li>
+gets this prior where the segment starts at zero (segment 1 or joined to nothing).
+With an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>, the intercept location and scale are computed from the offset-adjusted response,
+<code>y - offset</code> for identity links and <code>log(y) - offset</code> for log links.</p></li>
 <li><p><em><code>sigma</code> and group-level SDs</em> follow <code>brms</code>, e.g., <code>student_t(3, 0, max(2.5, mad(y)))</code>, since
-half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).</p></li>
+half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
+For <code>mu</code> with a log link and for modeled <code>shape</code>, group-level SDs are half-normal instead, e.g., <code>normal(0, 2.5) T(0, )</code>,
+because exponentiated heavy tails imply extreme group multipliers.</p></li>
 </ul><p>Like <code>rstanarm</code> and <code>brms</code>, which place intercept priors on centered predictors, the default prior on
-the segment-1 intercept applies to the level at the start of the segment, <code>min(x)</code>. The reported
+the segment-1 intercept applies to the value at the start of the segment, <code>min(x)</code>. The reported
 <code>Intercept_1</code> is still at <code>x = 0</code>, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>, so its prior is given the x-terms, e.g.,
 <code>dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))</code> in <code>fit$prior</code>. Later segments' intercepts are at their change point.
+Likewise, factor levels and contrasts with their own x-terms apply at <code>min(x)</code>, e.g., <code>stateb_1</code> in <code>y ~ 1 + state * x</code>
+gets <code>dnorm(-stateb.x_1 * min(x), ...)</code>.
 Unlike in <code>rstanarm</code> and <code>brms</code>, other predictors are not centered, so the prior applies where they are zero.
 If such a predictor is far from zero, center it before fitting or set a prior on <code>Intercept_1</code>.
-User-specified intercept priors apply to <code>Intercept_1</code> as written. The autoscaling does not account for
+User-specified intercept priors apply directly to <code>Intercept_1</code> (at <code>x = 0</code>). The autoscaling does not account for
 segment length. If you expect steep slopes or strong curvature within short segments, consider setting a
 wider prior.</p>
 <p>The default prior on change points is <code>dirichlet(1)</code> (uniform order statistics).
@@ -171,8 +178,8 @@ scale for <code>ddexp()</code> and <code><a href="https://rdrr.io/r/stats/Logist
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                                        bounds </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 cp    uniform(min = 20, max = 50)                  [20, 5…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 cp    uniform(min = cp_1, max = cp_3)              [cp_1,…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 20, max = 50)                  [20, 5…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    uniform(min = cp_1, max = cp_3)              [cp_1,…</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    normal(mean = 0, sd = 2)                     [0, In…</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    15                                           none   </span>

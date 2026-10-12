@@ -97,10 +97,11 @@ constraining y^\*\_t to \[0.1, 0.9\]). It has no effect for Gaussian
 models.
 
 The default should usually be left unchanged. If needed, set it on
-either term, for example `ar(1, threshold = 0.01) + ma(1)`. AR and MA
-share one threshold within a segment, and the threshold may differ
-between segments. Supplying different AR and MA thresholds in the same
-segment is an error.
+either term, for example `ar(1, threshold = 0.01) + ma(1)`. Like
+`series`, the threshold is set once and applies to all
+[`ar()`](https://rdrr.io/r/stats/ar.html) and `ma()` terms in all
+segments, since they transform the same response history. Supplying
+different thresholds is an error.
 
 ## Simple example
 
@@ -478,7 +479,9 @@ time series data. Set `plot(fit, arma = FALSE)` to omit all AR and MA
 effects.
 
 We plot it together with the change in the `ar1` parameter using
-`plot_dpar(fit)`:
+`plot_dpar(fit)`. Each AR/MA lag has its own segmented linear predictor,
+so `mcp` treats it as a distributional parameter (`dpar`; [read
+more](https://lindeloev.github.io/mcp/dev/articles/dpar.md)):
 
 ``` r
 
@@ -615,12 +618,12 @@ prior_summary(fit)
     ## # A tibble: 6 × 5
     ##   parameter   segment dpar  prior                                         bounds          
     ##   <chr>         <int> <chr> <chr>                                         <chr>           
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                          [min(x), max(x)]
+    ## 1 cp_1              2 NA    dirichlet(alpha = 1)                          [min(x), max(x)]
     ## 2 Intercept_1       1 mu    normal(mean = 70.055, sd = 74.062)            none            
     ## 3 x_1               1 mu    normal(mean = 0, sd = 2.5464)                 none            
     ## 4 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 35.6) [0, Inf]        
-    ## 5 ar1_1             1 ar    normal(mean = 0, sd = 0.5)                    [-1, 1]         
-    ## 6 ar1_2             2 ar    normal(mean = 0, sd = 0.5)                    [-1, 1]
+    ## 5 ar1_1             1 ar1   normal(mean = 0, sd = 0.5)                    [-1, 1]         
+    ## 6 ar1_2             2 ar1   normal(mean = 0, sd = 0.5)                    [-1, 1]
 
 We can also visualize the priors because we sampled the prior.
 `prior = TRUE` works in most `mcp` functions, including
@@ -654,15 +657,15 @@ prior_summary(empty)
     ## # A tibble: 9 × 5
     ##   parameter   segment dpar  prior                                        bounds          
     ##   <chr>         <int> <chr> <chr>                                        <chr>           
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                         [min(x), max(x)]
+    ## 1 cp_1              2 NA    dirichlet(alpha = 1)                         [min(x), max(x)]
     ## 2 Intercept_1       1 mu    normal(mean = 5.5, sd = 7.5691)              none            
     ## 3 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 3.7) [0, Inf]        
-    ## 4 ar1_1             1 ar    normal(mean = 0, sd = 0.5)                   [-1, 1]         
-    ## 5 ar1_x_1           1 ar    normal(mean = 0, sd = 0.082572)              none            
-    ## 6 ar1_2             2 ar    normal(mean = 0, sd = 0.5)                   [-1, 1]         
-    ## 7 ar1_xE2_2         2 ar    normal(mean = 0, sd = 0.0088324)             none            
-    ## 8 ar2_1             1 ar    normal(mean = 0, sd = 0.5)                   [-1, 1]         
-    ## 9 ar2_x_1           1 ar    normal(mean = 0, sd = 0.082572)              none
+    ## 4 ar1_1             1 ar1   normal(mean = 0, sd = 0.5)                   [-1, 1]         
+    ## 5 ar1_x_1           1 ar1   normal(mean = 0, sd = 0.082572)              none            
+    ## 6 ar1_2             2 ar1   normal(mean = 0, sd = 0.5)                   [-1, 1]         
+    ## 7 ar1_xE2_2         2 ar1   normal(mean = 0, sd = 0.0088324)             none            
+    ## 8 ar2_1             1 ar2   normal(mean = 0, sd = 0.5)                   [-1, 1]         
+    ## 9 ar2_x_1           1 ar2   normal(mean = 0, sd = 0.082572)              none
 
 AR and MA coefficient regressions use an identity link, while their
 residual inputs use the supported response-family link described above.
@@ -724,7 +727,10 @@ series are set to zero.
 
 Here is the JAGS code for the autocorrelation-only change above, i.e.,
 the one with a shared slope going from one AR(1) coefficient to another.
-You can print `fit$simulate` and see that it runs much of the same code.
+[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+etc. evaluate the same formulas in R; see [the model in
+R](https://lindeloev.github.io/mcp/dev/articles/implementation.html#the-model-in-r).
 
 ``` r
 
@@ -761,9 +767,7 @@ fit$jags_code
     ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
     ##     
     ##     # GARMA observation threshold
-    ##     garma_threshold_[i_] =
-    ##       (x[i_] < cp_1) * 0.1 +
-    ##       (x[i_] >= cp_1) * 0.1
+    ##     garma_threshold_[i_] = 0.1
     ##     
     ##     # Formula for ar1
     ##     ar1_[i_] =

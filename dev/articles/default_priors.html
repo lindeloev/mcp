@@ -146,8 +146,11 @@ probability.</p>
 <ul>
 <li><p>For x-terms, <span class="math inline">\operatorname{sd}(x)</span> is computed over all
 data, so slope priors do not depend on the number or location of change
-points. Powers such as <code>I(x^2)</code> use <span class="math inline">\operatorname{sd}((x - \min(x))^2)</span>, and
-interactions such as <code>x:group</code> use <span class="math inline">\operatorname{sd}(x)</span>.</p></li>
+points. Powers such as <code>I(x^2)</code> use <span class="math inline">\operatorname{sd}((x - \min(x))^2)</span>.
+Interactions such as <code>x:z</code> multiply by the SD of the term
+without <span class="math inline">x</span>, <span class="math inline">\operatorname{sd}(x) \cdot
+\operatorname{sd}(z)</span>, while 0/1 indicators such as the dummies in
+<code>x:group</code> contribute a factor of 1 (see <a href="#deviations">deviations</a>).</p></li>
 <li><p>The autoscaling does not account for segment length. If you
 expect steep slopes or strong curvature within short segments, consider
 setting a wider prior.</p></li>
@@ -159,7 +162,7 @@ setting a wider prior.</p></li>
 (see <a href="#deviations">deviations</a> for these and for log links).
 <code>rstanarm</code> and <code>brms</code> place the intercept prior on
 centered predictors. Similarly, the default prior on
-<code>Intercept_1</code> applies to the level at the start of segment 1,
+<code>Intercept_1</code> applies to the value at the start of segment 1,
 <span class="math inline">\min(x)</span>, though other predictors are
 not centered (see <a href="#deviations">deviations</a>).
 <code>Intercept_1</code> is still reported at <span class="math inline">x = 0</span>, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>, so
@@ -167,10 +170,14 @@ not centered (see <a href="#deviations">deviations</a>).
 given the slope, e.g.,
 <code>normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))</code>.
 This matters when <span class="math inline">x</span> is far from zero,
-e.g., calendar years. Later intercepts are already at their change
-point. User-specified priors on <code>Intercept_1</code> apply at <span class="math inline">x = 0</span> as written. For a factor without an
-intercept, e.g., <code>y ~ 0 + state</code>, each factor level has its
-own intercept, so each gets this prior (see <a href="#deviations">deviations</a>).</p></li>
+e.g., calendar years. Likewise, factor levels and contrasts with their
+own x-terms apply at <span class="math inline">\min(x)</span>, e.g.,
+<code>stateB_1</code> in <code>y ~ 1 + state * x</code> is the
+difference between states at <span class="math inline">\min(x)</span>.
+Later intercepts are already at their change point. User-specified
+priors on <code>Intercept_1</code> apply directly at <span class="math inline">x = 0</span>. For a factor without an intercept,
+e.g., <code>y ~ 0 + state</code>, each factor level has its own
+intercept, so each gets this prior (see <a href="#deviations">deviations</a>).</p></li>
 <li><p><strong>Scale parameters follow <a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link"><code>brms</code></a>:</strong>
 The residual SD and, for identity links, group-level SDs get a
 half-Student-t, <span class="math inline">\text{Student-t}(3, 0, S_y) \,
@@ -327,8 +334,9 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 </table>
 <p>* For <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>, these are <code>rstanarm</code>’s
 Gaussian defaults (see <a href="#deviations">deviations</a>), and the
-intercept is truncated <code>T(0, )</code>. † Group SDs for slopes are
-divided by <span class="math inline">\operatorname{sd}(\text{column})</span>. A blank
+intercept is truncated <code>T(0, )</code>, or
+<code>T(-min(offset), )</code> with an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>. † Group
+SDs for slopes are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>. A blank
 precedent means that the default is <code>mcp</code>-specific; see <a href="#deviations">deviations</a>.</p>
 </div>
 </div>
@@ -411,8 +419,9 @@ SDs use the same scales (1.5 and 1) instead of <code>brms</code>’s
 <code>brms</code>, so that it adapts to the magnitude of the counts. But
 it has normal tails rather than <code>brms</code>’s Student-t tails,
 because exponentiated Student-t tails imply infinite expected counts
-(<span class="math inline">\mathbb{E}[\exp(\eta)] = \infty</span>). For
-the same reason, group-level SDs are half-normal. With an
+(<span class="math inline">\mathbb{E}[\exp(\eta)] = \infty</span>).
+Group-level SDs are half-normal for a similar reason: their lighter
+tails make extreme group multipliers far less likely. With an
 <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>, the intercept is a log-rate, so <code>mcp</code>
 computes its location and scale from the observed log-rates, <span class="math inline">\log(y) - \text{offset}</span>. <code>brms</code>
 subtracts <code>mean(offset)</code> from the location but computes the
@@ -423,6 +432,13 @@ if the rates do not.</p></li>
 <code>normal(0, 2.5)</code> for the intercept, which ignore the
 magnitude of the counts. <code>mcp</code> uses the Gaussian defaults
 instead, which are on the response scale.</p></li>
+<li><p><strong>Offsets with identity links:</strong>
+<code>rstanarm</code> centers the intercept on <code>mean(y)</code>,
+ignoring <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>. But with an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>, the
+intercept describes <span class="math inline">y - \text{offset}</span>,
+so <code>mcp</code> computes its location and scale from <span class="math inline">y - \text{offset}</span>, just as for log links.
+<code>brms</code> subtracts <code>mean(offset)</code> from the location
+but computes the scale from <span class="math inline">y</span>.</p></li>
 <li><p><strong>Intercept placement:</strong> <code>rstanarm</code> and
 <code>brms</code> place the intercept prior on centered predictors.
 <code>mcp</code> places the default prior on <code>Intercept_1</code> at
@@ -430,6 +446,16 @@ instead, which are on the response scale.</p></li>
 other predictors, so the prior applies where they are zero. If such a
 predictor is far from zero, e.g., age in years, center it before fitting
 or set a prior on <code>Intercept_1</code>. Read more about the <a href="../articles/formulas.html">the mcp model</a>.</p></li>
+<li><p><strong>x-term interactions:</strong> <code>rstanarm</code>
+scales <code>x:z</code> by the SD of the model-matrix column, <span class="math inline">\operatorname{sd}(x \cdot z)</span>, which depends
+on the location of <span class="math inline">x</span> and <span class="math inline">z</span>. For example, it is around 1000 for
+<code>x:group</code> when <span class="math inline">x</span> is calendar
+years. Since x-terms are measured from the change point, the location of
+<span class="math inline">x</span> is not meaningful here.
+<code>mcp</code> instead uses <span class="math inline">\operatorname{sd}(x) \cdot
+\operatorname{sd}(z)</span>, where 0/1 indicators contribute a factor of
+1, so the prior applies per SD of <span class="math inline">x</span> and
+<span class="math inline">z</span>.</p></li>
 <li><p><strong>Proper coefficient priors:</strong> <code>brms</code>
 uses improper flat priors on coefficients, which JAGS does not support.
 <code>mcp</code> uses <code>rstanarm</code>’s instead.</p></li>

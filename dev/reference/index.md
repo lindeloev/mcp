@@ -9,13 +9,13 @@ contains structurally.
   Multiple Linear Segments And Their Change Points
 
 - [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
-  : Model parameters
+  **\[experimental\]** : Model parameters
 
 - [`mcp_columns()`](https://lindeloev.github.io/mcp/dev/reference/mcp_columns.md)
-  : Model data columns
+  **\[experimental\]** : Model data columns
 
 - [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
-  : Summarise priors used by an mcp model
+  **\[experimental\]** : Summarise priors used by an mcp model
 
 - [`print(`*`<mcplist>`*`)`](https://lindeloev.github.io/mcp/dev/reference/print.mcplist.md)
   : Print mcplist
@@ -23,7 +23,8 @@ contains structurally.
 - [`print(`*`<mcptext>`*`)`](https://lindeloev.github.io/mcp/dev/reference/print.mcptext.md)
   : Nice Printing of Multiline Texts
 
-- [`is.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is.mcpfit.md)
+- [`is.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.md)
+  [`is_mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.md)
   :
 
   Checks if the Argument is an `mcpfit` Object
@@ -69,7 +70,7 @@ Plotting of fits, parameters, and diagnostics.
 - [`pp_check(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
   : Posterior Predictive Checks For Mcpfit Objects
 - [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
-  : Returns a tibble with all combos of predictors
+  **\[experimental\]** : Returns a tibble with all combos of predictors
 
 ## Textual summaries and statistics
 
@@ -120,6 +121,9 @@ Per-observation summaries or draws
   [`as_draws_array()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
   [`as_draws_matrix()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
   [`as_draws_rvars()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+  [`as.matrix(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+  [`as.array(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+  [`as.data.frame(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
   :
 
   Extract MCMC Draws from `mcpfit` Objects
@@ -139,11 +143,6 @@ Distributional families that are not available in base R.
   : Bernoulli Family for mcp
 - [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)
   : Negative Binomial for mcp
-- [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
-  [`format(`*`<mcpfamily>`*`)`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
-  [`print(`*`<mcpfamily>`*`)`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
-  [`is.mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
-  : Create or Test Objects of Class "mcpfamily"
 
 ## Help and demos
 
@@ -161,4 +160,5 @@ the [front page](https://lindeloev.github.io/mcp).
 Functions retained for backward compatibility.
 
 - [`sd_to_prec()`](https://lindeloev.github.io/mcp/dev/reference/sd_to_prec.md)
-  : Transform an mcp prior to the parameterization used by JAGS.
+  **\[deprecated\]** : Transform an mcp prior to the parameterization
+  used by JAGS

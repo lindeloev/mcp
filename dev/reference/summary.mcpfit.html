@@ -144,8 +144,8 @@ the model, while a list or <code>FALSE</code> overrides the diagnostic footer.</
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
 <dd><p>Distributional parameter(s) whose regression coefficients to
-return. For modeled distributional parameters such as <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, these
-coefficients are on the link scale.</p></dd>
+return, e.g., <code>"mu"</code>, <code>"sigma"</code>, or <code>"ar1"</code> (see <a href="mcp-formula.html">mcp-formula</a>). For modeled
+distributional parameters such as <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, these coefficients are on the link scale.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -158,10 +158,11 @@ distributional parameters, then <code>ar</code>/<code>ma</code> components - eac
 segment. Note: The change point distributions are often not unimodal and
 symmetric so the intervals can be deceiving. Plot them using
 <code>plot_pars(fit)</code>.</p>
-<p>With <code>verbose = TRUE</code>:</p><ul><li><p><code>segment</code> is the segment the parameter belongs to.</p></li>
-<li><p><code>dpar</code> is the distributional parameter (<code>"cp"</code>, <code>"mu"</code>, <code>"sigma"</code>,
-<code>"ar"</code>, <code>"ma"</code>, etc.) the parameter belongs to. For AR/MA terms, the
-lag order is encoded in <code>parameter</code>, e.g. <code>ar2_1</code>.</p></li>
+<p>Columns:</p><ul><li><p><code>segment</code> (only with <code>verbose = TRUE</code>) is the segment the parameter belongs to.
+For change points, it is the segment that the change point starts, e.g., 2 for <code>cp_1</code>.</p></li>
+<li><p><code>dpar</code> (only with <code>verbose = TRUE</code>) is the distributional parameter (e.g., <code>"mu"</code>,
+<code>"sigma"</code>, or <code>"ar1"</code>; see <a href="mcp-formula.html">mcp-formula</a>) as accepted by the <code>dpar</code> argument of
+<code>fixef.mcpfit()</code>, <code><a href="execute-mcp-model.html">fitted.mcpfit()</a></code>, etc. It is <code>NA</code> for change points. See also <code><a href="mcp_pars.html">mcp_pars()</a></code>.</p></li>
 <li><p><code>mean</code> is the posterior mean</p></li>
 <li><p><code>sd</code> is the posterior standard deviation.</p></li>
 <li><p><code>lower</code> and <code>upper</code> are the bounds of the central posterior interval
@@ -192,7 +193,8 @@ information, change point and population-level parameters, and diagnostics.</p><
 <li><p><code>ranef(mcpfit)</code>: Group-level deviations (random effects) of <code>mcpfit</code>.
 Change-point deviations are relative to their population change point;
 <code>cp_i_&lt;group&gt;_sd</code> (e.g., <code>cp_1_id_sd</code>) is the SD of their normal distribution before truncation.</p></li>
-<li><p><code>print(mcpfit)</code>: Print the posterior summary of an <code><a href="mcpfit-class.html">mcpfit</a></code> object.</p></li>
+<li><p><code>print(mcpfit)</code>: Print the posterior summary of an <code><a href="mcpfit-class.html">mcpfit</a></code> object,
+or the prior summary with <code>prior = TRUE</code>. Without the requested draws, only the model is shown.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

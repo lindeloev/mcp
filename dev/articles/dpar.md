@@ -11,6 +11,14 @@ standard deviation (`sigma`), negative-binomial overdispersion
 (`shape`) - and auxiliary parameters for time-series autocorrelation
 (`ar` / `ma`) - on their respective link scales.
 
+In `mcp`, a **distributional parameter (`dpar`)** is anything with its
+own segmented linear predictor: `mu`, `sigma`, `shape`, and each AR/MA
+lag (`ar1`, `ar2`, `ma1`, …). Strictly, AR/MA lags are not parameters of
+the response distribution, but they are modeled the same way. This is
+what the `dpar` argument and column refer to throughout `mcp`, e.g.,
+`fitted(fit, dpar = "sigma")`, `plot_dpar(fit, "ar1")`,
+`fixef(fit, dpar = "ar1")`, and `mcp_pars(fit)$dpar`.
+
 Here, we exemplify regression on the standard deviation `sigma`. A
 plateau mean with an increasing standard deviation can be written as
 `y ~ 1 + sigma(1 + x)`. Read more about mcp formulas
@@ -58,7 +66,7 @@ empty = mcp(model, data = df, sample = FALSE, par_x = "x")
 df$y = empty$simulate(
   empty, df, 
   cp_1 = 50, Intercept_1 = 20, 
-  sigma_1 = log(5), sigma_2 = log(20))
+  sigma_Intercept_1 = log(5), sigma_Intercept_2 = log(20))
 
 head(df)
 ```
@@ -91,7 +99,8 @@ plot(fit, q_predict = TRUE)
 
 We can see all parameters are well recovered (compare `sim` to `mean`).
 Like the other parameters, the `sigma`s are named after the segment
-where they were instantiated. There will always be a `sigma_1`.
+where they were instantiated. There will always be a `sigma_Intercept_1`
+because `sigma` is required by the likelihood.
 
 ``` r
 
@@ -106,14 +115,14 @@ summary(fit)
     ##   2: ~ 0 + sigma(1)
     ## 
     ## Change point parameters:
-    ##    parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        49.7 1.64  46.1  52.2 1.00     3277     3827 50.0    OK
+    ##          parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  cp_1              49.7 1.64  46.1  52.2 1.00     3277     3827 50.0    OK
     ## 
     ## Population-level parameters:
-    ##    parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 20.1 0.82  18.5  21.7 1.00     7972     8574 20.0    OK
-    ##  sigma_1      1.8 0.11   1.6   2.0 1.00     4639     4599  1.6    OK
-    ##  sigma_2      2.9 0.10   2.7   3.1 1.00     5458     5230  3.0    OK
+    ##          parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
+    ##  Intercept_1       20.1 0.82  18.5  21.7 1.00     7972     8574 20.0    OK
+    ##  sigma_Intercept_1  1.8 0.11   1.6   2.0 1.00     4639     4599  1.6    OK
+    ##  sigma_Intercept_2  2.9 0.10   2.7   3.1 1.00     5458     5230  3.0    OK
 
 ## Advanced example
 
@@ -125,10 +134,10 @@ flexibility:
 
 model = list(
   # 1. Increasing standard deviation.
-  y ~ 1 + sigma(1 + x),  # Intercept_1, sigma_1, sigma_x_1
+  y ~ 1 + sigma(1 + x),  # Intercept_1, sigma_Intercept_1, sigma_x_1
   
   # 2. Abrupt change in mean and standard deviation.
-  ~ 1 + sigma(1),  # At cp_1: Intercept_2, sigma_2
+  ~ 1 + sigma(1),  # At cp_1: Intercept_2, sigma_Intercept_2
   
   # 3. Joined slope on mean; log-SD changes as a second-order polynomial.
   ~ 0 + x + sigma(0 + x + I(x^2)),  # At cp_2: x_3, sigma_x_3, sigma_xE2_3
@@ -152,9 +161,10 @@ Notice a few things here:
 In general, the log-SD parameters are named `sigma_[normalname]`, where
 “normalname” is the usual parameter names in mcp (see more
 [here](https://lindeloev.github.io/mcp/dev/articles/formulas.md)). For
-example, the log-SD slope on `x` in segment 3 is `sigma_x_3`. However,
-`sigma_Intercept_i` is just too verbose, so log-SD intercepts are simply
-called `sigma_i`, where i is the segment number.
+example, the log-SD intercept in segment 2 is `sigma_Intercept_2` and
+the log-SD slope on `x` in segment 3 is `sigma_x_3`. In models without
+[`sigma()`](https://rdrr.io/r/stats/sigma.html), the residual SD itself
+is simply `sigma_1`.
 
 ### Simulate data
 
@@ -173,8 +183,8 @@ df$y = empty$simulate(
   empty, df,
   cp_1 = 50, cp_2 = 80, cp_3 = 140,
   Intercept_1 = -20, Intercept_2 = 0,
-  sigma_1 = log(1), sigma_x_1 = log(2) / 15,
-  sigma_2 = log(4),
+  sigma_Intercept_1 = log(1), sigma_x_1 = log(2) / 15,
+  sigma_Intercept_2 = log(4),
   sigma_x_3 = 0.03,
   sigma_xE2_3 = 0.00015,
   x_3 = 0.8
@@ -230,21 +240,21 @@ summary(fit)
     ##   4: ~ 0 + same(x)
     ## 
     ## Change point parameters:
-    ##    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  cp_1         4.9e+01 4.4e-01  4.8e+01  5.0e+01 1.00     4143     2544  5.0e+01    OK
-    ##  cp_2         8.1e+01 2.0e+00  7.7e+01  8.4e+01 1.01     2039     3133  8.0e+01    OK
-    ##  cp_3         1.5e+02 1.4e+01  1.3e+02  1.9e+02 1.13       16       13  1.4e+02    OK
+    ##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
+    ##  cp_1               4.9e+01 4.4e-01  4.8e+01  5.0e+01 1.00     4143     2544  5.0e+01    OK
+    ##  cp_2               8.1e+01 2.0e+00  7.7e+01  8.4e+01 1.01     2039     3133  8.0e+01    OK
+    ##  cp_3               1.5e+02 1.4e+01  1.3e+02  1.9e+02 1.13       16       13  1.4e+02    OK
     ## 
     ## Population-level parameters:
-    ##    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  Intercept_1 -2.0e+01 3.5e-01 -2.1e+01 -1.9e+01 1.00     8424     8362 -2.0e+01    OK
-    ##  Intercept_2  4.8e-01 6.9e-01 -8.5e-01  1.8e+00 1.00     4199     5557  0.0e+00    OK
-    ##  x_3          7.8e-01 6.3e-02  6.5e-01  9.0e-01 1.01     1527     4773  8.0e-01    OK
-    ##  sigma_1      1.1e-01 2.4e-01 -3.3e-01  5.9e-01 1.00     4984     5447  0.0e+00    OK
-    ##  sigma_x_1    4.2e-02 8.4e-03  2.6e-02  5.9e-02 1.00     4842     4880  4.6e-02    OK
-    ##  sigma_2      1.3e+00 1.2e-01  1.1e+00  1.6e+00 1.01      319     1718  1.4e+00    OK
-    ##  sigma_x_3    3.7e-02 1.2e-02  1.4e-02  5.9e-02 1.12       19       30  3.0e-02    OK
-    ##  sigma_xE2_3  6.4e-05 2.2e-04 -3.2e-04  5.1e-04 1.14       16       20  1.5e-04    OK
+    ##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
+    ##  Intercept_1       -2.0e+01 3.5e-01 -2.1e+01 -1.9e+01 1.00     8424     8362 -2.0e+01    OK
+    ##  Intercept_2        4.8e-01 6.9e-01 -8.5e-01  1.8e+00 1.00     4199     5557  0.0e+00    OK
+    ##  x_3                7.8e-01 6.3e-02  6.5e-01  9.0e-01 1.01     1527     4773  8.0e-01    OK
+    ##  sigma_Intercept_1  1.1e-01 2.4e-01 -3.3e-01  5.9e-01 1.00     4984     5447  0.0e+00    OK
+    ##  sigma_x_1          4.2e-02 8.4e-03  2.6e-02  5.9e-02 1.00     4842     4880  4.6e-02    OK
+    ##  sigma_Intercept_2  1.3e+00 1.2e-01  1.1e+00  1.6e+00 1.01      319     1718  1.4e+00    OK
+    ##  sigma_x_3          3.7e-02 1.2e-02  1.4e-02  5.9e-02 1.12       19       30  3.0e-02    OK
+    ##  sigma_xE2_3        6.4e-05 2.2e-04 -3.2e-04  5.1e-04 1.14       16       20  1.5e-04    OK
 
 ``` r
 
@@ -305,12 +315,12 @@ fit$jags_code
     ##   Intercept_2 ~ dnorm(24.911544437719712, 1/(117.52798194134313)^2)   # Mean intercept (rstanarm default)
     ##   x_3_end_ ~ dnorm(Intercept_2, 1/(2.0305742544284522*(cp_3-cp_2))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
     ##   x_3 = (x_3_end_ - (Intercept_2)) / (cp_3 - cp_2)
-    ##   sigma_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept; on the level at min(x); sampled as the value at the expected midpoint of segment 1
-    ##   sigma_1 = sigma_1_mid_ - (sigma_x_1 * (25.875))
+    ##   sigma_Intercept_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept; on the value at min(x); sampled as the value at the expected midpoint of segment 1
+    ##   sigma_Intercept_1 = sigma_Intercept_1_mid_ - (sigma_x_1 * (25.875))
     ##   sigma_x_1 ~ dt(0, 1/(0.043193421279068007)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD
-    ##   sigma_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
-    ##   sigma_x_3_end_ ~ dt(sigma_2, 1/(0.043193421279068007*(cp_3-cp_2))^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the value at the segment end
-    ##   sigma_x_3 = (sigma_x_3_end_ - (sigma_2)) / (cp_3 - cp_2)
+    ##   sigma_Intercept_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
+    ##   sigma_x_3_end_ ~ dt(sigma_Intercept_2, 1/(0.043193421279068007*(cp_3-cp_2))^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the value at the segment end
+    ##   sigma_x_3 = (sigma_x_3_end_ - (sigma_Intercept_2)) / (cp_3 - cp_2)
     ##   sigma_xE2_3_rise_ ~ dt(0, 1/(0.0002100945749551876*(cp_3-cp_2)^2)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the rise over the segment
     ##   sigma_xE2_3 = sigma_xE2_3_rise_ / (cp_3 - cp_2)^2
     ## 
@@ -331,9 +341,9 @@ fit$jags_code
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =
-    ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(5)], c(sigma_1)) * 1 + 
+    ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(5)], c(sigma_Intercept_1)) * 1 + 
     ##       (x[i_] >= cp_0) * (x[i_] < cp_1) * inprod(rhs_matrix_[i_, c(6)], c(sigma_x_1)) * x_local_1_[i_] + 
-    ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(7)], c(sigma_2)) * 1 + 
+    ##       (x[i_] >= cp_1) * inprod(rhs_matrix_[i_, c(7)], c(sigma_Intercept_2)) * 1 + 
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(8)], c(sigma_x_3)) * x_local_3_[i_] + 
     ##       (x[i_] >= cp_2) * inprod(rhs_matrix_[i_, c(9)], c(sigma_xE2_3)) * x_local_3_[i_]^2
     ## 
@@ -377,7 +387,7 @@ df$y = empty$simulate(
   empty, df, 
   cp_1 = 130, cp_1_id_sd = 40,
   Intercept_1 = 20,
-  sigma_1 = log(10), sigma_2 = log(25))
+  sigma_Intercept_1 = log(10), sigma_Intercept_2 = log(25))
 ```
 
 Fit it:
@@ -388,7 +398,7 @@ fit = mcp(model, data = df, par_x = "x")
 ```
 
     ## Warning: Some parameters may not have converged well:
-    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1_id[3] and cp_1_id_sd
+    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1_id_sd and cp_1_id[3]
     ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 Plot it:
@@ -456,9 +466,8 @@ response families:
 - **[`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`**: Autoregressive
   and moving-average serial dependence terms for time-series models
   ([read more
-  here](https://lindeloev.github.io/mcp/dev/articles/arma.md)). They are
-  not really distributional parameters, but they are similar in terms of
-  the `mcp` model syntax.
+  here](https://lindeloev.github.io/mcp/dev/articles/arma.md)). Each lag
+  is a dpar named `ar1`, `ar2`, `ma1`, etc. (see the definition above).
 
 #### Inspecting and working with dpars
 

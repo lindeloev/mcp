@@ -39,8 +39,10 @@ The default priors follow three principles:
     - For x-terms, \operatorname{sd}(x) is computed over all data, so
       slope priors do not depend on the number or location of change
       points. Powers such as `I(x^2)` use \operatorname{sd}((x -
-      \min(x))^2), and interactions such as `x:group` use
-      \operatorname{sd}(x).
+      \min(x))^2). Interactions such as `x:z` multiply by the SD of the
+      term without x, \operatorname{sd}(x) \cdot \operatorname{sd}(z),
+      while 0/1 indicators such as the dummies in `x:group` contribute a
+      factor of 1 (see [deviations](#deviations)).
 
     - The autoscaling does not account for segment length. If you expect
       steep slopes or strong curvature within short segments, consider
@@ -52,7 +54,7 @@ The default priors follow three principles:
     logit links, and \text{Normal}(0, 1) for probit links (see
     [deviations](#deviations) for these and for log links). `rstanarm`
     and `brms` place the intercept prior on centered predictors.
-    Similarly, the default prior on `Intercept_1` applies to the level
+    Similarly, the default prior on `Intercept_1` applies to the value
     at the start of segment 1, \min(x), though other predictors are not
     centered (see [deviations](#deviations)). `Intercept_1` is still
     reported at x = 0, as in [`lm()`](https://rdrr.io/r/stats/lm.html),
@@ -60,11 +62,14 @@ The default priors follow three principles:
     [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
     show its prior given the slope, e.g.,
     `normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))`. This
-    matters when x is far from zero, e.g., calendar years. Later
-    intercepts are already at their change point. User-specified priors
-    on `Intercept_1` apply at x = 0 as written. For a factor without an
-    intercept, e.g., `y ~ 0 + state`, each factor level has its own
-    intercept, so each gets this prior (see [deviations](#deviations)).
+    matters when x is far from zero, e.g., calendar years. Likewise,
+    factor levels and contrasts with their own x-terms apply at \min(x),
+    e.g., `stateB_1` in `y ~ 1 + state * x` is the difference between
+    states at \min(x). Later intercepts are already at their change
+    point. User-specified priors on `Intercept_1` apply directly at x =
+    0. For a factor without an intercept, e.g., `y ~ 0 + state`, each
+    factor level has its own intercept, so each gets this prior (see
+    [deviations](#deviations)).
 
 3.  **Scale parameters follow
     [`brms`](https://paulbuerkner.com/brms/reference/set_prior.html):**
@@ -95,9 +100,11 @@ General quantities used in the table below:
 
 \* For [`poisson()`](https://rdrr.io/r/stats/family.html), these are
 `rstanarm`’s Gaussian defaults (see [deviations](#deviations)), and the
-intercept is truncated `T(0, )`. † Group SDs for slopes are divided by
-\operatorname{sd}(\text{column}). A blank precedent means that the
-default is `mcp`-specific; see [deviations](#deviations).
+intercept is truncated `T(0, )`, or `T(-min(offset), )` with an
+[`offset()`](https://rdrr.io/r/stats/offset.html). † Group SDs for
+slopes are divided by \operatorname{sd}(\text{column}). A blank
+precedent means that the default is `mcp`-specific; see
+[deviations](#deviations).
 
 ## Default priors on group-level effects
 
@@ -179,8 +186,9 @@ points, so W is an approximation.
   intercept is centered on the data, as in `brms`, so that it adapts to
   the magnitude of the counts. But it has normal tails rather than
   `brms`’s Student-t tails, because exponentiated Student-t tails imply
-  infinite expected counts (\mathbb{E}\[\exp(\eta)\] = \infty). For the
-  same reason, group-level SDs are half-normal. With an
+  infinite expected counts (\mathbb{E}\[\exp(\eta)\] = \infty).
+  Group-level SDs are half-normal for a similar reason: their lighter
+  tails make extreme group multipliers far less likely. With an
   [`offset()`](https://rdrr.io/r/stats/offset.html), the intercept is a
   log-rate, so `mcp` computes its location and scale from the observed
   log-rates, \log(y) - \text{offset}. `brms` subtracts `mean(offset)`
@@ -193,6 +201,14 @@ points, so W is an approximation.
   intercept, which ignore the magnitude of the counts. `mcp` uses the
   Gaussian defaults instead, which are on the response scale.
 
+- **Offsets with identity links:** `rstanarm` centers the intercept on
+  `mean(y)`, ignoring [`offset()`](https://rdrr.io/r/stats/offset.html).
+  But with an [`offset()`](https://rdrr.io/r/stats/offset.html), the
+  intercept describes y - \text{offset}, so `mcp` computes its location
+  and scale from y - \text{offset}, just as for log links. `brms`
+  subtracts `mean(offset)` from the location but computes the scale from
+  y.
+
 - **Intercept placement:** `rstanarm` and `brms` place the intercept
   prior on centered predictors. `mcp` places the default prior on
   `Intercept_1` at \min(x) for x-terms but does not center other
@@ -200,6 +216,14 @@ points, so W is an approximation.
   predictor is far from zero, e.g., age in years, center it before
   fitting or set a prior on `Intercept_1`. Read more about the [the mcp
   model](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
+
+- **x-term interactions:** `rstanarm` scales `x:z` by the SD of the
+  model-matrix column, \operatorname{sd}(x \cdot z), which depends on
+  the location of x and z. For example, it is around 1000 for `x:group`
+  when x is calendar years. Since x-terms are measured from the change
+  point, the location of x is not meaningful here. `mcp` instead uses
+  \operatorname{sd}(x) \cdot \operatorname{sd}(z), where 0/1 indicators
+  contribute a factor of 1, so the prior applies per SD of x and z.
 
 - **Proper coefficient priors:** `brms` uses improper flat priors on
   coefficients, which JAGS does not support. `mcp` uses `rstanarm`’s

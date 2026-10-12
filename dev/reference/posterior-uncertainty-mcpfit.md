@@ -30,7 +30,8 @@ confint(object, parm, level = 0.95, prior = FALSE, ...)
 
 - dpar:
 
-  Distributional parameter(s) to select when `pars = NULL`.
+  Distributional parameter(s) to select when `pars = NULL`, e.g.,
+  `"mu"`, `"sigma"`, or `"ar1"`.
 
 - prior:
 

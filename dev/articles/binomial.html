@@ -141,15 +141,15 @@ we need to simulate data.</p>
 <p>Now we can simulate. First, let us see the model parameters.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">empty</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
-<span><span class="co">##   parameter part  scope role  segment dpar  order group_col population_parameter</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1      cp    popu… chan…       2 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2      cp    popu… chan…       3 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercep… pred… popu… fixe…       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2    pred… popu… fixe…       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercep… pred… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3    pred… popu… fixe…       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 8</span></span></span>
+<span><span class="co">##   parameter   part      scope role  segment dpar  group_col population_parameter</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1        cp        popu… chan…       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2        cp        popu… chan…       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1 predictor popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2      predictor popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3 predictor popu… coef…       3 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3      predictor popu… coef…       3 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <ul>
 <li>It takes two intercepts (<code>Intercept_*</code>), for segments 1
 and 3.</li>
@@ -235,6 +235,7 @@ distribution of the parameters. You can change the number of draws
 logit scale, where the linear trends are modeled:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, scale <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Not showing 17 data point(s) with infinite values on the linear scale.</span></span></code></pre>
 <p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 <p>These plots work with <a href="../articles/group_effects.html">group-level effects</a> as
 well.</p>
@@ -245,7 +246,7 @@ well.</p>
 <p>Already in the default <code>plot</code> as used above, it will be
 obvious if there was poor convergence. A more direct assessment is to
 look at the posterior distributions and trace plots:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, npars <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="576"></p>
 <p>Convergence is perfect here as evidenced by the overlapping trace
@@ -272,7 +273,7 @@ they are “default” as in “what happens if you do nothing else”. All
 priors are stored in <code>fit$prior</code> (also
 <code>empty$prior</code>). We did not specify <code>prior</code> above,
 so it ran with default priors:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span>  <span class="co"># Raw view</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># Richer view. Try adding verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">##             [,1]                            </span></span>
@@ -285,8 +286,8 @@ so it ran with default priors:</p>
 <span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
 <span><span class="co">##   parameter   segment dpar  prior                           bounds           </span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)            [min(year), cp_2]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)            [cp_1, max(year)]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)            [min(year), cp_2]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)            [cp_1, max(year)]</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    normal(mean = 0, sd = 0.043122) none             </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none             </span></span>
@@ -300,7 +301,7 @@ exactly uniform on the probability scale. The figure compares normal
 priors with SD 1.5 (black, the <code>mcp</code> default) and 2.5 (blue,
 the <code>rstanarm</code> default), together with their correspondence
 to probabilities.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inverse_logit</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Start the plot</span></span>
@@ -338,7 +339,7 @@ as <code>I(x^2)</code> use <code>sd((x - min(x))^2)</code>.</p>
 <h2 id="jags-code">JAGS code<a class="anchor" aria-label="anchor" href="#jags-code"></a>
 </h2>
 <p>Here is the JAGS code for the model used in this article.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">jags_code</span></span></code></pre></div>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>

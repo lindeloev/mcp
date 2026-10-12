@@ -45,6 +45,21 @@ for priors.
 See [the mcp website](https://lindeloev.github.io/mcp/) for worked
 examples.
 
+## Options
+
+- `mcp_quiet`: Logical. The default of `mcp(..., quiet)`.
+  `options(mcp_quiet = TRUE)` suppresses routine JAGS output and mcp
+  sampling-status messages for the session.
+
+- `mcp_reparam`: Logical. `TRUE` (default) lets
+  [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) sample
+  some default priors on scales that mix faster. This changes only
+  `fit$jags_code` and sampling efficiency, not the model, the priors, or
+  the posterior. `options(mcp_reparam = FALSE)` writes the plain model,
+  which is mostly useful for seeing how `mcp` works. Ignored when
+  `jags_code` is supplied. Read more in [From formulas to sampler
+  code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
+
 ## References
 
 - Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple

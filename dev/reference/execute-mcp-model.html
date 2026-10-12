@@ -217,7 +217,7 @@ predictions. Like <code>re_formula = NA</code> in <code>{brms}</code>.</p></li>
 <li><p><code>"cp"</code> or <code>"predictor"</code>: All group-level deviations belonging to that part of
 the model.</p></li>
 <li><p>Character vector of group-level parameter names, e.g., <code>c("cp_1_id", "x_2_id")</code>.
-<code>*</code> is a wildcard, e.g., <code>"state*_1_id"</code> selects all levels of a factor
+<a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="figures/lifecycle-experimental.svg" alt="[Experimental]"></a> <code>*</code> is a wildcard, e.g., <code>"state*_1_id"</code> selects all levels of a factor
 and <code>"*_id"</code> selects all effects by <code>id</code>. See names using <code>ranef(fit)</code>.
 Can be combined, e.g., <code>c("cp", "sigma_*")</code>.</p></li>
 </ul></dd>
@@ -269,7 +269,7 @@ with <code><a href="pp_check.html">pp_check()</a></code> generate fresh historie
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
-<dd><p>What distributional parameter to evaluate. This is only relevant when <code>type == "fitted"</code>. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected response from the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
+<dd><p>What distributional parameter to evaluate. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected response from the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
 <li><p><code>"mu"</code>: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.</p></li>
 <li><p><code>"sigma"</code>: The standard deviation of the residuals.</p></li>
 <li><p><code>"ar1"</code>, <code>"ar2"</code>, <code>"ma1"</code>, <code>"ma2"</code>, etc. depending on which AR or MA
@@ -280,8 +280,7 @@ coefficient you want to evaluate.</p></li>
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
 <dd><p>One of</p><ul><li><p><code>"response"</code>: return on the response scale, i.e., after applying the inverse link function.</p></li>
 <li><p><code>"linear"</code>: return on the linear-predictor (link) scale, where the linear
-trends are modeled.
-A linear scale is only applicable when <code>type == "fitted"</code> and <code>dpar</code> is not <code>NULL</code>.</p></li>
+trends are modeled.</p></li>
 </ul></dd>
 
 </dl></div>
@@ -291,13 +290,14 @@ A linear scale is only applicable when <code>type == "fitted"</code> and <code>d
 <ul><li><p>If <code>summary = TRUE</code>: A tibble with the columns of <code>newdata</code> (or
 <code>fit$data</code> if <code>newdata</code> is <code>NULL</code>), followed by summaries for each row:</p><ul><li><p><code>.mean</code>: The mean of the draws.</p></li>
 <li><p><code>.sd</code>: The SD of the draws. With posterior draws (the default), this is the
-posterior predictive SD for <code>type = "predict"</code> and the posterior SD of the
+posterior predictive SD for <code>predict()</code> and the posterior SD of the
 evaluated quantity otherwise.</p></li>
 <li><p><code>.lower</code> and <code>.upper</code>: The bounds of the central interval given in <code>width</code>.</p></li>
 </ul><p>With <code>prior = TRUE</code>, these are the analogous prior summaries. mcp's own
 columns are dot-prefixed to avoid collisions with data columns.</p></li>
 <li><p>If <code>summary = FALSE</code> and <code>draws_format = "tidy"</code>: A <code>tidybayes</code> <code>tibble</code> with all the posterior
-draws (<code>Nd</code>) evaluated at each row in <code>newdata</code> (<code>Nn</code>), i.e., with <code>Nd x Nn</code> rows. If there are
+draws (<code>Nd</code>) evaluated at each row in <code>newdata</code> (<code>Nn</code>), i.e., with <code>Nd x Nn</code> rows, ordered by
+<code>.data_row</code> and then <code>.draw</code>. If there are
 group-level effects, the returned data is expanded with the relevant levels for each row.</p>
 <p>The return columns are:</p><ul><li><p>Predictors from <code>newdata</code>, plus its response column when supplied.</p></li>
 <li><p>Draw descriptors: ".chain", ".iteration", ".draw" (see the <code>posterior</code> and <code>tidybayes</code> packages), and <code>.data_row</code>, the row number in the evaluated <code>newdata</code>.</p></li>
@@ -306,7 +306,7 @@ group-level effects, the returned data is expanded with the relevant levels for 
 the <code>.dpar</code> for other dpars (e.g., <code>.mu</code> or <code>.sigma</code>), <code>.prediction</code>, <code>.residual</code>, or <code>.loglik</code>.</p></li>
 </ul></li>
 <li><p>If <code>summary = FALSE</code> and <code>draws_format = "matrix"</code>: An <code>N_draws</code> X <code>nrows(newdata)</code> matrix with fitted/predicted
-values (depending on <code>type</code>). This format is used by <code>brms</code> and it's useful as <code>yrep</code> in
+values (depending on the function). This format is used by <code>brms</code> and it's useful as <code>yrep</code> in
 <code>bayesplot::ppc_*</code> functions.</p></li>
 </ul></div>
     <div class="section level2">
@@ -411,16 +411,16 @@ retained JAGS imputations supply the history used for later fitted and predicted
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.2  22.5  -<span style="color: #BB0000;">30.0</span>   58.3</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Draws. Useful for plotting distributions.</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 14</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: sigma_1 &lt;dbl&gt;, response &lt;dbl&gt;, time &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   .data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   response  time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     12.2  76.3         1      1          1     1  28.6  71.6        8.78</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     12.2  76.3         1      1          2     2  35.2  72.0        9.62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     12.2  76.3         1      1          3     3  30.7  72.6        9.86</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>     12.2  76.3         1      1          4     4  29.4  72.0        9.64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>     12.2  76.3         1      1          5     5  30.5  72.2       10.2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>     12.2  76.3         1      1          6     6  34.8  70.4       10.5 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: time_2 &lt;dbl&gt;, Intercept_3 &lt;dbl&gt;, time_3 &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   sigma_1 &lt;dbl&gt;, .epred &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">fitted</span><span class="op">(</span><span class="va">demo_fit</span>, dpar <span class="op">=</span> <span class="st">"sigma"</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Another model parameter</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 6</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   response  time .mean   .sd .lower .upper</span>
@@ -473,15 +473,15 @@ retained JAGS imputations supply the history used for later fitted and predicted
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    <span style="color: #BB0000;">NA</span>    30 B      39.8 0.759   38.3   41.3</span>
 <span class="r-in"><span><span class="fu">fitted</span><span class="op">(</span><span class="va">missing_fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Same, but draws</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 14</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1     y</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>      1          1     1  57.9        11.1 0.192     22.0 -<span style="color: #BB0000;">0.360</span>    4.13    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      1          1     1  57.9        11.1 0.192     22.0 -<span style="color: #BB0000;">0.360</span>    4.13    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>      1          1     1  57.9        11.1 0.192     22.0 -<span style="color: #BB0000;">0.360</span>    4.13    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>      1          1     1  57.9        11.1 0.192     22.0 -<span style="color: #BB0000;">0.360</span>    4.13    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>      1          1     1  57.9        11.1 0.192     22.0 -<span style="color: #BB0000;">0.360</span>    4.13    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>      1          1     1  57.9        11.1 0.192     22.0 -<span style="color: #BB0000;">0.360</span>    4.13    <span style="color: #BB0000;">NA</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: x &lt;int&gt;, state &lt;fct&gt;, .data_row &lt;int&gt;, .epred &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       y     x state .data_row .chain .iteration .draw  cp_1 Intercept_1   x_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    <span style="color: #BB0000;">NA</span>     8 B             8      1          1     1  57.9        11.1 0.192</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>    <span style="color: #BB0000;">NA</span>     8 B             8      1          2     2  59.6        10.7 0.203</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>    <span style="color: #BB0000;">NA</span>     8 B             8      1          3     3  55.9        12.4 0.175</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>    <span style="color: #BB0000;">NA</span>     8 B             8      1          4     4  57.0        10.9 0.209</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>    <span style="color: #BB0000;">NA</span>     8 B             8      1          5     5  59.4        11.7 0.176</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    <span style="color: #BB0000;">NA</span>     8 B             8      1          6     6  56.9        12.9 0.138</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: stateB_1 &lt;dbl&gt;, x_2 &lt;dbl&gt;, sigma_1 &lt;dbl&gt;, .epred &lt;dbl&gt;</span></span>
 <span class="r-in"><span><span class="fu">predict</span><span class="op">(</span><span class="va">missing_fit</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># Posterior predictive for missing y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       y     x state .mean   .sd .lower .upper</span>

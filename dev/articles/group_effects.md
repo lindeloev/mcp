@@ -345,9 +345,9 @@ prior_summary(fit)
     ## # A tibble: 6 × 5
     ##   parameter   segment dpar  prior                                        bounds                        
     ##   <chr>         <int> <chr> <chr>                                        <chr>                         
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                         [min(x), max(x)]              
-    ## 2 cp_1_id_sd        2 cp    normal(mean = 0, sd = 24.716)                [0, Inf]                      
-    ## 3 cp_1_id           2 cp    normal(mean = 0, sd = cp_1_id_sd)            [min(x) - cp_1, max(x) - cp_1]
+    ## 1 cp_1              2 NA    dirichlet(alpha = 1)                         [min(x), max(x)]              
+    ## 2 cp_1_id_sd        2 NA    normal(mean = 0, sd = 24.716)                [0, Inf]                      
+    ## 3 cp_1_id           2 NA    normal(mean = 0, sd = cp_1_id_sd)            [min(x) - cp_1, max(x) - cp_1]
     ## 4 Intercept_1       1 mu    normal(mean = 25.186, sd = 18.621)           none                          
     ## 5 x_2               2 mu    normal(mean = 0, sd = 0.64588)               none                          
     ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0, Inf]
@@ -396,13 +396,13 @@ fit$jags_code
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
     ##     # par_x local to each segment
-    ##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id[i_]]))
-    ##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id[i_]])
+    ##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id_index_[i_]]))
+    ##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id_index_[i_]])
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##       (x[i_] >= (cp_1_id_location[id[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
+    ##       (x[i_] >= (cp_1_id_location[id_index_[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =

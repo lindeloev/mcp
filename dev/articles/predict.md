@@ -322,6 +322,8 @@ Now let’s fit it:
 fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
 ```
 
+    ## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.
+
 ### Step 3: predict!
 
 We can now compute the 80% posterior predictive interval at

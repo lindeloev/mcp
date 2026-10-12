@@ -42,15 +42,15 @@ Now we can simulate. First, let us see the model parameters.
 mcp_pars(empty)
 ```
 
-    ## # A tibble: 6 × 9
-    ##   parameter part  scope role  segment dpar  order group_col population_parameter
-    ##   <chr>     <chr> <chr> <chr>   <int> <chr> <int> <chr>     <chr>               
-    ## 1 cp_1      cp    popu… chan…       2 cp       NA NA        NA                  
-    ## 2 cp_2      cp    popu… chan…       3 cp       NA NA        NA                  
-    ## 3 Intercep… pred… popu… fixe…       1 mu       NA NA        NA                  
-    ## 4 year_2    pred… popu… fixe…       2 mu       NA NA        NA                  
-    ## 5 Intercep… pred… popu… fixe…       3 mu       NA NA        NA                  
-    ## 6 year_3    pred… popu… fixe…       3 mu       NA NA        NA
+    ## # A tibble: 6 × 8
+    ##   parameter   part      scope role  segment dpar  group_col population_parameter
+    ##   <chr>       <chr>     <chr> <chr>   <int> <chr> <chr>     <chr>               
+    ## 1 cp_1        cp        popu… chan…       2 NA    NA        NA                  
+    ## 2 cp_2        cp        popu… chan…       3 NA    NA        NA                  
+    ## 3 Intercept_1 predictor popu… coef…       1 mu    NA        NA                  
+    ## 4 year_2      predictor popu… coef…       2 mu    NA        NA                  
+    ## 5 Intercept_3 predictor popu… coef…       3 mu    NA        NA                  
+    ## 6 year_3      predictor popu… coef…       3 mu    NA        NA
 
 - It takes two intercepts (`Intercept_*`), for segments 1 and 3.
 - It takes two slopes (`year_*`), for segment 2 and 3.
@@ -162,6 +162,8 @@ logit scale, where the linear trends are modeled:
 plot_dpar(fit, scale = "linear")
 ```
 
+    ## Not showing 17 data point(s) with infinite values on the linear scale.
+
 ![](binomial_files/figure-html/unnamed-chunk-10-1.png)
 
 These plots work with [group-level
@@ -225,8 +227,8 @@ prior_summary(fit)  # Richer view. Try adding verbose = TRUE
     ## # A tibble: 6 × 5
     ##   parameter   segment dpar  prior                           bounds           
     ##   <chr>         <int> <chr> <chr>                           <chr>            
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)            [min(year), cp_2]
-    ## 2 cp_2              3 cp    dirichlet(alpha = 1)            [cp_1, max(year)]
+    ## 1 cp_1              2 NA    dirichlet(alpha = 1)            [min(year), cp_2]
+    ## 2 cp_2              3 NA    dirichlet(alpha = 1)            [cp_1, max(year)]
     ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none             
     ## 4 year_2            2 mu    normal(mean = 0, sd = 0.043122) none             
     ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none             

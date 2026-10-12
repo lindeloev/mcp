@@ -55,7 +55,9 @@ starts at a change point that can be modeled using `cp()`, e.g.,
   group-level effects ([read
   more](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)).
 - `+ sigma(1 + x)` or `shape(0 + state)`: Distributional parameters on
-  the link scale ([read
+  the link scale. Together with each AR/MA lag (`ar1`, `ma1`, …), these
+  are the `dpar`s in `mcp`, since each has its own segmented linear
+  predictor ([read
   more](https://lindeloev.github.io/mcp/dev/articles/dpar.md)).
 - `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average
   time-series residuals on the link scale; include them in every segment
@@ -155,10 +157,11 @@ include: in `list(y ~ 1 + x:z, ~ 0)`, the slope in segment 1 differs by
 ### Examples: Included terms and parameter names
 
 New coefficients are named after their segment: `x_1`, `x_2`, etc.
-Change points are `cp_1`, `cp_2`, etc.; `cp_1` separates segments 1 and
-2. In these examples, the change-point variable is `x`; set
-`mcp(..., par_x = "x")` if mcp does not automatically select the correct
-change-point variable.
+Interactions join their parts with a dot, e.g., `x:stateB` gives
+`x.stateB_1`. Change points are `cp_1`, `cp_2`, etc.; `cp_1` separates
+segments 1 and 2. In these examples, the change-point variable is `x`;
+set `mcp(..., par_x = "x")` if mcp does not automatically select the
+correct change-point variable.
 
 ``` r
 
@@ -172,7 +175,7 @@ model = list(
 
 # 2. Factors, other variables, and interactions
 model = list(
-  y ~ 1 + x:state + z,  # Intercept_1, by-state slopes (xstateA_1, ...), z_1
+  y ~ 1 + x:state + z,  # Intercept_1, by-state slopes (x.stateA_1, ...), z_1
     ~ 1 + x + state,    # At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included
     ~ 0 + x             # At cp_2: Joined slope (x_3); state not included
 )
@@ -193,9 +196,9 @@ model = list(
 
 # 5. Distributional parameters and AR/MA
 model = list(
-  y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_1, sigma_x_1); AR(1) (ar1_1)
+  y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_Intercept_1, sigma_x_1); AR(1) (ar1_1)
     ~ 0 + x + ar(1, 1 + x),  # At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)
-    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_3; AR not included
+    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_Intercept_3; AR not included
     ~ 0 + ma(2)              # At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)
 )
 ```
@@ -213,8 +216,8 @@ model = list(
     ~ 1 + same(x + z),           # Reuse x_2 and z_1
     ~ 0 + same(x, as = 1) + same(state, as = 2), # Reuse x_1 and segment 2 factor coding/coefficients
     ~ 0 + same((1|id), as = 1),  # Reuse segment 1 group deviations and SD
-    ~ 1 + sigma(0 + x),          # New log-SD slope sigma_x_6, joined to initial sigma_1
-    ~ 0 + sigma(1 + same(x))     # New log-SD intercept sigma_7; reuse sigma_x_6
+    ~ 1 + sigma(0 + x),          # New log-SD slope sigma_x_6, joined to initial sigma_Intercept_1
+    ~ 0 + sigma(1 + same(x))     # New log-SD intercept sigma_Intercept_7; reuse sigma_x_6
 )
 ```
 
@@ -244,24 +247,23 @@ fit = mcp(model, data = mcp_example_data("multiple"), par_x = "x", sample = FALS
 mcp_pars(fit)
 ```
 
-    ## # A tibble: 14 × 9
-    ##    parameter   part      scope      role         segment dpar  order group_col
-    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <int> <chr>    
-    ##  1 cp_1        cp        population change_point       2 cp       NA NA       
-    ##  2 cp_2        cp        population change_point       3 cp       NA NA       
-    ##  3 Intercept_1 predictor population fixed_effect       1 mu       NA NA       
-    ##  4 z_1         predictor population fixed_effect       1 mu       NA NA       
-    ##  5 xstateA_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  6 xstateB_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  7 xstateC_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  8 xstateD_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  9 Intercept_2 predictor population fixed_effect       2 mu       NA NA       
-    ## 10 x_2         predictor population fixed_effect       2 mu       NA NA       
-    ## 11 stateB_2    predictor population fixed_effect       2 mu       NA NA       
-    ## 12 stateC_2    predictor population fixed_effect       2 mu       NA NA       
-    ## 13 stateD_2    predictor population fixed_effect       2 mu       NA NA       
-    ## 14 sigma_1     predictor population dpar_effect        1 sigma    NA NA       
-    ## # ℹ 1 more variable: population_parameter <chr>
+    ## # A tibble: 14 × 8
+    ##    parameter   part     scope role  segment dpar  group_col population_parameter
+    ##    <chr>       <chr>    <chr> <chr>   <int> <chr> <chr>     <chr>               
+    ##  1 cp_1        cp       popu… chan…       2 NA    NA        NA                  
+    ##  2 cp_2        cp       popu… chan…       3 NA    NA        NA                  
+    ##  3 Intercept_1 predict… popu… coef…       1 mu    NA        NA                  
+    ##  4 z_1         predict… popu… coef…       1 mu    NA        NA                  
+    ##  5 x.stateA_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  6 x.stateB_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  7 x.stateC_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  8 x.stateD_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  9 Intercept_2 predict… popu… coef…       2 mu    NA        NA                  
+    ## 10 x_2         predict… popu… coef…       2 mu    NA        NA                  
+    ## 11 stateB_2    predict… popu… coef…       2 mu    NA        NA                  
+    ## 12 stateC_2    predict… popu… coef…       2 mu    NA        NA                  
+    ## 13 stateD_2    predict… popu… coef…       2 mu    NA        NA                  
+    ## 14 sigma_1     predict… popu… coef…       1 sigma NA        NA
 
 Thanks to `same()`, there is no `z_2` or `x_3`.
 
@@ -289,9 +291,10 @@ list(
 )
 ```
 
-Offsets have fixed coefficients: include `offset(log(exposure))`
-wherever it applies. Read more about offsets in [Poisson and Negative
-Binomial
+Offsets have fixed coefficients: include `offset(log(exposure))` in
+every segment (or in every
+[`ar()`](https://rdrr.io/r/stats/ar.html)/`ma()` term). Read more about
+offsets in [Poisson and Negative Binomial
 models](https://lindeloev.github.io/mcp/dev/articles/poisson.md).
 
 ## Multiple regression and categorical predictors
@@ -315,27 +318,26 @@ fit = mcp(model, data = ex$data, par_x = "x", sample = FALSE)
 mcp_pars(fit)
 ```
 
-    ## # A tibble: 17 × 9
-    ##    parameter   part      scope      role         segment dpar  order group_col
-    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <int> <chr>    
-    ##  1 cp_1        cp        population change_point       2 cp       NA NA       
-    ##  2 cp_2        cp        population change_point       3 cp       NA NA       
-    ##  3 cp_3        cp        population change_point       4 cp       NA NA       
-    ##  4 Intercept_1 predictor population fixed_effect       1 mu       NA NA       
-    ##  5 z_1         predictor population fixed_effect       1 mu       NA NA       
-    ##  6 xstateA_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  7 xstateB_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  8 xstateC_1   predictor population fixed_effect       1 mu       NA NA       
-    ##  9 xstateD_1   predictor population fixed_effect       1 mu       NA NA       
-    ## 10 Intercept_2 predictor population fixed_effect       2 mu       NA NA       
-    ## 11 x_2         predictor population fixed_effect       2 mu       NA NA       
-    ## 12 stateB_2    predictor population fixed_effect       2 mu       NA NA       
-    ## 13 stateC_2    predictor population fixed_effect       2 mu       NA NA       
-    ## 14 stateD_2    predictor population fixed_effect       2 mu       NA NA       
-    ## 15 xE2_3       predictor population fixed_effect       3 mu       NA NA       
-    ## 16 Intercept_4 predictor population fixed_effect       4 mu       NA NA       
-    ## 17 sigma_1     predictor population dpar_effect        1 sigma    NA NA       
-    ## # ℹ 1 more variable: population_parameter <chr>
+    ## # A tibble: 17 × 8
+    ##    parameter   part     scope role  segment dpar  group_col population_parameter
+    ##    <chr>       <chr>    <chr> <chr>   <int> <chr> <chr>     <chr>               
+    ##  1 cp_1        cp       popu… chan…       2 NA    NA        NA                  
+    ##  2 cp_2        cp       popu… chan…       3 NA    NA        NA                  
+    ##  3 cp_3        cp       popu… chan…       4 NA    NA        NA                  
+    ##  4 Intercept_1 predict… popu… coef…       1 mu    NA        NA                  
+    ##  5 z_1         predict… popu… coef…       1 mu    NA        NA                  
+    ##  6 x.stateA_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  7 x.stateB_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  8 x.stateC_1  predict… popu… coef…       1 mu    NA        NA                  
+    ##  9 x.stateD_1  predict… popu… coef…       1 mu    NA        NA                  
+    ## 10 Intercept_2 predict… popu… coef…       2 mu    NA        NA                  
+    ## 11 x_2         predict… popu… coef…       2 mu    NA        NA                  
+    ## 12 stateB_2    predict… popu… coef…       2 mu    NA        NA                  
+    ## 13 stateC_2    predict… popu… coef…       2 mu    NA        NA                  
+    ## 14 stateD_2    predict… popu… coef…       2 mu    NA        NA                  
+    ## 15 xE2_3       predict… popu… coef…       3 mu    NA        NA                  
+    ## 16 Intercept_4 predict… popu… coef…       4 mu    NA        NA                  
+    ## 17 sigma_1     predict… popu… coef…       1 sigma NA        NA
 
 Key features of multiple regression models in `mcp`:
 
@@ -345,11 +347,12 @@ Key features of multiple regression models in `mcp`:
   locations that deviate per group, use group-level effects like
   `cp((1|group))`; see [group-level
   effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)).
-- **Parameter names across segments**: In segment 1, `xstateA_1` through
-  `xstateD_1` represent separate slopes for each level of `state`. In
-  segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept
-  offsets relative to the reference level `stateA`. A variable such as
-  `z` must be included in each segment where it applies.
+- **Parameter names across segments**: In segment 1, `x.stateA_1`
+  through `x.stateD_1` represent separate slopes for each level of
+  `state`. In segment 2, `stateB_2`, `stateC_2`, and `stateD_2`
+  represent intercept offsets relative to the reference level `stateA`.
+  A variable such as `z` must be included in each segment where it
+  applies.
 - **Plotting and prediction**: Visualize by state using
   `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By
   default, other numeric variables (like `z`) are held at their mean
@@ -405,13 +408,13 @@ head(draws)
 ```
 
     ## # A draws_df: 6 iterations, 1 chains, and 8 variables
-    ##   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3 diff_time
-    ## 1         8.8          17   29   72     3.7   0.51  -0.37     -0.88
-    ## 2         9.6          13   35   72     4.0   0.56  -0.13     -0.69
-    ## 3         9.9          16   31   73     4.2   0.54  -0.28     -0.82
-    ## 4         9.6          14   29   72     3.8   0.47  -0.18     -0.65
-    ## 5        10.2          14   30   72     3.8   0.50  -0.21     -0.71
-    ## 6        10.5          14   35   70     4.3   0.55  -0.24     -0.79
+    ##   cp_1 cp_2 Intercept_1 time_2 Intercept_3 time_3 sigma_1 diff_time
+    ## 1   29   72         8.8   0.51          17  -0.37     3.7     -0.88
+    ## 2   35   72         9.6   0.56          13  -0.13     4.0     -0.69
+    ## 3   31   73         9.9   0.54          16  -0.28     4.2     -0.82
+    ## 4   29   72         9.6   0.47          14  -0.18     3.8     -0.65
+    ## 5   30   72        10.2   0.50          14  -0.21     3.8     -0.71
+    ## 6   35   70        10.5   0.55          14  -0.24     4.3     -0.79
     ## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
 You can now use `diff_time` directly with base R functions like

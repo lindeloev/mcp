@@ -252,9 +252,9 @@ hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
 ```
 
     ## # A tibble: 1 × 7
-    ##   hypothesis              mean  sd    lower upper  prob    BF
-    ##   <chr>                   <lgl> <lgl> <lgl> <lgl> <dbl> <dbl>
-    ## 1 cp_1 > 3.5 & cp_1 < 4.5 NA    NA    NA    NA    0.540  1.92
+    ##   hypothesis               mean    sd lower upper  prob    BF
+    ##   <chr>                   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    ## 1 cp_1 > 3.5 & cp_1 < 4.5    NA    NA    NA    NA 0.540  1.92
 
 ``` r
 

@@ -80,7 +80,9 @@ print(x, ...)
 
 - dpar:
 
-  Distributional parameter(s) whose regression coefficients to return.
+  Distributional parameter(s) whose regression coefficients to return,
+  e.g., `"mu"`, `"sigma"`, or `"ar1"` (see
+  [mcp-formula](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)).
   For modeled distributional parameters such as
   [`sigma()`](https://rdrr.io/r/stats/sigma.html), these coefficients
   are on the link scale.
@@ -95,13 +97,19 @@ parameters, then `ar`/`ma` components - each ascending by segment. Note:
 The change point distributions are often not unimodal and symmetric so
 the intervals can be deceiving. Plot them using `plot_pars(fit)`.
 
-With `verbose = TRUE`:
+Columns:
 
-- `segment` is the segment the parameter belongs to.
+- `segment` (only with `verbose = TRUE`) is the segment the parameter
+  belongs to. For change points, it is the segment that the change point
+  starts, e.g., 2 for `cp_1`.
 
-- `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
-  `"ar"`, `"ma"`, etc.) the parameter belongs to. For AR/MA terms, the
-  lag order is encoded in `parameter`, e.g. `ar2_1`.
+- `dpar` (only with `verbose = TRUE`) is the distributional parameter
+  (e.g., `"mu"`, `"sigma"`, or `"ar1"`; see
+  [mcp-formula](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md))
+  as accepted by the `dpar` argument of `fixef.mcpfit()`,
+  [`fitted.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  etc. It is `NA` for change points. See also
+  [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md).
 
 - `mean` is the posterior mean
 
@@ -150,7 +158,8 @@ simulation and summary multiple times to get a sense of the robustness.
 
 - `print(mcpfit)`: Print the posterior summary of an
   [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
-  object.
+  object, or the prior summary with `prior = TRUE`. Without the
+  requested draws, only the model is shown.
 
 ## Author
 

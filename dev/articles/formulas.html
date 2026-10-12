@@ -172,7 +172,10 @@ intercept.</li>
 interactions, and group-level effects (<a href="../articles/group_effects.html">read more</a>).</li>
 <li>
 <code>+ sigma(1 + x)</code> or <code>shape(0 + state)</code>:
-Distributional parameters on the link scale (<a href="../articles/dpar.html">read more</a>).</li>
+Distributional parameters on the link scale. Together with each AR/MA
+lag (<code>ar1</code>, <code>ma1</code>, …), these are the
+<code>dpar</code>s in <code>mcp</code>, since each has its own segmented
+linear predictor (<a href="../articles/dpar.html">read more</a>).</li>
 <li>
 <code>+ ar(1)</code> or <code>ma(2, 1 + x)</code>: Autoregressive
 and moving-average time-series residuals on the link scale; include them
@@ -259,11 +262,12 @@ differs by <code>z</code>, so the plateau in segment 2 does too.</p>
 <h3 id="examples-included-terms-and-parameter-names">Examples: Included terms and parameter names<a class="anchor" aria-label="anchor" href="#examples-included-terms-and-parameter-names"></a>
 </h3>
 <p>New coefficients are named after their segment: <code>x_1</code>,
-<code>x_2</code>, etc. Change points are <code>cp_1</code>,
-<code>cp_2</code>, etc.; <code>cp_1</code> separates segments 1 and 2.
-In these examples, the change-point variable is <code>x</code>; set
-<code>mcp(..., par_x = "x")</code> if mcp does not automatically select
-the correct change-point variable.</p>
+<code>x_2</code>, etc. Interactions join their parts with a dot, e.g.,
+<code>x:stateB</code> gives <code>x.stateB_1</code>. Change points are
+<code>cp_1</code>, <code>cp_2</code>, etc.; <code>cp_1</code> separates
+segments 1 and 2. In these examples, the change-point variable is
+<code>x</code>; set <code>mcp(..., par_x = "x")</code> if mcp does not
+automatically select the correct change-point variable.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Slopes: joined or disjoined</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -275,7 +279,7 @@ the correct change-point variable.</p>
 <span></span>
 <span><span class="co"># 2. Factors, other variables, and interactions</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">state</span> <span class="op">+</span> <span class="va">z</span>,  <span class="co"># Intercept_1, by-state slopes (xstateA_1, ...), z_1</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">state</span> <span class="op">+</span> <span class="va">z</span>,  <span class="co"># Intercept_1, by-state slopes (x.stateA_1, ...), z_1</span></span>
 <span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span>,    <span class="co"># At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>             <span class="co"># At cp_2: Joined slope (x_3); state not included</span></span>
 <span><span class="op">)</span></span>
@@ -296,9 +300,9 @@ the correct change-point variable.</p>
 <span></span>
 <span><span class="co"># 5. Distributional parameters and AR/MA</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, <span class="co"># Intercept_1, x_1; log-SD slope (sigma_1, sigma_x_1); AR(1) (ar1_1)</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, <span class="co"># Intercept_1, x_1; log-SD slope (sigma_Intercept_1, sigma_x_1); AR(1) (ar1_1)</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,  <span class="co"># At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)</span></span>
-<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,          <span class="co"># At cp_2: Joined mu plateau; new sigma_3; AR not included</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,          <span class="co"># At cp_2: Joined mu plateau; new sigma_Intercept_3; AR not included</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>              <span class="co"># At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -314,8 +318,8 @@ the correct change-point variable.</p>
 <span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span> <span class="op">+</span> <span class="va">z</span><span class="op">)</span>,           <span class="co"># Reuse x_2 and z_1</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">state</span>, as <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="co"># Reuse x_1 and segment 2 factor coding/coefficients</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,  <span class="co"># Reuse segment 1 group deviations and SD</span></span>
-<span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,          <span class="co"># New log-SD slope sigma_x_6, joined to initial sigma_1</span></span>
-<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>     <span class="co"># New log-SD intercept sigma_7; reuse sigma_x_6</span></span>
+<span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,          <span class="co"># New log-SD slope sigma_x_6, joined to initial sigma_Intercept_1</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>     <span class="co"># New log-SD intercept sigma_Intercept_7; reuse sigma_x_6</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><code>same()</code> refers to the preceding segment by default; use
 <code>as</code> to pick an earlier segment. It works for factors
@@ -340,24 +344,23 @@ before sampling:</p>
 <span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example_data</a></span><span class="op">(</span><span class="st">"multiple"</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 14 × 9</span></span></span>
-<span><span class="co">##    parameter   part      scope      role         segment dpar  order group_col</span></span>
-<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp        population change_point       2 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp        population change_point       3 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> Intercept_1 predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> z_1         predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> xstateA_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> xstateB_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> xstateC_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> xstateD_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> Intercept_2 predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span> x_2         predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">11</span> stateB_2    predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateC_2    predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateD_2    predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">14</span> sigma_1     predictor population dpar_effect        1 sigma    <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #949494;"># ℹ 1 more variable: population_parameter &lt;chr&gt;</span></span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 14 × 8</span></span></span>
+<span><span class="co">##    parameter   part     scope role  segment dpar  group_col population_parameter</span></span>
+<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp       popu… chan…       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp       popu… chan…       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> Intercept_1 predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> z_1         predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> x.stateA_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> x.stateB_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> x.stateC_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> x.stateD_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> Intercept_2 predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span> x_2         predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">11</span> stateB_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateC_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateD_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">14</span> sigma_1     predict… popu… coef…       1 sigma <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <p>Thanks to <code>same()</code>, there is no <code>z_2</code> or
 <code>x_3</code>.</p>
 </div>
@@ -382,9 +385,9 @@ of <code>x</code>, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="
 <span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>   <span class="co"># sin(x) uses x; x and I(x^2) are measured from cp_1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Offsets have fixed coefficients: include
-<code>offset(log(exposure))</code> wherever it applies. Read more about
-offsets in <a href="../articles/poisson.html">Poisson and Negative
-Binomial models</a>.</p>
+<code>offset(log(exposure))</code> in every segment (or in every
+<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>/<code>ma()</code> term). Read more about offsets in <a href="../articles/poisson.html">Poisson and Negative Binomial
+models</a>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -405,27 +408,26 @@ with an extra plateau segment:</p>
 <span><span class="va">ex</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"multiple"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">ex</span><span class="op">$</span><span class="va">data</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 17 × 9</span></span></span>
-<span><span class="co">##    parameter   part      scope      role         segment dpar  order group_col</span></span>
-<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp        population change_point       2 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp        population change_point       3 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> cp_3        cp        population change_point       4 cp       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> Intercept_1 predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> z_1         predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> xstateA_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> xstateB_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> xstateC_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> xstateD_1   predictor population fixed_effect       1 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span> Intercept_2 predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">11</span> x_2         predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateB_2    predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateC_2    predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">14</span> stateD_2    predictor population fixed_effect       2 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">15</span> xE2_3       predictor population fixed_effect       3 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">16</span> Intercept_4 predictor population fixed_effect       4 mu       <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">17</span> sigma_1     predictor population dpar_effect        1 sigma    <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">## <span style="color: #949494;"># ℹ 1 more variable: population_parameter &lt;chr&gt;</span></span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 17 × 8</span></span></span>
+<span><span class="co">##    parameter   part     scope role  segment dpar  group_col population_parameter</span></span>
+<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp       popu… chan…       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp       popu… chan…       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> cp_3        cp       popu… chan…       4 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> Intercept_1 predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> z_1         predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> x.stateA_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> x.stateB_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> x.stateC_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> x.stateD_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span> Intercept_2 predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">11</span> x_2         predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateB_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateC_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">14</span> stateD_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">15</span> xE2_3       predict… popu… coef…       3 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">16</span> Intercept_4 predict… popu… coef…       4 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">17</span> sigma_1     predict… popu… coef…       1 sigma <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <p>Key features of multiple regression models in <code>mcp</code>:</p>
 <ul>
 <li>
@@ -436,8 +438,8 @@ instead want category-specific change-point locations that deviate per
 group, use group-level effects like <code>cp((1|group))</code>; see <a href="../articles/group_effects.html">group-level effects</a>).</li>
 <li>
 <strong>Parameter names across segments</strong>: In segment 1,
-<code>xstateA_1</code> through <code>xstateD_1</code> represent separate
-slopes for each level of <code>state</code>. In segment 2,
+<code>x.stateA_1</code> through <code>x.stateD_1</code> represent
+separate slopes for each level of <code>state</code>. In segment 2,
 <code>stateB_2</code>, <code>stateC_2</code>, and <code>stateD_2</code>
 represent intercept offsets relative to the reference level
 <code>stateA</code>. A variable such as <code>z</code> must be included
@@ -484,13 +486,13 @@ certainty (<code>prob = 0</code>).</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## # A draws_df: 6 iterations, 1 chains, and 8 variables</span></span>
-<span><span class="co">##   Intercept_1 Intercept_3 cp_1 cp_2 sigma_1 time_2 time_3 diff_time</span></span>
-<span><span class="co">## 1         8.8          17   29   72     3.7   0.51  -0.37     -0.88</span></span>
-<span><span class="co">## 2         9.6          13   35   72     4.0   0.56  -0.13     -0.69</span></span>
-<span><span class="co">## 3         9.9          16   31   73     4.2   0.54  -0.28     -0.82</span></span>
-<span><span class="co">## 4         9.6          14   29   72     3.8   0.47  -0.18     -0.65</span></span>
-<span><span class="co">## 5        10.2          14   30   72     3.8   0.50  -0.21     -0.71</span></span>
-<span><span class="co">## 6        10.5          14   35   70     4.3   0.55  -0.24     -0.79</span></span>
+<span><span class="co">##   cp_1 cp_2 Intercept_1 time_2 Intercept_3 time_3 sigma_1 diff_time</span></span>
+<span><span class="co">## 1   29   72         8.8   0.51          17  -0.37     3.7     -0.88</span></span>
+<span><span class="co">## 2   35   72         9.6   0.56          13  -0.13     4.0     -0.69</span></span>
+<span><span class="co">## 3   31   73         9.9   0.54          16  -0.28     4.2     -0.82</span></span>
+<span><span class="co">## 4   29   72         9.6   0.47          14  -0.18     3.8     -0.65</span></span>
+<span><span class="co">## 5   30   72        10.2   0.50          14  -0.21     3.8     -0.71</span></span>
+<span><span class="co">## 6   35   70        10.5   0.55          14  -0.24     4.3     -0.79</span></span>
 <span><span class="co">## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span></span></code></pre>
 <p>You can now use <code>diff_time</code> directly with base R functions
 like <code>quantile(draws$diff_time, c(0.025, 0.975))</code> and

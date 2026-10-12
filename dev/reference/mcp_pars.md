@@ -20,15 +20,24 @@ mcp_pars(fit, scope = NULL, role = NULL)
 
 - role:
 
-  Optional parameter role(s), such as `"fixed_effect"`, `"dpar_effect"`,
-  `"arma"`, `"group_sd"`, or `"group_deviation"`.
+  Optional parameter role(s): `"change_point"`, `"coefficient"`
+  (regression coefficients of all distributional parameters, e.g., `mu`,
+  `sigma`, and `ar1`), or `"group_sd"`. Combine with `scope` to select
+  population-level parameters or their group-level deviations, e.g.,
+  `scope = "group", role = "change_point"` for group-level change
+  points.
 
 ## Value
 
 A tibble with one row per parameter definition. `parameter` is the model
-parameter name; `dpar` identifies its distributional parameter or
-component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
-`group_col` and `population_parameter` describe group-level effects.
+parameter name; `dpar` is its distributional parameter (e.g., `"mu"`,
+`"sigma"`, or `"ar1"`; see
+[mcp-formula](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)),
+as accepted by the `dpar` argument of
+[`fitted.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+[`fixef.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+etc., and `NA` for change points; `group_col` and `population_parameter`
+describe group-level effects.
 
 ## Details
 
@@ -41,24 +50,25 @@ parameters.
 ``` r
 # Show every parameter in the model
 mcp_pars(demo_fit)
-#> # A tibble: 7 × 9
-#>   parameter part  scope role  segment dpar  order group_col population_parameter
-#>   <chr>     <chr> <chr> <chr>   <int> <chr> <int> <chr>     <chr>               
-#> 1 cp_1      cp    popu… chan…       2 cp       NA NA        NA                  
-#> 2 cp_2      cp    popu… chan…       3 cp       NA NA        NA                  
-#> 3 Intercep… pred… popu… fixe…       1 mu       NA NA        NA                  
-#> 4 time_2    pred… popu… fixe…       2 mu       NA NA        NA                  
-#> 5 Intercep… pred… popu… fixe…       3 mu       NA NA        NA                  
-#> 6 time_3    pred… popu… fixe…       3 mu       NA NA        NA                  
-#> 7 sigma_1   pred… popu… dpar…       1 sigma    NA NA        NA                  
+#> # A tibble: 7 × 8
+#>   parameter   part      scope role  segment dpar  group_col population_parameter
+#>   <chr>       <chr>     <chr> <chr>   <int> <chr> <chr>     <chr>               
+#> 1 cp_1        cp        popu… chan…       2 NA    NA        NA                  
+#> 2 cp_2        cp        popu… chan…       3 NA    NA        NA                  
+#> 3 Intercept_1 predictor popu… coef…       1 mu    NA        NA                  
+#> 4 time_2      predictor popu… coef…       2 mu    NA        NA                  
+#> 5 Intercept_3 predictor popu… coef…       3 mu    NA        NA                  
+#> 6 time_3      predictor popu… coef…       3 mu    NA        NA                  
+#> 7 sigma_1     predictor popu… coef…       1 sigma NA        NA                  
 
 # Select population-level coefficients
-mcp_pars(demo_fit, scope = "population", role = "fixed_effect")
-#> # A tibble: 4 × 9
-#>   parameter part  scope role  segment dpar  order group_col population_parameter
-#>   <chr>     <chr> <chr> <chr>   <int> <chr> <int> <chr>     <chr>               
-#> 1 Intercep… pred… popu… fixe…       1 mu       NA NA        NA                  
-#> 2 time_2    pred… popu… fixe…       2 mu       NA NA        NA                  
-#> 3 Intercep… pred… popu… fixe…       3 mu       NA NA        NA                  
-#> 4 time_3    pred… popu… fixe…       3 mu       NA NA        NA                  
+mcp_pars(demo_fit, scope = "population", role = "coefficient")
+#> # A tibble: 5 × 8
+#>   parameter   part      scope role  segment dpar  group_col population_parameter
+#>   <chr>       <chr>     <chr> <chr>   <int> <chr> <chr>     <chr>               
+#> 1 Intercept_1 predictor popu… coef…       1 mu    NA        NA                  
+#> 2 time_2      predictor popu… coef…       2 mu    NA        NA                  
+#> 3 Intercept_3 predictor popu… coef…       3 mu    NA        NA                  
+#> 4 time_3      predictor popu… coef…       3 mu    NA        NA                  
+#> 5 sigma_1     predictor popu… coef…       1 sigma NA        NA                  
 ```

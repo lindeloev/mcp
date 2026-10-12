@@ -189,8 +189,7 @@ currently requires all such effects (<code>group_effects = TRUE</code>).</p></li
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
 <dd><p>One of</p><ul><li><p><code>"response"</code>: return on the response scale, i.e., after applying the inverse link function.</p></li>
 <li><p><code>"linear"</code>: return on the linear-predictor (link) scale, where the linear
-trends are modeled.
-A linear scale is only applicable when <code>type == "fitted"</code> and <code>dpar</code> is not <code>NULL</code>.</p></li>
+trends are modeled.</p></li>
 </ul></dd>
 
 
@@ -210,7 +209,7 @@ can be supplied as explicit scalar design values. Passed to
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
-<dd><p>What distributional parameter to evaluate. This is only relevant when <code>type == "fitted"</code>. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected response from the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
+<dd><p>What distributional parameter to evaluate. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected response from the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
 <li><p><code>"mu"</code>: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.</p></li>
 <li><p><code>"sigma"</code>: The standard deviation of the residuals.</p></li>
 <li><p><code>"ar1"</code>, <code>"ar2"</code>, <code>"ma1"</code>, <code>"ma2"</code>, etc. depending on which AR or MA

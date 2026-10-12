@@ -6,6 +6,8 @@ Checks if the Argument is an `mcpfit` Object
 
 ``` r
 is.mcpfit(x)
+
+is_mcpfit(x)
 ```
 
 ## Arguments

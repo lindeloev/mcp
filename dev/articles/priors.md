@@ -16,8 +16,9 @@ here](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviation
 ## Setting a prior
 
 `mcp` takes priors in the form of a named list. The names are the
-parameter names, and the values are JAGS code. Here is a fairly
-complicated example, to demonstrate the various ways priors can be used:
+parameter names, and the values are distribution strings, fixed values,
+or the names of other parameters. Here is a fairly complicated example,
+to demonstrate the various ways priors can be used:
 
 ``` r
 
@@ -38,15 +39,17 @@ prior = list(
 )
 ```
 
-The values use mcp’s JAGS-string syntax, so JAGS distributions are
-generally allowed. See the [JAGS user
-manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf)
-for more details. Prior strings use R-like conventional distribution
-scales even though JAGS has a different parameterization underneath: SD
-for [`dnorm()`](https://rdrr.io/r/stats/Normal.html), scale for
-[`dt()`](https://rdrr.io/r/stats/TDist.html), `ddexp()`, and
-[`dlogis()`](https://rdrr.io/r/stats/Logistic.html), and log-SD for
-[`dlnorm()`](https://rdrr.io/r/stats/Lognormal.html). When generating
+Distribution strings use JAGS names and argument order, including
+[`T()`](https://rdrr.io/r/base/logical.html) truncation, so JAGS
+distributions are generally allowed (see the [JAGS user
+manual](https://sourceforge.net/projects/mcmc-jags/files/Manuals/4.x/jags_user_manual.pdf)).
+However, they are not JAGS code: `mcp` uses conventional scales instead
+of JAGS precision, i.e., SD for
+[`dnorm()`](https://rdrr.io/r/stats/Normal.html), SD on the log scale
+for [`dlnorm()`](https://rdrr.io/r/stats/Lognormal.html) (`sdlog` in
+[`stats::dlnorm()`](https://rdrr.io/r/stats/Lognormal.html)), and scale
+for [`dt()`](https://rdrr.io/r/stats/TDist.html), `ddexp()`, and
+[`dlogis()`](https://rdrr.io/r/stats/Logistic.html). When generating
 JAGS code, `mcp` converts these to inverse variance for
 [`dnorm()`](https://rdrr.io/r/stats/Normal.html),
 [`dt()`](https://rdrr.io/r/stats/TDist.html), and
@@ -61,9 +64,9 @@ Other notes:
   priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior
   has neither explicit truncation nor an inherently bounded form such as
   [`dunif()`](https://rdrr.io/r/stats/Uniform.html) or `dirichlet()`.
-  User-specified population-level bounds are respected as written. When
-  change points have group-level deviations, their realized locations
-  are constrained to remain ordered within every group.
+  User-specified population-level bounds are kept unchanged. When change
+  points have group-level deviations, their realized locations are
+  constrained to remain ordered within every group.
 
 - `mcp` allows inserting data-dependent values: for example, `min(x)`,
   `max(x)`, `mean(y)`, `median(y)`, `sd(y)`, `mad(y)`,
@@ -104,8 +107,8 @@ prior_summary(empty_manual)  # For more details: add verbose = TRUE
     ## # A tibble: 9 × 5
     ##   parameter   segment dpar  prior                                         bounds        
     ##   <chr>         <int> <chr> <chr>                                         <chr>         
-    ## 1 cp_1              2 cp    uniform(min = cp_0, max = cp_2)               [min(x), cp_2]
-    ## 2 cp_2              3 cp    80                                            none          
+    ## 1 cp_1              2 NA    uniform(min = cp_0, max = cp_2)               [min(x), cp_2]
+    ## 2 cp_2              3 NA    80                                            none          
     ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf, 10]    
     ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]        
     ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.529)              none          
@@ -122,8 +125,8 @@ prior_summary(empty_default)  # For more details: add verbose = TRUE
     ## # A tibble: 9 × 5
     ##   parameter   segment dpar  prior                                         bounds        
     ##   <chr>         <int> <chr> <chr>                                         <chr>         
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)                          [min(x), cp_2]
-    ## 2 cp_2              3 cp    dirichlet(alpha = 1)                          [cp_1, max(x)]
+    ## 1 cp_1              2 NA    dirichlet(alpha = 1)                          [min(x), cp_2]
+    ## 2 cp_2              3 NA    dirichlet(alpha = 1)                          [cp_1, max(x)]
     ## 3 Intercept_1       1 mu    normal(mean = 50.5 - x_1 * 1, sd = 72.529)    none          
     ## 4 x_1               1 mu    normal(mean = 0, sd = 2.5)                    none          
     ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.529)              none          
@@ -219,8 +222,8 @@ prior_summary(fit_manual, verbose = TRUE)
     ## # A tibble: 9 × 9
     ##   parameter   segment dpar  prior                                        bounds         rule                                                                description                                           source  kind        
     ##   <chr>         <int> <chr> <chr>                                        <chr>          <chr>                                                               <chr>                                                 <chr>   <chr>       
-    ## 1 cp_1              2 cp    uniform(min = cp_0, max = cp_2)              [min(x), cp_2] uniform(min = min(x), max = cp_2)                                   User-specified prior                                  user    distribution
-    ## 2 cp_2              3 cp    80                                           none           80                                                                  Fixed at 80                                           user    constant    
+    ## 1 cp_1              2 NA    uniform(min = cp_0, max = cp_2)              [min(x), cp_2] uniform(min = min(x), max = cp_2)                                   User-specified prior                                  user    distribution
+    ## 2 cp_2              3 NA    80                                           none           80                                                                  Fixed at 80                                           user    constant    
     ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                     [-Inf, 10]     normal(mean = 0, sd = 5)                                            User-specified prior                                  user    distribution
     ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                 [0, 1]         beta(shape1 = 2, shape2 = 5)                                        User-specified prior                                  user    distribution
     ## 5 Intercept_2       2 mu    normal(mean = 24.322, sd = 26.856)           none           normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                     default distribution
@@ -354,7 +357,7 @@ For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`,
 `mcp` automatically adds default bounds equivalent to
 `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation,
 including `T(,)`, or a [`dunif()`](https://rdrr.io/r/stats/Uniform.html)
-prior is used as written. Relaxing the order can cause label-switching
+prior is used unchanged. Relaxing the order can cause label-switching
 between segments and make sampling difficult, so inspect the resulting
 prior carefully.
 

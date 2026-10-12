@@ -145,8 +145,8 @@ For multiple pages, an invisible list of <span class="pkg">ggplot2</span> object
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For other <code>type</code>, it calls <code>bayesplot::mcmc_type()</code>. Use these
-directly on <code>coda::as.mcmc(fit)</code> or <code>as_draws(fit)</code> if you want finer
-control of plotting, e.g., <code>bayesplot::mcmc_dens(coda::as.mcmc(fit))</code>. There
+directly on <code>fit</code> if you want finer
+control of plotting, e.g., <code>bayesplot::mcmc_dens(fit)</code>. There
 are also a number of useful plots in the <span class="pkg">coda</span> package, i.e.,
 <code>coda::gelman.plot(coda::as.mcmc(fit))</code> and <code>coda::crosscorr.plot(coda::as.mcmc(fit))</code></p>
 <p>In any case, if you see a few erratic lines or parameter estimates, this is

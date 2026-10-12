@@ -82,10 +82,9 @@ multiple pages, an invisible list of ggplot2 objects.
 ## Details
 
 For other `type`, it calls `bayesplot::mcmc_type()`. Use these directly
-on `coda::as.mcmc(fit)` or `as_draws(fit)` if you want finer control of
-plotting, e.g., `bayesplot::mcmc_dens(coda::as.mcmc(fit))`. There are
-also a number of useful plots in the coda package, i.e.,
-`coda::gelman.plot(coda::as.mcmc(fit))` and
+on `fit` if you want finer control of plotting, e.g.,
+`bayesplot::mcmc_dens(fit)`. There are also a number of useful plots in
+the coda package, i.e., `coda::gelman.plot(coda::as.mcmc(fit))` and
 `coda::crosscorr.plot(coda::as.mcmc(fit))`
 
 In any case, if you see a few erratic lines or parameter estimates, this

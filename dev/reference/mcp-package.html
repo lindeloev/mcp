@@ -107,6 +107,18 @@ or <code>~ cp((1|id)) + 0 + x</code>.</p></li>
 </ul><p>See <a href="https://lindeloev.github.io/mcp/">the mcp website</a> for worked examples.</p>
     </div>
     <div class="section level2">
+    <h2 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a></h2>
+
+
+<ul><li><p><code>mcp_quiet</code>: Logical. The default of <code>mcp(..., quiet)</code>. <code>options(mcp_quiet = TRUE)</code> suppresses routine JAGS output
+and mcp sampling-status messages for the session.</p></li>
+<li><p><code>mcp_reparam</code>: Logical. <code>TRUE</code> (default) lets <code><a href="mcp.html">mcp()</a></code> sample some default priors on scales that mix
+faster. This changes only <code>fit$jags_code</code> and sampling efficiency, not the model, the priors, or the posterior.
+<code>options(mcp_reparam = FALSE)</code> writes the plain model, which is mostly useful for seeing how <code>mcp</code> works.
+Ignored when <code>jags_code</code> is supplied. Read more in
+<a href="https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations">From formulas to sampler code</a>.</p></li>
+</ul></div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
 
 <ul><li><p>Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.

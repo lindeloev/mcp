@@ -23,11 +23,10 @@
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/demo_fit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.html</loc></url>
-<url><loc>https://lindeloev.github.io/mcp/dev/reference/get_plot.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/hypothesis.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/index.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.html</loc></url>
-<url><loc>https://lindeloev.github.io/mcp/dev/reference/is.mcpfit.html</loc></url>
+<url><loc>https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp-formula.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp-package.html</loc></url>
@@ -36,7 +35,6 @@
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp_columns.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp_example.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp_pars.html</loc></url>
-<url><loc>https://lindeloev.github.io/mcp/dev/reference/mcpfamily.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/model-accessors-mcpfit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/negbinomial.html</loc></url>
@@ -45,7 +43,6 @@
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/posterior-uncertainty-mcpfit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/pp_check.html</loc></url>
-<url><loc>https://lindeloev.github.io/mcp/dev/reference/pp_eval.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/print.mcplist.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/print.mcptext.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/prior_summary.html</loc></url>

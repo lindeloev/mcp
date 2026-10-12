@@ -104,10 +104,10 @@ print(fit$example_code) # See how the data was simulated
 #> 
 #>   Intercept_1 = 10,
 #>   z_1 = 0.2,
-#>   xstateA_1 = -0.30,
-#>   xstateB_1 = -0.10,
-#>   xstateC_1 = 0.25,
-#>   xstateD_1 = 0.50,
+#>   x.stateA_1 = -0.30,
+#>   x.stateB_1 = -0.10,
+#>   x.stateC_1 = 0.25,
+#>   x.stateD_1 = 0.50,
 #> 
 #>   Intercept_2 = 15,
 #>   x_2 = -0.8,
@@ -139,7 +139,7 @@ print(empty)
 #>   2: ~ 0 + x
 #>   3: ~ 1 + x
 #> 
-#> No draws. Nothing to summarise.
+#> No posterior draws. Nothing to summarise.
 print(empty$example_code)
 #> # Define model
 #> model = list(

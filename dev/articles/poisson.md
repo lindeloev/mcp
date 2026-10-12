@@ -129,7 +129,7 @@ prior_summary(fit)
     ## # A tibble: 3 × 5
     ##   parameter   segment dpar  prior                      bounds                
     ##   <chr>         <int> <chr> <chr>                      <chr>                 
-    ## 1 cp_1              2 cp    dirichlet(alpha = 1)       [min(date), max(date)]
+    ## 1 cp_1              2 NA    dirichlet(alpha = 1)       [min(date), max(date)]
     ## 2 Intercept_1       1 mu    normal(mean = 0, sd = 2.5) none                  
     ## 3 Intercept_2       2 mu    normal(mean = 0, sd = 2.5) none
 
@@ -230,6 +230,12 @@ Now we compute and compare the LOO ELPDs:
 ``` r
 
 fit_loo = loo(fit)
+```
+
+    ## Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
+
+``` r
+
 fit_flat_loo = loo(fit_flat)
 fit_decay_loo = loo(fit_decay)
 ```

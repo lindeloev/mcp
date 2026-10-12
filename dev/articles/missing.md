@@ -1,16 +1,16 @@
-# Missing responses and imputation
+# Missing data
 
-`mcp` allows missing values in the response. JAGS treats the unknown
-responses as latent variables and samples them together with the model
-parameters. `mcp` retains those posterior imputation draws for later
-use. This article shows how to inspect expected responses, posterior
-imputations, and their uncertainty.
+`mcp` allows missing values (`NA`) in the response. This article covers
+two consequences of that:
 
-## An example with missing responses
-
-The built-in example has a change in slope, a strong difference between
-two states, scattered missing responses, and a short run of missing
-responses. First, let’s fit the example and visualize it:
+1.  **Change points in voids:** Change points can be inferred in regions
+    with no observed responses.
+2.  **Imputing missing responses:** JAGS treats the missing responses as
+    latent variables and samples them together with the model
+    parameters. You can inspect expected responses with
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    and the imputation distribution with
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 
 ``` r
 
@@ -19,17 +19,76 @@ library(dplyr)
 library(ggplot2)
 ```
 
+## Inferring change points in voids
+
+Sometimes the interest is not in recovering individual missing
+responses, but in how gaps in the data affect inference about the change
+points. To demonstrate this, `mcp_example("void")` takes the data from
+`mcp_example("demo")` and sets the responses near both change points to
+`NA` (`25 < time < 42` and `70 < time < 80`). The top panel shows the
+fit to the full data and the bottom panel the fit with the voids:
+
+``` r
+
+fit_void = mcp_example("void")
+```
+
+    ## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.
+
+![](missing_files/figure-html/unnamed-chunk-3-1.png)
+
+Notice that `mcp` can infer change points in regions with no observed
+data. The first change point joins a plateau to a slope. Its location in
+the void is mostly informed by extrapolating the two segments until they
+meet, and the uncertainty is greater than in the full data because fewer
+data inform these trends. In principle, it could be known to great
+precision if the segments’ trends were very well defined.
+
+The second change point is different because segment 3 is disjoined from
+segment 2. There is nothing in the void that tells where the jump
+happened, so the change point posterior is roughly uniform across the
+void. This is true for any gap between data: the narrow gap between two
+neighboring data points (top panel) also yields a uniform-like
+posterior, just on a much smaller range.
+
+We can quantify how much of each change point posterior is within its
+void using
+[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md):
+
+``` r
+
+hypothesis(fit_void, c(
+  "cp_1 > 25 & cp_1 < 42",
+  "cp_2 > 70 & cp_2 < 80"
+))
+```
+
+    ## # A tibble: 2 × 7
+    ##   hypothesis             mean    sd lower upper  prob    BF
+    ##   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.937    NA
+    ## 2 cp_2 > 70 & cp_2 < 80    NA    NA    NA    NA 0.840    NA
+
+## Imputing missing responses
+
+### An example with missing responses
+
+The built-in example has a change in slope, a strong difference between
+two states, scattered missing responses, and a short run of missing
+responses:
+
 ``` r
 
 fit = mcp_example("missing")
 ```
 
-![](missing_files/figure-html/unnamed-chunk-3-1.png)
+    ## NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
 
-The ordinary plot shows the observed responses and model estimates.
-Missing responses are omitted. See below how they can be visualized.
+![](missing_files/figure-html/unnamed-chunk-5-1.png)
 
-The underlying data contain some missing responses in `y`:
+The ordinary plot shows the observed responses and model estimates but
+omits missing responses. [Below](#visualizing-imputations), we add them
+to the plot. These are the rows with missing responses in `y`:
 
 ``` r
 
@@ -48,14 +107,16 @@ fit$data |> filter(is.na(y))
     ## 9  NA 84     B
     ## 10 NA 96     B
 
-## Expected responses and predictions
+### Expected responses and predictions
 
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 evaluates the posterior predictive distribution at the missing rows,
 generating fresh simulated responses that include residual variation.
 The predictions come from trends in non-missing data and what they
 imply, given the observed covariates (`state` and `x`), for the missing
-rows.
+rows. Without [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` terms,
+as here, these predictions have the same distribution as the JAGS
+imputations, so we use them as imputations below.
 
 ``` r
 
@@ -106,7 +167,7 @@ fitted(fit, width = 0.8) |>
     ##  9    NA    84 B      34.2 0.879   33.1   35.4
     ## 10    NA    96 B      29.2 1.28    27.6   30.9
 
-## Visualize imputations on the model plot
+### Visualizing imputations
 
 Imputations are not added to
 [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
@@ -138,7 +199,7 @@ plot(fit, color_by = "state", q_predict = c(0.1, 0.9)) +
   )
 ```
 
-![](missing_files/figure-html/unnamed-chunk-7-1.png)
+![](missing_files/figure-html/unnamed-chunk-9-1.png)
 
 This deliberately distinguishes imputed values from the solid observed
 points. You can change the interval width, marker, color, or add a
@@ -158,9 +219,9 @@ ggplot(missing_draws, aes(x = .prediction)) +
   facet_wrap(~x)
 ```
 
-![](missing_files/figure-html/unnamed-chunk-8-1.png)
+![](missing_files/figure-html/unnamed-chunk-10-1.png)
 
-### Making probabilistic statements about missing responses
+### Probabilistic statements about missing responses
 
 Sometimes, the missing response is of direct interest. For example, you
 may want to know the probability that a missing response is above a
@@ -185,7 +246,7 @@ missing_draws |>
     ##       <dbl>   <dbl>     <dbl>
     ## 1     0.151   0.102     0.747
 
-### Other continuous predictors
+### Imputations and other continuous predictors
 
 Plotting differs from
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -209,54 +270,9 @@ lie away from that curve. Use `plot(fit, at = ...)` or
 `interpolate_newdata(fit, at = ...)` or make separate plots when those
 differences deserve emphasis.
 
-## Missing data around change points
+## Supported models and limitations
 
-Sometimes the interest is not in recovering individual missing
-responses, but in how gaps in the data affect inference about the change
-points. To demonstrate this, `mcp_example("void")` takes the data from
-`mcp_example("demo")` and removes the responses near both change points
-(`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to
-the full data and the bottom panel the fit with the voids:
-
-``` r
-
-fit_void = mcp_example("void")
-```
-
-![](missing_files/figure-html/unnamed-chunk-10-1.png)
-
-Notice that `mcp` can infer change points in regions with no missing
-data. The greater uncertainty in the change point location between
-segment 1 and 2 comes mostly from linear extrapolation between the
-segments and less data. In principle, it could be known to great
-precision if the segments’ trends were very well defined.
-
-The location of the disjoined change between segment 2 and 3 is
-different: the location is unknowable for disjoined segments in a void,
-and the change point posterior reflects that. Any distance between data
-is a void for disjoined segments. This can be seen in the uniform-like
-change point posterior both for the large void (bottom panel) and the
-simple between-datapoints void (top panel).
-
-We can quantify how much of the change point posteriors is within each
-actual void using
-[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md):
-
-``` r
-
-hypothesis(fit_void, c(
-  "cp_1 > 25 & cp_1 < 42",
-  "cp_2 > 70 & cp_2 < 80"
-))
-```
-
-    ## # A tibble: 2 × 7
-    ##   hypothesis            mean  sd    lower upper  prob    BF
-    ##   <chr>                 <lgl> <lgl> <lgl> <lgl> <dbl> <dbl>
-    ## 1 cp_1 > 25 & cp_1 < 42 NA    NA    NA    NA    0.937    NA
-    ## 2 cp_2 > 70 & cp_2 < 80 NA    NA    NA    NA    0.840    NA
-
-## What else can be modeled?
+### Supported model features
 
 Missing responses work with the usual `mcp` model features. For example,
 you can:
@@ -283,7 +299,7 @@ with ordinary regression using incomplete outcomes, interpretation
 relies on the missing responses being reasonably explained by the
 observed predictors and model structure.
 
-## Model evaluation and time-series histories
+### Model evaluation and time series
 
 Missing rows are not treated as observed contributions to
 [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -315,7 +331,7 @@ taken from the observed responses. The default predictions condition on
 observed responses and retained imputations as histories, but still
 generate fresh outcomes at every row.
 
-## Original data versus new data
+### Predictions for new data
 
 In AR/MA models, the retained JAGS draws belong to the missing rows in
 the original fitted data and supply their histories. For the non-AR/MA
@@ -336,5 +352,5 @@ predict(fit, newdata = newdata, width = 0.8)
     ## # A tibble: 2 × 6
     ##       x state .mean   .sd .lower .upper
     ##   <dbl> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    20 A      15.7  4.32   10.2   21.3
-    ## 2    80 B      35.9  4.38   30.3   41.5
+    ## 1    20 A      15.8  4.40   10.2   21.3
+    ## 2    80 B      35.9  4.42   30.3   41.5

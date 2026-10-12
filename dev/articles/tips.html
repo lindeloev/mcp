@@ -129,9 +129,10 @@ any pair of implicated parameters:
 <code>plot_pars(fit, pars = c("Intercept_1", "Intercept_2"), type = "hex")</code>.
 This may give you ideas how to change the model.</p></li>
 <li><p>You can set the initial values for the JAGS sampler using, e.g.,
-<code>mcp(..., inits = list(cp_1 = 20, Intercept_2 = -20, etc.))</code>.
-This will be passed to <code>jags.fit</code> and you can see more
-documentation there.</p></li>
+<code>mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))</code>.
+Names must be stochastic nodes in <code>fit$jags_code</code> (lines with
+<code>~</code>), so change points and parameters reparameterized for
+faster sampling cannot be initialized directly.</p></li>
 </ul>
 </div>
 <div class="section level2">

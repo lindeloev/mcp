@@ -51,8 +51,8 @@ can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`.
 
 **1. Response (segment 1 only):**
 
-- `y ~ ...`: Standard continuous or count response (Gaussian, Poisson,
-  Bernoulli).
+- `y ~ ...`: Standard continuous, binary, or count response (Gaussian,
+  Bernoulli, Poisson, negative binomial).
 
 - `successes | trials(total) ~ ...`: Binomial response
   (`family = binomial()`).
@@ -90,18 +90,26 @@ more](https://lindeloev.github.io/mcp/articles/formulas.html)
   [`splines::ns()`](https://rdrr.io/r/splines/ns.html)). Bases are
   evaluated before sampling and reused for `newdata`.
 
+- `~ 1 + offset(log(exposure))`: Offset with a fixed coefficient of 1.
+  If one segment includes an offset, all segments must include one. The
+  same applies within [`sigma()`](https://rdrr.io/r/stats/sigma.html),
+  etc., and within [`ar()`](https://rdrr.io/r/stats/ar.html)/`ma()` in
+  the segments that include them.
+
 - `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for
   independent slopes and intercepts). [Read
   more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
 - `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g.,
-  log residual SD). [Read
+  log residual SD), with parameters `sigma_Intercept_2` and `sigma_x_2`.
+  Without [`sigma()`](https://rdrr.io/r/stats/sigma.html) anywhere in
+  the model, `sigma_1` is the residual SD itself. [Read
   more](https://lindeloev.github.io/mcp/articles/dpar.html).
 
 - `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series
-  residuals on the link scale (accepts regression formulas,
-  `series = id`, and `threshold`; include them in every segment where
-  they apply). [Read
+  residuals on the link scale (accepts regression formulas; include them
+  in every segment where they apply). Set `series = id` and `threshold`
+  once in any term; they apply to all segments. [Read
   more](https://lindeloev.github.io/mcp/articles/arma.html).
 
 - `~ 1 + same(x)` or `0 + same(z, as = 1)`: Reuse a coefficient from the
@@ -145,7 +153,11 @@ expected count is \\n_i \mu_i\\). Distributional parameters
 ([`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`, etc.) and
 autoregressive terms ([`ar()`](https://rdrr.io/r/stats/ar.html), `ma()`)
 follow this exact same segmented structure on their respective link
-scales. See more details on the [mcp
+scales. Since each of them has its own segmented linear predictor, `mcp`
+calls them all distributional parameters (`dpar`): `mu`, `sigma`,
+`shape`, and each AR/MA lag (`ar1`, `ar2`, `ma1`, ...), e.g.,
+`fitted(fit, dpar = "ar1")` or `fixef(fit, dpar = "sigma")`. See more
+details on the [mcp
 website](https://lindeloev.github.io/mcp/articles/formulas.html).
 
 ## Time-series residuals (link-scale observation-driven GARMA)

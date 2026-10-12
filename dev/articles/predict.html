@@ -379,13 +379,14 @@ outcome. It may be helpful to review <a href="../articles/priors.html">the artic
 <p>Now let’s fit it:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data_forecast</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="step-3-predict">Step 3: predict!<a class="anchor" aria-label="anchor" href="#step-3-predict"></a>
 </h3>
 <p>We can now compute the 80% posterior predictive interval at
 <code>time = 125</code>:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
 <span><span class="co">##    time .mean   .sd .lower .upper</span></span>
@@ -394,7 +395,7 @@ outcome. It may be helpful to review <a href="../articles/priors.html">the artic
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
 manually doing our plot:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get expected-response and posterior predictive draws</span></span>
 <span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">170</span><span class="op">)</span></span>
 <span><span class="va">fitted_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, summary <span class="op">=</span> <span class="cn">FALSE</span>, ndraws <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>

@@ -90,11 +90,10 @@ between segments. See details or <a href="https://lindeloev.github.io/mcp/">the 
 <span>  warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  inits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  jags_code <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  reparam <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  diagnostics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"mcp_quiet"</span>, <span class="cn">FALSE</span><span class="op">)</span>,</span>
+<span>  cores <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  adapt <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -112,8 +111,7 @@ and the full formula syntax.</p></dd>
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>Table-like data in long format (data.frame, tibble, data.table, etc.)
 with syntactic column names.
-Missing values in the response variable are imputed using the posterior predictive.
-<code><a href="execute-mcp-model.html">fitted.mcpfit</a></code> or <code><a href="execute-mcp-model.html">predict.mcpfit</a></code> details how to see the imputed values.</p></dd>
+Missing values in the response variable are imputed jointly with the parameters.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
@@ -126,9 +124,11 @@ see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See
 
 
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
-<dd><p>A supported family: <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code>, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>, <code><a href="bernoulli.html">bernoulli()</a></code>,
-<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>, or <code><a href="negbinomial.html">negbinomial()</a></code>, with a supported link function; e.g.,
-<code>gaussian(link = "log")</code>.</p></dd>
+<dd><p>A supported family and link function:</p><ul><li><p><code>gaussian(link = "identity")</code> or <code>gaussian(link = "log")</code></p></li>
+<li><p><code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> or <code><a href="bernoulli.html">bernoulli()</a></code> with <code>link = "logit"</code>, <code>"probit"</code>, or <code>"identity"</code></p></li>
+<li><p><code>poisson(link = "log")</code> or <code>poisson(link = "identity")</code></p></li>
+<li><p><code>negbinomial(link = "log", link_shape = "log")</code></p></li>
+</ul></dd>
 
 
 <dt id="arg-par-x">par_x<a class="anchor" aria-label="anchor" href="#arg-par-x"></a></dt>
@@ -165,8 +165,11 @@ use diagnostics to assess convergence.</p></dd>
 
 
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
-<dd><p>A list of initial values for the parameters. This can be useful
-if a model fails to converge. Read more in <code><a href="https://rdrr.io/pkg/rjags/man/jags.model.html" class="external-link">jags.model</a></code>.
+<dd><p>A named list of initial values for the parameters, e.g., <code>list(Intercept_1 = 10)</code>,
+or a list of such lists with one per chain. This can be useful if a model fails to converge.
+Names must be stochastic nodes in <code>fit$jags_code</code> (lines with <code>~</code>). Change points, fixed parameters,
+and parameters that <code>mcp</code> samples via reparameterization (e.g., <code>Intercept_3</code> is sampled as
+<code>Intercept_3_end_</code>) cannot be initialized directly. See <code>mcp_reparam</code> in <a href="mcp-package.html">mcp-package</a>.
 Defaults to <code>NULL</code> where all chains start at equispaced change points and the prior medians.
 User-provided <code>inits</code> take precedence.</p></dd>
 
@@ -176,16 +179,6 @@ User-provided <code>inits</code> take precedence.</p></dd>
 you want to tweak the code in <code>fit$jags_code</code> and run it within the <code>mcp</code>
 framework. R-side simulation and prediction methods continue to use the
 mcp-default formulas (with warning), so they may no longer match custom JAGS code.</p></dd>
-
-
-<dt id="arg-reparam">reparam<a class="anchor" aria-label="anchor" href="#arg-reparam"></a></dt>
-<dd><p>Logical. Whether to enable reparameterization for faster mixing. Ignored
-when <code>jags_code</code> is supplied. Read more in
-<a href="https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations">From formulas to sampler code</a>.</p><ul><li><p><code>TRUE</code> (default) This changes only <code>fit$jags_code</code> and sampling efficiency, not the
-model, the priors, or the posterior.</p></li>
-<li><p><code>FALSE</code> runs the plain model, except that the segment-1 intercept is still sampled at the
-midpoint of segment 1. This mostly serves the pedagogical purpose of transparency.</p></li>
-</ul></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -206,7 +199,7 @@ the model, while a list or <code>FALSE</code> overrides the diagnostic footer.</
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical. Suppress routine JAGS output and mcp sampling-status
-messages? Defaults to <code>FALSE</code>.</p></dd>
+messages? Defaults to <code>FALSE</code>. Use <code>options(mcp_quiet = TRUE)</code> to change the default for the session.</p></dd>
 
 
 <dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
@@ -381,8 +374,8 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                                        bounds </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 cp    dirichlet(alpha = 1)                         [min(t…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 cp    dirichlet(alpha = 1)                         [cp_1,…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)                         [min(t…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)                         [cp_1,…</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   </span>

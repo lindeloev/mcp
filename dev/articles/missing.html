@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Missing responses and imputation • mcp</title>
+<title>Missing data • mcp</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -17,7 +17,7 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Missing responses and imputation">
+<meta property="og:title" content="Missing data">
 <meta name="robots" content="noindex">
 <!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-1026978-3"></script><script>
   window.dataLayer = window.dataLayer || [];
@@ -100,7 +100,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Missing responses and imputation</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Missing data</h1>
             
             <h4 data-toc-skip class="date">2026-10-12</h4>
       
@@ -110,29 +110,80 @@
 
     
     
-<p><code>mcp</code> allows missing values in the response. JAGS treats
-the unknown responses as latent variables and samples them together with
-the model parameters. <code>mcp</code> retains those posterior
-imputation draws for later use. This article shows how to inspect
-expected responses, posterior imputations, and their uncertainty.</p>
-<div class="section level2">
-<h2 id="an-example-with-missing-responses">An example with missing responses<a class="anchor" aria-label="anchor" href="#an-example-with-missing-responses"></a>
-</h2>
-<p>The built-in example has a change in slope, a strong difference
-between two states, scattered missing responses, and a short run of
-missing responses. First, let’s fit the example and visualize it:</p>
+<p><code>mcp</code> allows missing values (<code>NA</code>) in the
+response. This article covers two consequences of that:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Change points in voids:</strong> Change points can be
+inferred in regions with no observed responses.</li>
+<li>
+<strong>Imputing missing responses:</strong> JAGS treats the missing
+responses as latent variables and samples them together with the model
+parameters. You can inspect expected responses with
+<code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and the imputation distribution with
+<code><a href="../reference/execute-mcp-model.html">predict()</a></code>.</li>
+</ol>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="inferring-change-points-in-voids">Inferring change points in voids<a class="anchor" aria-label="anchor" href="#inferring-change-points-in-voids"></a>
+</h2>
+<p>Sometimes the interest is not in recovering individual missing
+responses, but in how gaps in the data affect inference about the change
+points. To demonstrate this, <code>mcp_example("void")</code> takes the
+data from <code>mcp_example("demo")</code> and sets the responses near
+both change points to <code>NA</code> (<code>25 &lt; time &lt; 42</code>
+and <code>70 &lt; time &lt; 80</code>). The top panel shows the fit to
+the full data and the bottom panel the fit with the voids:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_void</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"void"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.</span></span></code></pre>
 <p><img src="missing_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
-<p>The ordinary plot shows the observed responses and model estimates.
-Missing responses are omitted. See below how they can be visualized.</p>
-<p>The underlying data contain some missing responses in
-<code>y</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>Notice that <code>mcp</code> can infer change points in regions with
+no observed data. The first change point joins a plateau to a slope. Its
+location in the void is mostly informed by extrapolating the two
+segments until they meet, and the uncertainty is greater than in the
+full data because fewer data inform these trends. In principle, it could
+be known to great precision if the segments’ trends were very well
+defined.</p>
+<p>The second change point is different because segment 3 is disjoined
+from segment 2. There is nothing in the void that tells where the jump
+happened, so the change point posterior is roughly uniform across the
+void. This is true for any gap between data: the narrow gap between two
+neighboring data points (top panel) also yields a uniform-like
+posterior, just on a much smaller range.</p>
+<p>We can quantify how much of each change point posterior is within its
+void using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_void</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"cp_1 &gt; 25 &amp; cp_1 &lt; 42"</span>,</span>
+<span>  <span class="st">"cp_2 &gt; 70 &amp; cp_2 &lt; 80"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
+<span><span class="co">##   hypothesis             mean    sd lower upper  prob    BF</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1 &gt; 25 &amp; cp_1 &lt; 42    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span> 0.937    <span style="color: #BB0000;">NA</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2 &gt; 70 &amp; cp_2 &lt; 80    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span> 0.840    <span style="color: #BB0000;">NA</span></span></span></code></pre>
+</div>
+<div class="section level2">
+<h2 id="imputing-missing-responses">Imputing missing responses<a class="anchor" aria-label="anchor" href="#imputing-missing-responses"></a>
+</h2>
+<div class="section level3">
+<h3 id="an-example-with-missing-responses">An example with missing responses<a class="anchor" aria-label="anchor" href="#an-example-with-missing-responses"></a>
+</h3>
+<p>The built-in example has a change in slope, a strong difference
+between two states, scattered missing responses, and a short run of
+missing responses:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.</span></span></code></pre>
+<p><img src="missing_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<p>The ordinary plot shows the observed responses and model estimates
+but omits missing responses. <a href="#visualizing-imputations">Below</a>, we add them to the plot.
+These are the rows with missing responses in <code>y</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##     y  x state</span></span>
 <span><span class="co">## 1  NA  8     B</span></span>
@@ -146,15 +197,18 @@ Missing responses are omitted. See below how they can be visualized.</p>
 <span><span class="co">## 9  NA 84     B</span></span>
 <span><span class="co">## 10 NA 96     B</span></span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="expected-responses-and-predictions">Expected responses and predictions<a class="anchor" aria-label="anchor" href="#expected-responses-and-predictions"></a>
-</h2>
+<div class="section level3">
+<h3 id="expected-responses-and-predictions">Expected responses and predictions<a class="anchor" aria-label="anchor" href="#expected-responses-and-predictions"></a>
+</h3>
 <p><code><a href="../reference/execute-mcp-model.html">predict()</a></code> evaluates the posterior predictive
 distribution at the missing rows, generating fresh simulated responses
 that include residual variation. The predictions come from trends in
 non-missing data and what they imply, given the observed covariates
-(<code>state</code> and <code>x</code>), for the missing rows.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+(<code>state</code> and <code>x</code>), for the missing rows. Without
+<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code> terms, as here, these predictions
+have the same distribution as the JAGS imputations, so we use them as
+imputations below.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Mean and 80% posterior predictive interval for missing data</span></span>
 <span><span class="va">imputed</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
@@ -175,7 +229,7 @@ non-missing data and what they imply, given the observed covariates
 <p><code><a href="../reference/execute-mcp-model.html">fitted()</a></code> has the same syntax as <code><a href="../reference/execute-mcp-model.html">predict()</a></code>
 but returns the posterior <em>expected</em> response. Its intervals are
 narrower because they do not include response variation:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Mean and 80% posterior interval of the expected response at missing data</span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -193,14 +247,14 @@ narrower because they do not include response variation:</p>
 <span><span class="co">## <span style="color: #BCBCBC;"> 9</span>    <span style="color: #BB0000;">NA</span>    84 B      34.2 0.879   33.1   35.4</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">10</span>    <span style="color: #BB0000;">NA</span>    96 B      29.2 1.28    27.6   30.9</span></span></code></pre>
 </div>
-<div class="section level2">
-<h2 id="visualize-imputations-on-the-model-plot">Visualize imputations on the model plot<a class="anchor" aria-label="anchor" href="#visualize-imputations-on-the-model-plot"></a>
-</h2>
+<div class="section level3">
+<h3 id="visualizing-imputations">Visualizing imputations<a class="anchor" aria-label="anchor" href="#visualizing-imputations"></a>
+</h3>
 <p>Imputations are not added to <code><a href="../reference/plot.mcpfit.html">plot()</a></code> automatically. Since
 <code><a href="../reference/plot.mcpfit.html">plot()</a></code> returns a ggplot, it is easy to extend. Here an
 <code>×</code> marks the posterior mean and a vertical line shows the
 central 80% imputation interval:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, color_by <span class="op">=</span> <span class="st">"state"</span>, q_predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span></span>
@@ -220,7 +274,7 @@ central 80% imputation interval:</p>
 <span>    shape <span class="op">=</span> <span class="fl">4</span>,  <span class="co"># an "x"</span></span>
 <span>    size <span class="op">=</span> <span class="fl">2</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="missing_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 <p>This deliberately distinguishes imputed values from the solid
 observed points. You can change the interval width, marker, color, or
 add a subset of the missing rows using ordinary <code>dplyr</code> and
@@ -229,23 +283,24 @@ add a subset of the missing rows using ordinary <code>dplyr</code> and
 Use <code>summary = FALSE</code> when you need the individual draws
 instead. Here we plot the imputation distribution for each missing
 row:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">missing_draws</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.prediction</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="missing_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
+</div>
 <div class="section level3">
-<h3 id="making-probabilistic-statements-about-missing-responses">Making probabilistic statements about missing responses<a class="anchor" aria-label="anchor" href="#making-probabilistic-statements-about-missing-responses"></a>
+<h3 id="probabilistic-statements-about-missing-responses">Probabilistic statements about missing responses<a class="anchor" aria-label="anchor" href="#probabilistic-statements-about-missing-responses"></a>
 </h3>
 <p>Sometimes, the missing response is of direct interest. For example,
 you may want to know the probability that a missing response is above a
 threshold. You can use <code><a href="../reference/execute-mcp-model.html">predict()</a></code> with
 <code>summary = FALSE</code> to get all posterior predictive draws and
 then calculate probabilities of various statements. For example:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.data_row</span> <span class="op">==</span> <span class="fl">19</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
@@ -259,7 +314,7 @@ then calculate probabilities of various statements. For example:</p>
 <span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.151   0.102     0.747</span></span></code></pre>
 </div>
 <div class="section level3">
-<h3 id="other-continuous-predictors">Other continuous predictors<a class="anchor" aria-label="anchor" href="#other-continuous-predictors"></a>
+<h3 id="imputations-and-other-continuous-predictors">Imputations and other continuous predictors<a class="anchor" aria-label="anchor" href="#imputations-and-other-continuous-predictors"></a>
 </h3>
 <p>Plotting differs from <code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and
 <code><a href="../reference/execute-mcp-model.html">predict()</a></code> in one respect: The smooth curves in
@@ -281,45 +336,11 @@ when those differences deserve emphasis.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="missing-data-around-change-points">Missing data around change points<a class="anchor" aria-label="anchor" href="#missing-data-around-change-points"></a>
+<h2 id="supported-models-and-limitations">Supported models and limitations<a class="anchor" aria-label="anchor" href="#supported-models-and-limitations"></a>
 </h2>
-<p>Sometimes the interest is not in recovering individual missing
-responses, but in how gaps in the data affect inference about the change
-points. To demonstrate this, <code>mcp_example("void")</code> takes the
-data from <code>mcp_example("demo")</code> and removes the responses
-near both change points (<code>25 &lt; time &lt; 42</code> and
-<code>70 &lt; time &lt; 80</code>). The top panel shows the fit to the
-full data and the bottom panel the fit with the voids:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_void</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"void"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
-<p>Notice that <code>mcp</code> can infer change points in regions with
-no missing data. The greater uncertainty in the change point location
-between segment 1 and 2 comes mostly from linear extrapolation between
-the segments and less data. In principle, it could be known to great
-precision if the segments’ trends were very well defined.</p>
-<p>The location of the disjoined change between segment 2 and 3 is
-different: the location is unknowable for disjoined segments in a void,
-and the change point posterior reflects that. Any distance between data
-is a void for disjoined segments. This can be seen in the uniform-like
-change point posterior both for the large void (bottom panel) and the
-simple between-datapoints void (top panel).</p>
-<p>We can quantify how much of the change point posteriors is within
-each actual void using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_void</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"cp_1 &gt; 25 &amp; cp_1 &lt; 42"</span>,</span>
-<span>  <span class="st">"cp_2 &gt; 70 &amp; cp_2 &lt; 80"</span></span>
-<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
-<span><span class="co">##   hypothesis            mean  sd    lower upper  prob    BF</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1 &gt; 25 &amp; cp_1 &lt; 42 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    0.937    <span style="color: #BB0000;">NA</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2 &gt; 70 &amp; cp_2 &lt; 80 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    0.840    <span style="color: #BB0000;">NA</span></span></span></code></pre>
-</div>
-<div class="section level2">
-<h2 id="what-else-can-be-modeled">What else can be modeled?<a class="anchor" aria-label="anchor" href="#what-else-can-be-modeled"></a>
-</h2>
+<div class="section level3">
+<h3 id="supported-model-features">Supported model features<a class="anchor" aria-label="anchor" href="#supported-model-features"></a>
+</h3>
 <p>Missing responses work with the usual <code>mcp</code> model
 features. For example, you can:</p>
 <ul>
@@ -345,9 +366,9 @@ responses to be missing. As with ordinary regression using incomplete
 outcomes, interpretation relies on the missing responses being
 reasonably explained by the observed predictors and model structure.</p>
 </div>
-<div class="section level2">
-<h2 id="model-evaluation-and-time-series-histories">Model evaluation and time-series histories<a class="anchor" aria-label="anchor" href="#model-evaluation-and-time-series-histories"></a>
-</h2>
+<div class="section level3">
+<h3 id="model-evaluation-and-time-series">Model evaluation and time series<a class="anchor" aria-label="anchor" href="#model-evaluation-and-time-series"></a>
+</h3>
 <p>Missing rows are not treated as observed contributions to
 <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, or <code><a href="../reference/loo.mcpfit.html">waic()</a></code>. For
 ordinary non-AR/MA models, the remaining observed rows can still be used
@@ -367,15 +388,15 @@ rather than taken from the observed responses. The default predictions
 condition on observed responses and retained imputations as histories,
 but still generate fresh outcomes at every row.</p>
 </div>
-<div class="section level2">
-<h2 id="original-data-versus-new-data">Original data versus new data<a class="anchor" aria-label="anchor" href="#original-data-versus-new-data"></a>
-</h2>
+<div class="section level3">
+<h3 id="predictions-for-new-data">Predictions for new data<a class="anchor" aria-label="anchor" href="#predictions-for-new-data"></a>
+</h3>
 <p>In AR/MA models, the retained JAGS draws belong to the missing rows
 in the original fitted data and supply their histories. For the
 non-AR/MA example in this article, predictions for genuinely new data
 are ordinary posterior predictions, evaluated just like predictions at
 the missing rows:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">80</span><span class="op">)</span>,</span>
 <span>  state <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">state</span><span class="op">)</span><span class="op">)</span></span>
@@ -385,8 +406,9 @@ the missing rows:</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
 <span><span class="co">##       x state .mean   .sd .lower .upper</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>    20 A      15.7  4.32   10.2   21.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>    80 B      35.9  4.38   30.3   41.5</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    20 A      15.8  4.40   10.2   21.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>    80 B      35.9  4.42   30.3   41.5</span></span></code></pre>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

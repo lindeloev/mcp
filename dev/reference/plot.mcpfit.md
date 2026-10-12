@@ -142,8 +142,7 @@ plot_dpar(
     inverse link function.
 
   - `"linear"`: return on the linear-predictor (link) scale, where the
-    linear trends are modeled. A linear scale is only applicable when
-    `type == "fitted"` and `dpar` is not `NULL`.
+    linear trends are modeled.
 
 - at:
 
@@ -163,8 +162,7 @@ plot_dpar(
 
 - dpar:
 
-  What distributional parameter to evaluate. This is only relevant when
-  `type == "fitted"`. E.g.,
+  What distributional parameter to evaluate. E.g.,
 
   - `"epred"` (default): Expected response from the full model (or
     `NULL` for compatibility with brms etc.).

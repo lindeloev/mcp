@@ -1,4 +1,4 @@
-# Transform an mcp prior to the parameterization used by JAGS.
+# Transform an mcp prior to the parameterization used by JAGS
 
 **\[deprecated\]**
 

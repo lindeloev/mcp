@@ -20,11 +20,10 @@ mcp(
   warmup = 1000,
   inits = NULL,
   jags_code = NULL,
-  reparam = TRUE,
   seed = NULL,
   diagnostics = list(),
-  quiet = FALSE,
-  cores = NULL,
+  quiet = getOption("mcp_quiet", FALSE),
+  cores = lifecycle::deprecated(),
   adapt = lifecycle::deprecated()
 )
 ```
@@ -43,11 +42,7 @@ mcp(
 
   Table-like data in long format (data.frame, tibble, data.table, etc.)
   with syntactic column names. Missing values in the response variable
-  are imputed using the posterior predictive.
-  [`fitted.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  or
-  [`predict.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  details how to see the imputed values.
+  are imputed jointly with the parameters.
 
 - prior:
 
@@ -65,13 +60,17 @@ mcp(
 
 - family:
 
-  A supported family:
-  [`gaussian()`](https://rdrr.io/r/stats/family.html),
-  [`binomial()`](https://rdrr.io/r/stats/family.html),
-  [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md),
-  [`poisson()`](https://rdrr.io/r/stats/family.html), or
-  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md),
-  with a supported link function; e.g., `gaussian(link = "log")`.
+  A supported family and link function:
+
+  - `gaussian(link = "identity")` or `gaussian(link = "log")`
+
+  - [`binomial()`](https://rdrr.io/r/stats/family.html) or
+    [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)
+    with `link = "logit"`, `"probit"`, or `"identity"`
+
+  - `poisson(link = "log")` or `poisson(link = "identity")`
+
+  - `negbinomial(link = "log", link_shape = "log")`
 
 - par_x:
 
@@ -113,9 +112,15 @@ mcp(
 
 - inits:
 
-  A list of initial values for the parameters. This can be useful if a
-  model fails to converge. Read more in
-  [`jags.model`](https://rdrr.io/pkg/rjags/man/jags.model.html).
+  A named list of initial values for the parameters, e.g.,
+  `list(Intercept_1 = 10)`, or a list of such lists with one per chain.
+  This can be useful if a model fails to converge. Names must be
+  stochastic nodes in `fit$jags_code` (lines with `~`). Change points,
+  fixed parameters, and parameters that `mcp` samples via
+  reparameterization (e.g., `Intercept_3` is sampled as
+  `Intercept_3_end_`) cannot be initialized directly. See `mcp_reparam`
+  in
+  [mcp-package](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md).
   Defaults to `NULL` where all chains start at equispaced change points
   and the prior medians. User-provided `inits` take precedence.
 
@@ -126,20 +131,6 @@ mcp(
   framework. R-side simulation and prediction methods continue to use
   the mcp-default formulas (with warning), so they may no longer match
   custom JAGS code.
-
-- reparam:
-
-  Logical. Whether to enable reparameterization for faster mixing.
-  Ignored when `jags_code` is supplied. Read more in [From formulas to
-  sampler
-  code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
-
-  - `TRUE` (default) This changes only `fit$jags_code` and sampling
-    efficiency, not the model, the priors, or the posterior.
-
-  - `FALSE` runs the plain model, except that the segment-1 intercept is
-    still sampled at the midpoint of segment 1. This mostly serves the
-    pedagogical purpose of transparency.
 
 - seed:
 
@@ -164,7 +155,8 @@ mcp(
 - quiet:
 
   Logical. Suppress routine JAGS output and mcp sampling-status
-  messages? Defaults to `FALSE`.
+  messages? Defaults to `FALSE`. Use `options(mcp_quiet = TRUE)` to
+  change the default for the session.
 
 - cores:
 
@@ -352,8 +344,8 @@ prior_summary(demo_fit)
 #> # A tibble: 7 × 5
 #>   parameter   segment dpar  prior                                        bounds 
 #>   <chr>         <int> <chr> <chr>                                        <chr>  
-#> 1 cp_1              2 cp    dirichlet(alpha = 1)                         [min(t…
-#> 2 cp_2              3 cp    dirichlet(alpha = 1)                         [cp_1,…
+#> 1 cp_1              2 NA    dirichlet(alpha = 1)                         [min(t…
+#> 2 cp_2              3 NA    dirichlet(alpha = 1)                         [cp_1,…
 #> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
 #> 4 time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   
 #> 5 Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   

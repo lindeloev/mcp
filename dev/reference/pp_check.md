@@ -99,10 +99,10 @@ pp_check(
     that part of the model.
 
   - Character vector of group-level parameter names, e.g.,
-    `c("cp_1_id", "x_2_id")`. `*` is a wildcard, e.g., `"state*_1_id"`
-    selects all levels of a factor and `"*_id"` selects all effects by
-    `id`. See names using `ranef(fit)`. Can be combined, e.g.,
-    `c("cp", "sigma_*")`.
+    `c("cp_1_id", "x_2_id")`. **\[experimental\]** `*` is a wildcard,
+    e.g., `"state*_1_id"` selects all levels of a factor and `"*_id"`
+    selects all effects by `id`. See names using `ranef(fit)`. Can be
+    combined, e.g., `c("cp", "sigma_*")`.
 
 - arma:
 
@@ -151,7 +151,7 @@ support `prior = TRUE` or `newdata`.
 ## See also
 
 [`plot.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-[`pp_eval`](https://lindeloev.github.io/mcp/dev/reference/pp_eval.md)
+[`predict.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 
 plot_pars plot_dpar pp_check
 

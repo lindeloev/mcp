@@ -28,8 +28,8 @@
   comparison](https://lindeloev.github.io/mcp/dev/articles/comparison.md):
 - [Fits and
   predictions](https://lindeloev.github.io/mcp/dev/articles/predict.md):
-- [Missing responses and
-  imputation](https://lindeloev.github.io/mcp/dev/articles/missing.md):
+- [Missing
+  data](https://lindeloev.github.io/mcp/dev/articles/missing.md):
 
 ### Implementation
 
