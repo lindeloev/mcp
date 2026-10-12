@@ -289,7 +289,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     ps = prior_summary(fit, verbose = TRUE)
     int_row = ps[ps$parameter == "Intercept_1", ]
     testthat::expect_match(int_row$rule, "- offset", fixed = TRUE)
-    testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5; on the level at min(x)")
+    testthat::expect_equal(int_row$description, "Robustly centered log-rate intercept with a minimum scale of 2.5; on the value at min(x)")
 
     # A later segment must include its own offset.
     fit_multi = mcp(
@@ -312,7 +312,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     testthat::expect_equal(fit_multi$prior$Intercept_3, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
 
     ps_multi = prior_summary(fit_multi, verbose = TRUE)
-    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5; on the level at min(x)")
+    testthat::expect_equal(ps_multi$description[ps_multi$parameter == "Intercept_1"], "Robustly centered log-rate intercept with a minimum scale of 2.5; on the value at min(x)")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_2"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
     testthat::expect_match(ps_multi$description[ps_multi$parameter == "Intercept_3"], "Robustly centered log-(count|mean) intercept with a minimum scale of 2.5")
 
@@ -654,7 +654,7 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   expect_match(fit$jags_code, paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
   ps = prior_summary(fit, verbose = TRUE)
   expect_equal(ps$rule[ps$parameter == "Intercept_1"], "normal(mean = mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, sd = 2.5 * sd(y))")
-  expect_match(ps$description[ps$parameter == "Intercept_1"], "on the level at min(x)", fixed = TRUE)
+  expect_match(ps$description[ps$parameter == "Intercept_1"], "on the value at min(x)", fixed = TRUE)
 
   # Bounded priors shift their bounds too
   data$y = rpois(30, 10)
@@ -689,7 +689,7 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
 })
 
 
-test_that("the prior on the level at min(x) matches the default intercept prior", {
+test_that("the prior on the value at min(x) matches the default intercept prior", {
   data = data.frame(x = 101:130, y = 1:30)
   get_draws = function(prior = list()) {
     fit = suppressWarnings(mcp(

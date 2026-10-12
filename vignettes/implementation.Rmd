@@ -226,7 +226,7 @@ This is the same model because $e_k = \beta_{k,0} + \beta_{k,1} w_k$ is a mere s
 
 ## When mcp does not reparameterize
 
-`mcp` only reparameterizes its default `dnorm()` and `dt()` priors, and for the segment-1 intercept also truncated and `dunif()` priors. User-specified priors are sampled as written, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.
+`mcp` only reparameterizes its default `dnorm()` and `dt()` priors, and for the segment-1 intercept also truncated and `dunif()` priors. User-specified priors are sampled unchanged, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.
 
 
 # The model in R

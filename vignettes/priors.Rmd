@@ -49,7 +49,7 @@ Distribution strings use JAGS names and argument order, including `T()` truncati
 
 Other notes:
 
-- Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified population-level bounds are respected as written. When change points have group-level deviations, their realized locations are constrained to remain ordered within every group.
+- Default population-level change-point priors are ordered. For user priors, `mcp` adds truncation (e.g., `T(cp_1, )`) only when the prior has neither explicit truncation nor an inherently bounded form such as `dunif()` or `dirichlet()`. User-specified population-level bounds are kept unchanged. When change points have group-level deviations, their realized locations are constrained to remain ordered within every group.
 
 - `mcp` allows inserting data-dependent values: for example, `min(x)`, `max(x)`, `mean(y)`, `median(y)`, `sd(y)`, `mad(y)`, `max(x) - min(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older `mcp` v0.3.4 uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
 
@@ -261,7 +261,7 @@ The number in parentheses is a common $\alpha$ concentration parameter (all chan
 
 You can customize change point priors as shown in the initial example. Beware that the nature of the priors changes when truncation is applied; use `plot_pars(fit, prior = TRUE)` to inspect the realized prior distributions.
 
-For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` automatically adds default bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation, including `T(,)`, or a `dunif()` prior is used as written. Relaxing the order can cause label-switching between segments and make sampling difficult, so inspect the resulting prior carefully.
+For an otherwise unbounded user prior such as `cp_2 = "dnorm(40, 10)"`, `mcp` automatically adds default bounds equivalent to `cp_2 = "dnorm(40, 10) T(cp_1, max(x))"`. An explicit truncation, including `T(,)`, or a `dunif()` prior is used unchanged. Relaxing the order can cause label-switching between segments and make sampling difficult, so inspect the resulting prior carefully.
 
 
 # Default priors

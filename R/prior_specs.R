@@ -475,7 +475,7 @@ add_intercept_references = function(specs, predictors, context) {
       bounds = vapply(parse_prior_call(parts$truncation)$args, shift, character(1))
       specs$code[row] = paste0(specs$code[row], " T(", paste(bounds, collapse = ", "), ")")
     }
-    what = if (coefs$prior_type[i] == "Intercept") "level" else "difference"
+    what = if (coefs$prior_type[i] == "Intercept") "value" else "difference"
     specs$description[row] = paste0(specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
   }
   specs
