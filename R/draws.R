@@ -111,7 +111,8 @@ as.array.mcpfit = function(x, ...) {
 
 #' @exportS3Method tidybayes::tidy_draws
 tidy_draws.mcpfit = function(model, ...) {
-  posterior::as_draws_df(model, ...)
+  # A plain tibble, like tidybayes' own method, so spread_draws() doesn't warn about dropping draws_df metadata
+  tibble::as_tibble(posterior::as_draws_df(model, ...))
 }
 
 

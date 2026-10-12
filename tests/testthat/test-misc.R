@@ -441,12 +441,18 @@ test_that("posterior draws accessor preserves the stored chains", {
     expect_s3_class(td, "tbl_df")
     expect_true("Intercept_1" %in% names(td))
 
-    sd_df = tidybayes::spread_draws(demo_fit, Intercept_1, cp_1)
+    expect_false(inherits(td, "draws"))
+    expect_no_warning((sd_df = tidybayes::spread_draws(demo_fit, Intercept_1, cp_1)))
     expect_s3_class(sd_df, "tbl_df")
     expect_true(all(c("Intercept_1", "cp_1") %in% names(sd_df)))
 
+    # mcp's own generics, callable without rstantools
+    newdata = demo_fit$data[1:3, , drop = FALSE]
+    expect_equal(dim(posterior_epred(demo_fit, newdata, draws = 2)), c(2, 3))
+    expect_equal(dim(posterior_predict(demo_fit, newdata, draws = 2)), c(2, 3))
+    expect_equal(dim(posterior_linpred(demo_fit, newdata = newdata, draws = 2)), c(2, 3))
+
     if (requireNamespace("rstantools", quietly = TRUE)) {
-      newdata = demo_fit$data[1:3, , drop = FALSE]
       expect_equal(dim(rstantools::posterior_epred(demo_fit, newdata, draws = 2)), c(2, 3))
       expect_equal(dim(rstantools::posterior_predict(demo_fit, newdata, draws = 2)), c(2, 3))
       expect_equal(dim(rstantools::posterior_linpred(demo_fit, newdata = newdata, draws = 2)), c(2, 3))

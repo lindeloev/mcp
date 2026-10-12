@@ -65,7 +65,6 @@
 #'   supply missing GARMA histories. In models with group-level effects, this
 #'   currently requires all such effects (`group_effects = TRUE`).
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
-#'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". More draws trade speed for accuracy.
 #' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #' @param scale One of
