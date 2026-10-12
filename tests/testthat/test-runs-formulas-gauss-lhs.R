@@ -10,7 +10,8 @@ bad_y = list(
   list(y ~ 1,  # Intercept y
        1 ~ 1 ~ 1),
   list(bad_y_char ~ 1),  # Character y
-  list(bad_y_factor ~ 1)  # Factor y
+  list(bad_y_factor ~ 1),  # Factor y
+  list(log(y) ~ 1)  # Transformed y
 )
 
 test_bad(bad_y)

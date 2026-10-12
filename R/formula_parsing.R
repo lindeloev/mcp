@@ -331,6 +331,8 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
   y_col = attr(stats::terms(to_formula(lhs)), "term.labels")
   if (length(y_col) != 1)
     stop("There should be exactly one response variable. Got ", length(y_col), " in segment ", i)
+  if (!is.symbol(str2lang(y_col)))
+    stop("The response must be a data column name. Got '", y_col, "' in segment ", i, ". Transform it in the data before fitting, e.g., `data$y_log = log(data$y)`.", call. = FALSE)
   response$y = y_col
 
   term_labels = character()
