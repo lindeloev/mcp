@@ -194,7 +194,7 @@ niterations = posterior::niterations
 #' by the number of selected group levels).
 #'
 #' @inheritParams mcmclist_draws
-#' @inheritParams pp_eval
+#' @inheritParams fitted.mcpfit
 #' @param population
 #'   * `TRUE` All population-level model parameters.
 #'   * `FALSE` No population-level effects. Same as `c()`.

@@ -6,7 +6,7 @@
 #'
 #' @rdname pp_check
 #' @aliases pp_check pp_check.mcpfit
-#' @inheritParams pp_eval
+#' @inheritParams fitted.mcpfit
 #' @param type String specifying the type of plot. See \code{\link[bayesplot:PPC-overview]{bayesplot::available_ppc()}}
 #'   for available plot types, omitting the \code{"ppc_"} prefix (e.g., \code{"dens_overlay"},
 #'   \code{"ribbon"}, \code{"intervals"}).
@@ -20,7 +20,7 @@
 #'   checks use posterior draws and the original fitted data, so they do not
 #'   support `prior = TRUE` or `newdata`.
 #' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
-#' @seealso \code{\link{plot.mcpfit}} \code{\link{pp_eval}}
+#' @seealso \code{\link{plot.mcpfit}} \code{\link{predict.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export pp_check

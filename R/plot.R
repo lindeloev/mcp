@@ -42,42 +42,7 @@ resolve_plot_quantiles = function(q, arg) {
 }
 
 
-#' Underlies `plot()` and `plot_dpar()`
-#'
-#' @keywords internal
-#' @inheritParams pp_eval
-#' @param x An \code{\link{mcpfit}} object
-#' @param q_fit Whether to plot quantiles of the posterior (fitted value).
-#'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
-#'       `q_fit = c(0.025, 0.975)`.
-#'   * `FALSE` No quantiles
-#'   * A vector of quantiles (strictly between 0 and 1). For example, `q_fit = 0.5`
-#'       plots the median and `q_fit = c(0.2, 0.8)` plots the 20% and 80%
-#'       quantiles.
-#' @param q_predict Same as `q_fit`, but for the posterior predictive interval.
-#' @param facet_by Character vector. Names of categorical data columns to split to facets.
-#'   Can be grouping-factor or categorical predictor columns.
-#' @param color_by A character vector naming categorical predictor or grouping columns to color by.
-#'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
-#'   `"auto"` colors by the categorical predictor if the model has exactly one and it is not in `facet_by`. `NULL` disables color.
-#' @param at Named list setting additional continuous predictors to fixed values.
-#'   They default to their observed means. Family-specific response auxiliaries
-#'   can be supplied as explicit scalar design values. Passed to
-#'   `interpolate_newdata()`.
-#' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
-#'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
-#'   Note that lines always plot fitted values - not predicted.
-#'   For posterior predictive intervals, see the `q_predict` argument.
-#' @param geom_data String. One of "point", "line" (good for time-series),
-#'   or FALSE (do not plot).
-#' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
-#' @param rate Logical scalar. For binomial models, plot the observed or expected
-#'   success proportion (`rate = TRUE`, the default here) or counts (`rate = FALSE`).
-#'   This default is the opposite of `fitted()` and `predict()`, which return
-#'   counts by default; plotting proportions keeps curves comparable across
-#'   varying trial counts. Predictions and count-scale fitted values require a
-#'   trials column in `newdata`/`at`.
-#' @return A \pkg{ggplot2} object.
+# Underlies plot() and plot_dpar(). Arguments are documented in ?plot.mcpfit.
 get_plot = function(x,
                        q_fit = FALSE,
                        q_predict = FALSE,
@@ -409,7 +374,38 @@ get_plot = function(x,
 #'
 #' @aliases plot plot.mcpfit
 #' @export
-#' @inheritParams get_plot
+#' @param x An \code{\link{mcpfit}} object
+#' @param q_fit Whether to plot quantiles of the posterior (fitted value).
+#'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
+#'       `q_fit = c(0.025, 0.975)`.
+#'   * `FALSE` No quantiles
+#'   * A vector of quantiles (strictly between 0 and 1). For example, `q_fit = 0.5`
+#'       plots the median and `q_fit = c(0.2, 0.8)` plots the 20% and 80%
+#'       quantiles.
+#' @param q_predict Same as `q_fit`, but for the posterior predictive interval.
+#' @param facet_by Character vector. Names of categorical data columns to split to facets.
+#'   Can be grouping-factor or categorical predictor columns.
+#' @param color_by A character vector naming categorical predictor or grouping columns to color by.
+#'   Multiple columns are combined as an interaction. Curves and quantiles remain separate for grouping columns not mapped to color.
+#'   `"auto"` colors by the categorical predictor if the model has exactly one and it is not in `facet_by`. `NULL` disables color.
+#' @param at Named list setting additional continuous predictors to fixed values.
+#'   They default to their observed means. Family-specific response auxiliaries
+#'   can be supplied as explicit scalar design values. Passed to
+#'   `interpolate_newdata()`.
+#' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
+#'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
+#'   Note that lines always plot fitted values - not predicted.
+#'   For posterior predictive intervals, see the `q_predict` argument.
+#' @param geom_data String. One of "point", "line" (good for time-series),
+#'   or FALSE (do not plot).
+#' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
+#' @param rate Logical scalar. For binomial models, plot the observed or expected
+#'   success proportion (`rate = TRUE`, the default here) or counts (`rate = FALSE`).
+#'   This default is the opposite of `fitted()` and `predict()`, which return
+#'   counts by default; plotting proportions keeps curves comparable across
+#'   varying trial counts. Predictions and count-scale fitted values require a
+#'   trials column in `newdata`/`at`.
+#' @inheritParams fitted.mcpfit
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Must be empty. Reserved for future use.
 #' @encoding UTF-8
