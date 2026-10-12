@@ -104,25 +104,14 @@ get_segment_tables = function(model, data, family, par_x) {
     )
   }
 
-  # `segments`: shared segment metadata with change-point info joined back in
-  # by `segment`. Segment 1 has no row in `cps` (there is no change point before
-  # it), so it is given the fixed lower data limit `cp_0` explicitly. Kept in
-  # this per-segment shape because most consumers look up the change point
-  # *starting* a given segment, not the change point by its own number.
+  # `segments`: shared segment metadata with the code of the change points that start
+  # and end each segment. Segment 1 starts at the fixed lower data limit `cp_0` and
+  # the last segment ends at the upper data limit `cp_K`.
   segments = segment_metadata %>%
-    dplyr::left_join(
-      dplyr::select(
-        cps, "segment",
-        cp_name = "name", cp_group_col = "group_col",
-        cp_sd = "sd_name", cp_group = "group_name", cp_code_form = "code"
-      ),
-      by = "segment"
-    ) %>%
+    dplyr::left_join(dplyr::select(cps, "segment", cp_group_col = "group_col", cp_start = "code"), by = "segment") %>%
     dplyr::mutate(
-      cp_name = dplyr::coalesce(.data$cp_name, "cp_0"),
-      cp_code_form = dplyr::coalesce(.data$cp_code_form, "cp_0"),
-      cp_start = .data$cp_code_form,
-      cp_end = c(.data$cp_code_form[-1], paste0("cp_", dplyr::n()))
+      cp_start = dplyr::coalesce(.data$cp_start, "cp_0"),
+      cp_end = c(.data$cp_start[-1], paste0("cp_", dplyr::n()))
     )
 
   list(segments = segments, cps = cps)
