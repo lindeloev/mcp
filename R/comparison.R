@@ -3,10 +3,10 @@
 
 #' Information Criteria for Model Comparison
 #'
-#' Compare models using \code{\link[loo]{loo_compare}} and \code{\link[loo]{loo_model_weights}}.
+#' Compare models using \code{\link[loo]{loo_compare}} (re-exported by mcp) and \code{\link[loo]{loo_model_weights}}.
 #' Read more in \code{\link[loo]{loo}}.
 #'
-#' @aliases loo LOO loo.mcpfit
+#' @aliases loo LOO loo.mcpfit loo_compare
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
 #' @param by_row `TRUE` calls \code{\link[loo]{loo.function}} to compute log-likelihood
@@ -44,6 +44,7 @@
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export loo
+#' @export loo_compare
 #' @export
 #' @examples
 #' \donttest{
@@ -60,7 +61,7 @@
 #' # Compute LOO for each and compare (works for waic(fit) too)
 #' loo1 = loo(fit1)
 #' loo2 = loo(fit2)
-#' loo::loo_compare(loo1, loo2)
+#' loo_compare(loo1, loo2)
 #' }
 loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(),
                       ndraws = NULL, nsamples = lifecycle::deprecated()) {

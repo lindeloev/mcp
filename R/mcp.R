@@ -141,7 +141,7 @@
 #' fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
 #' demo_loo = loo(demo_fit)
 #' null_loo = loo(fit_null)
-#' loo::loo_compare(demo_loo, null_loo)
+#' loo_compare(demo_loo, null_loo)
 #'
 #' # Inspect the prior. Useful for prior predictive checks.
 #' summary(demo_fit, prior = TRUE)
