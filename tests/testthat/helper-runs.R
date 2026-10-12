@@ -398,6 +398,12 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       testthat::expect_equal(result$.sd, fitted_result$.sd)
       testthat::expect_equal(result$.lower, observed - fitted_result$.upper)
       testthat::expect_equal(result$.upper, observed - fitted_result$.lower)
+
+      # Per-draw residuals as a draws-by-observation matrix
+      residual_draws = func(fit, prior = prior, summary = FALSE, draws_format = "matrix")
+      fitted_draws = fitted(fit, rate = FALSE, prior = prior, summary = FALSE, draws_format = "matrix")
+      observed_draws = matrix(observed, nrow(fitted_draws), ncol(fitted_draws), byrow = TRUE)
+      testthat::expect_equal(residual_draws, observed_draws - fitted_draws)
     }
   }
 }

@@ -67,7 +67,7 @@
 #' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
 #'   If there are group-level effects, this is the number of draws from each group.
 #'   `NULL` means "all". More draws trade speed for accuracy.
-#' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE` (for `fitted()`, `predict()`, and `log_lik()`). `residuals()` always returns tidy output.
+#' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #' @param scale One of
 #'   * `"response"`: return on the response scale, i.e., after applying the inverse link function.
 #'   * `"linear"`: return on the linear-predictor (link) scale, where the linear
@@ -434,7 +434,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' function when counts differ from proportions. Explicit `rate` settings do not warn.
 #'
 #' `residuals(fit)` is equivalent to `fit$data[[mcp_columns(fit)$response]] - fitted(fit, ...)` (or `newdata[[mcp_columns(fit)$response]] - fitted(fit, ...)`),
-#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred', draws_format = 'tidy'`.
+#' but with fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred'`.
 #'
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
 #' by `loo` and other posterior workflows. Non-default `group_effects` and `arma`
@@ -862,6 +862,7 @@ residuals.mcpfit = function(
   group_effects = TRUE,
   arma = TRUE,
   ndraws = NULL,
+  draws_format = "tidy",
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
   probs = lifecycle::deprecated(),
@@ -884,6 +885,6 @@ residuals.mcpfit = function(
     group_effects = group_effects,
     arma = arma,
     ndraws = ndraws,
-    draws_format = "tidy"
+    draws_format = draws_format
   )
 }
