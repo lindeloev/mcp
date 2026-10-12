@@ -94,6 +94,8 @@
 #' representing the expected response for most families (or the success probability for binomial models,
 #' where the expected count is \eqn{n_i \mu_i}). Distributional parameters (\code{sigma()}, \code{shape()}, etc.)
 #' and autoregressive terms (\code{ar()}, \code{ma()}) follow this exact same segmented structure on their respective link scales.
+#' Since each of them has its own segmented linear predictor, `mcp` calls them all distributional parameters (`dpar`):
+#' `mu`, `sigma`, `shape`, and each AR/MA lag (`ar1`, `ar2`, `ma1`, ...), e.g., `fitted(fit, dpar = "ar1")` or `fixef(fit, dpar = "sigma")`.
 #' See more details on the [mcp website](https://lindeloev.github.io/mcp/articles/formulas.html).
 #'
 #' @section Time-series residuals (link-scale observation-driven GARMA):

@@ -138,11 +138,11 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   )
   expect_named(
     tables$parameters,
-    c("parameter", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_parameter")
+    c("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
   )
   expect_true(all(tables$parameters$part %in% c("cp", "predictor")))
   expect_true(all(tables$parameters$scope %in% c("population", "group")))
-  expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "arma", "group_sd", "group_deviation")))
+  expect_true(all(tables$parameters$role %in% c("change_point", "fixed_effect", "group_sd", "group_deviation")))
   expect_equal(mcp_pars(fit), tables$parameters)
   expect_equal(tables$predictors$definition_name, tables$predictors$code_name)
   expect_equal(tables$group_effects$definition_name, tables$group_effects$name)
@@ -208,8 +208,8 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
     data, par_x = "x", sample = FALSE
   )
   pars = mcp_pars(fit)
-  expect_equal(pars$dpar[pars$parameter == "ar1_1"], "ar")
-  expect_equal(pars$order[pars$parameter == "ar1_1"], 1L)
+  expect_equal(pars$dpar[pars$parameter == "ar1_1"], "ar1")
+  expect_true(all(is.na(pars$dpar[pars$part == "cp"])))
   expect_equal(pars$group_col[pars$parameter == "cp_1_id"], "id")
   expect_equal(pars$population_parameter[pars$parameter == "cp_1_id"], "cp_1")
   group_draws = unlist(lapply(pars$parameter[pars$scope == "group"], function(name) {
@@ -225,6 +225,8 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
     fixef(fit)$parameter,
     pars$parameter[pars$role == "fixed_effect" & pars$dpar == "mu"]
   )
+  expect_equal(fixef(fit, dpar = "ar1")$parameter, "ar1_1")
+  expect_equal(colnames(vcov(fit, dpar = "ar1")), "ar1_1")
   expect_setequal(ranef(fit)$parameter, group_draws)
 })
 

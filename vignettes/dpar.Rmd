@@ -21,6 +21,8 @@ set.seed(42)
 
 `mcp` supports **distributional regression**, where any parameter of a response distribution can be regressed on predictors and have change points across segments. In standard regression, formulas model only the conditional mean `mu()`, where the expected response on the response scale relates to the linear predictor via link function $g(\mu_i) = \eta_i$ ($\mu_i = g^{-1}(\eta_i)$). Distributional regression extends this by allowing formulas for distributional parameters such as residual standard deviation (`sigma`), negative-binomial overdispersion (`shape`) - and auxiliary parameters for time-series autocorrelation (`ar` / `ma`) - on their respective link scales.
 
+In `mcp`, a **distributional parameter (`dpar`)** is anything with its own segmented linear predictor: `mu`, `sigma`, `shape`, and each AR/MA lag (`ar1`, `ar2`, `ma1`, ...). Strictly, AR/MA lags are not parameters of the response distribution, but they are modeled the same way. This is what the `dpar` argument and column refer to throughout `mcp`, e.g., `fitted(fit, dpar = "sigma")`, `plot_dpar(fit, "ar1")`, `fixef(fit, dpar = "ar1")`, and `mcp_pars(fit)$dpar`.
+
 Here, we exemplify regression on the standard deviation `sigma`. A plateau mean with an increasing standard deviation can be written as `y ~ 1 + sigma(1 + x)`. Read more about mcp formulas [here](../articles/formulas.html).
 
 # Priors for distributional parameters
@@ -237,7 +239,7 @@ Here is an overview of standard distributional parameters across response famili
 - **`mu`**: Conditional mean or location (e.g. mean for `gaussian()`, success probability for `binomial()`, event rate for `poisson()`). Modeled by default without any wrapper.
 - **`sigma`**: Residual standard deviation for `gaussian()` (modeled on the log-SD scale via `sigma(...)`).
 - **`shape`**: Overdispersion / shape parameter for `negbinomial()` (modeled on the log-shape scale via `shape(...)`).
-- **`ar()` / `ma()`**: Autoregressive and moving-average serial dependence terms for time-series models ([read more here](../articles/arma.html)). They are not really distributional parameters, but they are similar in terms of the `mcp` model syntax.
+- **`ar()` / `ma()`**: Autoregressive and moving-average serial dependence terms for time-series models ([read more here](../articles/arma.html)). Each lag is a dpar named `ar1`, `ar2`, `ma1`, etc. (see the definition above).
 
 ### Inspecting and working with dpars
 

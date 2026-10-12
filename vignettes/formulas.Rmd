@@ -47,7 +47,7 @@ The first segment has the format `response ~ predictor`. Later segments use the 
 - `~ 0 + x`: Joined slope (no new intercept).
 - `~ 1`: Plateau (intercept only, no slope).
 - `~ x:state + z + (1 | id)`: Other variables, interactions, and group-level effects ([read more](../articles/group_effects.html)).
-- `+ sigma(1 + x)` or `shape(0 + state)`: Distributional parameters on the link scale ([read more](../articles/dpar.html)).
+- `+ sigma(1 + x)` or `shape(0 + state)`: Distributional parameters on the link scale. Together with each AR/MA lag (`ar1`, `ma1`, ...), these are the `dpar`s in `mcp`, since each has its own segmented linear predictor ([read more](../articles/dpar.html)).
 - `+ ar(1)` or `ma(2, 1 + x)`: Autoregressive and moving-average time-series residuals on the link scale; include them in every segment where they apply ([read more](../articles/arma.html)).
 
 `mcp` is heavily inspired by `brms` which again is inspired by [`lme4::lmer()`](https://cran.r-project.org/web/packages/lme4/index.html) which extends `lm()` and `glm()`. [Here is a bit of history](https://twitter.com/jonaslindeloev/status/1117760777249853440) on that.

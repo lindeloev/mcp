@@ -376,13 +376,13 @@ print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
 #' @aliases fixef fixef.mcpfit
 #' @describeIn summary.mcpfit Population-level fixed effects (regression coefficients) of `mcpfit`.
 #' @param dpar Distributional parameter(s) whose regression coefficients to
-#'   return. For modeled distributional parameters such as `sigma()`, these
-#'   coefficients are on the link scale.
+#'   return, e.g., `"mu"`, `"sigma"`, or `"ar1"` (see [mcp-formula]). For modeled
+#'   distributional parameters such as `sigma()`, these coefficients are on the link scale.
 #' @export fixef
 #' @exportS3Method nlme::fixef
 fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...) {
   rlang::check_dots_empty()
-  checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
+  checkmate::assert_subset(dpar, stats::na.omit(mcp_pars(object)$dpar))
   get_summary(
     object, width, scope = "population", role = "fixed_effect",
     dpar = dpar, prior = prior, verbose = verbose
@@ -471,7 +471,7 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #'   matrix?
 #' @param pars Optional names of population-level parameters to extract, or
 #'   `"all"` for all population-level parameters.
-#' @param dpar Distributional parameter(s) to select when `pars = NULL`.
+#' @param dpar Distributional parameter(s) to select when `pars = NULL`, e.g., `"mu"`, `"sigma"`, or `"ar1"`.
 #' @param parm Optional names or positions of population-level parameters to
 #'   include in the intervals.
 #' @param level Width of the central interval.
@@ -509,7 +509,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
   checkmate::assert_flag(prior)
   parameters = mcp_pars(object, scope = "population")
   if (is.null(pars)) {
-    checkmate::assert_subset(dpar, object$family$dpar_specs$dpar)
+    checkmate::assert_subset(dpar, stats::na.omit(parameters$dpar))
     pars = parameters$parameter[
       parameters$role == "fixed_effect" &
         parameters$dpar %in% dpar

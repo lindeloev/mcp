@@ -142,7 +142,7 @@ get_segment_tables = function(model, data, family, par_x) {
 #' @param group_effects A table from `get_group_effects()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and group),
-#'   with columns `parameter`, `part`, `scope`, `role`, `segment`, `dpar`, `order`,
+#'   with columns `parameter`, `part`, `scope`, `role`, `segment`, `dpar`,
 #'   `group_col`, and `population_parameter`.
 #' @noRd
 get_pars_table = function(predictors, cps, group_effects, family) {
@@ -180,7 +180,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       parameter = .data$code_name,
       part = "predictor",
       scope = "population",
-      role = dplyr::if_else(.data$dpar %in% family$dpar_specs$dpar, "fixed_effect", "arma"),
+      role = "fixed_effect",
       segment = .data$segment,
       dpar = .data$dpar,
       order = .data$order,
@@ -224,11 +224,15 @@ get_pars_table = function(predictors, cps, group_effects, family) {
   # ar/ma components (ar before ma) and their lag order.
   dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), "ar", "ma")
 
+  # Public `dpar` values are those accepted by `dpar` arguments, e.g., "ar1". Change points have none.
   dplyr::bind_rows(cp_pars, predictor_pars, predictor_group_pars) %>%
-    dplyr::mutate(dpar = factor(.data$dpar, levels = dpar_levels)) %>%
-    dplyr::arrange(.data$dpar, .data$order, .data$segment, .data$.tie) %>%
-    dplyr::mutate(dpar = as.character(.data$dpar)) %>%
-    dplyr::select("parameter", "part", "scope", "role", "segment", "dpar", "order", "group_col", "population_parameter")
+    dplyr::arrange(factor(.data$dpar, levels = dpar_levels), .data$order, .data$segment, .data$.tie) %>%
+    dplyr::mutate(dpar = dplyr::case_when(
+      .data$part == "cp" ~ NA_character_,
+      .data$dpar %in% c("ar", "ma") ~ paste0(.data$dpar, .data$order),
+      .default = .data$dpar
+    )) %>%
+    dplyr::select("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
 }
 
 
@@ -242,11 +246,12 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' @param fit An `mcpfit` object.
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.
 #' @param role Optional parameter role(s): `"change_point"`, `"fixed_effect"`
-#'   (population-level coefficients of all distributional parameters, e.g., `mu` and `sigma`),
-#'   `"arma"`, `"group_sd"`, or `"group_deviation"`.
+#'   (population-level coefficients of all distributional parameters, e.g., `mu`, `sigma`, and `ar1`),
+#'   `"group_sd"`, or `"group_deviation"`.
 #' @return A tibble with one row per parameter definition. `parameter` is the
-#'   model parameter name; `dpar` identifies its distributional parameter or
-#'   component (`"cp"`, `"ar"`, or `"ma"`); `order` gives an AR/MA lag;
+#'   model parameter name; `dpar` is its distributional parameter (e.g., `"mu"`,
+#'   `"sigma"`, or `"ar1"`; see [mcp-formula]), as accepted by the `dpar` argument of
+#'   [fitted.mcpfit()], [fixef.mcpfit()], etc., and `NA` for change points;
 #'   `group_col` and `population_parameter` describe group-level effects.
 #' @export
 #' @examples
