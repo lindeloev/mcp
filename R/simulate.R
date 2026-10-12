@@ -425,6 +425,7 @@ simulate_atomic = function(fit,
     cp_locations = list()
     for (i in seq_len(nrow(cp_effects))) {
       effect = cp_effects[i, ]
+      assert_generatable_group_prior(fit, effect)
       j = match(effect$population_name, cps$name)
       population = cp_values[[effect$population_name]]
 

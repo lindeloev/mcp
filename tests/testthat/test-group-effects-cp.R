@@ -79,6 +79,22 @@ test_that("simulation generates bounded hierarchical change-point locations", {
 })
 
 
+test_that("simulation rejects user-specified priors on change-point deviations", {
+  model = list(y ~ 1, ~ cp(1 + (1 | id)) + 1)
+  simulate_with = function(prior) {
+    fit = mcp(model, cp_group_data, par_x = "x", prior = prior, sample = FALSE)
+    fit$simulate(fit, cp_group_data, cp_1 = 5, cp_1_id_sd = 1, Intercept_1 = 0, Intercept_2 = 0, sigma_1 = 1)
+  }
+
+  expect_error(simulate_with(list(cp_1_id = 2)), "user-specified prior")
+  expect_error(simulate_with(list(cp_1_id = "dnorm(2, 0.1)")), "user-specified prior")
+  expect_error(simulate_with(list(cp_1_id = "dnorm(0, cp_1_id_sd)")), "Remove 'cp_1_id'")
+
+  # Priors on the population change point and the SD are replaced by the arguments
+  expect_no_error(simulate_with(list(cp_1 = "dnorm(5, 1)", cp_1_id_sd = "dnorm(0, 2) T(0, )")))
+})
+
+
 test_that("prior draws keep a single group-level change point in range", {
   fit = mcp(
     list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
