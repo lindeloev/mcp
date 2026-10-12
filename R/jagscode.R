@@ -160,7 +160,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   ###########
   # Transform formula_jags into JAGS format. Insert par_x and group indices.
   for (i in seq_len(max(segments$segment))) {
-    formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", segments$cp_group_col[i], "[i_]]"), formula_jags)
+    formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", segments$cp_group_col[i], "_index_[i_]]"), formula_jags)
   }
 
   # Insert formula_jags
@@ -327,7 +327,7 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
   }
 
   # Fixed constants/expressions for group-level effects must be vectors over group
-  # levels so they can be indexed as name[group_col[i_]] in the likelihood.
+  # levels so they can be indexed as name[group_col_index_[i_]] in the likelihood.
   # References to other group-level effects are indexed too, e.g.,
   # "x_1_id * 2" becomes "x_1_id[id_] * 2".
   if (!is.null(group_col)) {

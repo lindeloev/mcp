@@ -223,7 +223,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
   helper_names = unique(c(
     "rhs_matrix_", "series_id_", "response_observed_",
     "likelihood_weight_", "likelihood_phi_", "likelihood_zero_", offset_nodes,
-    paste0("n_unique_", group_cols), paste0(group_cols, "_"),
+    paste0("n_unique_", group_cols), paste0(group_cols, "_"), paste0(group_cols, "_index_"),
     if (generated) c(
       "i_", "garma_threshold_", "garma_y_", "garma_link_y_",
       "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_",
@@ -281,7 +281,7 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
     unique(c(names(data), group_cols, cols_data, series)), family, segments,
     definition_rows(predictors), definition_rows(group_effects), jags_code, generated
   )
-  jags_data = as.list(data[, c(group_cols, cols_data)])
+  jags_data = as.list(data[, cols_data])
 
   if (!is.null(series))
     jags_data$series_id_ = as.integer(factor(data[[series]], levels = unique(data[[series]])))
@@ -292,9 +292,9 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
     group_levels = levels(factor(data[[col]]))
     jags_data[[tmp]] = length(group_levels)
 
-    # Make grouping columns numeric in order of factor levels.
-    # They will be recovered using recover_levels()
-    jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = group_levels))
+    # Index grouping levels in a separate node so the grouping column can also
+    # be par_x, the response, etc. Levels are recovered using recover_levels()
+    jags_data[[paste0(col, "_index_")]] = as.numeric(factor(data[[col]], levels = group_levels))
   }
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.

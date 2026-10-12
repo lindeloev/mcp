@@ -111,6 +111,23 @@ test_that("prior draws keep a single group-level change point in range", {
 })
 
 
+test_that("a grouping column can also be par_x", {
+  year_data = data.frame(year = rep(2001:2010, each = 3), y = seq_len(30))
+  fit = mcp(
+    list(y ~ 1, ~ cp((1 | year)) + 1),
+    year_data,
+    par_x = "year",
+    sample = "prior",
+    chains = 1, warmup = 100, iter = 200,
+    seed = 42, quiet = TRUE
+  )
+  expect_match(fit$jags_code, "cp_1_year_location[year_index_[i_]]", fixed = TRUE)
+  draws = as.matrix(.subset2(fit, "mcmc_prior"))
+  expect_true(all(draws[, "cp_1"] >= 2001 & draws[, "cp_1"] <= 2010))
+  expect_true("cp_1_year[2001]" %in% colnames(draws))
+})
+
+
 test_that("simulation samples adjacent group-level change points in realized order", {
   fit = mcp(
     list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
