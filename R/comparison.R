@@ -374,7 +374,7 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
         .upper = stats::quantile(effect, 1 - tail_prob, names = FALSE)
       )
     } else {
-      estimate = list(effect = NA, sd = NA, .lower = NA, .upper = NA)
+      estimate = list(effect = NA_real_, sd = NA_real_, .lower = NA_real_, .upper = NA_real_)
     }
 
     # SAVAGE-DICKEY: compute BF. Equality hypotheses always have an LHS (see validate_savage_dickey_expression()).
