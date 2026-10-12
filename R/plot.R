@@ -272,8 +272,9 @@ get_plot = function(x,
     ydata = fit$family$linkfun(fit$family$response$observed(
       ydata, response_data, rate = TRUE
     ))
-    if (any(is.infinite(ydata)))
-      message("Removing points with infinite values on the linear scale. You may get a few warnings.")
+    n_infinite = sum(is.infinite(ydata))
+    if (n_infinite > 0)
+      message("Not showing ", n_infinite, " data point(s) with infinite values on the linear scale.")
     ydata[is.infinite(ydata)] = NA
   } else {
     ydata = fit$family$response$observed(ydata, response_data, rate)
