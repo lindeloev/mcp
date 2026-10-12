@@ -158,7 +158,7 @@ test_that("formula offsets work in mcp formulas", {
   offset_lifetime = mcp(
     list(
       y ~ 1 + x + offset(log(pop)),
-      ~ 1 + x,
+      ~ 1 + x + offset(0),
       ~ 0 + x + offset(log(pop)),
       ~ 0 + x + offset(0)
     ),
@@ -202,7 +202,7 @@ test_that("formula offsets work in mcp formulas", {
 
   # Offset in sigma
   fit_sigma = mcp(
-    list(y ~ 1 + x + sigma(1 + offset(z)), ~ 0 + x),
+    list(y ~ 1 + x + sigma(1 + offset(z)), ~ 0 + x + sigma(0 + offset(0))),
     d,
     sample = FALSE
   )
@@ -227,12 +227,33 @@ test_that("formula offsets work in mcp formulas", {
 
   # Warning when par_x is in offset()
   expect_warning(
-    mcp(list(y ~ 1 + offset(log(x)), ~ 1 + x), d_pois, family = poisson(), sample = FALSE),
+    mcp(list(y ~ 1 + offset(log(x)), ~ 1 + x + offset(log(x))), d_pois, family = poisson(), sample = FALSE),
     regexp = "The change-point predictor 'x' is also used in offset\\(\\)"
   )
   expect_warning(
-    mcp(list(y ~ 1 + offset(x), ~ 1), d, par_x = "x", sample = FALSE),
+    mcp(list(y ~ 1 + offset(x), ~ 1 + offset(x)), d, par_x = "x", sample = FALSE),
     regexp = "The change-point predictor 'x' is also used in offset\\(\\)"
+  )
+})
+
+test_that("offset() is required in all segments where its dpar applies", {
+  d = data.frame(x = 1:20, y = rnorm(20), z = rnorm(20))
+  expect_error(
+    mcp(list(y ~ 1 + offset(z), ~ 1 + x, ~ 1), d, par_x = "x", sample = FALSE),
+    "`offset()` must be included in all segments of `mu` but is missing in segment 2 and 3",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(list(y ~ 1 + sigma(1 + offset(z)), ~ 1 + x), d, par_x = "x", sample = FALSE),
+    "`offset()` must be included in all segments of `sigma` but is missing in segment 2",
+    fixed = TRUE
+  )
+  # AR applies only in segments that include it
+  expect_no_error(mcp(list(y ~ 1 + ar(1, 1 + offset(z)), ~ 1 + x), d, par_x = "x", sample = FALSE))
+  expect_error(
+    mcp(list(y ~ 1 + ar(1, 1 + offset(z)), ~ 1 + x + ar(1)), d, par_x = "x", sample = FALSE),
+    "`offset()` must be included in all segments of `ar` but is missing in segment 2",
+    fixed = TRUE
   )
 })
 
@@ -479,7 +500,7 @@ test_that("model formulas use .GlobalEnv while fitted designs preserve local tra
 
 test_that("each fitted design specification is evaluated once in add_rhs_predictors", {
   d = data.frame(x = 1:10, y = 1:10, z = 1:10)
-  fit = mcp(list(y ~ 1 + x + offset(z), ~ 1 + x), data = d, family = poisson(), sample = FALSE)
+  fit = mcp(list(y ~ 1 + x + offset(z), ~ 1 + x + offset(2 * z)), data = d, family = poisson(), sample = FALSE)
   specs = get_fit_model_tables(fit)$design_specs
   expect_equal(length(specs), 2)
 
@@ -487,7 +508,7 @@ test_that("each fitted design specification is evaluated once in add_rhs_predict
   expect_named(evaluated, names(specs))
   expect_true(is.matrix(evaluated[[1]]$matrix))
   expect_equal(as.numeric(evaluated[[1]]$offset), d$z)
-  expect_null(evaluated[[2]]$offset)
+  expect_equal(as.numeric(evaluated[[2]]$offset), 2 * d$z)
 
   eval_count = 0
   trace_env = environment(add_rhs_predictors)

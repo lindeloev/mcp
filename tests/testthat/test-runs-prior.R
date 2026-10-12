@@ -295,7 +295,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     fit_multi = mcp(
       list(
         y ~ 1 + x + offset(log(exposure)),
-        ~ 1 + x,
+        ~ 1 + x + offset(0),
         ~ 1 + offset(0)
       ),
       data = d,

@@ -608,7 +608,7 @@ test_that("group-only and offset-only covariates are represented in prediction m
   # Offset-only covariates are also discovered
   data_offset = data.frame(x = 1:10, y = 1:10, offset_val = 11:20)
   fit_offset = suppressWarnings(mcp(
-    list(y ~ 1, ~ 0 + offset(offset_val)),
+    list(y ~ 1 + offset(offset_val), ~ 0 + offset(offset_val)),
     data = data_offset,
     par_x = "x",
     sample = FALSE

@@ -38,6 +38,27 @@ stop_github = function(...) {
 }
 
 
+# Require offset() in every segment where a dpar applies if it is in any of them. Offsets usually
+# describe the observation (e.g., exposure), so omitting one in a segment is likely a mistake.
+# Dpars apply in all segments (joined when omitted); AR/MA only in segments that include them.
+assert_offsets = function(components, family) {
+  for (dpar in c(family$dpars, "ar", "ma")) {
+    is_arma = dpar %in% c("ar", "ma")
+    forms = lapply(components, function(x) if (is_arma) x[[dpar]]$form else x[[dpar]])
+    applies = if (is_arma) !vapply(forms, is.null, logical(1)) else rep(TRUE, length(forms))
+    has_offset = vapply(forms, function(form) !is.null(form) && !is.null(attr(stats::terms(form), "offset")), logical(1))
+    missing_segments = which(applies & !has_offset)
+    if (any(has_offset) && length(missing_segments) > 0)
+      stop(
+        "`offset()` must be included in all segments of `", dpar, "` but is missing in segment ",
+        and_collapse(as.character(missing_segments)), ". If you have a use case for omitting it, ",
+        "please request it on https://github.com/lindeloev/mcp/issues",
+        call. = FALSE
+      )
+  }
+}
+
+
 # Asserts whether matrix x is rank deficient.
 assert_rank = function(x, segment, dpar) {
   QR = qr(x)

@@ -197,7 +197,7 @@ list(
 )
 ```
 
-Offsets have fixed coefficients: include `offset(log(exposure))` wherever it applies. Read more about offsets in [Poisson and Negative Binomial models](../articles/poisson.html).
+Offsets have fixed coefficients: include `offset(log(exposure))` in every segment (or in every `ar()`/`ma()` term). Read more about offsets in [Poisson and Negative Binomial models](../articles/poisson.html).
 
 
 # Multiple regression and categorical predictors

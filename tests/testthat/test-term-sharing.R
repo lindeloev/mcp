@@ -115,7 +115,7 @@ test_that("same() keeps fitted contrasts and current segment offsets", {
   data = data.frame(x = 1:12, y = 0, g = factor(rep(c("a", "b", "c"), 4)), z = 1:12 / 10)
   old_options = options(contrasts = c("contr.sum", "contr.poly"))
   on.exit(options(old_options), add = TRUE)
-  fit = mcp(list(y ~ 1 + g + offset(z), ~ 0 + same(g), ~ same(1, as = 1) + offset(2 * z)),
+  fit = mcp(list(y ~ 1 + g + offset(z), ~ 0 + same(g) + offset(0), ~ same(1, as = 1) + offset(2 * z)),
     data, par_x = "x", sample = FALSE)
   options(old_options)
   values = fit$simulate(fit, data, cp_1 = 4, cp_2 = 8, Intercept_1 = 2,

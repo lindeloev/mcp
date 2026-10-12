@@ -784,6 +784,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # Parse the components of each segment once (mu, other dpars, ar, ma)
   components = lapply(model, function(form) get_segment_components(get_rhs(form), family))
   n_segments = length(components)
+  assert_offsets(components, family)
 
   # Resolve each component against earlier occurrences, including chains
   parsed_predictors = NULL
