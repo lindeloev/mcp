@@ -374,6 +374,7 @@ get_plot = function(x,
     names(newdata),
     c(data_columns$par_x, data_columns$response, data_columns$series, all_categorical_cols, group_cols)
   )
+  at_cols = at_cols[vapply(newdata[at_cols], dplyr::n_distinct, integer(1)) == 1]  # E.g., AR/MA plots use observed values
   if (length(at_cols) > 0) {
     at_text = paste0(at_cols, " = ", format(signif(unlist(newdata[1, at_cols]), 4), trim = TRUE))
     gg = gg + ggplot2::labs(caption = paste("Continuous predictors held at", paste(at_text, collapse = ", ")))

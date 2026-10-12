@@ -69,6 +69,15 @@ test_that("interpolate_newdata() carries the observed response for AR/MA models"
 
   expect_equal(nrow(newdata), nrow(data))
   expect_equal(newdata[[mcp_columns(fit)$response]], data$y)
+
+  # Observed predictor values are used, so the caption does not claim they are held constant
+  data$z = c(2, 5, 3, 8, 1)
+  fit = mcp(list(y ~ 1 + z + ar(1)), data, par_x = "x", sample = FALSE)
+  population = mcp_pars(fit, scope = "population")$parameter
+  draws = matrix(0, 1, length(population), dimnames = list(NULL, population))
+  draws[, "sigma_1"] = 1
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  expect_null(plot(fit, lines = 1)$labels$caption)
 })
 
 test_that("interpolate_newdata() does not invent response auxiliaries", {
