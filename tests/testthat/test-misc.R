@@ -812,6 +812,11 @@ test_that("find_mixture_quantile is accurate regardless of response units", {
       expect_equal(mean(stats::pnorm(res, dpars$mu, dpars$sigma)), p, tolerance = 1e-6)
     }
   }
+
+  # One extreme draw widens the bracket to ~1e16 but must not reduce accuracy
+  dpars = list(mu = rep(0, 1000), sigma = c(rep(1, 999), 1e15))
+  res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = 0.975)
+  expect_equal(mean(stats::pnorm(res, dpars$mu, dpars$sigma)), 0.975, tolerance = 1e-6)
 })
 
 

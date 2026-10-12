@@ -321,9 +321,8 @@ find_mixture_quantile = function(family, dpars, data, p) {
     return(bracket[1])
 
   # Continuous: root-finding. extendInt guards against rounding at the bracket ends.
-  # The tolerance is relative to the bracket width so that accuracy does not depend on response units.
   if (!isTRUE(family$response$is_discrete))
-    return(stats::uniroot(function(y) mix_cdf(y) - p, bracket, extendInt = "upX", tol = 1e-10 * diff(bracket))$root)
+    return(stats::uniroot(function(y) mix_cdf(y) - p, bracket, extendInt = "upX", tol = .Machine$double.eps)$root)
 
   # Discrete: binary search for the smallest integer with mix_cdf(y) >= p
   lo = bracket[1]
