@@ -177,12 +177,12 @@ test_that("parameter-name collisions give a useful error", {
     x = 1:6,
     a = c(0, 0, 0, 1, 1, 1),
     b = c(0, 1, 2, 0, 1, 2),
-    ab = c(0, 1, 0, 1, 0, 1)
+    a.b = c(0, 1, 0, 1, 0, 1)
   )
 
   expect_error(
-    mcp(list(y ~ a:b + ab), data, par_x = "x", sample = FALSE),
-    "`ab_1`: `ab` (mu, segment 1) and `a:b` (mu, segment 1)",
+    mcp(list(y ~ a:b + a.b), data, par_x = "x", sample = FALSE),
+    "`a.b_1`: `a.b` (mu, segment 1) and `a:b` (mu, segment 1)",
     fixed = TRUE
   )
 })

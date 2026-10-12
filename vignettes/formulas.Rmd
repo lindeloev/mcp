@@ -106,7 +106,7 @@ Conversely, a joined segment can depend on a variable it does not include: in `l
 
 ## Examples: Included terms and parameter names
 
-New coefficients are named after their segment: `x_1`, `x_2`, etc. Change points are `cp_1`, `cp_2`, etc.; `cp_1` separates segments 1 and 2. In these examples, the change-point variable is `x`; set `mcp(..., par_x = "x")` if mcp does not automatically select the correct change-point variable.
+New coefficients are named after their segment: `x_1`, `x_2`, etc. Interactions join their parts with a dot, e.g., `x:stateB` gives `x.stateB_1`. Change points are `cp_1`, `cp_2`, etc.; `cp_1` separates segments 1 and 2. In these examples, the change-point variable is `x`; set `mcp(..., par_x = "x")` if mcp does not automatically select the correct change-point variable.
 
 ```{r, eval=FALSE, R.options = list(width = 9999)}
 # 1. Slopes: joined or disjoined
@@ -119,7 +119,7 @@ model = list(
 
 # 2. Factors, other variables, and interactions
 model = list(
-  y ~ 1 + x:state + z,  # Intercept_1, by-state slopes (xstateA_1, ...), z_1
+  y ~ 1 + x:state + z,  # Intercept_1, by-state slopes (x.stateA_1, ...), z_1
     ~ 1 + x + state,    # At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included
     ~ 0 + x             # At cp_2: Joined slope (x_3); state not included
 )
@@ -222,7 +222,7 @@ mcp_pars(fit)
 Key features of multiple regression models in `mcp`:
 
 - **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `state`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `cp((1|group))`; see [group-level effects](../articles/group_effects.html)).
-- **Parameter names across segments**: In segment 1, `xstateA_1` through `xstateD_1` represent separate slopes for each level of `state`. In segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept offsets relative to the reference level `stateA`. A variable such as `z` must be included in each segment where it applies.
+- **Parameter names across segments**: In segment 1, `x.stateA_1` through `x.stateD_1` represent separate slopes for each level of `state`. In segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept offsets relative to the reference level `stateA`. A variable such as `z` must be included in each segment where it applies.
 - **Plotting and prediction**: Visualize by state using `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By default, other numeric variables (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "state", at = list(z = 0))`.
 
 # Relative changes between segments

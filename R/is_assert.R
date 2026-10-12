@@ -178,7 +178,7 @@ assert_response_data = function(family, segments, data, response_required = TRUE
 assert_fixed_dpars = function(prior_table, predictors, family) {
   bounds = get_constant_dpar_bounds(family)
   for (dpar in names(bounds)) {
-    fixed = prior_table$parameter %in% predictors$code_name[predictors$dpar == dpar] & prior_table$kind == "constant"
+    fixed = prior_table$parameter %in% predictors$name[predictors$dpar == dpar] & prior_table$kind == "constant"
     values = suppressWarnings(as.numeric(prior_table$value[fixed]))
     if (any(values <= bounds[[dpar]])) {
       bad_parameters = prior_table$parameter[fixed][values <= bounds[[dpar]]]

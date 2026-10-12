@@ -48,7 +48,7 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
   # Helpers to write x-terms, e.g., "xE2_2 * (cp_2 - cp_1)^2"
   power = function(x_factor) ifelse(x_factor == "x", "", sub("x", "", x_factor, fixed = TRUE))
   width = function(k, x_factor) paste0("(cp_", k, " - cp_", k - 1, ")", power(x_factor))
-  x_terms_at = function(terms, at) paste0(terms$code_name, " * ", at, power(terms$x_factor), collapse = " + ")
+  x_terms_at = function(terms, at) paste0(terms$name, " * ", at, power(terms$x_factor), collapse = " + ")
   K = nrow(cps) + 1
 
   # Each dpar separately. AR/MA are not anchored at change points.
@@ -61,7 +61,7 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
     # Segment 1: the intercept as the value at a fixed point. For a factor without an
     # intercept (`0 + state`), each factor level has an intercept (see get_prior_type()).
     terms = slopes[slopes$segment == 1, ]
-    for (intercept in own$code_name[own$segment == 1 & own$prior_type == "Intercept"]) {
+    for (intercept in own$name[own$segment == 1 & own$prior_type == "Intercept"]) {
       if (nrow(terms) > 0 && is_reparam_prior(intercept, segment_1 = TRUE)) {
         x_max = max(context$data[[context$x_name]], na.rm = TRUE)
         at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
@@ -76,24 +76,24 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
         next
       terms = slopes[slopes$segment == k, ]
       terms = terms[order(nchar(power(terms$x_factor))), ]  # Lowest degree first
-      intercept = own$code_name[own$segment == k & own$par_type == "Intercept"]
+      intercept = own$name[own$segment == k & own$par_type == "Intercept"]
 
       # Disjoined segment: the intercept as the value at the segment end
       if (length(intercept) == 1) {
         if (is_reparam_prior(intercept))
-          set_aux(intercept, "end", shift = paste0(terms$code_name, " * ", width(k, terms$x_factor), collapse = " + "))
+          set_aux(intercept, "end", shift = paste0(terms$name, " * ", width(k, terms$x_factor), collapse = " + "))
         next
       }
 
       # Joined segment: the first x-term as the value at the segment end, others as their rise
       start = get_value_at_cp(own, own_pure, k)
       for (i in seq_len(nrow(terms))) {
-        if (!is_reparam_prior(terms$code_name[i]))
+        if (!is_reparam_prior(terms$name[i]))
           next
         if (i == 1 && !is.null(start)) {
-          set_aux(terms$code_name[i], "end", shift = start, width = width(k, terms$x_factor[i]))
+          set_aux(terms$name[i], "end", shift = start, width = width(k, terms$x_factor[i]))
         } else {
-          set_aux(terms$code_name[i], "rise", width = width(k, terms$x_factor[i]))
+          set_aux(terms$name[i], "rise", width = width(k, terms$x_factor[i]))
         }
       }
     }
@@ -118,7 +118,7 @@ get_value_at_cp = function(own, own_pure, k) {
   # Intercepts as-is; x-terms at their full width
   width = ifelse(rows$segment == 1, "cp_1", paste0("(cp_", rows$segment, " - cp_", rows$segment - 1, ")"))
   power = ifelse(rows$x_factor %in% c("1", "x"), "", sub("x", "", rows$x_factor, fixed = TRUE))
-  terms = ifelse(rows$x_factor == "1", rows$code_name, paste0(rows$code_name, " * ", width, power))
+  terms = ifelse(rows$x_factor == "1", rows$name, paste0(rows$name, " * ", width, power))
   paste(terms, collapse = " + ")
 }
 

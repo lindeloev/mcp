@@ -641,8 +641,8 @@ test_that("x-interactions are autoscaled by two-valued numeric variables but not
   fit = mcp(list(y ~ 1 + x:z + x:b, ~ 1), data, sample = FALSE)
   prior_sd = function(prior) as.numeric(sub("dnorm\\(0, (.*)\\)", "\\1", prior))
   base = 2.5 * stats::sd(data$y) / stats::sd(data$x)
-  expect_equal(prior_sd(fit$prior$xz_1), base / stats::sd(data$z))
-  expect_equal(prior_sd(fit$prior$xb_1), base)
+  expect_equal(prior_sd(fit$prior$x.z_1), base / stats::sd(data$z))
+  expect_equal(prior_sd(fit$prior$x.b_1), base)
 })
 
 
@@ -714,7 +714,7 @@ test_that("factors without an intercept get intercept priors where a segment sta
   # Otherwise contrast and slope priors, e.g., jumps from an estimated value
   expect_match(get_prior(list(y ~ 0 + x, ~ 0 + state))$stateA_2, "^dnorm\\(0, ")
   expect_match(get_prior(list(y ~ 1, ~ 1 + state))$stateB_2, "^dnorm\\(0, ")
-  expect_match(get_prior(list(y ~ 0 + state:x, ~ 1))$stateAx_1, "^dnorm\\(0, ")
+  expect_match(get_prior(list(y ~ 0 + state:x, ~ 1))$stateA.x_1, "^dnorm\\(0, ")
 
   # Each factor level's prior is on its value at min(x), as for Intercept_1
   data$y = rnorm(100, 50)

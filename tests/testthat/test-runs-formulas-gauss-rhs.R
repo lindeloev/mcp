@@ -329,17 +329,17 @@ test_that("x-free interactions are evaluated directly at zero", {
 
   segmented = mcp(list(y ~ 0, ~ 0 + x:z), data, par_x = "x", sample = FALSE)
   fitted = segmented$simulate(
-    segmented, data, cp_1 = 0, xz_2 = 1, sigma_1 = 1, .type = "fitted"
+    segmented, data, cp_1 = 0, x.z_2 = 1, sigma_1 = 1, .type = "fitted"
   )
   expect_equal(as.numeric(fitted), data$x * data$z)
 })
 
 test_that("parameter names that end in other parameter names are evaluated correctly", {
-  # gBx_1 ends in x_1
+  # gB.x_1 ends in x_1
   data = data.frame(x = c(1, 2, 3, 4, 5, 6), g = c("A", "B", "C", "A", "B", "C"), y = 0)
   fit = mcp(list(y ~ 1 + g * x), data, par_x = "x", sample = FALSE)
   fitted = fit$simulate(
-    fit, data, Intercept_1 = 1, gB_1 = 2, gC_1 = 3, x_1 = 10, gBx_1 = 20, gCx_1 = 30,
+    fit, data, Intercept_1 = 1, gB_1 = 2, gC_1 = 3, x_1 = 10, gB.x_1 = 20, gC.x_1 = 30,
     sigma_1 = 1, .type = "fitted"
   )
   slope = c(A = 10, B = 30, C = 40)[data$g]
@@ -358,7 +358,7 @@ test_that("factor punctuation produces safe parameter names", {
   fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
   predictor = get_fit_model_tables(fit)$predictors
   slash_row = grepl("a/b", predictor$matrix_name, fixed = TRUE)
-  safe_name = predictor$code_name[slash_row]
+  safe_name = predictor$name[slash_row]
 
   expect_true(length(safe_name) == 1 && grepl("^[A-Za-z][A-Za-z0-9_.]*$", safe_name))
   args = list(fit = fit, newdata = data, Intercept_1 = 0, sigma_1 = 1, .type = "fitted")
@@ -423,7 +423,7 @@ test_that("data-derived bases reuse their fitted specification", {
 
   scale_fit = mcp(list(y ~ scale(x)), data, sample = FALSE)
   scale_matrix = add_rhs_predictors(newdata, scale_fit)
-  scale_pars = get_fit_model_tables(scale_fit)$predictors$code_name[
+  scale_pars = get_fit_model_tables(scale_fit)$predictors$name[
     get_fit_model_tables(scale_fit)$predictors$dpar == "mu"
   ]
   expect_equal(
@@ -434,7 +434,7 @@ test_that("data-derived bases reuse their fitted specification", {
   poly_basis = stats::poly(data$x, 2)
   poly_fit = mcp(list(y ~ poly(x, 2)), data, sample = FALSE)
   poly_matrix = add_rhs_predictors(newdata, poly_fit)
-  poly_pars = get_fit_model_tables(poly_fit)$predictors$code_name[
+  poly_pars = get_fit_model_tables(poly_fit)$predictors$name[
     get_fit_model_tables(poly_fit)$predictors$dpar == "mu"
   ]
   expect_equal(
@@ -445,7 +445,7 @@ test_that("data-derived bases reuse their fitted specification", {
   spline_basis = splines::ns(data$x, df = 3)
   spline_fit = mcp(list(y ~ splines::ns(x, df = 3)), data, sample = FALSE)
   spline_matrix = add_rhs_predictors(newdata, spline_fit)
-  spline_pars = get_fit_model_tables(spline_fit)$predictors$code_name[
+  spline_pars = get_fit_model_tables(spline_fit)$predictors$name[
     get_fit_model_tables(spline_fit)$predictors$dpar == "mu"
   ]
   expect_equal(
@@ -460,7 +460,7 @@ test_that("data-derived bases reuse their fitted specification", {
   bs_basis = splines::bs(data$x, df = 3)
   bs_fit = mcp(list(y ~ splines::bs(x, df = 3)), data, sample = FALSE)
   bs_matrix = add_rhs_predictors(bs_newdata, bs_fit)
-  bs_pars = get_fit_model_tables(bs_fit)$predictors$code_name[
+  bs_pars = get_fit_model_tables(bs_fit)$predictors$name[
     get_fit_model_tables(bs_fit)$predictors$dpar == "mu"
   ]
   expect_equal(

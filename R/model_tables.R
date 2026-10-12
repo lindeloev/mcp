@@ -177,7 +177,7 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 
   predictor_pars = predictors %>%
     dplyr::transmute(
-      parameter = .data$code_name,
+      parameter = .data$name,
       part = "predictor",
       scope = "population",
       role = "coefficient",
@@ -329,7 +329,6 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       sd_name = character(),
       par_type = character(),
       matrix_name = character(),
-      display_name = character(),
       order = integer(),
       x_factor = character(),
       design_id = character(),
@@ -337,7 +336,6 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       matrix_col = integer(),
       matrix_data = list(),
       next_segment = integer(),
-      definition_name = character(),
       definition_segment = integer()
     )
   }
@@ -352,7 +350,6 @@ get_group_effects = function(cps, predictor_group_effects = NULL) {
       segment = .data$segment,
       dpar = "cp",
       sd_name = as.character(.data$sd_name),
-      definition_name = .data$name,
       definition_segment = .data$segment
     )
 

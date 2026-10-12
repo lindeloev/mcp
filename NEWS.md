@@ -30,7 +30,7 @@
 
 mcp v0.4 is a major breaking change with the aim of remaining relatively stable going forward towards version 1.0. Although a lot has been updated, the parameter estimates in v0.4.0 remain practically identical to the previous public release (v0.3.4). Deprecation detections have been added until we reach 1.0.
 
-- **Renamed parameters and column names** to align with `{brms}`: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, `cp_1_sd` --\> `cp_1_id_sd` (for `(1 | id)`), etc.
+- **Renamed parameters and column names** to align with `{brms}`: `int_i` --\> `Intercept_i`; `x_1_E2` --\> `xE2_1`; `x_1_sin` --\> `sinx_1`, `cp_1_sd` --\> `cp_1_id_sd` (for `(1 | id)`), etc. Interactions join their parts with a dot, e.g., `x:stateB` --\> `x.stateB_1`.
 
 - **Renamed return column names** to align with `{posterior}` and others:
 

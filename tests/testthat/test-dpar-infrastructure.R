@@ -89,10 +89,10 @@ test_that("default coefficient priors are autoscaled by predictor SDs (rstanarm)
   expect_scaled(fit$prior$logw_1, "dnorm", mu_base, stats::sd(log(data$w)))
   expect_scaled(fit$prior$b_1, "dnorm", mu_base, stats::sd(data$b))
   expect_scaled(fit$prior$gb_1, "dnorm", mu_base, stats::sd(data$g == "b"))
-  expect_scaled(fit$prior$xz_1, "dnorm", mu_base, x_sd * z_sd)
-  expect_scaled(fit$prior$zgb_1, "dnorm", mu_base, stats::sd(data$z * (data$g == "b")))
+  expect_scaled(fit$prior$x.z_1, "dnorm", mu_base, x_sd * z_sd)
+  expect_scaled(fit$prior$z.gb_1, "dnorm", mu_base, stats::sd(data$z * (data$g == "b")))
   expect_scaled(fit$prior$sigma_z_1, "dt", 2.5, z_sd)
-  expect_scaled(fit$prior$sigma_zx_1, "dt", 2.5, x_sd * z_sd)
+  expect_scaled(fit$prior$sigma_z.x_1, "dt", 2.5, x_sd * z_sd)
 })
 
 
@@ -210,7 +210,7 @@ test_that("included dpar wrappers use the generic formula path", {
 
   expect_setequal(unique(predictors$dpar), c("mu", "sigma", "aux"))
   expect_equal(
-    predictors$code_name[predictors$dpar == "aux"],
+    predictors$name[predictors$dpar == "aux"],
     c("aux_Intercept_1", "aux_x_1")
   )
 })
@@ -854,7 +854,7 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
     sample = FALSE
   )
   expect_true(all(
-    c("sigma_groupB_1", "sigma_groupC_1", "sigma_groupAx_1", "sigma_groupBx_1", "sigma_groupCx_1") %in%
+    c("sigma_groupB_1", "sigma_groupC_1", "sigma_groupA.x_1", "sigma_groupB.x_1", "sigma_groupC.x_1") %in%
       mcp_pars(fit_sigma, scope = "population")$parameter
   ))
 
@@ -867,7 +867,7 @@ test_that("sigma() and ar() support categorical predictors and interactions", {
     sample = FALSE
   ))
   expect_true(all(
-    c("ar1_groupB_1", "ar1_groupC_1", "ar1_groupAx_1", "ar1_groupBx_1", "ar1_groupCx_1") %in%
+    c("ar1_groupB_1", "ar1_groupC_1", "ar1_groupA.x_1", "ar1_groupB.x_1", "ar1_groupC.x_1") %in%
       mcp_pars(fit_ar, scope = "population")$parameter
   ))
 })

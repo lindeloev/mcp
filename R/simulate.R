@@ -130,7 +130,7 @@ add_rhs_predictors = function(newdata, fit) {
 get_sim_pars = function(cps, predictors, group_effects) {
   c(
     cps$name,
-    predictors$code_name,
+    predictors$name,
     group_effects$name
   )
 }
@@ -510,7 +510,7 @@ simulate_atomic = function(fit,
 #' @noRd
 get_fitsimulate = function(cps, predictors, group_effects) {
   # List of argument names. Group-level SDs default to 0 (no group-level deviations).
-  args_required = c(cps$name, predictors$code_name)
+  args_required = c(cps$name, predictors$name)
   args_default = group_effects$sd_name
 
   # Assemble formal arguments

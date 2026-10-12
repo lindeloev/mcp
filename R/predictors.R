@@ -165,7 +165,7 @@ rewrite_local_x = function(form, par_x) {
 
 
 # Make a shared R/JAGS-safe coefficient name
-make_code_name = function(x) {
+make_parameter_name = function(x) {
   out = gsub("[^A-Za-z0-9_.]", "_", x)
   out = gsub("_+", "_", out)
   needs_prefix = !grepl("^[A-Za-z]", out)
@@ -237,8 +237,7 @@ empty_predictors = function() {
     dpar = character(),
     segment = integer(),
     matrix_name = character(),
-    display_name = character(),
-    code_name = character(),
+    name = character(),
     term_key = character(),
     par_type = character(),
     order = integer(),
@@ -269,8 +268,7 @@ empty_predictors = function() {
 #'   - `segment`: the segment number (positive integer).
 #'   - `matrix_name`: original column name from the model matrix. Used to
 #'     diagnose collisions after parameter names are converted for JAGS.
-#'   - `display_name`: user-facing parameter name used in summary functions.
-#'   - `code_name`: parameter name used in JAGS and internally in mcp.
+#'   - `name`: parameter name, e.g., `x_2` or `x.stateB_1`, used in priors, JAGS, and draws.
 #'   - `term_key`: identifier for the formula term which generated the
 #'     coefficient. Multi-column terms share one key.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
@@ -367,12 +365,13 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   intercept_name = ifelse(dpar %in% c("ar", "ma"), "", "Intercept")
   pars[is_intercept] = intercept_name
 
-  # display_name
-  display_name = gsub("\\(|\\)", "", pars)
-  display_name = gsub("^", "E", display_name, fixed = TRUE)
-  display_name = gsub("-", "M", display_name, fixed = TRUE)
-  display_name = paste0(dpar_prefix, display_name, "_", segment)
-  display_name = gsub("__", "_", display_name, fixed = TRUE)
+  # Parameter names, e.g., xE2_1 for I(x^2) and x.stateB_1 for x:stateB. Symbols are renamed as in brms,
+  # except that interactions use "." because JAGS names cannot contain ":".
+  symbols = c("^" = "E", "-" = "M", "+" = "P", "*" = "MU", "/" = "D", ":" = ".")
+  name = gsub("\\(|\\)", "", pars)
+  for (symbol in names(symbols))
+    name = gsub(symbol, symbols[[symbol]], name, fixed = TRUE)
+  name = paste0(dpar_prefix, name, "_", segment)
 
   # Multi-column bases often include arguments and namespaces in their matrix
   # names. Name both the position within the basis and the segment explicitly.
@@ -383,12 +382,10 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   basis_name = gsub("[^A-Za-z0-9]+", "_", basis_name)
   basis_name = gsub("^_|_$", "", basis_name)
   basis_col = ave(term_index, term_index, FUN = seq_along)
-  display_name[is_basis] = paste0(
+  name[is_basis] = paste0(
     dpar_prefix, basis_name, "_basis", basis_col, "_", segment
   )
-
-  # code_name
-  code_name = make_code_name(gsub("[: +]", "", display_name))
+  name = make_parameter_name(gsub(" ", "", name, fixed = TRUE))
 
   # is_dummy
   is_dummy = apply(mat, 2, function(x) all(x %in% c(0, 1)))
@@ -426,8 +423,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
         dpar = dpar,
         segment = segment,
         matrix_name = NA_character_,
-        display_name = NA_character_,
-        code_name = NA_character_,
+        name = NA_character_,
         term_key = "(offset)",
         par_type = "offset",
         order = ifelse(is.null(order), NA_integer_, as.integer(order)),
@@ -446,8 +442,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     dpar = dpar,
     segment = segment,
     matrix_name = matrix_name,
-    display_name,
-    code_name = code_name,
+    name = name,
     term_key = term_key,
     par_type = dplyr::case_when(
       is_intercept == TRUE ~ "Intercept",
@@ -478,17 +473,17 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 #'   collision.
 #' @noRd
 assert_unique_predictor_names = function(predictors) {
-  collision_names = unique(predictors$code_name[duplicated(predictors$code_name)])
+  collision_names = unique(predictors$name[duplicated(predictors$name)])
   if (length(collision_names) == 0)
     return(invisible(predictors))
 
-  collision_lines = vapply(collision_names, function(code_name) {
-    rows = predictors[predictors$code_name == code_name, , drop = FALSE]
+  collision_lines = vapply(collision_names, function(name) {
+    rows = predictors[predictors$name == name, , drop = FALSE]
     sources = paste0(
       "`", rows$matrix_name, "` (", rows$dpar,
       ", segment ", rows$segment, ")"
     )
-    paste0("  `", code_name, "`: ", and_collapse(sources))
+    paste0("  `", name, "`: ", and_collapse(sources))
   }, character(1))
 
   stop(
@@ -636,7 +631,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   form_rhs = remove_terms(form_rhs, "group")
   current = get_predictors_dpar(data, form_rhs, segment, dpar, par_x, order,
     check_rank = check_rank && nrow(selected) == 0, design_id = design_id) %>%
-    dplyr::mutate(definition_name = .data$code_name, definition_segment = .data$segment)
+    dplyr::mutate(definition_segment = .data$segment)
   if (nrow(selected) == 0)
     return(current)
 
@@ -656,7 +651,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   if (nrow(bare) == 0 && nrow(current) > 0 && isTRUE(current$design_spec[[1]]$has_offset)) {
     bare = current[1, ]
     bare$par_type = "offset"
-    bare$code_name = NA_character_
+    bare$name = NA_character_
   }
   result = dplyr::bind_rows(bare, dplyr::bind_rows(borrowed))
 
@@ -798,7 +793,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # An implicit dpar without a formula anywhere is the parameter itself, e.g., sigma_1
   # rather than the link-scale intercept sigma_Intercept_1 of a modeled sigma().
   unmodeled = parsed_predictors$dpar %in% setdiff(family$dpars, c("mu", unlist(lapply(components, names))))
-  parsed_predictors[unmodeled, c("display_name", "code_name", "definition_name")] = paste0(parsed_predictors$dpar[unmodeled], "_1")
+  parsed_predictors$name[unmodeled] = paste0(parsed_predictors$dpar[unmodeled], "_1")
   predictors = parsed_predictors %>%
     dplyr::filter(.data$par_type != "offset") %>%
     dplyr::mutate(matrix_col = dplyr::row_number())
@@ -848,7 +843,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       dplyr::filter(.data$has_coefficients) %>%
       dplyr::mutate(
         population_name = dplyr::if_else(
-          .data$population_name %in% predictors$code_name,
+          .data$population_name %in% predictors$name,
           .data$population_name,
           NA_character_
         ),
@@ -857,9 +852,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       ) %>%
       dplyr::select(
         "population_name", "name", "part", "group_col", "segment", "dpar",
-        "sd_name", "par_type", "matrix_name", "display_name", "order",
+        "sd_name", "par_type", "matrix_name", "order",
         "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
-        "design_spec", "definition_name", "definition_segment"
+        "design_spec", "definition_segment"
       )
 
     # How long each group term applies. Group x-terms join later segments until a group intercept
@@ -887,7 +882,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")
   if ("name" %notin% names(predictor_group_effects))
     predictor_group_effects = tibble::tibble(name = character(), segment = integer(),
-      definition_name = character(), definition_segment = integer())
+      definition_segment = integer())
 
   list(
     components = components,

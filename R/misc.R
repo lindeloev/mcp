@@ -178,7 +178,7 @@ get_predictor_design_names = function(predictors, group_effects = NULL) {
   design = dplyr::bind_rows(
     tibble::tibble(
       matrix_col = predictors$matrix_col,
-      name = predictors$code_name,
+      name = predictors$name,
       segment = predictors$segment
     ),
     group_predictors

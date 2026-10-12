@@ -12,8 +12,8 @@ test_that("AR and MA terms are parsed as separate model components", {
   expect_equal(unique(predictors$order[predictors$dpar == "ma"]), 1)
   expect_equal(sum(predictors$dpar == "ar"), 4)
   expect_equal(sum(predictors$dpar == "ma"), 1)
-  expect_true(all(grepl("^ar[12]_", predictors$code_name[predictors$dpar == "ar"])))
-  expect_true(all(grepl("^ma1_", predictors$code_name[predictors$dpar == "ma"])))
+  expect_true(all(grepl("^ar[12]_", predictors$name[predictors$dpar == "ar"])))
+  expect_true(all(grepl("^ma1_", predictors$name[predictors$dpar == "ma"])))
 })
 
 
@@ -43,15 +43,15 @@ test_that("including a lower-order AR/MA turns off higher lags", {
     list(y ~ ar(2), ~ ar(1)), data, family, par_x = "x"
   )
   expect_equal(
-    predictors$next_segment[predictors$code_name == "ar2_1"],
+    predictors$next_segment[predictors$name == "ar2_1"],
     2L
   )
 
   joined_lower = get_predictors(
     list(y ~ ar(2), ~ ar(1, 0)), data, family, par_x = "x"
   )
-  expect_equal(joined_lower$next_segment[joined_lower$code_name == "ar1_1"], NA_integer_)
-  expect_equal(joined_lower$next_segment[joined_lower$code_name == "ar2_1"], 2L)
+  expect_equal(joined_lower$next_segment[joined_lower$name == "ar1_1"], NA_integer_)
+  expect_equal(joined_lower$next_segment[joined_lower$name == "ar2_1"], 2L)
 
   fit = mcp(list(y ~ ar(2), ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE)
   expect_match(
@@ -69,7 +69,7 @@ test_that("including a lower-order AR/MA turns off higher lags", {
     list(y ~ ma(2), ~ ma(1)), data, family, par_x = "x"
   )
   expect_equal(
-    ma_predictors$next_segment[ma_predictors$code_name == "ma2_1"],
+    ma_predictors$next_segment[ma_predictors$name == "ma2_1"],
     2L
   )
 })
@@ -128,7 +128,7 @@ test_that("AR/MA components are off until included again", {
     list(y ~ ar(1), ~ 0, ~ ar(1)), data, as_mcpfamily(gaussian()), par_x = "x"
   )
   expect_equal(
-    stats::setNames(predictors$next_segment[predictors$dpar == "ar"], predictors$code_name[predictors$dpar == "ar"]),
+    stats::setNames(predictors$next_segment[predictors$dpar == "ar"], predictors$name[predictors$dpar == "ar"]),
     c(ar1_1 = 2L, ar1_3 = NA_integer_)
   )
 

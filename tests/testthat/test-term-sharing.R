@@ -54,8 +54,8 @@ test_that("same() reuses population coefficients with x measured from the curren
 
   expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "Intercept_1", "x_1", "z_1", "sigma_1"))
   expect_equal(
-    tables$predictors[tables$predictors$segment == 2, c("code_name", "definition_segment")],
-    tibble::tibble(code_name = c("x_1", "z_1"), definition_segment = c(1L, 1L))
+    tables$predictors[tables$predictors$segment == 2, c("name", "definition_segment")],
+    tibble::tibble(name = c("x_1", "z_1"), definition_segment = c(1L, 1L))
   )
   expect_equal(
     as.numeric(fit$simulate(
@@ -97,7 +97,7 @@ test_that("sharing chains reuse fitted bases and explicit sources bridge gaps", 
   newdata = data.frame(x = c(3, 9, 17), z = c(-0.4, 0.2, 0.7))
   args = c(list(fit = fit, newdata = newdata, cp_1 = 6, cp_2 = 14,
     Intercept_1 = 2, sigma_1 = 1, .type = "fitted"),
-    stats::setNames(list(3, -1), source$code_name))
+    stats::setNames(list(3, -1), source$name))
   basis = predict(poly(data$z, 2), newdata$z)
   expect_equal(as.numeric(do.call(fit$simulate, args)), as.numeric(2 + basis %*% c(3, -1)))
 
@@ -139,7 +139,7 @@ test_that("same() preserves source factor coding and supports explicit sources",
   tables = get_fit_model_tables(fit)
 
   expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "cp_2", "Intercept_1", "groupb_1", "groupc_1", "sigma_1"))
-  expect_true(all(tables$predictors$code_name[tables$predictors$segment > 1 & tables$predictors$term_key == "group"] %in% c("groupb_1", "groupc_1")))
+  expect_true(all(tables$predictors$name[tables$predictors$segment > 1 & tables$predictors$term_key == "group"] %in% c("groupb_1", "groupc_1")))
   expect_equal(unique(tables$predictors$definition_segment[tables$predictors$segment == 3]), 1L)
   expect_no_error(add_rhs_predictors(data[1:3, ], fit))
 

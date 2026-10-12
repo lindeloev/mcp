@@ -156,7 +156,7 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
   if (any(is.na(joined$prior))) {
     stop_github(
       "mcp could not find a default prior for ",
-      and_collapse(joined$code_name[is.na(joined$prior)])
+      and_collapse(joined$name[is.na(joined$prior)])
     )
   }
 
@@ -183,7 +183,7 @@ default_predictor_specs = function(predictors, family, design_specs = list()) {
   joined$prior = fill_predictor_scale(joined$prior, joined$matrix_data, joined$x_factor)
 
   tibble::tibble(
-    parameter = joined$code_name,
+    parameter = joined$name,
     code = joined$prior,
     description = joined$description,
     source = "default"
@@ -214,7 +214,7 @@ default_group_specs = function(group_effects, family) {
   coefficient_description = ifelse(
     joined$par_type == "Intercept",
     "intercept",
-    paste0("coefficient `", joined$display_name, "`")
+    paste0("coefficient `", joined$matrix_name, "`")
   )
 
   dplyr::bind_rows(
@@ -308,8 +308,8 @@ assert_prior_not_shared = function(prior, predictors, group_effects) {
   shared = dplyr::bind_rows(
     dplyr::transmute(
       dplyr::filter(predictors, .data$segment != .data$definition_segment),
-      replaced = stringr::str_replace(.data$code_name, "_[0-9]+$", paste0("_", .data$segment)),
-      original = .data$code_name
+      replaced = stringr::str_replace(.data$name, "_[0-9]+$", paste0("_", .data$segment)),
+      original = .data$name
     ),
     dplyr::transmute(
       dplyr::filter(group_effects, .data$segment != .data$definition_segment),
@@ -404,8 +404,8 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 
   # Enforce the support of constant dpars, e.g., sigma > 0
   bounds = get_constant_dpar_bounds(family)
-  for (name in intersect(names(prior), predictors$code_name[predictors$dpar %in% names(bounds)])) {
-    dpar = predictors$dpar[match(name, predictors$code_name)]
+  for (name in intersect(names(prior), predictors$name[predictors$dpar %in% names(bounds)])) {
+    dpar = predictors$dpar[match(name, predictors$name)]
     original = prior[[name]]
     prior[[name]] = truncate_lower_prior(original, bounds[[dpar]], name)
     if (!identical(prior[[name]], original))
@@ -437,7 +437,7 @@ add_intercept_references = function(specs, predictors, context) {
 
   intercepts = predictors[predictors$segment == 1 & predictors$prior_type == "Intercept" & predictors$dpar %notin% c("ar", "ma"), ]
   for (i in seq_len(nrow(intercepts))) {
-    row = match(intercepts$code_name[i], specs$parameter)
+    row = match(intercepts$name[i], specs$parameter)
     if (is.na(row) || specs$source[row] != "default")
       next
     parts = split_prior_truncation(specs$code[row])
@@ -454,7 +454,7 @@ add_intercept_references = function(specs, predictors, context) {
 
     # Subtract the x-terms at min(x) from the location and the truncation bounds
     power = ifelse(terms$x_factor == "x", "", sub("x", "", terms$x_factor, fixed = TRUE))
-    reference = paste0(" - ", terms$code_name, " * min(.x)", power, collapse = "")
+    reference = paste0(" - ", terms$name, " * min(.x)", power, collapse = "")
     shift = function(arg) if (arg == "") "" else if (arg == "0") reference else paste0(arg, reference)
     location = if (call$name == "dunif") 1:2 else 1
     call$args[location] = vapply(call$args[location], shift, character(1))

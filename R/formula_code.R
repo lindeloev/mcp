@@ -27,7 +27,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
       dpar = .data$dpar,
       segment = .data$segment,
       matrix_col = .data$matrix_col,
-      code_name = paste0(.data$name, "[", .data$group_col, "_index_[i_]]"),
+      name = paste0(.data$name, "[", .data$group_col, "_index_[i_]]"),
       order = .data$order,
       x_factor = .data$x_factor,
       next_segment = .data$next_segment
@@ -35,7 +35,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
 
   # Then add population-level effects
   formula_predictors = predictors %>%
-    dplyr::select("dpar", "segment", "matrix_col", "code_name", "order", "x_factor", "next_segment") %>%
+    dplyr::select("dpar", "segment", "matrix_col", "name", "order", "x_factor", "next_segment") %>%
     dplyr::bind_rows(predictor_group_effects)
 
   # Extract offset terms from design specifications
@@ -106,7 +106,7 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
       dplyr::summarise(
         indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
         indicator_next = dplyr::if_else(is.na(dplyr::first(.data$next_cp)), "", paste0(" * (", par_x, "[i_] < ", dplyr::first(.data$next_cp), ")")),
-        inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$code_name, collapse = ", "), "))"),
+        inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$name, collapse = ", "), "))"),
         x_factor = gsub("x(?!p\\()", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),
         segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
         .groups = "drop"

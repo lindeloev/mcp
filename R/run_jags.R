@@ -214,7 +214,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
   # Public parameters and fixed data range endpoints share one namespace.
   parameter_names = stats::na.omit(c(
     paste0("cp_", 0:nrow(segments)),
-    predictors$code_name,
+    predictors$name,
     group_effects$name, group_effects$sd_name
   ))
 
@@ -230,7 +230,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
       paste0("cp_", seq_len(nrow(segments) - 1L), "_frac_"), "cp_unit_", "cp_sorted_", "cp_i_",
       paste0("x_local_", seq_len(nrow(segments)), "_"),
       paste0("link_", dpars, "_"), paste0(dpars, "_"),
-      paste0(c(predictors$code_name, group_effects$name), "_inverse")
+      paste0(c(predictors$name, group_effects$name), "_inverse")
     )
   ))
 
