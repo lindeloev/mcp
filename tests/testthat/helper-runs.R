@@ -54,18 +54,17 @@ test_runs = function(model,
   testthat::expect_true(is.function(empty$simulate), model)
   testthat::expect_true(is.list(empty$.internal), model)
 
-  # The plain model has the same parameters and priors, without auxiliary nodes except for the segment-1 intercept
+  # The plain model has the same parameters and priors, without auxiliary nodes
   plain = mcp(model = model, data = data, prior = prior, family = family, par_x = par_x, sample = FALSE, reparam = FALSE, quiet = TRUE)
   testthat::expect_identical(mcp_pars(plain), parameters, label = model)
   testthat::expect_identical(plain$prior, empty$prior, label = model)
-  testthat::expect_false(grepl("_end_|_rise_", plain$jags_code), label = model)
+  testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)
 
   level = get_mcp_test_level()
 
   if (sample) {
     if (rbinom(1, 1, 0.5) == 1)
       data = tibble::as_tibble(data)
-    reparam = rbinom(1, 1, 0.5) == 1  # Also sample the plain model
 
     warnings = messages = character()
     fit = withCallingHandlers(
@@ -76,7 +75,6 @@ test_runs = function(model,
         prior = prior,
         sample = "both",  # prior and posterior to check hypotheses
         par_x = par_x,
-        reparam = reparam,
         warmup = 6,
         iter = 18,  # Keep enough draws for the minimum supported loo version.
         chains = 2,  # run sequentially under the default future plan

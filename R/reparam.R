@@ -18,8 +18,6 @@
 #
 # - Segment 1: The intercept as the value at a fixed point, the expected midpoint of
 #   segment 1 under the dirichlet(1) prior, min(x) + (max(x) - min(x)) / (2 * K).
-#   This also applies with reparam = FALSE since the intercept and slope are otherwise
-#   strongly correlated when x is far from zero.
 # - Joined segments: The lowest-degree x-term as the value at the segment end, and
 #   further x-terms (e.g., I(x^2)) as their rise over the segment.
 # - Disjoined segments: The intercept as the value at the segment end.
@@ -41,7 +39,7 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
   is_reparam_prior = function(name, segment_1 = FALSE) {
     row = match(name, table$parameter)
     call = parse_prior_call(split_prior_truncation(table$value[row])$distribution)
-    (reparam || segment_1) && !is.na(row) && table$source[row] == "default" && !is.null(call) &&
+    reparam && !is.na(row) && table$source[row] == "default" && !is.null(call) &&
       call$name %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !grepl("T(", table$value[row], fixed = TRUE))
   }
   # Terms without other variables (a model-matrix column of ones)

@@ -604,7 +604,7 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   fit = mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE, reparam = FALSE)
   location = paste0(format_prior_number(mean(data$y)), " - x_1 * 101 - xE2_1 * 10201")
   expect_equal(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
-  expect_match(fit$jags_code, paste0("Intercept_1_mid_ ~ dnorm(", location, " + x_1 * ("), fixed = TRUE)
+  expect_match(fit$jags_code, paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
   ps = prior_summary(fit, verbose = TRUE)
   expect_equal(ps$rule[ps$parameter == "Intercept_1"], "normal(mean = mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, sd = 2.5 * sd(y))")
   expect_match(ps$description[ps$parameter == "Intercept_1"], "on the level at min(x)", fixed = TRUE)
@@ -707,9 +707,9 @@ test_that("reparameterizations keep segment lines in place when change points mo
   sigma_fit = mcp(list(y ~ 1, ~ 0 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
   expect_match(sigma_fit$jags_code, "sigma_2 = sigma_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
 
-  # The plain model, except for the segment-1 intercept
+  # The plain model
   plain_fit = mcp(model, data, par_x = "x", sample = FALSE, reparam = FALSE)
-  expect_false(grepl("_end_|_rise_", plain_fit$jags_code))
+  expect_false(grepl("_mid_|_end_|_rise_", plain_fit$jags_code))
   expect_match(plain_fit$jags_code, "\n  x_3 ~ dnorm")
   expect_equal(plain_fit$prior, fit$prior)
 
