@@ -120,7 +120,8 @@ information, change point and population-level parameters, and diagnostics.
 Change-point deviations are relative to their population change point;
 \verb{cp_i_<group>_sd} (e.g., \code{cp_1_id_sd}) is the SD of their normal distribution before truncation.
 
-\item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
+\item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object,
+or the prior summary with \code{prior = TRUE}. Without the requested draws, only the model is shown.
 
 }}
 \examples{

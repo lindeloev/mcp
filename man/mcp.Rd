@@ -20,7 +20,7 @@ mcp(
   seed = NULL,
   diagnostics = list(),
   quiet = getOption("mcp_quiet", FALSE),
-  cores = NULL,
+  cores = lifecycle::deprecated(),
   adapt = lifecycle::deprecated()
 )
 }

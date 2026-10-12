@@ -46,7 +46,7 @@ can be modeled using \code{cp()}, e.g., \code{~ cp((1 | id)) + 0 + x}.
 
 \strong{1. Response (segment 1 only):}
 \itemize{
-\item \code{y ~ ...}: Standard continuous or count response (Gaussian, Poisson, Bernoulli).
+\item \code{y ~ ...}: Standard continuous, binary, or count response (Gaussian, Bernoulli, Poisson, negative binomial).
 \item \code{successes | trials(total) ~ ...}: Binomial response (\code{family = binomial()}).
 \item \code{y | weights(w) ~ ...}: Observation log-likelihood weights (multiplies each observation's
 log-likelihood contribution by \code{w > 0}; affects posterior inference and \code{log_lik()}, but

@@ -166,7 +166,7 @@ with \code{pp_check()} generate fresh histories.}
 
 \item{...}{Must be empty. Reserved for future use.}
 
-\item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
+\item{dpar}{What distributional parameter to evaluate. E.g.,
 \itemize{
 \item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
@@ -180,7 +180,6 @@ coefficient you want to evaluate.
 \item \code{"response"}: return on the response scale, i.e., after applying the inverse link function.
 \item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
 trends are modeled.
-A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 }
 \value{
@@ -190,7 +189,7 @@ A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} i
 \itemize{
 \item \code{.mean}: The mean of the draws.
 \item \code{.sd}: The SD of the draws. With posterior draws (the default), this is the
-posterior predictive SD for \code{type = "predict"} and the posterior SD of the
+posterior predictive SD for \code{predict()} and the posterior SD of the
 evaluated quantity otherwise.
 \item \code{.lower} and \code{.upper}: The bounds of the central interval given in \code{width}.
 }
@@ -211,7 +210,7 @@ The return columns are:
 the \code{.dpar} for other dpars (e.g., \code{.mu} or \code{.sigma}), \code{.prediction}, \code{.residual}, or \code{.loglik}.
 }
 \item If \code{summary = FALSE} and \code{draws_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted
-values (depending on \code{type}). This format is used by \code{brms} and it's useful as \code{yrep} in
+values (depending on the function). This format is used by \code{brms} and it's useful as \code{yrep} in
 \verb{bayesplot::ppc_*} functions.
 }
 }

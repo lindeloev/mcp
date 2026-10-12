@@ -103,7 +103,7 @@ pp_check(demo_fit, type = "ecdf_overlay")
 }
 }
 \seealso{
-\code{\link{plot.mcpfit}} \code{\link{pp_eval}}
+\code{\link{plot.mcpfit}} \code{\link{predict.mcpfit}}
 
 plot_pars plot_dpar pp_check
 }

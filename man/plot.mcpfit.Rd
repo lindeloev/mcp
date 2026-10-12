@@ -101,7 +101,6 @@ currently requires all such effects (\code{group_effects = TRUE}).
 \item \code{"response"}: return on the response scale, i.e., after applying the inverse link function.
 \item \code{"linear"}: return on the linear-predictor (link) scale, where the linear
 trends are modeled.
-A linear scale is only applicable when \code{type == "fitted"} and \code{dpar} is not \code{NULL}.
 }}
 
 \item{at}{Named list setting additional continuous predictors to fixed values.
@@ -113,7 +112,7 @@ can be supplied as explicit scalar design values. Passed to
 
 \item{...}{Must be empty. Reserved for future use.}
 
-\item{dpar}{What distributional parameter to evaluate. This is only relevant when \code{type == "fitted"}. E.g.,
+\item{dpar}{What distributional parameter to evaluate. E.g.,
 \itemize{
 \item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
