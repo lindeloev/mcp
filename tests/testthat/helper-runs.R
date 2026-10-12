@@ -54,11 +54,11 @@ test_runs = function(model,
   testthat::expect_true(is.function(empty$simulate), model)
   testthat::expect_true(is.list(empty$.internal), model)
 
-  # The plain model has the same parameters and priors, without auxiliary nodes
+  # The plain model has the same parameters and priors, without auxiliary nodes except for the segment-1 intercept
   plain = mcp(model = model, data = data, prior = prior, family = family, par_x = par_x, sample = FALSE, reparam = FALSE, quiet = TRUE)
   testthat::expect_identical(mcp_pars(plain), parameters, label = model)
   testthat::expect_identical(plain$prior, empty$prior, label = model)
-  testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)
+  testthat::expect_false(grepl("_end_|_rise_", plain$jags_code), label = model)
 
   level = get_mcp_test_level()
 

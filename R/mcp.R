@@ -58,7 +58,8 @@
 #'   [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
 #'   * `TRUE` (default) This changes only `fit$jags_code` and sampling efficiency, not the 
 #'     model, the priors, or the posterior. 
-#'   * `FALSE` runs the plain model. This mostly serves the pedagogical purpose of transparency.
+#'   * `FALSE` runs the plain model, except that the segment-1 intercept is still sampled at the
+#'     midpoint of segment 1. This mostly serves the pedagogical purpose of transparency.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
 #'   so `set.seed()` before `mcp()` also makes sampling reproducible. 

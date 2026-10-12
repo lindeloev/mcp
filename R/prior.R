@@ -45,10 +45,10 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
     default_group_specs(group_effects, family)
   )
   specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)
+  specs = add_intercept_references(specs, predictors, context)
 
   all_names = specs$parameter
   table = compile_prior_specs(specs, all_names, context)
-  table = add_intercept_references(table, predictors, context)
   table = add_reparams(table, predictors, cps, context, reparam)
   resolved = stats::setNames(as.list(table$value), table$parameter)
   attr(resolved, "prior_table") = table
@@ -65,7 +65,8 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #' (e.g. `min(x)` or `max(x)`) may be retained in symbolic form in compact output,
 #' while `verbose = TRUE` displays the underlying rule, description, source, and kind.
 #' Numbers are rounded to 5 significant digits for display. `fit$prior` holds the exact
-#' values used in the model.
+#' values used in the model. Parameter names within a prior describe its dependence on
+#' other parameters, e.g., the default prior on `Intercept_1` given `x_1`.
 #'
 #' `prior_summary()` shares its generic with \pkg{rstantools} (used by `brms` and `rstanarm`), so it
 #' works for all of these models regardless of package load order.

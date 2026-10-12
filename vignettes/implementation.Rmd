@@ -125,11 +125,11 @@ You will find the exact same formula for `y_ = ...` if you do `print(fit$simulat
 
 # Reparameterizations
 
-By default (`mcp(..., reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model (`reparam = FALSE`). Only the sampling becomes faster and converges more reliably. Here are excerpts of `fit$jags_code` for `list(y ~ 1 + x, ~ 0 + x, ~ 1 + x)` with `x = 1:100`, first with `reparam = FALSE`:
+By default (`mcp(..., reparam = TRUE)`), `fit$jags_code` samples some coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or `_rise_`. This is a reparameterization, not a new model: the priors, and hence the posteriors, are exactly those of the plain model. Only the sampling becomes faster and converges more reliably. `reparam = FALSE` shows the plain model, except that the segment-1 intercept is still sampled at the midpoint of segment 1 because sampling is otherwise very slow when $x$ is far from zero. Here are excerpts of `fit$jags_code` for `list(y ~ 1 + x, ~ 0 + x, ~ 1 + x)` with `x = 1:100`, first with `reparam = FALSE`:
 
 ```{r, eval = FALSE}
-Intercept_1_start_ ~ dnorm(0, 1/(2.5)^2)  # Prior on the value at min(x) = 1
-Intercept_1 = Intercept_1_start_ - (x_1 * 1)
+Intercept_1_mid_ ~ dnorm(0 - x_1 * 1 + x_1 * (17.5), 1/(2.5)^2)  # Prior on the value at min(x) = 1
+Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))  # Also with reparam = FALSE
 x_1 ~ dnorm(0, 1/(0.087)^2)
 x_2 ~ dnorm(0, 1/(0.087)^2)
 Intercept_3 ~ dnorm(0, 1/(2.5)^2)
@@ -140,7 +140,7 @@ And with `reparam = TRUE`:
 
 ```{r, eval = FALSE}
 # Segment 1: intercept sampled as the value at x = 17.5
-Intercept_1_mid_ ~ dnorm(0 + x_1 * (17.5) - (x_1 * cp_0), 1/(2.5)^2)
+Intercept_1_mid_ ~ dnorm(0 - x_1 * 1 + x_1 * (17.5), 1/(2.5)^2)
 Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))
 x_1 ~ dnorm(0, 1/(0.087)^2)
 
@@ -178,7 +178,7 @@ So JAGS can sample $u$ with this prior and derive $\beta = (u - a) / w$, and $\b
 
 | Coefficient | Sampled $u$ | $a$ | $w$ |
 |---|---|---|---|
-| Segment 1 intercept $\beta_{1,0}$ (prior on the value at $\min(x)$) | Value at $c$ | $\beta_{1,1}(c - \min(x))$ | $1$ |
+| Segment 1 intercept $\beta_{1,0}$ | Value at $c$ | $\beta_{1,1} c$ | $1$ |
 | Joined slope $\beta_{k,1}$ | Value at segment end $e_k = v_{k-1} + \beta_{k,1} w_k$ | $v_{k-1}$ | $w_k$ |
 | Joined `I(x^2)` term $\beta_{k,2}$ | Rise $\beta_{k,2} w_k^2$ | $0$ | $w_k^2$ |
 | Disjoined intercept $\beta_{k,0}$ | Value at segment end $e_k = \beta_{k,0} + \beta_{k,1} w_k$ | $\beta_{k,1} w_k$ | $1$ |
@@ -196,4 +196,4 @@ c(mean = mean(slope), sd = sd(slope))  # Normal(0, 0.5), as for the plain slope
 c(cor(slope, start), cor(slope, width))  # ... regardless of start and width
 ```
 
-`mcp` only reparameterizes its default `dnorm()` and `dt()` priors. User-specified priors are sampled as written, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.
+`mcp` only reparameterizes its default `dnorm()` and `dt()` priors, and for the segment-1 intercept also truncated and `dunif()` priors, since a shift ($w = 1$) moves their bounds by $a$ too. User-specified priors are sampled as written, and so are coefficients in segments bounded by group-level change points, where the segment widths differ between groups.

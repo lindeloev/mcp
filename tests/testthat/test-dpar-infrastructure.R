@@ -175,7 +175,7 @@ test_that("generated code separates link and distribution scales", {
   expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
   expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
   expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
-  expect_equal(fit$prior$sigma_1, "dt(0, 2.5, 3)")
+  expect_equal(fit$prior$sigma_1, "dt(-sigma_x_1 * 1, 2.5, 3)")
   expect_equal(fit$prior$sigma_x_1, paste0("dt(0, ", format_prior_number(2.5 / stats::sd(data$x)), ", 3)"))
   expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
 

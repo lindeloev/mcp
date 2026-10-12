@@ -13,19 +13,21 @@
 #   <name>_<suffix>_ ~ dist(location * width + shift, scale * width)
 #   <name> = (<name>_<suffix>_ - derive) / width
 #
-# With reparam = TRUE, the following are sampled as values that stay in place when
-# a change point moves. All dpars except ar and ma follow the same rules.
+# The following are sampled as values that stay in place when a change point moves.
+# All dpars except ar and ma follow the same rules.
 #
 # - Segment 1: The intercept as the value at a fixed point, the expected midpoint of
 #   segment 1 under the dirichlet(1) prior, min(x) + (max(x) - min(x)) / (2 * K).
+#   This also applies with reparam = FALSE since the intercept and slope are otherwise
+#   strongly correlated when x is far from zero.
 # - Joined segments: The lowest-degree x-term as the value at the segment end, and
 #   further x-terms (e.g., I(x^2)) as their rise over the segment.
 # - Disjoined segments: The intercept as the value at the segment end.
 #
-# Only default dnorm() and dt() priors without truncation are reparameterized.
+# Only default dnorm() and dt() priors without truncation are reparameterized, except
+# that the segment-1 intercept may also have a truncated or dunif() prior.
 # Segments bounded by group-level change points are skipped because their data use
-# group-specific widths. With reparam = FALSE, only the default segment-1 intercept
-# prior on the value at min(x) remains (see add_intercept_references()).
+# group-specific widths.
 add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
   # Empty columns, filled by set_aux() for reparameterized parameters
   aux_cols = c("aux_suffix", "aux_shift", "aux_width", "aux_derive")
@@ -34,12 +36,13 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
     table[match(name, table$parameter), aux_cols] <<- list(suffix, shift, width, derive)
   }
 
-  # Only default location-scale priors can be shifted and scaled exactly
-  is_reparam_prior = function(name) {
+  # Only default location-scale priors can be shifted and scaled exactly. The segment-1
+  # intercept is shifted without change points, so bounded priors (truncation or dunif) work too.
+  is_reparam_prior = function(name, segment_1 = FALSE) {
     row = match(name, table$parameter)
-    call = parse_prior_call(table$value[row])
-    reparam && !is.na(row) && table$source[row] == "default" && !is.null(call) &&
-      call$name %in% c("dnorm", "dt") && !grepl("T(", table$value[row], fixed = TRUE)
+    call = parse_prior_call(split_prior_truncation(table$value[row])$distribution)
+    (reparam || segment_1) && !is.na(row) && table$source[row] == "default" && !is.null(call) &&
+      call$name %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !grepl("T(", table$value[row], fixed = TRUE))
   }
   # Terms without other variables (a model-matrix column of ones)
   is_pure = vapply(predictors$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
@@ -61,13 +64,10 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
     # intercept (`0 + state`), each factor level has an intercept (see get_prior_type()).
     terms = slopes[slopes$segment == 1, ]
     for (intercept in own$code_name[own$segment == 1 & own$prior_type == "Intercept"]) {
-      if (nrow(terms) > 0 && is_reparam_prior(intercept)) {
+      if (nrow(terms) > 0 && is_reparam_prior(intercept, segment_1 = TRUE)) {
         x_max = max(context$data[[context$x_name]], na.rm = TRUE)
         at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
-        set_aux(intercept, "mid", shift = paste0(x_terms_at(terms, at), " - (", x_terms_at(terms, "cp_0"), ")"), derive = x_terms_at(terms, at))
-      } else if (!is.na(table$reference[match(intercept, table$parameter)])) {
-        # Otherwise (e.g., reparam = FALSE): only the prior placement on the value at min(x)
-        set_aux(intercept, "start", derive = table$reference[match(intercept, table$parameter)])
+        set_aux(intercept, "mid", shift = x_terms_at(terms, at), derive = x_terms_at(terms, at))
       }
     }
 
@@ -131,7 +131,8 @@ get_aux_prior_str = function(name, value, description, aux) {
   # Prior on the auxiliary node: dist(location * width + shift, scale * width)
   aux_name = paste0(name, "_", aux$aux_suffix, "_")
   if (!is.na(aux$aux_shift) || !is.na(aux$aux_width)) {
-    call = parse_prior_call(value)
+    parts = split_prior_truncation(value)
+    call = parse_prior_call(parts$distribution)
     location = call$args[1]
     if (!is.na(aux$aux_width)) {
       location = if (location == "0") "0" else paste0(location, " * ", aux$aux_width)
@@ -140,7 +141,14 @@ get_aux_prior_str = function(name, value, description, aux) {
     if (!is.na(aux$aux_shift))
       location = if (location == "0") aux$aux_shift else paste0(location, " + ", aux$aux_shift)
     call$args[1] = location
+
+    # Bounded priors are only shifted (see is_reparam_prior())
+    shift = function(bound) if (bound == "") "" else paste0(bound, " + ", aux$aux_shift)
+    if (call$name == "dunif")
+      call$args[2] = shift(call$args[2])
     value = paste0(call$name, "(", paste(call$args, collapse = ", "), ")")
+    if (!is.null(parts$truncation))
+      value = paste0(value, " T(", paste(vapply(parse_prior_call(parts$truncation)$args, shift, character(1)), collapse = ", "), ")")
   }
 
   # The parameter derived from the auxiliary node: (aux - derive) / width
@@ -149,7 +157,6 @@ get_aux_prior_str = function(name, value, description, aux) {
     derive = paste0(if (is.na(aux$aux_derive)) derive else paste0("(", derive, ")"), " / ", aux$aux_width)
   # JAGS comment and code
   sampled_as = c(
-    start = "",
     mid = "; sampled as the value at the expected midpoint of segment 1",
     end = "; sampled as the value at the segment end",
     rise = "; sampled as the rise over the segment"

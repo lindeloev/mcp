@@ -144,7 +144,7 @@ test_that("modeled shape uses link-scale coefficient priors", {
   )
 
   expect_equal(fit$family$links, c(mu = "log", shape = "log"))
-  expect_equal(fit$prior$shape_1, "dnorm(0, 2.5)")
+  expect_equal(fit$prior$shape_1, "dnorm(-shape_x_1 * 1, 2.5)")
   expect_equal(
     fit$prior$shape_x_1,
     paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")")
@@ -158,7 +158,7 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
 
   expect_equal(fit$family$dpars, "mu")
   expect_equal(fit$family$links, c(mu = "log"))
-  expect_equal(fit$prior$Intercept_1, "dnorm(0.7, 2.5)")
+  expect_equal(fit$prior$Intercept_1, "dnorm(0.7 - x_1 * 1, 2.5)")
   expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
 
   negbin_fit = mcp(list(y ~ 1 + x), data, family = negbinomial(), sample = FALSE)
@@ -169,7 +169,7 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
     list(y ~ 1 + x), data,
     family = poisson(link = "identity"), sample = FALSE
   )
-  expect_equal(identity_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(data$y)), ", ", format_prior_number(2.5 * stats::sd(data$y)), ") T(0, )"))
+  expect_equal(identity_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(data$y)), " - x_1 * 1, ", format_prior_number(2.5 * stats::sd(data$y)), ") T(-x_1 * 1, )"))
   expect_equal(identity_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 * stats::sd(data$y) / stats::sd(data$x)), ")"))
 })
 

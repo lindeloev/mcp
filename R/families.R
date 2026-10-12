@@ -318,7 +318,7 @@ mcpfamily_binomial = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform success-probability intercept", "always",
+      "mu", "Intercept", "dunif(0, 1)", "dt(0, 1, 3) T(0, )", "Uniform success-probability intercept", "always",
       "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Success-probability difference between levels", "always",
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled success-probability coefficient", "always"
     )
@@ -415,7 +415,7 @@ mcpfamily_bernoulli = function(family) {
   if (family$link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-      "mu", "Intercept", "dbeta(1, 1)", "dt(0, 1, 3) T(0, )", "Uniform P(y = TRUE) intercept", "always",
+      "mu", "Intercept", "dunif(0, 1)", "dt(0, 1, 3) T(0, )", "Uniform P(y = TRUE) intercept", "always",
       "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "P(y = TRUE) difference between levels", "always",
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled P(y = TRUE) coefficient", "always"
     )

@@ -252,7 +252,7 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     family = negbinomial(),
     sample = FALSE
   )
-  testthat::expect_equal(fit_shape$prior$shape_1, "dnorm(0, 2.5)")
+  testthat::expect_equal(fit_shape$prior$shape_1, "dnorm(-shape_x_1 * 1, 2.5)")
   testthat::expect_equal(fit_shape$prior$shape_x_1, paste0("dnorm(0, ", x_scale, ")"))
   testthat::expect_equal(fit_shape$prior$shape_catB_1, "dnorm(0, 2.5)")
   testthat::expect_equal(fit_shape$prior$shape_1_id_sd, "dnorm(0, 2.5) T(0, )")
@@ -280,7 +280,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     expected_rate = log(pmax(d$y, 0.1)) - log(d$exposure)
     expected_loc = round(median(expected_rate), 1)
     expected_scale = max(2.5, round(mad(expected_rate), 1))
-    testthat::expect_equal(fit$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+    testthat::expect_equal(fit$prior$Intercept_1, paste0("dnorm(", expected_loc, " - x_1 * 1, ", expected_scale, ")"))
 
     ps = prior_summary(fit, verbose = TRUE)
     int_row = ps[ps$parameter == "Intercept_1", ]
@@ -301,7 +301,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     expected_count = log(pmax(d$y, 0.1))
     expected_count_loc = round(median(expected_count), 1)
     expected_count_scale = max(2.5, round(mad(expected_count), 1))
-    testthat::expect_equal(fit_multi$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+    testthat::expect_equal(fit_multi$prior$Intercept_1, paste0("dnorm(", expected_loc, " - x_1 * 1, ", expected_scale, ")"))
     testthat::expect_equal(fit_multi$prior$Intercept_2, paste0("dnorm(", expected_count_loc, ", ", expected_count_scale, ")"))
 
     # Segment 3 reverted to log-count / log-mean
@@ -325,7 +325,7 @@ testthat::test_that("offset adjusts default intercept priors to log-rate", {
     expected_rate2 = log(pmax(d$y, 0.1)) - log(d$exposure2)
     expected_loc2 = round(median(expected_rate2), 1)
     expected_scale2 = max(2.5, round(mad(expected_rate2), 1))
-    testthat::expect_equal(fit_diff$prior$Intercept_1, paste0("dnorm(", expected_loc, ", ", expected_scale, ")"))
+    testthat::expect_equal(fit_diff$prior$Intercept_1, paste0("dnorm(", expected_loc, " - x_1 * 1, ", expected_scale, ")"))
     testthat::expect_equal(fit_diff$prior$Intercept_2, paste0("dnorm(", expected_loc2, ", ", expected_scale2, ")"))
 
     ps_diff = prior_summary(fit_diff, verbose = TRUE)
@@ -381,7 +381,7 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
 
   ps = prior_summary(fit, verbose = TRUE)
   int_row = ps[ps$parameter == "Intercept_1", ]
-  testthat::expect_match(int_row$prior, "^normal\\(mean = [0-9.]+, sd = [0-9.]+\\)$")
+  testthat::expect_match(int_row$prior, "^normal\\(mean = [0-9.]+ - time_1 \\* 1, sd = [0-9.]+\\)$")
   testthat::expect_match(int_row$rule, "log\\(pmax\\(y, 0.1\\)\\)")
 
   # Categorical contrast on log link uses dnorm(0, 2.5 / sd(dummy))
@@ -439,7 +439,7 @@ test_that("priors are resolved without changing their parameterization", {
     unclass(default_fit$prior),
     list(
       cp_1 = "dirichlet(1)",
-      Intercept_1 = intercept,
+      Intercept_1 = sub(",", " - x_1 * 1,", intercept),
       x_1 = slope,
       Intercept_2 = intercept,
       x_2 = slope,
@@ -547,7 +547,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
   )
 
   # Non-positive responses are valid: the log link applies to mu, not y.
-  expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6, 2.5)")
+  expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6 - x_1 * 1, 2.5)")
   expect_equal(log_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(log_data$x)), ")"))
   expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0, )")
   expect_false(grepl("log\\(y\\)", log_fit$jags_code))
@@ -562,7 +562,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
     list(y ~ 1 + x), wide_data,
     family = gaussian(link = "log"), sample = FALSE
   )
-  expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5, 7.1)")
+  expect_equal(wide_fit$prior$Intercept_1, "dnorm(2.5 - x_1 * 1, 7.1)")
   expect_equal(wide_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(wide_data$x)), ")"))
   expect_equal(wide_fit$prior$sigma_1, "dt(0, 110.8, 3) T(0, )")
 
@@ -571,11 +571,11 @@ test_that("Gaussian defaults use coherent response and link scales", {
     list(y ~ 1 + x), zero_data,
     family = gaussian(link = "log"), sample = FALSE
   )
-  expect_equal(zero_fit$prior$Intercept_1, "dnorm(0.9, 2.5)")
+  expect_equal(zero_fit$prior$Intercept_1, "dnorm(0.9 - x_1 * 1, 2.5)")
 
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
-  expect_equal(small_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(small_data$y)), ", ", format_prior_number(2.5 * stats::sd(small_data$y)), ")"))
+  expect_equal(small_fit$prior$Intercept_1, paste0("dnorm(", format_prior_number(mean(small_data$y)), " - x_1 * 1, ", format_prior_number(2.5 * stats::sd(small_data$y)), ")"))
   expect_equal(small_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 })
 
@@ -593,9 +593,23 @@ test_that("x-term powers are autoscaled by the sd of the power measured from min
 test_that("default segment-1 intercept priors are placed at min(x)", {
   data = data.frame(x = 101:130, y = 1:30 + 0.5 * (1:30 > 15))
   fit = mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE, reparam = FALSE)
-  expect_match(fit$jags_code, "Intercept_1_start_ ~ dnorm(", fixed = TRUE)
-  expect_match(fit$jags_code, "Intercept_1 = Intercept_1_start_ - (x_1 * 101 + xE2_1 * 10201)", fixed = TRUE)
-  expect_match(prior_summary(fit, verbose = TRUE)$description[1:3], "on the level at min(x)", fixed = TRUE, all = FALSE)
+  location = paste0(format_prior_number(mean(data$y)), " - x_1 * 101 - xE2_1 * 10201")
+  expect_equal(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
+  expect_match(fit$jags_code, paste0("Intercept_1_mid_ ~ dnorm(", location, " + x_1 * ("), fixed = TRUE)
+  ps = prior_summary(fit, verbose = TRUE)
+  expect_equal(ps$rule[ps$parameter == "Intercept_1"], "normal(mean = mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, sd = 2.5 * sd(y))")
+  expect_match(ps$description[ps$parameter == "Intercept_1"], "on the level at min(x)", fixed = TRUE)
+
+  # Bounded priors shift their bounds too
+  data$y = rpois(30, 10)
+  poisson_fit = mcp(list(y ~ 1 + x), data, family = poisson(link = "identity"), sample = FALSE)
+  expect_match(poisson_fit$prior$Intercept_1, " - x_1 * 101, ", fixed = TRUE)
+  expect_match(poisson_fit$prior$Intercept_1, ") T(-x_1 * 101, )", fixed = TRUE)
+  expect_match(poisson_fit$jags_code, "Intercept_1_mid_ ~ dnorm(", fixed = TRUE)
+  data$y = rbinom(30, 1, 0.5)
+  bernoulli_fit = mcp(list(y ~ 1 + x), data, family = bernoulli(link = "identity"), sample = FALSE)
+  expect_equal(bernoulli_fit$prior$Intercept_1, "dunif(-x_1 * 101, 1 - x_1 * 101)")
+  expect_match(bernoulli_fit$jags_code, "Intercept_1_mid_ ~ dunif(", fixed = TRUE)
 
   # User-specified intercept priors stay on the intercept at x = 0
   user_fit = mcp(list(y ~ 1 + x), data, prior = list(Intercept_1 = "dnorm(0, 10)"), sample = FALSE)
@@ -603,21 +617,29 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   expect_false(grepl("Intercept_1_", user_fit$jags_code))
 
   # Nothing to move when x starts at zero or segment 1 has no x-terms
-  expect_false(grepl("_start_", mcp(list(y ~ 1 + x), transform(data, x = x - 101), sample = FALSE, reparam = FALSE)$jags_code))
-  expect_false(grepl("_start_", mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE, reparam = FALSE)$jags_code))
+  expect_false(grepl("x_", mcp(list(y ~ 1 + x), transform(data, x = x - 101), sample = FALSE)$prior$Intercept_1))
+  expect_false(grepl("x_", mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE)$prior$Intercept_1))
 })
 
 
 test_that("the prior on the level at min(x) matches the default intercept prior", {
   data = data.frame(x = 101:130, y = 1:30)
-  fit = suppressWarnings(mcp(
-    list(y ~ 1 + x), data, sample = "prior",
-    chains = 1, iter = 4000, warmup = 100, seed = 42, quiet = TRUE
-  ))
-  draws = as_draws_df(fit, prior = TRUE)
-  level = draws$Intercept_1 + draws$x_1 * 101
+  get_draws = function(prior = list()) {
+    fit = suppressWarnings(mcp(
+      list(y ~ 1 + x), data, prior = prior, sample = "prior",
+      chains = 1, iter = 4000, warmup = 100, seed = 42, quiet = TRUE
+    ))
+    list(fit = fit, draws = as_draws_df(fit, prior = TRUE))
+  }
+  default = get_draws()
+  level = default$draws$Intercept_1 + default$draws$x_1 * 101
   expect_equal(mean(level), mean(data$y), tolerance = 0.1)
   expect_equal(stats::sd(level), 2.5 * stats::sd(data$y), tolerance = 0.1)
+
+  # Reusing fit$prior gives the same model
+  copy = get_draws(as.list(default$fit$prior))
+  expect_equal(stats::sd(copy$draws$Intercept_1), stats::sd(default$draws$Intercept_1), tolerance = 0.1)
+  expect_equal(stats::sd(copy$draws$Intercept_1 + copy$draws$x_1 * 101), stats::sd(level), tolerance = 0.1)
 })
 
 
@@ -631,7 +653,7 @@ test_that("factors without an intercept get intercept priors where a segment sta
   expect_equal(get_prior(list(y ~ 0 + state, ~ 1))[c("stateA_1", "stateB_1")], list(stateA_1 = intercept, stateB_1 = intercept))
   expect_equal(get_prior(list(y ~ 0, ~ 0 + state))$stateA_2, intercept)
   data$y = rbinom(100, 1, 0.5)
-  expect_equal(get_prior(list(y ~ 0 + state, ~ 1), bernoulli(link = "identity"))$stateA_1, "dbeta(1, 1)")
+  expect_equal(get_prior(list(y ~ 0 + state, ~ 1), bernoulli(link = "identity"))$stateA_1, "dunif(0, 1)")
 
   # Otherwise contrast and slope priors, e.g., jumps from an estimated value
   expect_match(get_prior(list(y ~ 0 + x, ~ 0 + state))$stateA_2, "^dnorm\\(0, ")
@@ -656,7 +678,7 @@ test_that("factors without an intercept get intercept priors where a segment sta
 test_that("a constant response uses unit scale for sd(y)-based default priors", {
   data = data.frame(x = 1:10, y = 2)
   fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
-  expect_equal(fit$prior$Intercept_1, "dnorm(2, 2.5)")
+  expect_equal(fit$prior$Intercept_1, "dnorm(2 - x_1 * 1, 2.5)")
   expect_equal(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
 })
 
@@ -676,9 +698,9 @@ test_that("reparameterizations keep segment lines in place when change points mo
   sigma_fit = mcp(list(y ~ 1, ~ 0 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
   expect_match(sigma_fit$jags_code, "sigma_2 = sigma_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
 
-  # The plain model
+  # The plain model, except for the segment-1 intercept
   plain_fit = mcp(model, data, par_x = "x", sample = FALSE, reparam = FALSE)
-  expect_false(grepl("_mid_|_end_|_rise_", plain_fit$jags_code))
+  expect_false(grepl("_end_|_rise_", plain_fit$jags_code))
   expect_match(plain_fit$jags_code, "\n  x_3 ~ dnorm")
   expect_equal(plain_fit$prior, fit$prior)
 

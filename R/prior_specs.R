@@ -415,18 +415,21 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 
 # Place default segment-1 intercept priors on the level at the segment start,
 # min(x), like brms and rstanarm place them on centered predictors. The reported
-# intercept remains at x = 0 (as in lm()). `reference` is the value of the
-# segment's x-terms at min(x), e.g., "x_1 * 101 + xE2_1 * 10201". Other
-# predictors are at 0. Returns `table` with a `reference` column.
-add_intercept_references = function(table, predictors, context) {
-  table$reference = NA_character_
+# intercept remains at x = 0 (as in lm()), so its prior is conditional on the
+# segment's x-terms, e.g., "dnorm(mean(.y) - x_1 * min(.x), 2.5 * sd(.y))".
+# Other predictors are at 0.
+add_intercept_references = function(specs, predictors, context) {
   if (context$x_min == 0)
-    return(table)
+    return(specs)
 
   intercepts = predictors[predictors$segment == 1 & predictors$prior_type == "Intercept" & predictors$dpar %notin% c("ar", "ma"), ]
   for (i in seq_len(nrow(intercepts))) {
-    row = match(intercepts$code_name[i], table$parameter)
-    if (is.na(row) || table$source[row] != "default" || table$kind[row] != "distribution")
+    row = match(intercepts$code_name[i], specs$parameter)
+    if (is.na(row) || specs$source[row] != "default")
+      next
+    parts = split_prior_truncation(specs$code[row])
+    call = parse_prior_call(parts$distribution)
+    if (is.null(call) || call$name %notin% c("dnorm", "dt", "dunif"))
       next
 
     # x-terms of the same dpar without other variables (a model-matrix column of ones)
@@ -436,9 +439,18 @@ add_intercept_references = function(table, predictors, context) {
     if (nrow(terms) == 0)
       next
 
-    degree = as.numeric(ifelse(terms$x_factor == "x", "1", sub("x^", "", terms$x_factor, fixed = TRUE)))
-    table$reference[row] = paste0(terms$code_name, " * ", sprintf("%.15g", context$x_min^degree), collapse = " + ")
-    table$description[row] = paste0(table$description[row], "; on the level at min(", context$x_display, ")")
+    # Subtract the x-terms at min(x) from the location and the truncation bounds
+    power = ifelse(terms$x_factor == "x", "", sub("x", "", terms$x_factor, fixed = TRUE))
+    reference = paste0(" - ", terms$code_name, " * min(.x)", power, collapse = "")
+    shift = function(arg) if (arg == "") "" else if (arg == "0") reference else paste0(arg, reference)
+    location = if (call$name == "dunif") 1:2 else 1
+    call$args[location] = vapply(call$args[location], shift, character(1))
+    specs$code[row] = paste0(call$name, "(", paste(call$args, collapse = ", "), ")")
+    if (!is.null(parts$truncation)) {
+      bounds = vapply(parse_prior_call(parts$truncation)$args, shift, character(1))
+      specs$code[row] = paste0(specs$code[row], " T(", paste(bounds, collapse = ", "), ")")
+    }
+    specs$description[row] = paste0(specs$description[row], "; on the level at min(", context$x_display, ")")
   }
-  table
+  specs
 }
