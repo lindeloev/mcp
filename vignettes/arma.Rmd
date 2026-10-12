@@ -12,6 +12,7 @@ vignette: >
 if (requireNamespace("pkgload", quietly = TRUE)) {
   pkgload::load_all(export_all = FALSE, quiet = TRUE)
 }
+options(mcp_quiet = TRUE)
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
 set.seed(42)
 ```
@@ -72,7 +73,7 @@ head(ar_data)
 
 See how this was generated in `mcp_example("ar")$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
-```{r, results = FALSE, message=FALSE}
+```{r, results = FALSE}
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2; replaces AR(2) with AR(1)
@@ -143,7 +144,7 @@ AR and MA lags apply strictly to the *order of rows* in your data frame, without
 
 When data contains repeated measurements from multiple participants, sessions, or locations, you do *not* want residual autocorrelation from the end of one individual to carry over to the beginning of the next. Use the `series` argument inside `ar()` or `ma()` to define where independent series start and end:
 
-```{r, message=FALSE}
+```{r}
 # 1. Model: set series = id once
 model = list(
   y ~ 1 + ar(1, series = id),  # Segment 1: AR(1) within series
@@ -207,7 +208,7 @@ arima(df$response, order = c(3, 0, 0))
 
 OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) are simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
-```{r, results = FALSE, message=FALSE}
+```{r, results = FALSE}
 fit = mcp(model, df, par_x = "time")
 ```
 
@@ -223,7 +224,7 @@ One "side-effect" of the `mcp` implementation of autocorrelation using `ar()` *i
 
 Let's simulate a change point in autocorrelation and see if we can infer it later:
 
-```{r, message=FALSE}
+```{r}
 # The model
 model = list(
   y ~ 1 + x + ar(1),
@@ -245,7 +246,7 @@ df$y = empty$simulate(
 
 We use `same(x)` in segment 2 to keep the slope identical across segments, so the change point is strictly in autocorrelation. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
-```{r, results=FALSE, message=FALSE}
+```{r, results = FALSE}
 fit = mcp(model, data = df, iter = 10000, sample = "both")
 ```
 

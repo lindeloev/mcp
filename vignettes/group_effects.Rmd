@@ -15,6 +15,7 @@ editor_options:
 if (requireNamespace("pkgload", quietly = TRUE)) {
   pkgload::load_all(export_all = FALSE, quiet = TRUE)
 }
+options(mcp_quiet = TRUE)
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
 set.seed(42)
 ```
@@ -134,7 +135,7 @@ model = list(
 
 This follows the same interface as predictor group-level effects: supply the population-level SD and `fit$simulate()` draws one deviation per group from the same truncated normal hierarchy as the JAGS model (see above), keeping each group's change point in range. The deviations are therefore not centered exactly on zero.
 
-```{r, message=FALSE}
+```{r}
 library(dplyr, warn.conflicts = FALSE)
 group_levels = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
 df = data.frame(
@@ -167,7 +168,7 @@ ggplot(df, aes(x=x, y=y)) +
 # Summarise and plot group-level effects
 Fitting the model is simple:
 
-```{r, message = FALSE, results=FALSE}
+```{r, results = FALSE}
 fit = mcp(model, data = df)
 ```
 

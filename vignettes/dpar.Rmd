@@ -15,6 +15,7 @@ editor_options:
 if (requireNamespace("pkgload", quietly = TRUE)) {
   pkgload::load_all(export_all = FALSE, quiet = TRUE)
 }
+options(mcp_quiet = TRUE)
 bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
 set.seed(42)
 ```
@@ -61,7 +62,7 @@ head(df)
 
 Now we fit the model to the simulated data.
 
-```{r, results=FALSE, message=FALSE}
+```{r, results = FALSE}
 fit = mcp(model, data = df, par_x = "x")
 ```
 
@@ -130,7 +131,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, results = FALSE, message=FALSE}
+```{r, results = FALSE}
 fit = mcp(model, data = df, diagnostics = FALSE)
 ```
 
@@ -208,7 +209,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, results=FALSE, message=FALSE}
+```{r, results = FALSE}
 fit = mcp(model, data = df, par_x = "x")
 ```
 

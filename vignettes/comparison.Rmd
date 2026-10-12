@@ -15,6 +15,7 @@ editor_options:
 if (requireNamespace("pkgload", quietly = TRUE)) {
   pkgload::load_all(export_all = FALSE, quiet = TRUE)
 }
+options(mcp_quiet = TRUE)
 set.seed(42)
 ```
 
@@ -76,7 +77,7 @@ head(df)
 
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
-```{r, message = FALSE, results=FALSE}
+```{r, results = FALSE}
 fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 6000)
 fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 6000)
 fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 6000)
