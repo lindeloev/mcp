@@ -24,13 +24,13 @@ set.seed(42)
 
 The built-in example has a change in slope, a strong difference between two states, scattered missing responses, and a short run of missing responses. First, let's fit the example and visualize it:
 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE}
 library(mcp)
 library(dplyr)
 library(ggplot2)
 ```
 
-```{r, results=FALSE, warning=FALSE, message=FALSE}
+```{r, results=FALSE, message=FALSE}
 fit = mcp_example("missing")
 ```
 
@@ -67,7 +67,7 @@ fitted(fit, width = 0.8) |>
 
 Imputations are not added to `plot()` automatically. Since `plot()` returns a ggplot, it is easy to extend. Here an `×` marks the posterior mean and a vertical line shows the central 80% imputation interval:
 
-```{r, warning=FALSE}
+```{r}
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
 plot(fit, color_by = "state", q_predict = c(0.1, 0.9)) +
 
@@ -129,7 +129,7 @@ The imputation markers above are different: `predict(fit)` evaluates the origina
 
 Sometimes the interest is not in recovering individual missing responses, but in how gaps in the data affect inference about the change points. To demonstrate this, `mcp_example("void")` takes the data from `mcp_example("demo")` and removes the responses near both change points (`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to the full data and the bottom panel the fit with the voids:
 
-```{r, results=FALSE, warning=FALSE, message=FALSE, fig.height=7}
+```{r, results=FALSE, message=FALSE, fig.height=7}
 fit_void = mcp_example("void")
 ```
 

@@ -134,7 +134,7 @@ model = list(
 
 This follows the same interface as predictor group-level effects: supply the population-level SD and `fit$simulate()` draws one deviation per group from the same truncated normal hierarchy as the JAGS model (see above), keeping each group's change point in range. The deviations are therefore not centered exactly on zero.
 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE}
 library(dplyr, warn.conflicts = FALSE)
 group_levels = c("Clark", "Louis", "Batman", "Batgirl", "Spiderman", "Jane")
 df = data.frame(
@@ -167,7 +167,7 @@ ggplot(df, aes(x=x, y=y)) +
 # Summarise and plot group-level effects
 Fitting the model is simple:
 
-```{r, message = FALSE, warning=FALSE, results=FALSE}
+```{r, message = FALSE, results=FALSE}
 fit = mcp(model, data = df)
 ```
 

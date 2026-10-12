@@ -82,7 +82,7 @@ plot(df$year, df$y)
 # Check parameter recovery
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
-```{r, results=FALSE, message=FALSE, warning=FALSE}
+```{r, results=FALSE, message=FALSE}
 fit = mcp(model, data = df, family = binomial(), iter = 10000)
 ```
 
@@ -105,7 +105,7 @@ These lines are just `fit$simulate` applied to a random draw of the posterior sa
 
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 
-```{r, warning=FALSE, message=FALSE}
+```{r, message=FALSE}
 plot_dpar(fit, scale = "linear")
 ```
 

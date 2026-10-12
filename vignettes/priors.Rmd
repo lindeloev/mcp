@@ -87,7 +87,7 @@ head(df)
 
 Sample the prior and posterior.
 
-```{r, message=FALSE, warning=FALSE, results=FALSE}
+```{r, message=FALSE, results=FALSE}
 future::plan(future::multisession, workers = 3)
 fit_manual = mcp(model, data = df, sample = "both", prior = prior)
 fit_default = mcp(model, data = df, sample = "both")
@@ -135,7 +135,7 @@ This is a contrived example. Usually setting priors manually aims to sample the 
 
 Prior predictive checks are a great way to ensure that the priors are meaningful before fitting to data. Simply set `sample = "prior"`. Let us do it for the manual and default priors above to compare their prior predictive space:
 
-```{r, results= FALSE, message=FALSE, warning=FALSE}
+```{r, results= FALSE, message=FALSE}
 # Sample priors
 fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior")
 fit_pp_default = mcp(model, data = df, sample = "prior")
@@ -161,7 +161,7 @@ The default prior on all change points in `mcp` is **uniform order statistics** 
 
 The plot below compares these theoretical Dirichlet distributions (black lines) with the sampled prior distributions (red lines) for 2 and 5 change points:
 
-```{r, echo = FALSE, results=FALSE, warning=FALSE, message=FALSE}
+```{r, echo = FALSE, results=FALSE, message=FALSE}
 df_dummy = data.frame(x = c(0, 0.5, 1), y = rnorm(3))
 
 # Sample priors for two default change points
