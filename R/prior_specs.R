@@ -36,8 +36,8 @@ default_cp_specs = function(cps, context) {
     name = cps$name[j]
     specs[[name]] = tibble::tibble(
       parameter = name,
-      code = "dirichlet(1)",
-      description = "Uniform order statistics (flat Dirichlet) within the observed change-point span",
+      code = "dunif(min(.x), max(.x))",
+      description = paste0("Uniform within the observed range of ", context$x_display),
       source = "default"
     )
   }
@@ -244,20 +244,75 @@ is_distribution = function(prior_value) {
 }
 
 
+# The lower and upper limits of a change point prior: the arguments of dunif() or T(), or NULL
+# without them. `rebuild(limits)` writes the prior with other T(low, high) limits.
+split_cp_limits = function(prior_value) {
+  parts = split_prior_truncation(prior_value)
+  call = parse_prior_call(parts$distribution)
+  if (call$name == "dunif") {
+    if (!is.null(parts$truncation))
+      stop("JAGS cannot truncate dunif(). Set its lower and upper limits as its arguments instead, e.g., \"dunif(20, 50)\".", call. = FALSE)
+    return(list(limits = call$args, rebuild = function(limits) paste0("dunif(", limits[1], ", ", limits[2], ")")))
+  }
+  limits = if (!is.null(parts$truncation)) parse_prior_call(parts$truncation)$args
+  list(limits = limits, rebuild = function(limits) paste0(parts$distribution, " T(", limits[1], ", ", limits[2], ")"))
+}
+
+
+# Minimum distance from change point j to the previous change point, written as the lower
+# limit `cp_1 + 20` in dunif(cp_1 + 20, max(x)) or T(cp_1 + 20, ). Returns the distance as a
+# string. "0" for just `cp_1`, or NULL. Change points are ordered anyway, so other references
+# to change points in the limits are errors.
+get_cp_gap = function(limits, j, cp_names) {
+  limits = lapply(limits, function(limit) if (nzchar(limit)) str2lang(limit))
+  previous = if (j > 1) as.name(cp_names[j - 1])
+  lower = limits[[1]]
+  gap = NULL
+  if (!is.null(previous) && identical(lower, previous)) {
+    gap = "0"
+    limits[[1]] = NULL
+  } else if (!is.null(previous) && is.call(lower) && identical(lower[[1]], as.name("+")) && identical(lower[[2]], previous)) {
+    gap = deparse_prior(lower[[3]])
+    limits[[1]] = lower[[3]]
+  }
+
+  references = intersect(unlist(lapply(limits, all.vars)), cp_names)
+  if (length(references) > 0) {
+    stop(
+      "The lower or upper limit of the prior on `", cp_names[j], "` (in dunif() or T()) refers to ", and_collapse(paste0("`", references, "`")),
+      ". Change points are always ordered, so the limits can only refer to the previous change point to set a minimum distance, ",
+      "e.g., `cp_2 = \"dunif(cp_1 + 20, max(x))\"` or `cp_2 = \"dnorm(50, 10) T(cp_1 + 20, )\"`.",
+      call. = FALSE
+    )
+  }
+  gap
+}
+
+
+# User change point priors apply as written, restricted to ordered change points (see
+# get_jags_code()). Priors without dunif() or T() are truncated to the observed range of x.
+# An empty upper limit next to a minimum distance, e.g., T(cp_1 + 20, ), is also max(x).
 truncate_cp_prior = function(cps, j, prior_value, context) {
-  if (!is_distribution(prior_value))
-    return(prior_value)
-  is_bounded = stringr::str_detect(prior_value, "^\\s*(dunif|dirichlet)\\s*\\(")
-  is_truncated = stringr::str_detect(prior_value, "T\\s*\\(")
-  if (is_bounded || is_truncated)
+  if (!is_distribution(prior_value) || grepl("^\\s*dirichlet\\s*\\(", prior_value))
     return(prior_value)
 
-  lower = if (j == 1) {
-    paste0("min(", context$x_display, ")")
-  } else {
-    cps$name[j - 1]
+  x_range = paste0(c("min(", "max("), context$x_display, ")")
+  cp_prior = split_cp_limits(prior_value)
+  if (is.null(cp_prior$limits))
+    return(cp_prior$rebuild(x_range))
+
+  gap = get_cp_gap(cp_prior$limits, j, cps$name)
+  if (identical(gap, "0")) {
+    warning(
+      "`", cps$name[j], "` = \"", prior_value, "\": `", cps$name[j - 1], "` as the lower limit is already embodied in the mcp model and hence not needed. ",
+      "Each change point has its prior as written, restricted to ordered change points. ",
+      "To set a minimum distance between change points, use e.g. `", cps$name[j - 1], " + 20` as the lower limit.",
+      call. = FALSE
+    )
   }
-  paste0(prior_value, " T(", lower, ", max(", context$x_display, "))")
+  if (!is.null(gap) && !nzchar(cp_prior$limits[2]))
+    return(cp_prior$rebuild(c(cp_prior$limits[1], x_range[2])))
+  prior_value
 }
 
 
@@ -329,39 +384,18 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     )
   }
 
+  # dirichlet(alpha) applies to all change points, so propagate it to unassigned change points
   user_cp_names = intersect(names(prior), cps$name)
-  if (length(user_cp_names) > 0) {
-    user_cp_is_dirichlet = grepl("^\\s*dirichlet\\s*\\(", as.character(prior[user_cp_names]))
-
-    if (any(!user_cp_is_dirichlet)) {
-      if (any(user_cp_is_dirichlet)) {
-        stop("All or none of the change point priors must be `dirichlet(alpha)`.")
-      }
-      # When user specifies non-dirichlet cp prior(s), any unassigned default
-      # change points fall back to direct priors.
-      unassigned_cps = setdiff(cps$name, user_cp_names)
-      for (u_name in unassigned_cps) {
-        j = match(u_name, cps$name)
-        lower = if (j == 1) "min(.x)" else cps$name[j - 1]
-        i = match(u_name, specs$parameter)
-        specs$code[i] = paste0("dunif(", lower, ", max(.x))")
-        specs$description[i] = if (j == 1) {
-          "Within the observed change-point span"
-        } else {
-          paste0("Ordered after ", cps$name[j - 1], " within the observed change-point span")
-        }
-      }
-    } else if (all(user_cp_is_dirichlet) && length(user_cp_names) < nrow(cps)) {
-      # Propagate user-specified alpha to unassigned change points
-      first_dirichlet = prior[[user_cp_names[1]]]
-      source_desc = and_collapse(paste0("`", user_cp_names, "`"))
-      unassigned_cps = setdiff(cps$name, user_cp_names)
-      for (u_name in unassigned_cps) {
-        i = match(u_name, specs$parameter)
-        specs$code[i] = first_dirichlet
-        specs$source[i] = "user"
-        specs$description[i] = paste0("Inherited from user-specified ", source_desc)
-      }
+  user_cp_is_dirichlet = grepl("^\\s*dirichlet\\s*\\(", as.character(prior[user_cp_names]))
+  if (any(user_cp_is_dirichlet)) {
+    if (!all(user_cp_is_dirichlet))
+      stop("All or none of the change point priors must be `dirichlet(alpha)`.")
+    source_desc = and_collapse(paste0("`", user_cp_names, "`"))
+    for (u_name in setdiff(cps$name, user_cp_names)) {
+      i = match(u_name, specs$parameter)
+      specs$code[i] = prior[[user_cp_names[1]]]
+      specs$source[i] = "user"
+      specs$description[i] = paste0("Inherited from user-specified ", source_desc)
     }
   }
 
@@ -405,11 +439,22 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     i = match(name, specs$parameter)
     specs$code[i] = prior[[name]]
     specs$source[i] = "user"
-    specs$description[i] = if (name %in% auto_truncated) {
+    specs$description[i] = if (name %in% auto_truncated && name %in% cps$name) {
+      paste0("User-specified prior, truncated to the observed range of ", context$x_display)
+    } else if (name %in% auto_truncated) {
       "User-specified prior with required bounds added by mcp"
     } else {
       NA_character_
     }
+  }
+
+  # Change points with a prior distribution are ordered (see get_jags_code())
+  if (nrow(cps) > 1) {
+    is_ordered = specs$parameter %in% cps$name & vapply(specs$code, is_distribution, logical(1))
+    description = dplyr::coalesce(specs$description[is_ordered], "User-specified prior")
+    specs$description[is_ordered] = paste0(description, ", restricted to ordered change points")
+    if (length(user_cp_names) == 0)
+      specs$description[is_ordered] = paste0("Flat Dirichlet on the segment lengths: ", tolower(specs$description[is_ordered]))
   }
   specs
 }

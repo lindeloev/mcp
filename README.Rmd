@@ -239,11 +239,11 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - Default priors are weakly informative and follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with a few [documented deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
 
-- The default prior on change points is `dirichlet(1)` (uniform order statistics). For a single change point, this is the Beta(1, 1) / uniform distribution over `[min(x), max(x)]`. For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths with equal spacing between change points. Informativeness increases as the number of change points increases.
+- The default prior on change points is a flat Dirichlet prior on the segment lengths (uniform order statistics). It is `uniform(min(x), max(x))` for one change point and scaled beta distributions for each of two or more change points, evenly spaced on average. Informativeness increases as the number of change points increases.
 
 - Fix parameters to specific values using `cp_1 = 45`. To share a coefficient between segments, use `same()` in the model, e.g., `~ 0 + same(x)`.
 
-- Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to population-level change-point priors. Users can override these.
+- Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. Change points are always ordered. Set a minimum distance between change points using, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`.
 
 - Do prior predictive checks using `mcp(model, data, sample = "prior") |> plot(prior = TRUE)`.
 

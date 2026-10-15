@@ -259,7 +259,7 @@ prior_quantile = function(dist, a, bounds, prob) {
 
 
 # Summarize the support implied by a prior distribution or truncation.
-prior_bounds = function(x, parameter = NULL, all_names = character(), context = list()) {
+prior_bounds = function(x, context = list()) {
   parts = split_prior_truncation(x)
   if (!is.null(parts$truncation)) {
     trunc = parse_prior_call(trimws(parts$truncation))
@@ -275,18 +275,8 @@ prior_bounds = function(x, parameter = NULL, all_names = character(), context = 
     return("none")
   if (call$name == "dunif" && length(call$args) == 2)
     return(paste0("[", call$args[1], ", ", call$args[2], "]"))
-  if (call$name == "dirichlet") {
-    # Display as: cp_1 [min(x), cp_2] ; cp_2 [cp_1, cp_3] ; ... ; cp_n [cp_{n-1}, max(x)]
-    cp_names = all_names[grepl("^cp_[1-9][0-9]*$", all_names)]
-    j = match(parameter, cp_names)
-    x_var = if (!is.null(context$x_display) && nzchar(context$x_display)) context$x_display else "x"
-    if (is.na(j) || length(cp_names) <= 1) {
-      return(paste0("[min(", x_var, "), max(", x_var, ")]"))
-    }
-    lower = if (j == 1) paste0("min(", x_var, ")") else cp_names[j - 1]
-    upper = if (j == length(cp_names)) paste0("max(", x_var, ")") else cp_names[j + 1]
-    return(paste0("[", lower, ", ", upper, "]"))
-  }
+  if (call$name == "dirichlet")
+    return(paste0("[min(", context$x_display, "), max(", context$x_display, ")]"))
   if (call$name == "dbeta") return("[0, 1]")
   if (call$name %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
@@ -341,7 +331,7 @@ compile_prior_record = function(parameter, code, all_names, context, source,
   tibble::tibble(
     parameter = parameter,
     prior = format_prior_display(if (kind == "distribution") human_prior_call(resolved) else resolved),
-    bounds = format_prior_display(prior_bounds(display_original, parameter, all_names, context)),
+    bounds = format_prior_display(prior_bounds(display_original, context)),
     rule = format_prior_display(rule),
     description = description,
     source = source,

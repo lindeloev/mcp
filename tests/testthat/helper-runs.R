@@ -120,6 +120,14 @@ test_runs = function(model,
       }
     }
 
+    # Population change points are ordered in all draws
+    if (nrow(cps) > 1) {
+      for (chain in c(.subset2(fit, "mcmc_post"), .subset2(fit, "mcmc_prior"))) {
+        pop = as.matrix(chain)[, cps$name, drop = FALSE]
+        testthat::expect_true(all(diff(t(pop)) >= 0), label = model)
+      }
+    }
+
     if (is_arma(fit))
       test_arma_simulation(fit)
 

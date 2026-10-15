@@ -32,7 +32,7 @@ test_that("group-level change points use absolute locations and sequential bound
   expect_match(fit$jags_code, "cp_1_id\\[id_\\] = cp_1_id_location\\[id_\\] - cp_1")
   expect_match(fit$jags_code, "cp_2_id_location\\[id_\\].*cp_1_id_location\\[id_\\]")
   expect_false(grepl("_uncentered", fit$jags_code, fixed = TRUE))
-  expect_false(grepl("cp_order_", fit$jags_code, fixed = TRUE))
+  expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)  # Population change points only
 })
 
 

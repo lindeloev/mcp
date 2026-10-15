@@ -17,7 +17,7 @@
 # All dpars except ar and ma follow the same rules.
 #
 # - Segment 1: The intercept as the value at a fixed point, the expected midpoint of
-#   segment 1 under the dirichlet(1) prior, min(x) + (max(x) - min(x)) / (2 * K).
+#   segment 1 under the default change point prior, min(x) + (max(x) - min(x)) / (2 * K).
 #   Likewise for other coefficients with x-terms, e.g., `stateb` in `1 + state * x`.
 # - Joined segments: The lowest-degree x-term as the value at the segment end, and
 #   further x-terms (e.g., I(x^2)) as their rise over the segment.

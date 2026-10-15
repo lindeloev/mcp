@@ -13,8 +13,17 @@ bad_prior = list(
     cp_2 = "dnorm(3, 10)"
   ),
   list(
-    cp_1 = "dirichlet(1)",
-    cp_2 = "dirichlet(0)"  # alpha has to be > 0
+    cp_1 = "dirichlet(0.5)",
+    cp_2 = "dirichlet(0.5)"  # alpha has to be >= 1
+  ),
+  list(
+    cp_1 = "dunif(min(x), cp_2)"  # Limits can only refer to the previous change point
+  ),
+  list(
+    cp_2 = "dnorm(1, 1) T(cp_1 - 0.5, )"  # ... and only as a minimum distance
+  ),
+  list(
+    cp_2 = "dunif(0, 3) T(0, 2)"  # JAGS cannot truncate dunif()
   )
 )
 
@@ -85,6 +94,22 @@ good_prior = list(
   list(
     cp_1 = "dnorm(0, 1)",
     cp_2 = "cp_1 + 1"  # Fixed change point relative to another
+  ),
+  list(
+    cp_1 = "dunif(-1, 3)",  # Identical priors
+    cp_2 = "dunif(-1, 3)"
+  ),
+  list(
+    cp_2 = "dunif(cp_1 + 0.5, max(x))"  # Minimum distance
+  ),
+  list(
+    cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"  # Minimum distance with truncation
+  ),
+  list(
+    cp_2 = 2  # Fixed change point
+  ),
+  list(
+    cp_2 = "dnorm(cp_1 + 1, 1)"  # Conditional prior
   )
 )
 
@@ -118,12 +143,13 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
   fit = mcp(
     prior_model,
     data = data_gauss,
-    prior = list(cp_1 = "dirichlet(0.5)", cp_2 = "dirichlet(0.5)"),
+    prior = list(cp_1 = "dirichlet(1)", cp_2 = "dirichlet(1)"),
     par_x = "x",
     sample = FALSE,
     quiet = TRUE
   )
-  testthat::expect_match(fit$jags_code, "dbeta(0.5, 1)", fixed = TRUE)
+  testthat::expect_match(fit$jags_code, "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
+  testthat::expect_false(grepl("cp_weight_", fit$jags_code, fixed = TRUE))
   fit_10 = mcp(
     prior_model,
     data = data_gauss,
@@ -132,25 +158,14 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
     sample = FALSE,
     quiet = TRUE
   )
-  testthat::expect_match(fit_10$jags_code, "dbeta(10, 20)", fixed = TRUE)
-  testthat::expect_no_error(suppressWarnings(mcp(
-    prior_model,
-    data = data_gauss,
-    prior = list(cp_1 = "dirichlet(0.5)", cp_2 = "dirichlet(0.5)"),
-    par_x = "x",
-    sample = "prior",
-    chains = 1,
-    iter = 4,
-    warmup = 4,
-    quiet = TRUE
-  )))
+  testthat::expect_match(fit_10$jags_code, "cp_weight_ ~ dpois(-9 * (log((cp_1 - cp_0) / (cp_3 - cp_0)) + ", fixed = TRUE)
   testthat::expect_error(
     mcp(prior_model, data = data_gauss, prior = list(cp_1 = "dirichlet(2)", cp_2 = "dirichlet(3)"), par_x = "x", sample = FALSE, quiet = TRUE),
     "same alpha"
   )
   testthat::expect_error(
-    mcp(prior_model, data = data_gauss, prior = list(cp_1 = "dirichlet(0)", cp_2 = "dirichlet(0)"), par_x = "x", sample = FALSE, quiet = TRUE),
-    "finite alpha > 0"
+    mcp(prior_model, data = data_gauss, prior = list(cp_1 = "dirichlet(0.5)", cp_2 = "dirichlet(0.5)"), par_x = "x", sample = FALSE, quiet = TRUE),
+    "finite alpha >= 1"
   )
 })
 
@@ -182,6 +197,52 @@ testthat::test_that("Dirichlet change point prior matches direct R simulation", 
   r_draws = t(apply(r_spacings, 1, cumsum))[, 1:4, drop = FALSE]
 
   testthat::expect_lt(max(abs(colMeans(jags_draws) - colMeans(r_draws))), 0.025)
+})
+
+
+testthat::test_that("Minimum distances between change points go in cp_order_", {
+  fit = mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"), sample = FALSE)
+  testthat::expect_equal(fit$prior$cp_2, "dnorm(2, 1) T(cp_1 + 0.5, cp_3)")
+  testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0,cp_3)", fixed = TRUE)
+  testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
+
+  # A lower limit at the previous change point is a distance of 0, i.e., just the ordering
+  testthat::expect_warning(
+    fit <- mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dunif(cp_1, max(x))"), sample = FALSE),
+    "as the lower limit is already embodied in the mcp model"
+  )
+  testthat::expect_match(fit$jags_code, "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
+  testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)
+})
+
+
+testthat::test_that("Change points have their priors as written, restricted to ordered change points", {
+  data = data.frame(x = seq(0, 1, length.out = 20), y = 0)
+  set.seed(123)
+  n = 1e5
+  rtnorm = function(mean, sd) stats::qnorm(stats::runif(n, stats::pnorm(0, mean, sd), stats::pnorm(1, mean, sd)), mean, sd)
+  restrict = function(cp_1, cp_2, gap = 0) cbind(cp_1, cp_2)[cp_2 - cp_1 >= gap, ]
+  cases = list(
+    list(prior = list(cp_1 = "dnorm(0.6, 0.2)", cp_2 = "dnorm(0.4, 0.2)"), r_draws = restrict(rtnorm(0.6, 0.2), rtnorm(0.4, 0.2))),
+    list(prior = list(cp_2 = "dunif(cp_1 + 0.3, max(x))"), r_draws = restrict(stats::runif(n), stats::runif(n), 0.3))
+  )
+  for (case in cases) {
+    fit = suppressWarnings(mcp(list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", prior = case$prior, sample = "prior", chains = 1, iter = 6000, warmup = 100, seed = 1, quiet = TRUE))
+    jags_draws = as.matrix(.subset2(fit, "mcmc_prior")[[1]])[, c("cp_1", "cp_2")]
+    testthat::expect_lt(max(abs(colMeans(jags_draws) - colMeans(case$r_draws))), 0.025)
+  }
+})
+
+
+testthat::test_that("Change point inits are ordered and within the priors, around fixed and user-supplied values", {
+  fit = mcp(list(y ~ 1, ~ 1, ~ 1, ~ 1), data.frame(x = 0:100, y = 0), par_x = "x", sample = FALSE,
+    prior = list(cp_2 = "dunif(80, 90)", cp_3 = "dnorm(50, 5)"))
+  testthat::expect_equal(get_cp_inits(fit$prior, c(0, 100)), list(cp_1 = 25, cp_2 = 81, cp_3 = 82))
+  testthat::expect_equal(get_cp_inits(fit$prior, c(0, 100), list(cp_2 = 85)), list(cp_1 = 25, cp_3 = 86))
+  testthat::expect_error(get_cp_inits(fit$prior, c(0, 100), list(cp_3 = 70)), "no room for ordered change points")
+
+  fit = mcp(list(y ~ 1, ~ 1, ~ 1), data.frame(x = 0:100, y = 0), par_x = "x", sample = FALSE, prior = list(cp_2 = 20))
+  testthat::expect_equal(get_cp_inits(fit$prior, c(0, 100)), list(cp_1 = 19))
 })
 
 
@@ -475,7 +536,7 @@ test_that("priors are resolved without changing their parameterization", {
   expect_prior(
     unclass(default_fit$prior),
     list(
-      cp_1 = "dirichlet(1)",
+      cp_1 = "dunif(cp_0, cp_2)",
       Intercept_1 = sub(",", " - x_1 * 1,", intercept),
       x_1 = slope,
       Intercept_2 = intercept,
@@ -552,9 +613,9 @@ test_that("change point priors refer to the exact data limits cp_0 and cp_K", {
     prior = list(cp_1 = "dunif(min(x), 5)", cp_2 = "dnorm(7, 1)", Intercept_1 = "dnorm(min(x), 1)")
   )
   expect_equal(fit$prior$cp_1, "dunif(cp_0, 5)")
-  expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(cp_1, cp_3)")
+  expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(cp_0, cp_3)")
   expect_equal(fit$prior$Intercept_1, "dnorm(0.618632254190743, 1)")
-  expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_1,cp_3)  # User-specified prior with required bounds added by mcp\n  cp_3 = max(x)\n", fixed = TRUE)
+  expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0,cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
 })
 
 
@@ -565,11 +626,11 @@ test_that("partial user-specified Dirichlet priors propagate source and descript
 
   expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_1"], "dirichlet(alpha = 2)")
   expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_1"], "user")
-  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_1"], "User-specified prior")
+  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_1"], "User-specified prior, restricted to ordered change points")
 
   expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_2"], "dirichlet(alpha = 2)")
   expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_2"], "user")
-  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_2"], "Inherited from user-specified `cp_1`")
+  expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_2"], "Inherited from user-specified `cp_1`, restricted to ordered change points")
 })
 
 

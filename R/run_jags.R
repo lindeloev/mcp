@@ -10,6 +10,7 @@
 #' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
 #' @param pars Character vector of parameters to save/monitor.
+#' @param cp_inits Named list. Default initial values for change points, from `get_cp_inits()`.
 #' @param use_glm Logical. Load the JAGS glm module, which block-samples
 #'   coefficients that enter the linear predictor jointly.
 #' @return `mcmc.list`
@@ -22,6 +23,7 @@ run_jags = function(jags_code,
                     n.iter,
                     n.adapt,
                     inits,
+                    cp_inits = list(),
                     seed,
                     quiet,
                     use_glm = FALSE
@@ -90,15 +92,11 @@ run_jags = function(jags_code,
     seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
 
-  # Default inits where users supplied none: equispaced change points for sorted uniforms
-  # or the sequential beta chain and prior medians for other nodes, e.g., away from the
-  # zero bound of SDs.
-  cp_frac_nodes = unique(stringr::str_extract_all(jags_code, "cp_[0-9]+_frac_")[[1]])
-  N = length(cp_frac_nodes)
-  defaults = c(stats::setNames(as.list(1 / (N - seq_len(N) + 2)), cp_frac_nodes), get_jags_median_inits(jags_code))
-  N = length(unique(stringr::str_extract_all(jags_code, "cp_sorted_\\[[0-9]+\\]")[[1]]))
-  if (N > 0)
-    defaults$cp_unit_ = seq_len(N) / (N + 1)
+  # Default inits where users supplied none: ordered change points (see get_cp_inits()) and
+  # prior medians for other nodes, e.g., SDs away from zero.
+  # Custom JAGS code may define change points differently, so only initialize sampled nodes.
+  is_sampled = vapply(names(cp_inits), function(name) grepl(paste0("\\n\\s*", name, " ~"), jags_code), logical(1))
+  defaults = c(cp_inits[is_sampled], get_jags_median_inits(jags_code))
   defaults = defaults[!duplicated(names(defaults))]
   inits = lapply(inits, function(ch) c(ch, defaults[setdiff(names(defaults), names(ch))]))
 
@@ -196,6 +194,62 @@ get_jags_median_inits = function(jags_code) {
 }
 
 
+#' Initial values for the change point parameters
+#'
+#' Equispaced in the observed range of x with room for minimum distances, then moved the least
+#' possible to be within the lower and upper limits of their priors and ordered. Fixed change points and the
+#' user's initial values stay where they are. Sampler fails at init if impossible values are chosen because
+#' it is incompatible with the 1 ~ dbern(...) ordering node.
+#'
+#' @param prior Named list of resolved priors, as in `fit$prior`.
+#' @param x_range Numeric vector with the observed range of x.
+#' @param user_inits Named list. The user's initial values.
+#' @return A named list of initial values for change points with a prior distribution,
+#'   except those in `user_inits`.
+#' @noRd
+get_cp_inits = function(prior, x_range, user_inits = list()) {
+  cps = prior[grepl("^cp_[0-9]+$", names(prior))]
+  n = length(cps)
+  if (n == 0)
+    return(list())
+
+  # Lower and upper limits (dunif() or T()) and minimum distance to the previous change point.
+  # Fixed change points and user-supplied initial values are limited to themselves.
+  env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n + 1)))
+  evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
+  is_free = vapply(cps, is_distribution, logical(1))
+  lower = upper = gaps = numeric(n)
+  for (i in seq_len(n)) {
+    fixed = c(user_inits[[names(cps)[i]]], suppressWarnings(as.numeric(cps[[i]])))[1]
+    limits = if (is_free[i] && !startsWith(cps[[i]], "dirichlet")) split_cp_limits(cps[[i]])$limits
+    gap = if (!is.null(limits)) get_cp_gap(limits, i, names(cps))
+    if (!is.null(gap))
+      limits[1] = "cp_0"
+    gaps[i] = evaluate(gap, 0)
+    lower[i] = if (!is.na(fixed)) fixed else evaluate(limits[1], -Inf)
+    upper[i] = if (!is.na(fixed)) fixed else evaluate(limits[2], Inf)
+  }
+
+  # Keep 1% of the range of x from the limits and neighboring change points, but within narrow priors
+  margin = pmin(0.01 * diff(x_range), (upper - lower) / 3)
+  distance = gaps + c(0, pmax(margin[-1], margin[-n]))
+  lower = lower + margin
+  upper = upper - margin
+
+  # Earliest and latest positions of ordered change points within these limits
+  for (i in seq_len(n)[-1])
+    lower[i] = max(lower[i], lower[i - 1] + distance[i])
+  for (i in rev(seq_len(n)[-1]))
+    upper[i - 1] = min(upper[i - 1], upper[i] - distance[i])
+  if (any(lower > upper))
+    stop("The change point priors (and initial values) leave no room for ordered change points. Check the lower and upper limits (in dunif() or T()), minimum distances, and initial values of the change points.", call. = FALSE)
+
+  target = x_range[1] + cumsum(gaps) + max((diff(x_range) - sum(gaps)) / (n + 1), 0) * seq_len(n)
+  inits = stats::setNames(as.list(pmin(pmax(target, lower), upper)), names(cps))
+  inits[is_free & names(cps) %notin% names(user_inits)]
+}
+
+
 #' Check user data names against generated JAGS nodes
 #'
 #' @param data_names Names of user-data nodes passed to JAGS.
@@ -227,7 +281,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
     if (generated) c(
       "i_", "garma_threshold_", "garma_y_", "garma_link_y_",
       "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_",
-      paste0("cp_", seq_len(nrow(segments) - 1L), "_frac_"), "cp_unit_", "cp_sorted_", "cp_i_",
+      "cp_order_", "cp_weight_",
       paste0("x_local_", seq_len(nrow(segments)), "_"),
       paste0("link_", dpars, "_"), paste0(dpars, "_"),
       paste0(c(predictors$name, group_effects$name), "_inverse")
@@ -316,6 +370,12 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
     jags_data$response_observed_ = as.integer(!is.na(data[[segments$y[1]]]))
   if (generated && grepl("likelihood_zero_", jags_code, fixed = TRUE))
     jags_data$likelihood_zero_ = numeric(nrow(data))
+
+  # Observed nodes that restrict the change point priors, also in custom code copied from fit$jags_code
+  if (grepl("cp_order_ ~", jags_code, fixed = TRUE))
+    jags_data$cp_order_ = 1
+  if (grepl("cp_weight_ ~", jags_code, fixed = TRUE))
+    jags_data$cp_weight_ = 0
 
   # Return
   jags_data

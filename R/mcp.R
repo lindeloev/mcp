@@ -52,9 +52,10 @@
 #' @param inits A named list of initial values for the parameters, e.g., `list(Intercept_1 = 10)`,
 #'   or a list of such lists with one per chain. This can be useful if a model fails to converge
 #'   ([read more](https://lindeloev.github.io/mcp/articles/tips.html)).
-#'   Names must be stochastic nodes in `fit$jags_code` (lines with `~`). Change points, fixed parameters,
+#'   Names must be stochastic nodes in `fit$jags_code` (lines with `~`). Fixed parameters
 #'   and parameters that `mcp` samples via reparameterization (e.g., `Intercept_3` is sampled as
 #'   `Intercept_3_end_`) cannot be initialized directly. See `mcp_reparam` in [mcp-package].
+#'   Initial values for change points must be ordered.
 #'   Defaults to `NULL` where all chains start at equispaced change points and the prior medians.
 #'   User-provided `inits` take precedence.
 #' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
@@ -157,7 +158,7 @@
 #' prior = list(
 #'   Intercept_1 = 15,
 #'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-#'   cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
+#'   cp_2 = "dunif(min(time), 80)"   # change point to segment 3 before 80 (and after cp_1).
 #' )
 #'
 #' fit3 = mcp(model, data = data, prior = prior, seed = 42)
@@ -375,6 +376,7 @@ mcp = function(
       n.iter = iter,
       n.adapt = warmup,
       inits = inits,
+      cp_inits = get_cp_inits(prior, range(data[[par_x]], na.rm = TRUE), if (!is.list(inits[[1]])) inits),  # Ignores chain-specific inits
       seed = seed,
       quiet = quiet,
       use_glm = use_glm

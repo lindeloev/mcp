@@ -51,63 +51,66 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   #######################
   # CHANGE POINT PRIORS #
   #######################
-  # Get change point priors and check if they are Dirichlet
+  # Each change point has its prior as written, and cp_order_ restricts them to ordered
+  # change points with any minimum distances. dirichlet(alpha) is the default uniform prior
+  # expanded to the segment length.
   cps = prior[intersect(paste0("cp_", seq_len(K - 1L)), names(prior))]
-  dirichlet_calls = lapply(cps, function(x) {
-    call = parse_prior_call(x)
-    if (!is.null(call) && call$name == "dirichlet") call else NULL
-  })
-  is_dirichlet = !vapply(dirichlet_calls, is.null, logical(1))
+  is_dirichlet = grepl("^dirichlet\\(", unlist(cps))
   if (any(is_dirichlet)) {
     # overlay_user_prior_specs() ensures that all or none are dirichlet()
-    alpha = vapply(dirichlet_calls, function(call) {
-      if (length(call$args) != 1)
-        return(NA_real_)
-      suppressWarnings(as.numeric(call$args))
+    dirch_alpha = vapply(cps, function(x) {
+      args = parse_prior_call(x)$args
+      if (length(args) == 1) suppressWarnings(as.numeric(args)) else NA_real_
     }, numeric(1))
-    if (any(!is.finite(alpha)) || any(alpha <= 0))
-      stop("`dirichlet(alpha)` requires one finite alpha > 0.")
-    if (any(alpha != alpha[1]))
+    if (any(!is.finite(dirch_alpha)) || any(dirch_alpha < 1))
+      stop("`dirichlet(alpha)` requires one finite alpha >= 1.")
+    if (any(dirch_alpha != dirch_alpha[1]))
       stop("All `dirichlet(alpha)` change point priors must use the same alpha.")
   }
 
-  cp_prior_str = function(name, ...) {
+  cp_prior_str = function(name, value = prior[[name]], ...) {
     get_prior_str(
-      prior, match(name, names(prior)),
+      stats::setNames(list(value), name), 1,
       description = prior_description[[name]],
       kind = prior_kind_[[name]], ...
     )
   }
   cp_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
+  gaps = rep("0", length(cps))
   for (i in seq_along(cps)) {
     name = names(cps)[i]
-    if (any(is_dirichlet) && alpha[1] == 1) {
-      # Uniform order statistics: sorted uniforms. On the unit scale because the JAGS
-      # slice sampler starts with a step width of 1.
-      if (i == 1)
-        mm = paste0(mm, "  for (cp_i_ in 1:", length(cps), ") {\n    cp_unit_[cp_i_] ~ dunif(0, 1)\n  }\n  cp_sorted_ = sort(cp_unit_)  # Uniform order statistics\n")
-      mm = paste0(mm, "  ", name, " = cp_0 + cp_sorted_[", i, "] * (cp_", K, " - cp_0)\n")
-    } else if (any(is_dirichlet)) {
-      # Sequential Beta chain for ordered Dirichlet(alpha) change points
-      a = alpha[1]
-      M = length(cps) - i + 1L
-      lower_cp = paste0("cp_", i - 1L)
-      mm = paste0(
-        mm,
-        "  ", name, "_frac_ ~ dbeta(", format_prior_number(a), ", ", format_prior_number(M * a), ")  # Relative fraction of remaining span (Dirichlet(", format_prior_number(a), "))\n",
-        "  ", name, " = ", lower_cp, " + ", name, "_frac_ * (cp_", K, " - ", lower_cp, ")  # Ordered change point\n"
-      )
-    } else {
-      mm = paste0(mm, cp_prior_str(name))
+    value = cps[[i]]
+    if (any(is_dirichlet)) {
+      value = paste0("dunif(cp_0, cp_", K, ")")
+    } else if (prior_kind_[[name]] == "distribution") {
+      # A minimum distance to the previous change point goes in cp_order_
+      cp_prior = split_cp_limits(value)
+      gap = get_cp_gap(cp_prior$limits, i, names(cps))
+      if (!is.null(gap)) {
+        gaps[i] = gap
+        value = cp_prior$rebuild(c("cp_0", cp_prior$limits[2]))
+      }
     }
+    mm = paste0(mm, cp_prior_str(name, value))
 
     # Group-level change points right after their population change point
     effect = cp_effects[cp_effects$population_name == name, , drop = FALSE]
     if (nrow(effect) == 1)
       mm = paste0(mm, cp_prior_str(effect$sd_name), cp_prior_str(effect$name, group_col = effect$group_col, population_name = name))
   }
-  mm = paste0(mm, "  cp_", K, " = max(", par_x, ")
+  mm = paste0(mm, "  cp_", K, " = max(", par_x, ")\n")
 
+  # Observed nodes (data: cp_order_ = 1 and cp_weight_ = 0) that restrict the priors above
+  if (length(cps) > 1) {
+    steps = paste0("step(cp_", 2:length(cps), " - cp_", 2:length(cps) - 1, ifelse(gaps[-1] == "0", "", paste0(" - ", gaps[-1])), ")")
+    mm = paste0(mm, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(gaps != "0")) " with minimum distances", "\n")
+  }
+  if (any(is_dirichlet) && dirch_alpha[1] != 1) {
+    # Zeros trick: dpois(0 | lambda) adds -lambda = (alpha - 1) * sum(log(segment length / range of x)) to the log density
+    log_lengths = paste0("log((cp_", seq_len(K), " - cp_", seq_len(K) - 1, ") / (cp_", K, " - cp_0))", collapse = " + ")
+    mm = paste0(mm, "  cp_weight_ ~ dpois(-", format_prior_number(dirch_alpha[1] - 1), " * (", log_lengths, "))  # dirichlet(", format_prior_number(dirch_alpha[1]), ") weight on the segment lengths\n")
+  }
+  mm = paste0(mm, "
   # Priors for population-level effects\n")
 
   ################

@@ -2,7 +2,7 @@ models_families_bernoulli = list(
   list(
     y ~ 1 + x,
     ~ 1 + x,
-    simulated = list(cp_1 = 93, Intercept_1 = -0.4, x_1 = 0.006, Intercept_2 = 3, x_2 = -0.004),
+    simulated = list(cp_1 = 100, Intercept_1 = -0.4, x_1 = 0.006, Intercept_2 = 2.2, x_2 = -0.004),  # A unimodal posterior (cp_1 = 93 had a small second mode)
     family = bernoulli(link = "logit"),
     chains = 2,
     warmup = 500,
