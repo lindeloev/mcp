@@ -583,6 +583,12 @@ coef.mcpfit = function(object, ...) {
   stop("`coef()` is not implemented for mcpfit objects. Use `fixef(fit)` for population-level coefficients and `ranef(fit)` for group-level deviations.", call. = FALSE)
 }
 
+# The default method would silently re-evaluate `fit$call` with whatever `model` and `data` are in the caller's environment.
+#' @export
+update.mcpfit = function(object, ...) {
+  stop("`update()` is not implemented for mcpfit objects. Call `mcp()` again instead, e.g., `mcp(fit$model, fit$data, family = family(fit), ...)`.", call. = FALSE)
+}
+
 
 #' @aliases print print.mcpfit
 #' @describeIn summary.mcpfit Print the posterior summary of an \code{\link{mcpfit}} object,

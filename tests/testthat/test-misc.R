@@ -117,6 +117,12 @@ test_that("fixef() and vcov() select distributional-parameter coefficients", {
 })
 
 
+test_that("unimplemented generics fail helpfully", {
+  expect_error(coef(demo_fit), "Use `fixef(fit)`", fixed = TRUE)
+  expect_error(update(demo_fit, iter = 100), "Call `mcp()` again instead", fixed = TRUE)
+})
+
+
 test_that("model metadata uses aligned table names and group-effect selectors", {
   data = data.frame(
     x = 1:6,
