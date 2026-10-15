@@ -5,6 +5,7 @@ pkgdown/assets/mcp_showcase_small.png
 dev/*
 !dev/LEARNINGS.md
 !dev/DECISIONS.md
+!dev/TERMINOLOGY.md
 !dev/prompt*
 
 # Hidden
@@ -14,6 +15,10 @@ dev/*
 .Rhistory
 .Rprofile
 .vscode
+
+# Test leftovers
+tests/testthat/_snaps/**/*.new.svg
+tests/*.Rout.fail
 
 # Files
 AGENTS.md
