@@ -239,7 +239,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - Default priors are weakly informative and follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with a few [documented deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
 
-- The default prior on change points is a flat Dirichlet prior on the segment lengths (uniform order statistics). It is `uniform(min(x), max(x))` for one change point and scaled beta distributions for each of two or more change points, evenly spaced on average. Informativeness increases as the number of change points increases.
+- The default prior on change points is a flat Dirichlet prior on the segment lengths ([read more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
 
 - Fix parameters to specific values using `cp_1 = 45`. To share a coefficient between segments, use `same()` in the model, e.g., `~ 0 + same(x)`.
 

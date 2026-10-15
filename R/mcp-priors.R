@@ -21,6 +21,8 @@
 #'      is generally preferred. If two group-level deviations are shared via the prior,
 #'      they will need to have the same grouping variable.
 #'
+#' @section Regression priors:
+#' 
 #' Weakly informative defaults are used where priors are not specified. These are designed for stable
 #' estimation and prediction, but should be justified before hypothesis testing.
 #' Default priors follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with
@@ -38,21 +40,18 @@
 #' See [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for all families, links,
 #' and distributional parameters, and for how the defaults deviate from `rstanarm` and `brms`.
 #'
-#' The default prior on change points is a flat Dirichlet prior on the segment lengths
-#' (uniform order statistics). It is `uniform(min(x), max(x))` for one change point and results in scaled beta distributions
-#' for each of two or more change points. `fit$prior` writes it as `dunif(min(x), max(x))` on each change point.
-#' Change points are always ordered: each change point has its prior as written, restricted to ordered
-#' change points. Set `cp_i = "dirichlet(alpha)"` with `alpha >= 1` to regularize spacing (`alpha > 1` penalizes change points
-#' from occurring close together). Set a minimum segment length by using the previous change point in the lower
-#' limit, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"` or `cp_2 = "dnorm(70, 10) T(cp_1 + 20, )"`.
-#' [Read more](https://lindeloev.github.io/mcp/articles/priors.html#cp_prior).
+#' @section Change point priors: 
+#' 
+#' Change points are always ordered: each change point keeps its specified prior, restricted to ordered change points.
+#' The default is a flat Dirichlet prior on the segment lengths, written as `dunif(min(x), max(x))` on each change point
+#' ([read more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
+#' Set a minimum segment length using the previous change point in the lower limit, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`.
+#' [Read more](https://lindeloev.github.io/mcp/articles/priors.html#cp_prior) about setting priors on change points.
 #'
 #' @section Notes on priors:
 #'
-#'   * *Ordered change point priors:* Change point priors without `dunif()` or `T()` are truncated to the observed range,
-#'       e.g., `dnorm(30, 10)` becomes `dnorm(30, 10) T(min(x), max(x))` before ordering. Lower and upper limits in `dunif()` and `T()`
-#'       are used as written. References in distribution parameters, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`,
-#'       give conditional priors.
+#'   * *Change point priors* without `dunif()` or `T()` are truncated to the observed range of x,
+#'       e.g., `dnorm(30, 10)` becomes `dnorm(30, 10) T(min(x), max(x))`.
 #'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `mean(response)`, `median(response)`, `sd(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()` and `n_cp()`.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
 #'   * *Group-level change points:* Group-specific locations follow a hierarchical

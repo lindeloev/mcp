@@ -11,7 +11,15 @@ editor_options:
     wrap: none
 ---
 
-This article documents the default priors in `mcp`. These are the priors used if you do not specify otherwise in `mcp(..., prior = list())`. See [Working with priors](../articles/priors.html) for how to set your own priors and do prior predictive checks, and for the [default prior on change points](../articles/priors.html#cp_prior).
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE)) {
+  pkgload::load_all(export_all = FALSE, quiet = TRUE)
+}
+options(mcp_quiet = TRUE)
+set.seed(42)
+```
+
+This article documents the default priors in `mcp`. These are the priors used if you do not specify otherwise in `mcp(..., prior = list())`. See [Working with priors](../articles/priors.html) for how to set your own priors and do prior predictive checks.
 
 
 # Default priors on regression parameters
@@ -54,11 +62,126 @@ General quantities used in the table below:
 | **Mean ($\mu$): Identity link** (`binomial`, `bernoulli`) | `uniform(0, 1)` | contrasts: `uniform(-1, 1)`<br>slopes: `normal(0, 1 / sd(column))` | `student_t(3, 0, 1) T(0, )`† | |
 | **Constant dispersion** (implicit `sigma`, `shape`) | `sigma_1`: `student_t(3, 0, S_y) T(0, )`<br>`shape_1`: `inv_gamma(0.4, 0.3)` | — | — | `brms` |
 | **Modeled `sigma()`** (log link) | `student_t(3, 0, 2.5)` | contrasts: `student_t(3, 0, 2.5)`<br>slopes: `student_t(3, 0, 2.5 / sd(column))` | `student_t(3, 0, 2.5) T(0, )`† | `brms` intercept |
-| **Modeled `shape()`** (log link) | `normal(0, 2.5)` | contrasts: `normal(0, 2.5)`<br>slopes: `normal(0, 2.5 / sd(column))` | `normal(0, 2.5) T(0, )`† | |
+| **Modeled `shape()`** (log link) | `normal(0, 2.5)` | contrasts: `normal(0, 2.5)`<br>slopes: `normal(0, 2.5 / sd(column))` | `normal(0, 2.5) T(0, )`\*\* | |
 | **Autocorrelation** (`ar()`, `ma()`) | `normal(0, 0.5) T(-1, 1)` | contrasts: `normal(0, 0.25)`<br>slopes: `normal(0, 0.25 / sd(column))` | — | |
-| **Change points** (`cp_i`) | `dirichlet(1)` | — | `normal(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
+| **Change points** (`cp_i`) | `uniform(min(x), max(x))`\*\*\* | — | `normal(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
 
-\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. † Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations).
+\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. \*\* Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations). \*\*\* Ordered ([flat Dirichlet](#change-points))
+
+
+# Default prior on change points {#change-points}
+
+The default prior on change points is a flat Dirichlet prior on the segment lengths, also known as "uniform order statistics". It treats any set of ordered change points within the observed range of $x$ as equally likely. Equivalently, the change points are distributed like sorted draws from $\text{Uniform}(\min(x), \max(x))$. This is also how `fit$prior` and the JAGS code write it: `dunif(min(x), max(x))` on each change point, restricted to ordered change points. See [Working with priors](../articles/priors.html#cp_prior) for how to set other priors on change points.
+
+With $K$ segments, i.e., $K - 1$ change points $\tau_1 < \dots < \tau_{K-1}$, this prior has some nice properties:
+
+- **Beta marginals:** Each change point has a beta prior, scaled to the observed range of $x$:
+
+  $$\frac{\tau_k - \min(x)}{\max(x) - \min(x)} \sim \text{Beta}(k, K - k)$$
+
+  For 1 change point, this is $\text{Beta}(1, 1)$, i.e., $\text{Uniform}(\min(x), \max(x))$. For 2 change points, $\tau_1$ and $\tau_2$ have scaled $\text{Beta}(1, 2)$ and $\text{Beta}(2, 1)$ priors.
+
+- **Evenly spaced on average:** The prior means are
+
+  $$\mathbb{E}[\tau_k] = \min(x) + \frac{k}{K} (\max(x) - \min(x))$$
+
+  For example, with 2 change points, the prior means are at 33% and 67% of the observed range of $x$. With 5 change points, they are at 16.7%, 33.3%, 50%, 66.7%, and 83.3%.
+
+- **Symmetry and flat sum:** The prior is symmetric along $x$, and the sum of the prior densities of all change points is uniform across the observed range of $x$.
+
+- **More change points, more informative:** For a given range, adding change points makes the prior on each change point more informative because they are "squeezed" together.
+
+The plot below compares these theoretical beta marginals (black lines) with prior draws from `mcp` (red lines) for 2 and 5 change points:
+
+```{r, echo = FALSE, results = FALSE}
+library(mcp)
+df_dummy = data.frame(x = c(0, 0.5, 1), y = rnorm(3))
+
+# Sample priors for two default change points
+model_two = list(y ~ x, ~ 1, ~ 1)
+fit_two = mcp(model_two, data = df_dummy, sample = "prior", chains = 1, iter = 50000, seed = 42)
+
+# Sample priors for five default change points
+model_five = list(y ~ x, ~ 1, ~ 1, ~ 1, ~ 1, ~ 1)
+fit_five = mcp(model_five, data = df_dummy, sample = "prior", chains = 1, iter = 50000, seed = 42)
+```
+
+```{r, echo = FALSE, fig.height=3.5, fig.width=7}
+par(mfrow = c(1, 2), mar = c(4, 4, 2.5, 1))
+x_min = min(df_dummy$x)
+x_max = max(df_dummy$x)
+col_emp = rgb(1, 0, 0)
+
+# Panel 1: Two change points
+curve(dbeta(x, 1, 2) / 2, from = 0, to = 1, ylim = c(0, 1.15),
+      ylab = "Density", xlab = "x", main = "Two change points",
+      col = "black", lwd = 1.5)
+curve(dbeta(x, 2, 1) / 2, add = TRUE, col = "black", lwd = 2)
+curve(dunif(x, 0, 1), lty = 2, add = TRUE, col = "black", lwd = 2)
+
+draws_two = as_draws_df(fit_two, prior = TRUE)
+y1 = density(draws_two$cp_1, from = x_min, to = x_max)
+y2 = density(draws_two$cp_2, from = x_min, to = x_max)
+ysum = (y1$y + y2$y) / 2
+
+lines(y1$x, y1$y / 2, col = col_emp)
+lines(y2$x, y2$y / 2, col = col_emp)
+lines(y1$x, ysum, col = col_emp, lty = 2)
+
+text(0.12, 0.75, labels = "cp_1")
+text(0.88, 0.75, labels = "cp_2")
+text(0.5, 1.05, labels = "sum")
+
+# Panel 2: Five change points
+curve(dbeta(x, 1, 5) / 5, from = 0, to = 1, ylim = c(0, 1.15),
+      ylab = "Density", xlab = "x", main = "Five change points",
+      col = "black", lwd = 1.5)
+curve(dbeta(x, 2, 4) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dbeta(x, 3, 3) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dbeta(x, 4, 2) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dbeta(x, 5, 1) / 5, add = TRUE, col = "black", lwd = 2)
+curve(dunif(x, 0, 1), lty = 2, add = TRUE, col = "black", lwd = 2)
+
+draws_five = as_draws_df(fit_five, prior = TRUE)
+z1 = density(draws_five$cp_1, from = x_min, to = x_max)
+z2 = density(draws_five$cp_2, from = x_min, to = x_max)
+z3 = density(draws_five$cp_3, from = x_min, to = x_max)
+z4 = density(draws_five$cp_4, from = x_min, to = x_max)
+z5 = density(draws_five$cp_5, from = x_min, to = x_max)
+zsum = (z1$y + z2$y + z3$y + z4$y + z5$y) / 5
+
+lines(z1$x, z1$y / 5, col = col_emp)
+lines(z2$x, z2$y / 5, col = col_emp)
+lines(z3$x, z3$y / 5, col = col_emp)
+lines(z4$x, z4$y / 5, col = col_emp)
+lines(z5$x, z5$y / 5, col = col_emp)
+lines(z1$x, zsum, col = col_emp, lty = 2)
+
+text(0.1, 0.85, labels = "cp_1")
+text(0.25, 0.53, labels = "cp_2")
+text(0.5, 0.48, labels = "cp_3")
+text(0.75, 0.53, labels = "cp_4")
+text(0.9, 0.85, labels = "cp_5")
+text(0.5, 1.05, labels = "sum")
+
+par(mfrow = c(1, 1))
+```
+
+## The Dirichlet prior on segment lengths {#dirichlet}
+
+The change points divide the observed range of $x$ into $K$ segments. Instead of a prior on each change point, one can place a prior on how the range is divided, i.e., on the relative segment lengths
+
+$$s_k = \frac{\tau_k - \tau_{k-1}}{\max(x) - \min(x)}, \qquad k = 1, \dots, K,$$
+
+with $\tau_0 = \min(x)$ and $\tau_K = \max(x)$ here, to ensure that $\tau_1$ to $\tau_{k-1}$ are within the observed range of $$x$. They are positive and sum to 1. The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is the standard prior for such proportions. It also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)). The symmetric Dirichlet prior with concentration $\alpha$ has density
+
+$$p(s_1, \dots, s_K) \propto \prod_{k=1}^{K} s_k^{\alpha - 1}.$$
+
+With $\alpha = 1$, the density is constant, so every division of the range into ordered segments is equally likely. This is `mcp`'s default prior. With $\alpha > 1$, divisions with short segments are less likely, favoring evenly spaced change points away from the limits of the data. The marginal priors generalize to
+
+$$\frac{\tau_k - \min(x)}{\max(x) - \min(x)} \sim \text{Beta}(k\alpha, (K - k)\alpha).$$
+
+The segment lengths are a linear function of the change points, so the same density applies to the ordered change points. For $\alpha > 1$, the prior is therefore the default prior multiplied by the factor $\prod_k s_k^{\alpha - 1}$. This factor is 1 when all segments are equally long and approaches 0 when a segment becomes very short. See [Working with priors](../articles/priors.html#cp_prior) for how to set $\alpha$ and [From formulas to sampler code](../articles/implementation.html#change-point-priors) for how JAGS samples it. $\alpha < 1$ is not supported because the density goes to infinity as a segment shrinks to zero.
 
 
 # Default priors on group-level effects
@@ -69,7 +192,7 @@ Each group-level effect has a population-level SD parameter. Predictor-side devi
 
 Change-point effects use the same ordinary normal hierarchy, with additional range and within-group ordering constraints. Therefore, `cp_i_sd` is the SD of the normal distribution **before truncation** rather than the realized sample SD. See [group-level effects with mcp](../articles/group_effects.html) for the model equation and practical interpretation.
 
-The default prior on the SD of group-level change points, e.g., `cp_1_id_sd`, is $$\text{Normal}\left(0, \frac{W}{4}\right) T(0, ), \qquad W = \frac{2 (\max(x) - \min(x))}{N + 1}$$ where $N$ is the number of change points. $W$ is the expected width of the interval in which a group's change point can vary, i.e., between its two neighboring change points. Under the default `dirichlet(1)` prior, adjacent change points are on average $(\max(x) - \min(x)) / (N + 1)$ apart. With one change point, $W$ is the observed range of $x$.
+The default prior on the SD of group-level change points, e.g., `cp_1_id_sd`, is $$\text{Normal}\left(0, \frac{W}{4}\right) T(0, ), \qquad W = \frac{2 (\max(x) - \min(x))}{N + 1}$$ where $N$ is the number of change points. $W$ is the expected width of the interval in which a group's change point can vary, i.e., between its two neighboring change points. Under the default prior, adjacent change points are on average $(\max(x) - \min(x)) / (N + 1)$ apart. With one change point, $W$ is the observed range of $x$.
 
 The scale $W / 4$ is calibrated on the realized spread of the group-level change points rather than on `cp_i_sd` itself. Because group-level change points are truncated to an interval of width $W$, their realized SD cannot exceed $W / \sqrt{12}$, the SD of a uniform distribution on that interval. When `cp_i_sd` is larger than about $W / 2$, the truncated normal is practically uniform, so the data carry little information to distinguish between larger values. With the default prior, the realized SD as a fraction of its maximum $W / \sqrt{12}$ is approximately uniform between 0 and 1 a priori (prior deciles: 0.10, 0.20, 0.30, 0.39, 0.49, 0.59, 0.69, 0.79, 0.87; simulated with $\text{cp}_i$ uniform within the interval). This is similar to how the logit and probit intercept priors are (approximately) uniform on the probability scale [read more in this section](#deviations). Thus, a priori, group-level change points are exchangeable around the population change point, so groups with little information about their change point are pooled towards it.
 
@@ -103,7 +226,7 @@ The prior is half-normal rather than the half-Student-t used for predictor group
 
 - **Autoregressive and moving-average terms:** `mcp` uses zero-centered `normal(0, 0.5) T(-1, 1)` priors to favor stationary and invertible dynamics, with modest changes across segments and predictors (`normal(0, 0.25)`).
 
-- **Change points:** `mcp`-specific, as described in [Working with priors](../articles/priors.html#cp_prior). The SDs of group-level change points have an `mcp`-specific prior, described [above](#group-level-change-points).
+- **Change points:** `mcp`-specific, as described [above](#change-points). The SDs of group-level change points have an `mcp`-specific prior, described [above](#group-level-change-points).
 
 
 # Applied discussion of default priors in other articles

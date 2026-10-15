@@ -216,7 +216,7 @@ testthat::test_that("Minimum segment lengths go in cp_order_", {
 })
 
 
-testthat::test_that("Change points have their priors as written, restricted to ordered change points", {
+testthat::test_that("Change points keep their specified priors, restricted to ordered change points", {
   data = data.frame(x = seq(0, 1, length.out = 20), y = 0)
   set.seed(123)
   n = 1e5

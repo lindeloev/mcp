@@ -51,7 +51,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   #######################
   # CHANGE POINT PRIORS #
   #######################
-  # Each change point has its prior as written, and cp_order_ restricts them to ordered
+  # Each change point keeps its specified prior, and cp_order_ restricts them to ordered
   # change points with any minimum segment lengths. dirichlet(alpha) is the default uniform prior
   # expanded to the segment length.
   cps = prior[intersect(paste0("cp_", seq_len(K - 1L)), names(prior))]

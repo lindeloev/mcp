@@ -289,7 +289,7 @@ get_min_segment_length = function(limits, j, cp_names) {
 }
 
 
-# User change point priors apply as written, restricted to ordered change points (see
+# User priors on change points are used unchanged, restricted to ordered change points (see
 # get_jags_code()). Priors without dunif() or T() are truncated to the observed range of x.
 # An empty upper limit next to a minimum segment length, e.g., T(cp_1 + 20, ), is also max(x).
 truncate_cp_prior = function(cps, j, prior_value, context) {
@@ -305,7 +305,7 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
   if (identical(min_length, "0")) {
     warning(
       "`", cps$name[j], "` = \"", prior_value, "\": `", cps$name[j - 1], "` as the lower limit is already embodied in the mcp model and hence not needed. ",
-      "Each change point has its prior as written, restricted to ordered change points. ",
+      "Each change point keeps its specified prior, restricted to ordered change points. ",
       "To set a minimum segment length, use e.g. `", cps$name[j - 1], " + 20` as the lower limit.",
       call. = FALSE
     )
