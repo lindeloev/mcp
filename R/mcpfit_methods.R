@@ -168,17 +168,17 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     )
 
     # Add simulation values for comparison with the fitted parameters.
-    estimates = estimates %>%
-      dplyr::left_join(simulated, by = "parameter", relationship = "one-to-one") %>%
-      dplyr::mutate(
-        cp_width = ifelse(stringr::str_detect(.data$parameter, "^cp_[0-9]+"), .data$upper - .data$lower, 0),
-        match = ifelse(
-          .data$sim >= (.data$lower - 0.05 * .data$cp_width) &
-          .data$sim <= (.data$upper + 0.05 * .data$cp_width),
-          yes = "OK", no = ""
-        )
-      ) %>%
-      dplyr::select(-"cp_width")
+    estimates = dplyr::left_join(estimates, simulated, by = "parameter", relationship = "one-to-one")
+    is_match = estimates$sim >= estimates$lower & estimates$sim <= estimates$upper
+
+    # A disjoined change point has the same likelihood anywhere between two adjacent observed x.
+    # Match if `sim` is between the same observed x as the interval.
+    cols = mcp_columns(fit)
+    x_obs = sort(unique(fit$data[[cols$par_x]][!is.na(fit$data[[cols$response]])]))
+    gap = function(value) findInterval(value, x_obs, left.open = TRUE)
+    is_disjoined = estimates$parameter %in% get_disjoined_cps(fit)
+    is_match[is_disjoined] = (gap(estimates$lower) <= gap(estimates$sim) & gap(estimates$sim) <= gap(estimates$upper))[is_disjoined]
+    estimates$match = ifelse(is_match, yes = "OK", no = "")
   }
 
   # Return-columns and column-order
@@ -253,7 +253,9 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'
 #'   * `sim` is the value used to generate the data.
 #'   * `match` is `"OK"` if `sim` is contained in the central posterior
-#'     interval (`lower` to `upper`).
+#'     interval (`lower` to `upper`). For change points starting a disjoined
+#'     segment, `sim` only needs to be between the same two adjacent observed
+#'     `x` as the interval, since the likelihood is identical anywhere between them.
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}

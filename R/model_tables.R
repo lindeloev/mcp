@@ -353,6 +353,21 @@ definition_rows = function(table) {
 }
 
 
+# Names of population-level change points starting a disjoined segment, i.e., a segment that
+# includes an intercept for every dpar with x-terms in it. Excludes change points with group-level
+# change points.
+get_disjoined_cps = function(fit) {
+  tables = get_fit_model_tables(fit)
+  terms = dplyr::bind_rows(tables$predictors, tables$group_effects[tables$group_effects$part != "cp", ])
+  cps = tables$cps[is.na(tables$cps$group_col), ]
+  is_disjoined = vapply(cps$segment, function(segment) {
+    this = terms[terms$segment == segment, ]
+    all(this$dpar[this$x_factor != "1"] %in% this$dpar[this$par_type == "Intercept"])
+  }, logical(1))
+  cps$name[is_disjoined]
+}
+
+
 # Get model metadata tables from a fitted model
 get_fit_model_tables = function(fit) {
   check_mcpfit_version(fit)

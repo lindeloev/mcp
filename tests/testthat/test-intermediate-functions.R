@@ -180,3 +180,32 @@ test_that("fit$simulate() errors with a helpful message on the pre-v0.4 calling 
     "install_github"
   )
 })
+
+test_that("summary() matches simulated disjoined change points between adjacent observed x", {
+  data = data.frame(x = 1:100, y = 0)
+  get_match = function(model, sim_values) {
+    fit = mcp(model, data, par_x = "x", sample = FALSE)
+    fit$data$y = do.call(fit$simulate, c(list(fit = fit, newdata = data, .type = "fitted"), sim_values))
+    population = mcp_pars(fit, scope = "population")$parameter
+    draws = matrix(unlist(sim_values[population]), 101, length(population), byrow = TRUE, dimnames = list(NULL, population))
+    draws[, "cp_1"] = seq(49.01, 49.99, length.out = 101)  # The likelihood is flat in (49, 50] for disjoined
+    fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+    summary_fit = get_summary(fit, width = 0.95)
+    summary_fit$match[summary_fit$parameter == "cp_1"]
+  }
+
+  # Disjoined: sim = 50 is between the same observed x as the interval, while 49 is not.
+  disjoined = list(y ~ 1, ~ 1 + x)
+  expect_identical(get_disjoined_cps(mcp(disjoined, data, par_x = "x", sample = FALSE)), "cp_1")
+  expect_identical(get_match(disjoined, list(cp_1 = 50, Intercept_1 = 0, Intercept_2 = 5, x_2 = 1, sigma_1 = 1)), "OK")
+  expect_identical(get_match(disjoined, list(cp_1 = 49, Intercept_1 = 0, Intercept_2 = 5, x_2 = 1, sigma_1 = 1)), "")
+
+  # Joined: the change point is identified within the gap, so sim must be in the interval.
+  joined = list(y ~ 1, ~ 0 + x)
+  expect_identical(get_disjoined_cps(mcp(joined, data, par_x = "x", sample = FALSE)), character())
+  expect_identical(get_match(joined, list(cp_1 = 50, Intercept_1 = 0, x_2 = 1, sigma_1 = 1)), "")
+
+  # Joined in one dpar is joined.
+  mixed = list(y ~ 1, ~ 1 + sigma(0 + x))
+  expect_identical(get_disjoined_cps(mcp(mixed, data, par_x = "x", sample = FALSE)), character())
+})
