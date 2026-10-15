@@ -121,7 +121,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   family$garma = garma
   family = add_dpar_specs(family)
 
-  family$linkfun =get_link_function(family$link)
+  family$linkfun = get_link_function(family$link)
   family$linkinv = get_link_function(family$link, inverse = TRUE)
 
   class(family) = c("mcpfamily", "family")

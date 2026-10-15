@@ -294,7 +294,7 @@ get_plot = function(x,
     gg = gg + geom_quantiles(q_fit_data, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
   }
   if (show_q_predict) {
-    gg = gg + geom_quantiles(q_predict_data, ".predicted", use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
+    gg = gg + geom_quantiles(q_predict_data, ".prediction", use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
   }
 
   # Add change point densities?
@@ -305,7 +305,7 @@ get_plot = function(x,
     if (dpar == "epred" && geom_data != FALSE) {
       limits_y = range(fit$data[[data_columns$response]], finite = TRUE)
     } else if (show_q_predict) {
-      limits_y = range(q_predict_data$.predicted)
+      limits_y = range(q_predict_data$.prediction)
     } else if (show_q_fit) {
       limits_y = range(dplyr::pull(q_fit_data, yvar))
     } else if (yvar %in% names(eval_lines)) {

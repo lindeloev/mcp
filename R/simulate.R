@@ -30,16 +30,12 @@ relevel_newdata = function(newdata, fit) {
         stop("Got novel values (", and_collapse(new_levels), ") for column ", col_name, ". Only values used during fitting are allowed.")
       }
     } else if (is.character(org_col)) {
-      # Keep character type for grouping columns; factorize predictor covariates for model.matrix
+      # Factorize character predictors for model.matrix
       novel = setdiff(as.character(new_col), unique(org_col))
       if (length(novel) > 0) {
         stop("Got novel values (", and_collapse(novel), ") for column ", col_name, ". Only values used during fitting are allowed.")
       }
-      if (col_name %in% rhs_vars) {
-        new_col = factor(new_col, levels = levels(factor(org_col)))
-      } else {
-        new_col = as.character(new_col)
-      }
+      new_col = factor(new_col, levels = levels(factor(org_col)))
     }
 
     newdata[, col_name] = new_col
@@ -147,7 +143,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
   out %>%
     as.list() %>%
     as.data.frame() %>%
-    dplyr::select(-dplyr::starts_with("x_local_"), -dplyr::any_of("ar_"))
+    dplyr::select(-dplyr::starts_with("x_local_"))
 }
 
 
@@ -257,8 +253,6 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
     ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
     ma_list = dplyr::select(dpar_values, dplyr::matches("^ma[0-9]+_$"))
     threshold = dpar_values$garma_threshold_
-    if (is.null(threshold))
-      threshold = rep(0.1, length(base_link_mu))
     if (!has_ydata && .type != "predict")
       stop("The response is required to evaluate GARMA terms.")
 

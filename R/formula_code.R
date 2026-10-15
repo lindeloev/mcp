@@ -12,7 +12,7 @@ get_formula_jags = function(segments, predictors, group_effects, par_x, family, 
   # Add X-helpers which code the X relative to the start of each segment.
   local_x_str = "\n# par_x local to each segment"
   for (i in seq_len(nrow(segments))) {
-    segment_start = ifelse(i > 1, paste0(" - ", segments$cp_start[i]), "")
+    segment_start = if (i > 1) paste0(" - ", segments$cp_start[i]) else ""
     local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segments$cp_end[i], ")", segment_start)
   }
 
@@ -107,7 +107,7 @@ get_formula_jags_dpar = function(dpar_table, dpar, par_x, family, segment_offset
         indicator_this = paste0("  (", par_x, "[i_] >= ", dplyr::first(.data$this_cp), ")"),
         indicator_next = dplyr::if_else(is.na(dplyr::first(.data$next_cp)), "", paste0(" * (", par_x, "[i_] < ", dplyr::first(.data$next_cp), ")")),
         inprod = paste0(" * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$name, collapse = ", "), "))"),
-        x_factor = gsub("x(?!p\\()", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), perl = TRUE),
+        x_factor = sub("x", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), fixed = TRUE),  # "1", "x", or "x^k"
         segment_code = paste0(.data$indicator_this, .data$indicator_next, .data$inprod, " * ", .data$x_factor),
         .groups = "drop"
       )

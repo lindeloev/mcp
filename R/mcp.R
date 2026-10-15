@@ -361,15 +361,10 @@ mcp = function(
   imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
     paste0(segments$y[1], "[", missing_response_rows, "]")
 
-  # The JAGS glm module helps some families always and others only with group-level predictor effects.
-  glm_module = family$backends$jags$glm_module
-  use_glm = identical(glm_module, "always") ||
-    (identical(glm_module, "group_effects") && any(group_definitions$part != "cp"))
-
-  sample_draws = function(jags_data, pars, sample) {
+  sample_draws = function(pars, sample) {
     draws = run_jags(
       jags_code = jags_code,
-      jags_data = jags_data,
+      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, jags_code, segments$y[1], custom_jags_code) else jags_data,
       pars = pars,
       sample = sample,
       n.chains = chains,
@@ -379,7 +374,7 @@ mcp = function(
       cp_inits = get_cp_inits(prior, range(data[[par_x]], na.rm = TRUE), if (!is.list(inits[[1]])) inits),  # Ignores chain-specific inits
       seed = seed,
       quiet = quiet,
-      use_glm = use_glm
+      use_glm = use_jags_glm(family, group_definitions)
     ) %>%
       recover_levels(data, group_definitions)
 
@@ -391,7 +386,7 @@ mcp = function(
 
   # Sample posterior
   if (sample %in% c("post", "both")) {
-    mcmc_post = sample_draws(jags_data, c(all_pars, imputed_response_nodes), "post")
+    mcmc_post = sample_draws(c(all_pars, imputed_response_nodes), "post")
 
     # Handle missing data
     if (length(imputed_response_nodes) > 0) {
@@ -413,19 +408,7 @@ mcp = function(
 
   # Sample prior
   if (sample %in% c("prior", "both")) {
-    # Set stochastic response nodes to NA for prior sampling. 
-    # Except for weighted discrete likelihoods which use the response in a zeros trick.
-    jags_data_prior = jags_data
-    response_node = paste0(segments$y[1], "[i_] ~")
-    response_is_stochastic = if (custom_jags_code)
-      !grepl("likelihood_phi_", jags_code, fixed = TRUE) else
-      grepl(response_node, jags_code, fixed = TRUE)
-    if (response_is_stochastic)
-      jags_data_prior[[segments$y[1]]] = rep(NA, nrow(data))
-    if (!is.null(jags_data_prior$response_observed_))
-      jags_data_prior$response_observed_[] = 0L
-
-    mcmc_prior = sample_draws(jags_data_prior, all_pars, "prior")
+    mcmc_prior = sample_draws(all_pars, "prior")
   } else {
     mcmc_prior = NULL
   }

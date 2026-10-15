@@ -276,9 +276,8 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   checkmate::assert_string(dpar)
   checkmate::assert_string(par_x)
   checkmate::assert_string(design_id)
-  checkmate::assert_integer(order, max.len = 1, null.ok = TRUE)
-  if (is.null(order) == FALSE)
-    checkmate::assert_integerish(order, lower = 1)
+  checkmate::assert_int(order, lower = 1, null.ok = TRUE)
+  order_value = if (is.null(order)) NA_integer_ else as.integer(order)  # Stored in the returned table
 
   form_rhs = rewrite_zero_offset(form_rhs, par_x)
 
@@ -320,10 +319,10 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   design$spec$local_x_name = local$name
   design$spec$dpar = dpar
   design$spec$segment = segment
-  design$spec$order = ifelse(is.null(order), NA_integer_, as.integer(order))
+  design$spec$order = order_value
   if (!is.null(source_design$offset)) {
     design$spec$has_offset = TRUE
-    design$spec$offset_name = paste0("offset_", dpar, ifelse(is.null(order) || is.na(order), "", order), "_", segment, "_")
+    design$spec$offset_name = paste0("offset_", dpar, order, "_", segment, "_")
     design$spec$offset_data = as.numeric(source_design$offset)
   }
 
@@ -411,7 +410,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
         name = NA_character_,
         term_key = "(offset)",
         par_type = "offset",
-        order = ifelse(is.null(order), NA_integer_, as.integer(order)),
+        order = order_value,
         x_factor = "1",
         design_id = design_id,
         design_col = NA_integer_,
@@ -434,7 +433,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
       is_dummy == TRUE ~ "dummy",
       TRUE ~ "slope"
     ),
-    order = ifelse(is.null(order), NA, order),
+    order = order_value,
     x_factor = x_factor,
     design_id = design_id,
     design_col = seq_len(ncol(mat_without_x)),

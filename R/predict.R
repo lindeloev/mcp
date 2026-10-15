@@ -26,12 +26,13 @@ pp_eval = function(
   .return_dpars = FALSE,
   .garma_replicate = FALSE
 ) {
-  draws_format = rlang::arg_match0(draws_format, c("tidy", "matrix"))
-
-  # Recode
+  ########################
+  # ASSERTS AND RECODING #
+  ########################
   fit = object
   checkmate::assert_class(fit, "mcpfit")
   warn_custom_jags_code(fit)
+  draws_format = rlang::arg_match0(draws_format, c("tidy", "matrix"))
   dpar = assert_dpar(dpar, fit = fit, type = type)
   assert_typescale(type, scale)
   value_col = get_value_col(type, dpar, scale)
@@ -39,6 +40,25 @@ pp_eval = function(
     stop("`group_effects` cannot be NULL. Use `TRUE` for all group-level effects or `FALSE`/`NA` for none.", call. = FALSE)
   if (length(group_effects) == 1 && is.na(group_effects))
     group_effects = FALSE  # brms/lme4-style NA means none
+  checkmate::assert_flag(summary)
+  if (!isFALSE(width)) {
+    checkmate::assert_number(width)
+    if (width <= 0 || width >= 1)
+      stop("`width` must be strictly between 0 and 1, or `FALSE`.")
+  }
+  checkmate::assert_flag(rate)
+  checkmate::assert_flag(prior)
+  checkmate::assert_flag(arma)
+  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+  checkmate::assert_flag(.return_fitted)
+  checkmate::assert_flag(.return_dpars)
+  checkmate::assert_flag(.garma_replicate)
+  if (.return_fitted && (type != "predict" || summary))
+    stop_github("`.return_fitted` requires `type = 'predict'` and `summary = FALSE`.")
+  if (.return_dpars && (type != "predict" || summary))
+    stop_github("`.return_dpars` requires `type = 'predict'` and `summary = FALSE`.")
+  if (.garma_replicate && type != "predict")
+    stop_github("`.garma_replicate` requires `type = 'predict'`.")
 
   # What data to use
   using_original_data = is.null(newdata) || identical(data.frame(newdata), fit$data)
@@ -46,7 +66,6 @@ pp_eval = function(
     newdata = fit$data
 
   data_columns = mcp_columns(fit)
-  checkmate::assert_flag(.garma_replicate)
   replicate_garma = .garma_replicate && arma && is_arma(fit)
   evaluating_arma = uses_garma(fit, arma, type, dpar)
   if (evaluating_arma)
@@ -128,33 +147,11 @@ pp_eval = function(
   if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))
     newdata_return[[data_columns$response]] = response_return[[data_columns$response]]
 
-  ########################
-  # ASSERTS AND RECODING #
-  ########################
-  checkmate::assert_flag(summary)
-  if (!isFALSE(width)) {
-    checkmate::assert_number(width)
-    if (width <= 0 || width >= 1)
-      stop("`width` must be strictly between 0 and 1, or `FALSE`.")
-  }
-  checkmate::assert_flag(rate)
-  checkmate::assert_flag(prior)
-  checkmate::assert_flag(arma)
-  checkmate::assert_flag(.return_fitted)
-  checkmate::assert_flag(.return_dpars)
-  if (.return_fitted && (type != "predict" || summary))
-    stop_github("`.return_fitted` requires `type = 'predict'` and `summary = FALSE`.")
-  if (.return_dpars && (type != "predict" || summary))
-    stop_github("`.return_dpars` requires `type = 'predict'` and `summary = FALSE`.")
-  if (.garma_replicate && type != "predict")
-    stop_github("`.garma_replicate` requires `type = 'predict'`.")
-  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-
 
   ########################
   # GET FITS/PREDICTIONS #
   ########################
-  simulate_type = ifelse(type == "residuals", yes = "fitted", no = type)
+  simulate_type = if (type == "residuals") "fitted" else type
   if (length(group_info$cols) > 0) {
     # Match group-level draws to each row of data.
     draws = dplyr::left_join(
@@ -275,15 +272,14 @@ pp_eval = function(
     # Central interval
     if (!isFALSE(width)) {
       probs = c((1 - width) / 2, (1 + width) / 2)
-      val_col = if (type == "predict" && !is.null(fit$family$r$cdf)) ".predicted" else value_col
-      quantiles = if (type == "predict" && !is.null(fit$family$r$cdf)) {
+      quantiles = if (type == "predict") {
         get_mixture_quantiles(draws, probs, fit$family, keep = NULL, rate = rate, dpars = dpars_values, response_data = response_data_values)
       } else {
         get_quantiles(draws, probs, value_col, na.rm = type == "residuals")
       }
       quantiles = quantiles %>%
         dplyr::mutate(quantile = ifelse(.data$quantile < 0.5, ".lower", ".upper")) %>%
-        tidyr::pivot_wider(names_from = "quantile", values_from = dplyr::all_of(val_col))
+        tidyr::pivot_wider(names_from = "quantile", values_from = dplyr::all_of(value_col))
 
       df_return = dplyr::left_join(df_return, quantiles, by = ".data_row", relationship = "one-to-one")
     }

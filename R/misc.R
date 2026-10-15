@@ -13,13 +13,9 @@ inprod = function(x, y) {
 }
 
 
-# Converts logical(0) to null. Returns x otherwise
+# Converts zero-length vectors to NULL. Returns x otherwise
 logical0_to_null = function(x) {
-  if (length(x) > 0) {
-    return(x)
-  } else {
-    return(NULL)
-  }
+  if (length(x) > 0) x
 }
 
 
@@ -350,12 +346,8 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
   grid = draws %>% dplyr::select(dplyr::all_of(c(".data_row", keep))) %>% dplyr::distinct()
 
   # Fallback to empirical quantiles if no cdf method or dpars available
-  if (is.null(family$r$cdf) || is.null(dpars)) {
-    return(dplyr::rename(
-      get_quantiles(draws, quantiles, ".prediction", keep = keep),
-      .predicted = ".prediction"
-    ))
-  }
+  if (is.null(family$r$cdf) || is.null(dpars))
+    return(get_quantiles(draws, quantiles, ".prediction", keep = keep))
 
   # Split draws by evaluation row to process one data point across all posterior draws
   row_indices = split(seq_len(nrow(draws)), draws$.data_row)
@@ -375,7 +367,7 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
 
     df_res = data.frame(
       quantile = quantiles,
-      .predicted = q_vals,
+      .prediction = q_vals,
       stringsAsFactors = FALSE
     )
     df_res$.data_row = data_row_id

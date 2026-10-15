@@ -130,6 +130,27 @@ run_jags = function(jags_code,
 }
 
 
+# The JAGS glm module helps some families always and others only with group-level predictor effects.
+use_jags_glm = function(family, group_effects) {
+  glm_module = family$backends$jags$glm_module
+  identical(glm_module, "always") || (identical(glm_module, "group_effects") && any(group_effects$part != "cp"))
+}
+
+
+# JAGS data for sampling the prior. Stochastic response nodes are set to NA, except for weighted
+# discrete likelihoods, which use the response in a zeros trick that `response_observed_ = 0` turns off.
+get_jags_prior_data = function(jags_data, jags_code, response, custom_jags_code) {
+  response_is_stochastic = if (custom_jags_code)
+    !grepl("likelihood_phi_", jags_code, fixed = TRUE) else
+    grepl(paste0(response, "[i_] ~"), jags_code, fixed = TRUE)
+  if (response_is_stochastic)
+    jags_data[[response]][] = NA
+  if (!is.null(jags_data$response_observed_))
+    jags_data$response_observed_[] = 0L
+  jags_data
+}
+
+
 #' Add deterministic JAGS RNG initial values
 #'
 #' @param inits Initial values passed to `mcp()`.
