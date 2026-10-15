@@ -408,9 +408,13 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
           )
         }
 
-        if (is_sparse_tail(prior_values, 0) || is_sparse_tail(post_values, 0)) {
+        # At a bound, e.g., `cp_1_id_sd = 0`, all prior draws are on one side but dense near it, so it is not a sparse tail.
+        # Both kernel densities are about halved at a bound, which cancels in their ratio.
+        at_bound = (all(prior_values >= 0) || all(prior_values <= 0)) && !is_sparse_tail(prior_values, 0, at_bound = TRUE)
+        if (is_sparse_tail(prior_values, 0, at_bound) || is_sparse_tail(post_values, 0, at_bound)) {
           warning(
-            "The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.",
+            if (at_bound) "Few posterior draws are near the tested bound" else "The tested value is in a sparse tail of the prior or posterior draws",
+            "; the Savage-Dickey estimate may be unreliable.",
             call. = FALSE
           )
         }
@@ -542,12 +546,19 @@ get_density = function(x, value) {
   if (diff(range(x)) == 0) {
     stop("Cannot estimate density for constant values.", call. = FALSE)
   }
-  bandwidth = tryCatch(stats::bw.SJ(x), error = function(e) stats::bw.nrd0(x))
-  mean(stats::dnorm(value, mean = x, sd = bandwidth))
+  mean(stats::dnorm(value, mean = x, sd = get_bandwidth(x)))
 }
 
 
-# Is the tested value outside the central 98% of draws?
-is_sparse_tail = function(x, value) {
+get_bandwidth = function(x) {
+  tryCatch(stats::bw.SJ(x), error = function(e) stats::bw.nrd0(x))
+}
+
+
+# Are there too few draws near the tested value? Outside the central 98% of draws, or, at a bound
+# of the draws (`at_bound`), fewer than 1% of draws within one kernel bandwidth of it.
+is_sparse_tail = function(x, value, at_bound = FALSE) {
+  if (at_bound)
+    return(mean(abs(x - value) < get_bandwidth(x)) < 0.01)
   mean(x <= value) < 0.01 || mean(x >= value) < 0.01
 }

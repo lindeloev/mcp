@@ -107,6 +107,11 @@ test_that("hypothesis()", {
     fixed = TRUE
   )
 
+  # At a bound, the prior is dense (half-t mode at 0) and only the posterior is far away
+  fit_bound = demo_fit
+  fit_bound$.internal$prior_table$source[fit_bound$.internal$prior_table$parameter == "sigma_1"] = "user"
+  expect_warning(hypothesis(fit_bound, "sigma_1 = 0"), "Few posterior draws are near the tested bound", fixed = TRUE)
+
   # Degenerate hypotheses with constant prior contrasts are rejected
   expect_error(
     hypothesis(fit_same, "Intercept_1 = Intercept_1"),
@@ -184,6 +189,8 @@ test_that("Savage-Dickey density is evaluated directly", {
   expect_gte(get_density(x, 10), 0)
   expect_false(is_sparse_tail(x, 0))
   expect_true(is_sparse_tail(x, 3))
+  expect_false(is_sparse_tail(abs(x), 0, at_bound = TRUE))
+  expect_true(is_sparse_tail(abs(x) + 3, 0, at_bound = TRUE))
   expect_error(get_density(rep(1, 101), 0), "Cannot estimate density for constant values", fixed = TRUE)
 })
 
