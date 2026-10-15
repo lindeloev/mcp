@@ -225,6 +225,18 @@ assert_rel = function(model) {
 }
 
 
+# Width of a central interval. 0 and 1 are degenerate intervals, so they are not allowed.
+# - false_ok: Whether `FALSE` (no interval) is allowed.
+assert_width = function(width, name = "width", false_ok = FALSE) {
+  if (false_ok && isFALSE(width))
+    return(invisible(width))
+  checkmate::assert_number(width, .var.name = name)
+  if (width <= 0 || width >= 1)
+    stop("`", name, "` must be strictly between 0 and 1", if (false_ok) ", or `FALSE`", ".", call. = FALSE)
+  invisible(width)
+}
+
+
 assert_typescale = function(type, scale) {
   rlang::arg_match0(type, c("predict", "fitted", "residuals", "loglik"))
   rlang::arg_match0(scale, c("response", "linear"))

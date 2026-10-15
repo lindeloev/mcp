@@ -215,6 +215,10 @@ test_that("width and quantiles must be strictly between 0 and 1", {
   expect_error(residuals(demo_fit, width = 0), "strictly between 0 and 1")
   expect_error(residuals(demo_fit, width = 1), "strictly between 0 and 1")
   expect_error(fitted(demo_fit, width = TRUE), "width")
+  expect_error(summary(demo_fit, width = 1), "strictly between 0 and 1")
+  expect_error(fixef(demo_fit, width = 0), "strictly between 0 and 1")
+  expect_error(hypothesis(demo_fit, "cp_1 > 30", width = 1), "strictly between 0 and 1")
+  expect_error(confint(demo_fit, level = 1), "strictly between 0 and 1")
 
   expect_error(plot(demo_fit, q_fit = 0), "strictly between 0 and 1")
   expect_error(plot(demo_fit, q_fit = 1), "strictly between 0 and 1")

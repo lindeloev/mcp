@@ -41,11 +41,7 @@ pp_eval = function(
   if (length(group_effects) == 1 && is.na(group_effects))
     group_effects = FALSE  # brms/lme4-style NA means none
   checkmate::assert_flag(summary)
-  if (!isFALSE(width)) {
-    checkmate::assert_number(width)
-    if (width <= 0 || width >= 1)
-      stop("`width` must be strictly between 0 and 1, or `FALSE`.")
-  }
+  assert_width(width, false_ok = TRUE)
   checkmate::assert_flag(rate)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(arma)

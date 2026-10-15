@@ -312,7 +312,7 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
   fit = x  # Standard name in mcp
   checkmate::assert_character(hypotheses)
   legacy_parameter_names(hypotheses, "hypothesis()")
-  checkmate::assert_number(width, lower = 0, upper = 1)
+  assert_width(width)
   checkmate::assert_flag(prior)
 
   # Selected draws, plus prior draws for Bayes factors when the posterior is selected

@@ -45,7 +45,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
                        dpar = NULL, prior = FALSE, verbose = FALSE) {
   # Check arguments
   checkmate::assert_class(fit, "mcpfit")
-  checkmate::assert_number(width, lower = 0, upper = 1)
+  assert_width(width)
   scope = rlang::arg_match0(scope, c("population", "group"))
   checkmate::assert_character(role, null.ok = TRUE)
   checkmate::assert_character(dpar, any.missing = FALSE, null.ok = TRUE)
@@ -286,7 +286,7 @@ summary.mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbo
 summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, diagnostics = NULL, ...) {
   fit = object  # Standard name in mcp
   checkmate::assert_class(fit, "mcpfit")
-  checkmate::assert_number(width, lower = 0, upper = 1)
+  assert_width(width)
   checkmate::assert_int(digits, lower = 0)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
@@ -546,8 +546,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
 #' @export
 confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
   rlang::check_dots_empty()
-  checkmate::assert_number(level, lower = 0, upper = 1)
-  checkmate::assert_true(level > 0 && level < 1, .var.name = "level")
+  assert_width(level, name = "level")
   checkmate::assert_flag(prior)
 
   population = mcp_pars(object, scope = "population")$parameter
