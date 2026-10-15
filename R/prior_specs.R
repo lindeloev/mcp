@@ -454,7 +454,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
     description = dplyr::coalesce(specs$description[is_ordered], "User-specified prior")
     specs$description[is_ordered] = paste0(description, ", restricted to ordered change points")
     if (length(user_cp_names) == 0)
-      specs$description[is_ordered] = paste0("Flat Dirichlet on the segment lengths: ", tolower(specs$description[is_ordered]))
+      specs$description[is_ordered] = "Flat Dirichlet on the segment lengths"
   }
   specs
 }
