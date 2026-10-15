@@ -1,6 +1,8 @@
 # Bernoulli Family for mcp
 
-Bernoulli Family for mcp
+Binary responses (0 or 1). See [Binomial and
+Bernoulli](https://lindeloev.github.io/mcp/articles/binomial.html) for
+worked examples.
 
 ## Usage
 

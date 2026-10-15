@@ -22,8 +22,8 @@ family-defined response-auxiliary column roles.
 ## Details
 
 Return the resolved data-column roles for an `mcpfit` object. In
-particular, `par_x` is the change-point predictor chosen automatically
-or supplied to
+particular, `par_x` is the change-point variable chosen automatically or
+supplied to
 [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
 Family-defined response auxiliaries, such as `trials` and `weights`, are
 listed when relevant.

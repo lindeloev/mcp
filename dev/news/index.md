@@ -724,11 +724,14 @@ been added until we reach 1.0.
   - mcp now requires R \>= 4.1.0, matching its use of the native pipe
     (`|>`).
 
-  - Removed `criterion()` and `get_segment_table()`. They now throw an
-    error pointing to their replacements: `loo(fit)` or `waic(fit)`
-    instead of `criterion(fit)`, and `mcp_pars(fit)` or
+  - Removed
+    [`criterion()`](https://lindeloev.github.io/mcp/dev/reference/mcp-defunct.md)
+    and
+    [`get_segment_table()`](https://lindeloev.github.io/mcp/dev/reference/mcp-defunct.md).
+    They now throw an error pointing to their replacements: `loo(fit)`
+    or `waic(fit)` instead of `criterion(fit)`, and `mcp_pars(fit)` or
     `mcp_columns(fit)` on `fit = mcp(..., sample = FALSE)` instead of
-    `get_segment_table()`.
+    [`get_segment_table()`](https://lindeloev.github.io/mcp/dev/reference/mcp-defunct.md).
 
   - Removed the non-functional `exponential()` family. It had no default
     priors and could not be fitted. Exponential survival models would
@@ -736,6 +739,11 @@ been added until we reach 1.0.
     rather than the previous ordinary-response placeholder.
 
 ### Bug fixes
+
+- Equality hypotheses now warn when all prior draws lie on one side of
+  the tested value: kernel smoothing can otherwise give misleading Bayes
+  factors for values outside the prior bounds. Boundary tests receive
+  the same warning; Bayes factor calculations are unchanged.
 
 - Named arguments in prior distributions or truncations
   (e.g. `dnorm(sd = 1, mean = 10)`) are now rejected explicitly with an

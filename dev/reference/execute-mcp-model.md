@@ -3,7 +3,9 @@
 Evaluate the model on data, either summarised (per data-row) or per
 draw. You can use draws from the prior (`prior = TRUE`), select a
 distributional parameter with `dpar`, and choose the response or
-linear-predictor scale with `scale` where applicable.
+linear-predictor scale with `scale` where applicable. See [Fits and
+predictions](https://lindeloev.github.io/mcp/articles/predict.html) for
+worked examples, including forecasts with future change points.
 
 ## Usage
 
@@ -122,7 +124,8 @@ residuals(
 
 - summary:
 
-  Summarise at each x-value
+  Logical. Summarise the draws for each row in `newdata` (`TRUE`) or
+  return the draws (`FALSE`)?
 
 - width:
 
@@ -254,8 +257,8 @@ residuals(
     is the posterior predictive SD for `predict()` and the posterior SD
     of the evaluated quantity otherwise.
 
-  - `.lower` and `.upper`: The bounds of the central interval given in
-    `width`.
+  - `.lower` and `.upper`: The lower and upper ends of the central
+    interval given in `width`.
 
   With `prior = TRUE`, these are the analogous prior summaries. mcp's
   own columns are dot-prefixed to avoid collisions with data columns.
@@ -308,8 +311,8 @@ fixed arguments for `fitted`: `rate = FALSE, dpar = 'epred'`.
 `log_lik()` defaults to an unsummarised draws-by-observation matrix, as
 used by `loo` and other posterior workflows. Non-default `group_effects`
 and `arma` settings evaluate conditional or counterfactual
-log-likelihoods (e.g., omitting random effects or serial correlation);
-they cannot be used in
+log-likelihoods (e.g., without group-level effects or serial
+correlation); they cannot be used in
 [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
 or
 [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
@@ -320,7 +323,8 @@ Missing responses in the original data remain missing in the response
 column. `fitted()` returns their expected responses, while `predict()`
 generates fresh posterior predictive response draws (including at
 missing rows). In GARMA models, retained JAGS imputations supply the
-history used for later fitted and predicted rows.
+history used for later fitted and predicted rows. [Read
+more](https://lindeloev.github.io/mcp/articles/missing.html).
 
 ## Functions
 
@@ -347,27 +351,27 @@ head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9 1.02   11.0    14.9
-#> 2     6.35  83.5  11.4 0.742   9.95   12.9
-#> 3    28.0   60.2  25.4 0.863  23.8    27.1
-#> 4    15.7   74.7  13.2 1.12   11.0    15.5
-#> 5    16.2   85.9  10.9 0.736   9.45   12.3
-#> 6    22.3   40.1  14.5 0.656  13.2    15.7
+#> 1    12.2   76.3  12.9 1.01   10.9    14.8
+#> 2     6.35  83.5  11.4 0.717   9.96   12.8
+#> 3    28.0   60.2  25.4 0.873  23.7    27.3
+#> 4    15.7   74.7  13.2 1.11   11.0    15.4
+#> 5    16.2   85.9  10.9 0.711   9.51   12.3
+#> 6    22.3   40.1  14.5 0.621  13.2    15.6
 head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
 #> # A tibble: 6 × 6
 #>   response  time  .mean   .sd .lower .upper
 #>      <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3 -0.637 1.02  -2.68    1.28
-#> 2     6.35  83.5 -5.04  0.742 -6.51   -3.60
-#> 3    28.0   60.2  2.60  0.863  0.938   4.29
-#> 4    15.7   74.7  2.48  1.12   0.215   4.65
-#> 5    16.2   85.9  5.31  0.736  3.93    6.76
-#> 6    22.3   40.1  7.82  0.656  6.65    9.16
+#> 1    12.2   76.3 -0.645 1.01  -2.54    1.38
+#> 2     6.35  83.5 -5.05  0.717 -6.43   -3.61
+#> 3    28.0   60.2  2.61  0.873  0.784   4.33
+#> 4    15.7   74.7  2.47  1.11   0.327   4.71
+#> 5    16.2   85.9  5.30  0.711  3.89    6.70
+#> 6    22.3   40.1  7.83  0.621  6.68    9.14
 log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 #>              1         2         3
-#> [1,] -2.508965 -3.555050 -2.610885
-#> [2,] -2.313553 -3.096477 -2.895883
-#> [3,] -2.520140 -3.468677 -2.504247
+#> [1,] -2.193497 -3.449599 -2.445390
+#> [2,] -2.317434 -3.373387 -2.342121
+#> [3,] -2.311202 -3.090324 -2.419474
 
 # All of the above take a range of arguments. E.g.,:
 # \donttest{
@@ -375,54 +379,54 @@ head(predict(demo_fit))  # Pointwise posterior predictive
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.7  3.90   4.99   20.7
-#> 2     6.35  83.5  11.4  3.91   3.63   19.1
-#> 3    28.0   60.2  25.3  4.04  17.6    33.3
-#> 4    15.7   74.7  13.3  4.01   5.27   21.1
-#> 5    16.2   85.9  10.8  4.11   3.14   18.6
-#> 6    22.3   40.1  14.6  4.03   6.77   22.2
+#> 1    12.2   76.3  12.7  3.93   5.01   20.7
+#> 2     6.35  83.5  11.5  3.85   3.65   19.1
+#> 3    28.0   60.2  25.3  4.06  17.6    33.2
+#> 4    15.7   74.7  13.3  3.92   5.29   21.1
+#> 5    16.2   85.9  10.9  4.14   3.17   18.6
+#> 6    22.3   40.1  14.6  4.03   6.79   22.2
 head(predict(demo_fit, width = 0.8))  # 80% posterior predictive interval
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.8  4.16   7.75   18.0
-#> 2     6.35  83.5  11.5  4.15   6.35   16.4
-#> 3    28.0   60.2  25.3  3.95  20.4    30.5
-#> 4    15.7   74.7  13.3  4.08   8.05   18.4
-#> 5    16.2   85.9  11.0  4.17   5.86   15.9
-#> 6    22.3   40.1  14.4  3.77   9.48   19.5
+#> 1    12.2   76.3  12.8  4.03   7.77   18.0
+#> 2     6.35  83.5  11.5  4.12   6.37   16.4
+#> 3    28.0   60.2  25.3  3.97  20.4    30.5
+#> 4    15.7   74.7  13.3  4.02   8.07   18.4
+#> 5    16.2   85.9  11.1  4.09   5.88   15.9
+#> 6    22.3   40.1  14.4  3.74   9.49   19.5
 head(predict(demo_fit, prior = TRUE))  # Prior predictive
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  14.0  28.1  -47.3   70.7
-#> 2     6.35  83.5  14.4  30.4  -50.8   75.1
-#> 3    28.0   60.2  13.7  26.2  -39.8   66.2
-#> 4    15.7   74.7  13.9  28.4  -46.3   69.6
-#> 5    16.2   85.9  14.4  29.5  -52.1   76.2
-#> 6    22.3   40.1  14.2  22.5  -30.0   58.3
+#> 1    12.2   76.3  13.5  29.4  -42.7   76.7
+#> 2     6.35  83.5  12.9  31.0  -46.6   81.2
+#> 3    28.0   60.2  13.6  26.8  -37.9   68.0
+#> 4    15.7   74.7  13.4  28.5  -41.0   76.2
+#> 5    16.2   85.9  12.8  31.1  -48.3   80.8
+#> 6    22.3   40.1  14.2  23.5  -31.2   55.4
 head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 #> # A tibble: 6 × 14
 #>   response  time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1
 #>      <dbl> <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>
-#> 1     12.2  76.3         1      1          1     1  28.6  71.6        8.78
-#> 2     12.2  76.3         1      1          2     2  35.2  72.0        9.62
-#> 3     12.2  76.3         1      1          3     3  30.7  72.6        9.86
-#> 4     12.2  76.3         1      1          4     4  29.4  72.0        9.64
-#> 5     12.2  76.3         1      1          5     5  30.5  72.2       10.2 
-#> 6     12.2  76.3         1      1          6     6  34.8  70.4       10.5 
+#> 1     12.2  76.3         1      1          1     1  31.9  71.0        8.95
+#> 2     12.2  76.3         1      1          2     2  31.7  71.4        9.87
+#> 3     12.2  76.3         1      1          3     3  32.1  70.5       11.4 
+#> 4     12.2  76.3         1      1          4     4  33.3  72.8       10.1 
+#> 5     12.2  76.3         1      1          5     5  31.7  69.9        9.97
+#> 6     12.2  76.3         1      1          6     6  33.3  69.9       10.0 
 #> # ℹ 5 more variables: time_2 <dbl>, Intercept_3 <dbl>, time_3 <dbl>,
 #> #   sigma_1 <dbl>, .epred <dbl>
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  3.87 0.280   3.37   4.44
-#> 2     6.35  83.5  3.87 0.280   3.37   4.44
-#> 3    28.0   60.2  3.87 0.280   3.37   4.44
-#> 4    15.7   74.7  3.87 0.280   3.37   4.44
-#> 5    16.2   85.9  3.87 0.280   3.37   4.44
-#> 6    22.3   40.1  3.87 0.280   3.37   4.44
+#> 1    12.2   76.3  3.86 0.293   3.34   4.54
+#> 2     6.35  83.5  3.86 0.293   3.34   4.54
+#> 3    28.0   60.2  3.86 0.293   3.34   4.54
+#> 4    15.7   74.7  3.86 0.293   3.34   4.54
+#> 5    16.2   85.9  3.86 0.293   3.34   4.54
+#> 6    22.3   40.1  3.86 0.293   3.34   4.54
 
 # Custom quantiles from the draws, here for fitted().
 # Note that for predict(), this adds more Monte Carlo error than `width`.
@@ -436,7 +440,7 @@ fitted(demo_fit, summary = FALSE) |>
 #> 1         1  76.3      0.1   11.6
 #> 2         1  76.3      0.5   12.8
 #> 3         1  76.3      0.9   14.2
-#> 4         2  83.5      0.1   10.4
+#> 4         2  83.5      0.1   10.5
 #> 5         2  83.5      0.5   11.4
 #> 6         2  83.5      0.9   12.3
 
@@ -446,9 +450,9 @@ head(predict(demo_fit, newdata = novel_data))
 #> # A tibble: 3 × 5
 #>    time  .mean   .sd .lower .upper
 #>   <dbl>  <dbl> <dbl>  <dbl>  <dbl>
-#> 1    -5   9.78  3.89   2.22  17.7 
-#> 2    20  10.1   3.82   2.22  17.7 
-#> 3   300 -33.5  17.9  -67.8    2.91
+#> 1    -5   9.80  3.89   2.25  17.7 
+#> 2    20  10.1   3.81   2.25  17.7 
+#> 3   300 -33.4  18.4  -69.9    2.39
 
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)

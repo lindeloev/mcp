@@ -200,13 +200,14 @@
 <li>
 <p><strong>Requirements and removals:</strong></p>
 <ul><li><p>mcp now requires R &gt;= 4.1.0, matching its use of the native pipe (<code>|&gt;</code>).</p></li>
-<li><p>Removed <code>criterion()</code> and <code>get_segment_table()</code>. They now throw an error pointing to their replacements: <code>loo(fit)</code> or <code>waic(fit)</code> instead of <code>criterion(fit)</code>, and <code>mcp_pars(fit)</code> or <code>mcp_columns(fit)</code> on <code>fit = mcp(..., sample = FALSE)</code> instead of <code>get_segment_table()</code>.</p></li>
+<li><p>Removed <code><a href="../reference/mcp-defunct.html">criterion()</a></code> and <code><a href="../reference/mcp-defunct.html">get_segment_table()</a></code>. They now throw an error pointing to their replacements: <code>loo(fit)</code> or <code>waic(fit)</code> instead of <code>criterion(fit)</code>, and <code>mcp_pars(fit)</code> or <code>mcp_columns(fit)</code> on <code>fit = mcp(..., sample = FALSE)</code> instead of <code><a href="../reference/mcp-defunct.html">get_segment_table()</a></code>.</p></li>
 <li><p>Removed the non-functional <code>exponential()</code> family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.</p></li>
 </ul></li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-4-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-4-0"></a></h3>
-<ul><li><p>Named arguments in prior distributions or truncations (e.g. <code>dnorm(sd = 1, mean = 10)</code>) are now rejected explicitly with an informative error rather than being silently re-interpreted positionally.</p></li>
+<ul><li><p>Equality hypotheses now warn when all prior draws lie on one side of the tested value: kernel smoothing can otherwise give misleading Bayes factors for values outside the prior bounds. Boundary tests receive the same warning; Bayes factor calculations are unchanged.</p></li>
+<li><p>Named arguments in prior distributions or truncations (e.g. <code>dnorm(sd = 1, mean = 10)</code>) are now rejected explicitly with an informative error rather than being silently re-interpreted positionally.</p></li>
 <li><p><code>hypothesis(..., prior = TRUE)</code> now reports <code>BF = NA</code> rather than comparing prior draws with themselves and returning a Bayes factor of 1.</p></li>
 <li><p>Directional Bayes factors now divide posterior odds by prior odds. Previously, they reported posterior odds alone, which is only a Bayes factor when the prior probability of the hypothesis is 0.5.</p></li>
 <li><p><code><a href="../reference/execute-mcp-model.html">residuals()</a></code> now uses the conventional <code>observed - fitted</code> sign. Previously, <code>mcp</code> residuals used <code>fitted - observed</code>.</p></li>

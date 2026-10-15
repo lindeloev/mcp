@@ -4,7 +4,9 @@ Compare models using
 [`loo_compare`](https://mc-stan.org/loo/reference/loo_compare.html)
 (re-exported by mcp) and
 [`loo_model_weights`](https://mc-stan.org/loo/reference/loo_model_weights.html).
-Read more in [`loo`](https://mc-stan.org/loo/reference/loo.html).
+Read more in [`loo`](https://mc-stan.org/loo/reference/loo.html) and see
+[worked examples on the mcp
+website](https://lindeloev.github.io/mcp/articles/comparison.html#cross-validation).
 
 ## Usage
 

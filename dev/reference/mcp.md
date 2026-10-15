@@ -36,13 +36,15 @@ mcp(
   `model = list(response ~ predictors, ~ cp(...) + predictors)`, where
   `cp()` is optional. See
   [mcp-formula](https://lindeloev.github.io/mcp/dev/reference/mcp-formula.md)
-  for how segments connect and the full formula syntax.
+  for how segments connect and the full formula syntax. [Read
+  more](https://lindeloev.github.io/mcp/articles/formulas.html).
 
 - data:
 
   Table-like data in long format (data.frame, tibble, data.table, etc.)
-  with syntactic column names. Missing values in the response variable
-  are imputed jointly with the parameters.
+  with syntactic column names. The response variable can contain missing
+  values, which will be imputed jointly with the parameters. [Read
+  more](https://lindeloev.github.io/mcp/articles/missing.html).
 
 - prior:
 
@@ -56,7 +58,8 @@ mcp(
   [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md).
   See
   [mcp-priors](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
-  for the full syntax.
+  for the full syntax. [Read
+  more](https://lindeloev.github.io/mcp/articles/priors.html).
 
 - family:
 
@@ -72,11 +75,13 @@ mcp(
 
   - `negbinomial(link = "log", link_shape = "log")`
 
+  [Read more](https://lindeloev.github.io/mcp/articles/families.html).
+
 - par_x:
 
   String. Name of the change-point variable, i.e., the data column on
   which change points are located. `NULL` (default) auto-detects it as
-  the only continuous predictor in the formulas.
+  the only continuous variable in the formulas.
 
 - sample:
 
@@ -92,7 +97,7 @@ mcp(
     prior draws.
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
-    sample. This is useful if you only want to check prior strings
+    draws. This is useful if you only want to check prior strings
     (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
 - chains:
@@ -114,15 +119,16 @@ mcp(
 
   A named list of initial values for the parameters, e.g.,
   `list(Intercept_1 = 10)`, or a list of such lists with one per chain.
-  This can be useful if a model fails to converge. Names must be
-  stochastic nodes in `fit$jags_code` (lines with `~`). Change points,
-  fixed parameters, and parameters that `mcp` samples via
-  reparameterization (e.g., `Intercept_3` is sampled as
-  `Intercept_3_end_`) cannot be initialized directly. See `mcp_reparam`
-  in
+  This can be useful if a model fails to converge ([read
+  more](https://lindeloev.github.io/mcp/articles/tips.html)). Names must
+  be stochastic nodes in `fit$jags_code` (lines with `~`). Fixed
+  parameters and parameters that `mcp` samples via reparameterization
+  (e.g., `Intercept_3` is sampled as `Intercept_3_end_`) cannot be
+  initialized directly. See `mcp_reparam` in
   [mcp-package](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md).
-  Defaults to `NULL` where all chains start at equispaced change points
-  and the prior medians. User-provided `inits` take precedence.
+  Initial values for change points must be ordered. Defaults to `NULL`
+  where all chains start at equispaced change points and the prior
+  medians. User-provided `inits` take precedence.
 
 - jags_code:
 
@@ -130,7 +136,9 @@ mcp(
   want to tweak the code in `fit$jags_code` and run it within the `mcp`
   framework. R-side simulation and prediction methods continue to use
   the mcp-default formulas (with warning), so they may no longer match
-  custom JAGS code.
+  custom JAGS code. [Read
+  more](https://lindeloev.github.io/mcp/articles/implementation.html)
+  about how `mcp` writes JAGS code.
 
 - seed:
 
@@ -197,7 +205,9 @@ starts afresh with a new intercept. See
 for the rules of how segments connect, the full formula syntax, and the
 underlying model. See
 [mcp-priors](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
-for how to specify priors.
+for how to specify priors. See [the mcp
+website](https://lindeloev.github.io/mcp/) for worked examples of all
+model features.
 
 ## References
 
@@ -356,13 +366,12 @@ prior_summary(demo_fit)
 prior = list(
   Intercept_1 = 15,
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-  cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
+  cp_2 = "dunif(min(time), 80)"   # change point to segment 3 before 80 (and after cp_1).
 )
 
 fit3 = mcp(model, data = data, prior = prior, seed = 42)
-#> Warning: `cp_2` = "dunif(cp_1, 80)": `cp_1` as the lower bound is already embodied in the mcp model and hence not needed. Each change point keeps its specified prior, restricted to ordered change points. To set a minimum segment length, use e.g. `cp_1 + 20` as the lower bound.
 
-# Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
+# Reuse coefficients in later segments using same() (e.g., Intercept_1 in segment 3)
 model_same = list(
   response ~ 1,
   ~ 0 + time,

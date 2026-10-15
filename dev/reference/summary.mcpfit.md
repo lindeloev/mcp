@@ -93,9 +93,9 @@ An `mcpsummary` tibble with parameter estimates and MCMC diagnostics. It
 prints with model information, separate tables for change points and
 population-level parameters, and convergence warnings. Rows are ordered
 by change point first, then `mu`, then the other distributional
-parameters, then `ar`/`ma` components - each ascending by segment. Note:
-The change point distributions are often not unimodal and symmetric so
-the intervals can be deceiving. Plot them using `plot_pars(fit)`.
+parameters, then AR/MA lags - each ascending by segment. Note: The
+change point distributions are often not unimodal and symmetric so the
+intervals can be deceiving. Plot them using `plot_pars(fit)`.
 
 Columns:
 
@@ -115,23 +115,25 @@ Columns:
 
 - `sd` is the posterior standard deviation.
 
-- `lower` and `upper` are the bounds of the central posterior interval
-  given in `width`.
+- `lower` and `upper` are the lower and upper ends of the central
+  posterior interval given in `width`.
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 
 - `ess_bulk` and `ess_tail` are the bulk and tail effective sample
   sizes. Low effective sample sizes are also obvious as poor mixing in
   trace plots (see `plot_pars(fit)`). Read how to deal with such
-  problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
+  problems in [Diagnosing and fixing
+  problems](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
 
 Group-level change-point deviations (`cp_i_id`) follow a hierarchical
-normal distribution around the population change point before
-truncation. Realized locations are truncated to remain in range and
-ordered, so the population change point is generally close to the mean
-of the realized group change points, but not exactly. Predictor
-group-level effects (such as `Intercept_1_id`) use standard hierarchical
-zero-mean priors, without change-point constraints.
+normal distribution around the population-level change point before
+truncation. The group-specific change points are truncated to the
+observed range of x and ordered, so the population-level change point is
+generally close to their mean, but not exactly. Predictor group-level
+deviations (such as `Intercept_1_id`) use standard hierarchical
+zero-mean priors, without these bounds. [Read
+more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
 For simulated data, the summary contains two additional columns so that
 it is easy to inspect whether the model can recover the parameters. Run
@@ -140,7 +142,10 @@ simulation and summary multiple times to get a sense of the robustness.
 - `sim` is the value used to generate the data.
 
 - `match` is `"OK"` if `sim` is contained in the central posterior
-  interval (`lower` to `upper`).
+  interval (`lower` to `upper`). For change points starting a disjoined
+  segment, `sim` only needs to be between the same two adjacent observed
+  `x` as the interval, since the likelihood is identical anywhere
+  between them.
 
 ## Functions
 
@@ -148,13 +153,13 @@ simulation and summary multiple times to get a sense of the robustness.
   model information, change point and population-level parameters, and
   diagnostics.
 
-- `fixef(mcpfit)`: Population-level fixed effects (regression
-  coefficients) of `mcpfit`.
+- `fixef(mcpfit)`: Population-level coefficients (fixed effects) of
+  `mcpfit`.
 
 - `ranef(mcpfit)`: Group-level deviations (random effects) of `mcpfit`.
-  Change-point deviations are relative to their population change point;
-  `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their normal
-  distribution before truncation.
+  Change-point deviations are relative to their population-level change
+  point; `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their
+  normal distribution before truncation.
 
 - `print(mcpfit)`: Print the posterior summary of an
   [`mcpfit`](https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.md)
@@ -180,16 +185,16 @@ summary(demo_fit)
 #> 
 #> Change point parameters:
 #>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        31.59 1.744 28.24 34.914 1.00      950      907 30.0    OK
-#>  cp_2        71.14 1.015 69.48 72.788 1.00     1055     1029 70.0    OK
+#>  cp_1        31.64 1.691 28.23 34.883 1.00     1012      945 30.0    OK
+#>  cp_2        71.10 0.991 69.48 72.770 1.01      869      676 70.0    OK
 #> 
 #> Population-level parameters:
 #>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.95 0.665  8.49 11.223 1.00      894      973 10.0    OK
-#>  time_2       0.54 0.047  0.46  0.634 1.00      979      776  0.5    OK
-#>  Intercept_3 13.94 1.367 11.30 16.700 1.00      951      824 15.0    OK
-#>  time_3      -0.21 0.082 -0.36 -0.044 1.00      869      837 -0.3    OK
-#>  sigma_1      3.87 0.280  3.37  4.442 1.00      890      945  3.5    OK
+#>  Intercept_1  9.97 0.665  8.68 11.245 1.00     1032      747 10.0    OK
+#>  time_2       0.54 0.048  0.45  0.643 1.00     1087      970  0.5    OK
+#>  Intercept_3 13.97 1.386 11.11 16.647 1.00      993      823 15.0    OK
+#>  time_3      -0.21 0.084 -0.37 -0.048 1.00      900      740 -0.3    OK
+#>  sigma_1      3.86 0.293  3.34  4.540 1.00      931      921  3.5    OK
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #> Family: gaussian
 #> Links: mu = identity; sigma = identity
@@ -200,20 +205,20 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>    parameter    mean      sd   lower    upper   rhat ess_bulk ess_tail  sim
-#>  cp_1        31.5935 1.74401 29.3232 33.82035 1.0005      950      907 30.0
-#>  cp_2        71.1442 1.01458 69.7466 72.53458 0.9991     1055     1029 70.0
+#>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
+#>  cp_1        31.6369 1.69122 29.4401 33.7774 1.0028     1012      945 30.0
+#>  cp_2        71.0983 0.99102 69.7097 72.4884 1.0065      869      676 70.0
 #>  match
 #>     OK
 #>     OK
 #> 
 #> Population-level parameters:
-#>    parameter    mean      sd   lower    upper   rhat ess_bulk ess_tail  sim
-#>  Intercept_1  9.9465 0.66456  9.0751 10.77530 1.0033      894      973 10.0
-#>  time_2       0.5437 0.04660  0.4836  0.60348 0.9993      979      776  0.5
-#>  Intercept_3 13.9424 1.36672 12.1993 15.70817 0.9998      951      824 15.0
-#>  time_3      -0.2066 0.08208 -0.3136 -0.09996 0.9996      869      837 -0.3
-#>  sigma_1      3.8675 0.28029  3.5116  4.23835 0.9997      890      945  3.5
+#>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
+#>  Intercept_1  9.9675 0.66463  9.1113 10.8454 1.0003     1032      747 10.0
+#>  time_2       0.5436 0.04754  0.4826  0.6026 1.0032     1087      970  0.5
+#>  Intercept_3 13.9661 1.38591 12.2422 15.7274 0.9994      993      823 15.0
+#>  time_3      -0.2062 0.08367 -0.3078 -0.1008 1.0003      900      740 -0.3
+#>  sigma_1      3.8615 0.29314  3.5054  4.2163 1.0027      931      921  3.5
 #>  match
 #>     OK
 #>     OK
@@ -224,7 +229,7 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 # Get the results as a tibble
 results = summary(demo_fit)
 results$mean
-#> [1] 31.5935403 71.1441814  9.9464536  0.5437021 13.9424489 -0.2065739  3.8674841
+#> [1] 31.6369306 71.0983320  9.9674657  0.5435759 13.9660544 -0.2062269  3.8615146
 
 # Group-level deviations (random effects)
 # ranef(my_fit)
@@ -240,15 +245,15 @@ summary(demo_fit, prior = TRUE)
 #>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        33.161 22.78   2.10  82.9 1.00      901     1074 30.0    OK
-#>  cp_2        64.742 23.34  15.21  98.3 1.00      904      927 70.0    OK
+#>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        34.6020 23.52   1.99  85.8 1.00     1004      882 30.0    OK
+#>  cp_2        65.9423 23.39  16.38  98.1 1.00      975      916 70.0    OK
 #> 
 #> Population-level parameters:
-#>    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1 13.671 18.03 -21.28  50.1 1.00     1039      982 10.0    OK
-#>  time_2      -0.020  0.61  -1.21   1.2 1.00      946     1017  0.5    OK
-#>  Intercept_3 14.016 17.63 -20.72  47.1 1.00      903      911 15.0    OK
-#>  time_3       0.012  0.62  -1.21   1.2 1.00      884      826 -0.3    OK
-#>  sigma_1      5.906  6.61   0.15  22.5 1.00      901      784  3.5    OK
+#>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1 13.7421 17.74 -22.83  48.1 1.00      786      822 10.0    OK
+#>  time_2       0.0068  0.62  -1.23   1.3 1.00      859      956  0.5    OK
+#>  Intercept_3 13.4314 17.44 -19.85  47.6 1.00      920      834 15.0    OK
+#>  time_3      -0.0109  0.63  -1.25   1.2 1.00     1031      980 -0.3    OK
+#>  sigma_1      6.5183  9.00   0.13  25.8 1.00      912     1028  3.5    OK
 ```

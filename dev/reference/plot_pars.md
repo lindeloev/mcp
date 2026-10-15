@@ -60,7 +60,10 @@ plot_pars(
 - prior:
 
   Logical. Plot prior draws (`TRUE`) instead of posterior draws
-  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
+  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`. Prior
+  draws show the marginal priors, e.g., of ordered change points, rather
+  than the specified priors in
+  [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md).
 
 - npars:
 
@@ -84,12 +87,13 @@ multiple pages, an invisible list of ggplot2 objects.
 For other `type`, it calls `bayesplot::mcmc_type()`. Use these directly
 on `fit` if you want finer control of plotting, e.g.,
 `bayesplot::mcmc_dens(fit)`. There are also a number of useful plots in
-the coda package, i.e., `coda::gelman.plot(coda::as.mcmc(fit))` and
+the coda package, e.g., `coda::gelman.plot(coda::as.mcmc(fit))` and
 `coda::crosscorr.plot(coda::as.mcmc(fit))`
 
 In any case, if you see a few erratic lines or parameter estimates, this
 is a sign that you may want to increase argument 'warmup' and 'iter' in
-[`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md).
+[`mcp`](https://lindeloev.github.io/mcp/dev/reference/mcp.md). [Read
+more](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
 
 Up to `npars` parameters are shown on each page. Multi-page plots are
 printed in sequence; in interactive use, `ask = TRUE` pauses between
@@ -134,7 +138,7 @@ plot_pars(demo_fit, prior = TRUE, regex_pars = "^cp_")
 # pages = plot_pars(my_fit, pars = "group", ask = FALSE)
 # pages[[1]]  # Inspect or customize one page
 
-# Customize multi-column ggplots using "*" instead of "+" (patchwork)
+# Customize multi-column ggplots using "&" instead of "+" (patchwork)
 library(ggplot2)
 library(patchwork)
 plot_pars(demo_fit, regex_pars = "cp") & theme_gray(15)

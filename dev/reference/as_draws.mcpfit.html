@@ -137,12 +137,12 @@ so use <code>as_draws_df()</code> for chain-aware diagnostics such as <code><a h
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">as_draws_df</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Convert draws to a data frame</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_df: 6 iterations, 1 chains, and 7 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 cp_2 Intercept_1 time_2 Intercept_3 time_3 sigma_1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   29   72         8.8   0.51          17  -0.37     3.7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   35   72         9.6   0.56          13  -0.13     4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   31   73         9.9   0.54          16  -0.28     4.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   29   72         9.6   0.47          14  -0.18     3.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   30   72        10.2   0.50          14  -0.21     3.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   35   70        10.5   0.55          14  -0.24     4.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   32   71         8.9   0.58          14 -0.155     3.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   32   71         9.9   0.57          16 -0.335     3.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   32   70        11.4   0.53          13 -0.096     4.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   33   73        10.1   0.56          14 -0.174     4.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   32   70        10.0   0.47          14 -0.158     4.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   33   70        10.0   0.54          13 -0.140     4.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Other posterior formats are useful in different downstream packages</span></span></span>
@@ -150,24 +150,24 @@ so use <code>as_draws_df()</code> for chain-aware diagnostics such as <code><a h
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_matrix: 3 iterations, 1 chains, and 3 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     variable</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> draw cp_1 cp_2 Intercept_1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1   29   72         8.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2   35   72         9.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    3   31   73         9.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1   32   71         8.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2   32   71         9.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3   32   70        11.4</span>
 <span class="r-in"><span><span class="fu">as_draws_array</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>  <span class="co"># Iteration-by-chain-by-parameter array</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_array: 2 iterations, 2 chains, and 2 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = cp_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration  1  2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 29 33</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 35 31</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 32 33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 32 33</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = cp_2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration  1  2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 72 71</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 72 71</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 71 70</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 71 70</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">as_draws_rvars</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">]</span>  <span class="co"># Random-variable representation</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_rvars: 500 iterations, 2 chains, and 2 variables</span>
@@ -175,16 +175,16 @@ so use <code>as_draws_df()</code> for chain-aware diagnostics such as <code><a h
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 32 ± 1.7 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $cp_2: rvar&lt;500,2&gt;[1] <span style="color: #949494;">mean ± sd:</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 71 ± 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 71 ± 0.99 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Base R formats, e.g., for bayesplot</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>  <span class="co"># Plain matrix of draws by parameter</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     variable</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> draw     cp_1     cp_2 Intercept_1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1 28.62198 71.64352    8.784091</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2 35.23290 71.99687    9.616996</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    3 30.65926 72.62149    9.855172</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1 31.90708 70.99582    8.947364</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2 31.71172 71.37298    9.867221</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3 32.05810 70.49805   11.369319</span>
 <span class="r-in"><span><span class="fu">bayesplot</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-traces.html" class="external-link">mcmc_trace</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="as_draws.mcpfit-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
@@ -194,25 +194,25 @@ so use <code>as_draws_df()</code> for chain-aware diagnostics such as <code><a h
 <span class="r-out co"><span class="r-pr">#&gt;</span> Start = 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> End = 7 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Thinning interval = 1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          cp_1     cp_2 Intercept_1    time_2 Intercept_3     time_3  sigma_1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 28.62198 71.64352    8.784091 0.5075254    16.77079 -0.3716232 3.677526</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 35.23290 71.99687    9.616996 0.5642833    12.86030 -0.1268837 4.032746</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 30.65926 72.62149    9.855172 0.5383178    15.70700 -0.2829757 4.201375</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 29.41700 72.01096    9.636267 0.4724210    13.63040 -0.1752059 3.803651</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 30.46828 72.24478   10.237401 0.5016851    14.31229 -0.2106269 3.804450</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [6,] 34.84658 70.38014   10.533919 0.5508531    14.21816 -0.2415054 4.314083</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [7,] 31.28970 71.73028   11.096123 0.5326566    16.06382 -0.4110181 4.119481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          cp_1     cp_2 Intercept_1    time_2 Intercept_3      time_3  sigma_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 31.90708 70.99582    8.947364 0.5835762    13.87090 -0.15501670 3.482356</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 31.71172 71.37298    9.867221 0.5657889    15.82394 -0.33517543 3.473407</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 32.05810 70.49805   11.369319 0.5262384    12.61722 -0.09556548 4.020069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 33.26487 72.80376   10.124358 0.5609585    13.68735 -0.17380410 3.982678</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 31.68991 69.92944    9.973154 0.4656394    13.77041 -0.15837419 4.650924</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [6,] 33.29453 69.88452   10.025386 0.5361540    12.50262 -0.13980463 3.983922</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [7,] 35.38173 72.48857   10.306921 0.5893318    12.49397 -0.16163957 3.647744</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"tidybayes"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">tidybayes</span><span class="fu">::</span><span class="fu"><a href="https://mjskay.github.io/tidybayes/reference/tidy_draws.html" class="external-link">tidy_draws</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    cp_1  cp_2 Intercept_1 time_2 Intercept_3 time_3 sigma_1 .chain .iteration</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>  28.6  71.6        8.78  0.508        16.8 -<span style="color: #BB0000;">0.372</span>    3.68      1          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>  35.2  72.0        9.62  0.564        12.9 -<span style="color: #BB0000;">0.127</span>    4.03      1          2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>  30.7  72.6        9.86  0.538        15.7 -<span style="color: #BB0000;">0.283</span>    4.20      1          3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>  29.4  72.0        9.64  0.472        13.6 -<span style="color: #BB0000;">0.175</span>    3.80      1          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>  30.5  72.2       10.2   0.502        14.3 -<span style="color: #BB0000;">0.211</span>    3.80      1          5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>  34.8  70.4       10.5   0.551        14.2 -<span style="color: #BB0000;">0.242</span>    4.31      1          6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .chain .iteration</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>  31.9  71.0        8.95  0.584        13.9 -<span style="color: #BB0000;">0.155</span>     3.48      1          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>  31.7  71.4        9.87  0.566        15.8 -<span style="color: #BB0000;">0.335</span>     3.47      1          2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>  32.1  70.5       11.4   0.526        12.6 -<span style="color: #BB0000;">0.095</span><span style="color: #BB0000; text-decoration: underline;">6</span>    4.02      1          3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>  33.3  72.8       10.1   0.561        13.7 -<span style="color: #BB0000;">0.174</span>     3.98      1          4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>  31.7  69.9        9.97  0.466        13.8 -<span style="color: #BB0000;">0.158</span>     4.65      1          5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>  33.3  69.9       10.0   0.536        12.5 -<span style="color: #BB0000;">0.140</span>     3.98      1          6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: .draw &lt;int&gt;</span></span>
 </code></pre></div>
     </div>

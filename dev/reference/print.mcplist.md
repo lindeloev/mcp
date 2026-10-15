@@ -40,8 +40,8 @@ print(demo_fit$model)
 #>  $ ~1 + time
 print(demo_fit$prior)
 #> List of 7
-#>  $ cp_1       :"dirichlet(1)"
-#>  $ cp_2       :"dirichlet(1)"
+#>  $ cp_1       :"dunif(cp_0, cp_3)"
+#>  $ cp_2       :"dunif(cp_0, cp_3)"
 #>  $ Intercept_1:"dnorm(13.825120048974153, 17.382500430759464)"
 #>  $ time_2     :"dnorm(0, 0.62123709509255609)"
 #>  $ Intercept_3:"dnorm(13.825120048974153, 17.382500430759464)"

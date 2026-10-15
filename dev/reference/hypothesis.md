@@ -117,10 +117,10 @@ A tibble with a row per hypothesis and the following columns:
 - `sd` is the posterior standard deviation of ditto, or the prior SD
   when `prior = TRUE`.
 
-- `lower` is the lower bound of the central posterior interval of width
+- `lower` is the lower end of the central posterior interval of width
   `width`, or the corresponding prior interval when `prior = TRUE`.
 
-- `upper` is the upper bound of ditto.
+- `upper` is the upper end of ditto.
 
 - `prob` is the posterior probability of a directional hypothesis, or
   the prior probability when `prior = TRUE`. It is `NA` for equality
@@ -149,27 +149,27 @@ hypothesis(demo_fit, "cp_1 > 30")
 #> # A tibble: 1 × 7
 #>   hypothesis     mean    sd lower upper  prob    BF
 #>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  1.59  1.74 -1.76  4.91 0.828  4.91
+#> 1 cp_1 - 30 > 0  1.64  1.69 -1.77  4.88 0.836  4.74
 
 # Combine directional statements for an interval (a ROPE-style hypothesis)
 hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
 #> # A tibble: 1 × 7
 #>   hypothesis             mean    sd lower upper  prob    BF
 #>   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 > 20 & cp_1 < 30    NA    NA    NA    NA 0.172  1.16
+#> 1 cp_1 > 20 & cp_1 < 30    NA    NA    NA    NA 0.164  1.08
 
 # Evaluate several directional hypotheses at once
 hypothesis(demo_fit, c("cp_1 > 30", "cp_2 > 70"))
 #> # A tibble: 2 × 7
 #>   hypothesis     mean    sd  lower upper  prob    BF
 #>   <chr>         <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  1.59  1.74 -1.76   4.91 0.828  4.91
-#> 2 cp_2 - 70 > 0  1.14  1.01 -0.521  2.79 0.822  5.33
+#> 1 cp_1 - 30 > 0  1.64 1.69  -1.77   4.88 0.836  4.74
+#> 2 cp_2 - 70 > 0  1.10 0.991 -0.520  2.77 0.819  4.67
 
 # Inspect the corresponding prior probability without a Bayes factor
 hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)
 #> # A tibble: 1 × 7
 #>   hypothesis     mean    sd lower upper  prob    BF
 #>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  3.16  22.8 -27.9  52.9 0.495    NA
+#> 1 cp_1 - 30 > 0  4.60  23.5 -28.0  55.8 0.518    NA
 ```

@@ -22,13 +22,19 @@ Here is the demo model (see `mcp_example("demo")`):
 slope](figures/mcp_demo.png)
 
 Segment 2 continues from where the plateau left off, while segment 3
-starts afresh with a new intercept. Three rules govern how segments
-connect (with `x` as the change-point variable, i.e., `time` above):
+starts afresh with a new intercept.
+
+The modeling options and behavior are described below. They are
+described in a more applied and comprehensive way [on the mcp
+website](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect).
+
+Three rules govern how segments connect (with `x` as the change-point
+variable, i.e., `time` above):
 
 1.  **Only included terms get coefficients.** A segment includes the
     terms in its formula, plus an intercept unless removed with `0 +`.
     Each included term gets a new coefficient (`x_2`, `stateB_2`) or
-    reuses an existing one with `same()`.
+    reuses an existing one if wrapped in `same()`.
 
 2.  **x-terms are measured from the change point.** `x`, `x:z`,
     `state:x`, and `I(x^2)` start at zero at the segment's change point
@@ -47,7 +53,8 @@ point, so it always includes a change-point intercept (`cp_1`, `cp_2`,
 **Formula syntax.** The first segment has the format
 `response ~ predictors`. Later segments use the same response, so they
 are one-sided, `~ predictors`, and each starts at a change point that
-can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`.
+can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`. `cp()` is
+the change-point part of the formula and the rest is the predictor part.
 
 **1. Response (segment 1 only):**
 
@@ -55,7 +62,8 @@ can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`.
   Bernoulli, Poisson, negative binomial).
 
 - `successes | trials(total) ~ ...`: Binomial response
-  (`family = binomial()`).
+  (`family = binomial()`). [Read
+  more](https://lindeloev.github.io/mcp/articles/binomial.html).
 
 - `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies
   each observation's log-likelihood contribution by `w > 0`; affects
@@ -66,16 +74,16 @@ can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`.
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries
   using `+`.
 
-**2. Change-point modeling (`cp()`, segments 2+):**
+**2. Change-point part (`cp()`, segments 2+):**
 
-- `~ x` (i.e., `cp()` omitted): Population-level change point (default).
-  Same as `~ cp(1) + x`.
+- `~ x` (i.e., `cp()` not included): Population-level change point
+  (default). Same as `~ cp(1) + x`.
 
 - `~ cp((1 | id)) + x`: Group-level change-point deviations around the
-  population change point. [Read
+  population-level change point. [Read
   more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
-**3. Regression formula (all segments):** [Read
+**3. Predictor part (all segments):** [Read
 more](https://lindeloev.github.io/mcp/articles/formulas.html)
 
 - `~ 1 + x`: Disjoined slope with a new segment intercept.
@@ -94,16 +102,17 @@ more](https://lindeloev.github.io/mcp/articles/formulas.html)
   If one segment includes an offset, all segments must include one. The
   same applies within [`sigma()`](https://rdrr.io/r/stats/sigma.html),
   etc., and within [`ar()`](https://rdrr.io/r/stats/ar.html)/`ma()` in
-  the segments that include them.
+  the segments that include them. [Read
+  more](https://lindeloev.github.io/mcp/articles/poisson.html#modeling-rates-using-offset).
 
 - `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for
   independent slopes and intercepts). [Read
   more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
 - `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g.,
-  log residual SD), with parameters `sigma_Intercept_2` and `sigma_x_2`.
-  Without [`sigma()`](https://rdrr.io/r/stats/sigma.html) anywhere in
-  the model, `sigma_1` is the residual SD itself. [Read
+  log residual SD), with coefficients `sigma_Intercept_2` and
+  `sigma_x_2`. Without [`sigma()`](https://rdrr.io/r/stats/sigma.html)
+  anywhere in the model, `sigma_1` is the residual SD itself. [Read
   more](https://lindeloev.github.io/mcp/articles/dpar.html).
 
 - `~ ar(1) + ma(1)`: Autoregressive and moving-average time-series
@@ -112,10 +121,11 @@ more](https://lindeloev.github.io/mcp/articles/formulas.html)
   once in any term; they apply to all segments. [Read
   more](https://lindeloev.github.io/mcp/articles/arma.html).
 
-- `~ 1 + same(x)` or `0 + same(z, as = 1)`: Reuse a coefficient from the
-  preceding segment (default) or from segment `as`. Reused coefficients
-  are estimated jointly from all segments where they are included, not
-  fitted in one segment and copied to another.
+- `~ 1 + same(x)` or `~ 0 + same(z, as = 1)`: Reuse a coefficient from
+  the preceding segment (default) or from segment `as`. Reused
+  coefficients are estimated jointly from all segments where they are
+  included, not fitted in one segment and copied to another. [Read
+  more](https://lindeloev.github.io/mcp/articles/formulas.html#reusing-coefficients-between-segments).
 
 ## The mcp model
 
@@ -167,8 +177,8 @@ finite conditional recurrence on the link scale (generalized
 autoregressive moving-average, GARMA). They support Gaussian
 (`identity`), binomial (`logit`), Bernoulli (`logit`), Poisson (`log`),
 and negative-binomial (`log`) families. If \\\eta^{\text{reg}}\_t\\ is
-the ordinary regression predictor from the segment formulas and
-\\\eta_t\\ is the predictor including serial dependence, the recurrence
+the ordinary linear predictor from the segment formulas and \\\eta_t\\
+is the linear predictor including serial dependence, the recurrence
 decomposes into components:
 
 \$\$\begin{aligned} \text{AR}\_t &= \sum\_{j=1}^{p} \phi\_{j,t}
@@ -180,22 +190,12 @@ decomposes into components:
 where \\\phi\_{j,t}\\ is the lag-\\j\\ autoregressive (AR) coefficient
 at time \\t\\, \\\theta\_{k,t}\\ is the lag-\\k\\ moving-average (MA)
 coefficient at time \\t\\, \\g(\cdot)\\ is the link function, and
-\\y^\*\_t\\ is the threshold-constrained observation with threshold
-constant \\c\\ (set via argument `threshold = 0.1` in
+\\y^\*\_t\\ is the observation, constrained by a threshold constant
+\\c\\ (argument `threshold = 0.1` in
 [`ar()`](https://rdrr.io/r/stats/ar.html) / `ma()`) to keep residuals
-finite on the link scale:
-
-- **Gaussian:** \\y^\*\_t = y_t\\.
-
-- **Poisson / Negative Binomial:** \\y^\*\_t = \max(y_t, c)\\ to prevent
-  \\\log(0)\\. Here \\c\\ replaces zero counts with a small positive
-  threshold value.
-
-- **Binomial / Bernoulli:** \\y^\*\_t = \min(\max(y_t, c), n_t - c) /
-  n_t\\, where \\y_t\\ is observed successes, \\n_t\\ is the number of
-  trials (\\n_t = 1\\ for Bernoulli), and \\c\\ constrains counts to the
-  interval \\\[c, n_t - c\]\\ before converting to a rate, preventing
-  \\\text{logit}(0)\\ and \\\text{logit}(1)\\.
+finite on the link scale, e.g., \\y^\*\_t = \max(y_t, c)\\ for zero
+counts in Poisson models. [Read
+more](https://lindeloev.github.io/mcp/articles/arma.html#observation-threshold).
 
 Implications:
 

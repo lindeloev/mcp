@@ -29,7 +29,8 @@ Components:
   directly; use as_draws(fit) or similar.
 
 - `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show
-  it.
+  it. [Read
+  more](https://lindeloev.github.io/mcp/articles/implementation.html).
 
 - `simulate`: A function to simulate data from supplied parameter
   values.

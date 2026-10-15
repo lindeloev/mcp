@@ -54,11 +54,11 @@ interpolate_newdata(
 
 A tibble with
 
-- Cols for par_x
+- A column for the change-point variable (`par_x`)
 
-- unique levels combos of factorial vars
+- All combinations of categorical predictor levels
 
-- fixed values for additional continuous predictors
+- Fixed values for additional continuous predictors
 
 ## Details
 
@@ -98,12 +98,12 @@ head(fitted(demo_fit, newdata))
 #> # A tibble: 6 × 5
 #>    time .mean   .sd .lower .upper
 #>   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1 0.619  9.95 0.665   8.49   11.2
-#> 2 1.62   9.95 0.665   8.49   11.2
-#> 3 2.62   9.95 0.665   8.49   11.2
-#> 4 3.62   9.95 0.665   8.49   11.2
-#> 5 4.62   9.95 0.665   8.49   11.2
-#> 6 5.62   9.95 0.665   8.49   11.2
+#> 1 0.619  9.97 0.665   8.68   11.2
+#> 2 1.62   9.97 0.665   8.68   11.2
+#> 3 2.62   9.97 0.665   8.68   11.2
+#> 4 3.62   9.97 0.665   8.68   11.2
+#> 5 4.62   9.97 0.665   8.68   11.2
+#> 6 5.62   9.97 0.665   8.68   11.2
 
 # Predictions for each draw
 prediction = predict(demo_fit, newdata, summary = FALSE)
@@ -111,12 +111,12 @@ head(prediction)
 #> # A tibble: 6 × 13
 #>    time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2
 #>   <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>
-#> 1 0.619         1      1          1     1  28.6  71.6        8.78  0.508
-#> 2 0.619         1      1          2     2  35.2  72.0        9.62  0.564
-#> 3 0.619         1      1          3     3  30.7  72.6        9.86  0.538
-#> 4 0.619         1      1          4     4  29.4  72.0        9.64  0.472
-#> 5 0.619         1      1          5     5  30.5  72.2       10.2   0.502
-#> 6 0.619         1      1          6     6  34.8  70.4       10.5   0.551
+#> 1 0.619         1      1          1     1  31.9  71.0        8.95  0.584
+#> 2 0.619         1      1          2     2  31.7  71.4        9.87  0.566
+#> 3 0.619         1      1          3     3  32.1  70.5       11.4   0.526
+#> 4 0.619         1      1          4     4  33.3  72.8       10.1   0.561
+#> 5 0.619         1      1          5     5  31.7  69.9        9.97  0.466
+#> 6 0.619         1      1          6     6  33.3  69.9       10.0   0.536
 #> # ℹ 4 more variables: Intercept_3 <dbl>, time_3 <dbl>, sigma_1 <dbl>,
 #> #   .prediction <dbl>
 

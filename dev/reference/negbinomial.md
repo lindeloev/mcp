@@ -4,7 +4,8 @@ Parameterized as `mu` (the conditional mean) and `shape` (the same
 quantity as `size` in
 [`rnbinom()`](https://rdrr.io/r/stats/NegBinomial.html)). Thus
 `Var(y) = mu + mu^2 / shape`, which approaches the Poisson variance as
-`shape` approaches infinity.
+`shape` approaches infinity. [Read
+more](https://lindeloev.github.io/mcp/articles/poisson.html#negative-binomial-extension).
 
 ## Usage
 

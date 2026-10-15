@@ -131,78 +131,78 @@ returns a two-column matrix of central intervals.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Posterior covariance of the primary-response coefficients, matching fixef().</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               Intercept_1        time_2   Intercept_3        time_3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.4416343541 -0.0072905718  0.0304178993 -0.0002884934</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2      -0.0072905718  0.0021712914 -0.0004292144 -0.0001262524</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3  0.0304178993 -0.0004292144  1.8679145063 -0.0929213047</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3      -0.0002884934 -0.0001262524 -0.0929213047  0.0067363802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Intercept_1        time_2  Intercept_3        time_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.441730996 -0.0076944262 -0.008694904  0.0010577664</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2      -0.007694426  0.0022602415 -0.002418374  0.0002482322</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -0.008694904 -0.0024183736  1.920748300 -0.0976086443</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       0.001057766  0.0002482322 -0.097608644  0.0070004302</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Central posterior intervals for all population-level parameters, or a selection.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  2.5 %     97.5 %</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1        28.2437124 34.9139556</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        69.4788981 72.7884742</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  8.4927383 11.2226971</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.4591914  0.6340292</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 11.2996947 16.6996581</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3      -0.3618760 -0.0443138</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      3.3661781  4.4420735</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1        28.2323892 34.8833815</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        69.4796848 72.7703641</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  8.6811979 11.2449667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.4539101  0.6431522</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 11.1116538 16.6473670</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3      -0.3729092 -0.0477629</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      3.3443922  4.5399852</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">demo_fit</span>, parm <span class="op">=</span> <span class="st">"cp_1"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         2.5 %   97.5 %</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1 28.24371 34.91396</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1 28.23239 34.88338</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">demo_fit</span>, parm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Intercept_1"</span>, <span class="st">"time_2"</span><span class="op">)</span>, level <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 10 %       90 %</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1 9.075140 10.7753049</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2      0.483584  0.6034823</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  10 %       90 %</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1 9.1112810 10.8454130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2      0.4825704  0.6025843</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  2.5 %    97.5 %</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1          2.100901 82.850839</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2         15.205694 98.320851</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1 -21.277525 50.113926</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       -1.206786  1.182860</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -20.720652 47.144012</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       -1.210176  1.247309</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1       0.154470 22.495286</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   2.5 %    97.5 %</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1          1.9860251 85.773990</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2         16.3799745 98.109020</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1 -22.8308241 48.063439</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       -1.2259134  1.275298</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -19.8533241 47.565743</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       -1.2460525  1.243472</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1       0.1277497 25.805782</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Include change points, residual SDs, group SDs, and AR/MA parameters.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     cp_1          cp_2   Intercept_1        time_2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         3.041576158 -1.471207e-02  0.4877127091  4.569380e-02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.014712065  1.029368e+00 -0.0070031106  5.243563e-05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.487712709 -7.003111e-03  0.4416343541 -7.290572e-03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.045693804  5.243563e-05 -0.0072905718  2.171291e-03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3  0.022820566 -1.683385e-01  0.0304178993 -4.292144e-04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3      -0.001816144 -2.897673e-03 -0.0002884934 -1.262524e-04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      0.001773736 -1.118579e-02  0.0031484330  6.143777e-05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               Intercept_3        time_3       sigma_1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         0.0228205659 -0.0018161441  1.773736e-03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.1683384888 -0.0028976730 -1.118579e-02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.0304178993 -0.0002884934  3.148433e-03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2      -0.0004292144 -0.0001262524  6.143777e-05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3  1.8679145063 -0.0929213047 -1.723748e-02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3      -0.0929213047  0.0067363802  9.624823e-04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1     -0.0172374806  0.0009624823  7.856290e-02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     cp_1         cp_2  Intercept_1        time_2  Intercept_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         2.860236828 -0.023006037  0.479259027  0.0450919199 -0.113947879</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.023006037  0.982126142  0.026726008 -0.0018991431 -0.277033079</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.479259027  0.026726008  0.441730996 -0.0076944262 -0.008694904</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.045091920 -0.001899143 -0.007694426  0.0022602415 -0.002418374</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -0.113947879 -0.277033079 -0.008694904 -0.0024183736  1.920748300</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       0.007548661  0.004117322  0.001057766  0.0002482322 -0.097608644</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      0.016940926 -0.003602333  0.008129028  0.0003602231 -0.013407276</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    time_3       sigma_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         7.548661e-03  1.694093e-02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2         4.117322e-03 -3.602333e-03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  1.057766e-03  8.129028e-03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       2.482322e-04  3.602231e-04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -9.760864e-02 -1.340728e-02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       7.000430e-03 -2.727354e-05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1     -2.727354e-05  8.593321e-02</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Inspect posterior parameter correlations across the full population model.</span></span></span>
 <span class="r-in"><span><span class="co"># Useful to quickly check identifiability (high correlation). Inspecting</span></span></span>
 <span class="r-in"><span><span class="co"># `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"all"</span>, correlation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     cp_1         cp_2  Intercept_1       time_2  Intercept_3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         1.000000000 -0.008314554  0.420807334  0.562275175  0.009574113</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.008314554  1.000000000 -0.010386619  0.001109129 -0.121400251</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.420807334 -0.010386619  1.000000000 -0.235435045  0.033490320</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.562275175  0.001109129 -0.235435045  1.000000000 -0.006739641</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3  0.009574113 -0.121400251  0.033490320 -0.006739641  1.000000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3      -0.012687839 -0.034797716 -0.005289214 -0.033011667 -0.828368365</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      0.003628531 -0.039334393  0.016902630  0.004704003 -0.044997308</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    cp_1        cp_2  Intercept_1      time_2  Intercept_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         1.00000000 -0.01372642  0.426373660  0.56081588 -0.048614970</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.01372642  1.00000000  0.040576214 -0.04030850 -0.201703189</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.42637366  0.04057621  1.000000000 -0.24351172 -0.009439535</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.56081588 -0.04030850 -0.243511725  1.00000000 -0.036703775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -0.04861497 -0.20170319 -0.009439535 -0.03670378  1.000000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       0.05334658  0.04965567  0.019021663  0.06240485 -0.841764654</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      0.03417084 -0.01239994  0.041723350  0.02584721 -0.033000824</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   time_3      sigma_1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1        -0.012687839  0.003628531</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.034797716 -0.039334393</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1 -0.005289214  0.016902630</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_2      -0.033011667  0.004704003</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -0.828368365 -0.044997308</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       1.000000000  0.041837978</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1      0.041837978  1.000000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         0.053346578  0.034170837</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cp_2         0.049655673 -0.012399945</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_1  0.019021663  0.041723350</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_2       0.062404847  0.025847209</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept_3 -0.841764654 -0.033000824</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> time_3       1.000000000 -0.001111984</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1     -0.001111984  1.000000000</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

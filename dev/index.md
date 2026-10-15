@@ -141,7 +141,7 @@ also add fitted interval (`q_fit`):
 plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
 ```
 
-![](reference/figures/README-demo-plot-1.png)
+![](https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot-1.png)
 
 Use
 [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
@@ -197,7 +197,7 @@ distributions, highlighting the need for a computational approach:
 plot_pars(fit, regex_pars = "cp_") + ggtitle("Change point posteriors")
 ```
 
-![](reference/figures/README-demo-plot_pars-1.png)
+![](https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot_pars-1.png)
 
 Do a posterior predictive check to see if the model recovers the
 empirical distribution in the data:
@@ -207,7 +207,7 @@ empirical distribution in the data:
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
-![](reference/figures/README-demo-pp_check-1.png)
+![](https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-pp_check-1.png)
 
 You can expect most generics from R, `posterior`, `tidybayes` to work on
 mcpfits. E.g., use `fitted(fit)` and `predict(fit)` to get fits and

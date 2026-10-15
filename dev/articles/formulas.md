@@ -385,7 +385,7 @@ hypothesis(demo_fit, "time_3 > time_2")
     ## # A tibble: 1 × 7
     ##   hypothesis            mean     sd  lower  upper  prob    BF
     ##   <chr>                <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>
-    ## 1 time_3 - time_2 > 0 -0.750 0.0957 -0.940 -0.563     0     0
+    ## 1 time_3 - time_2 > 0 -0.750 0.0936 -0.935 -0.570     0     0
 
 The estimate reflects the difference `time_3 - time_2` (how much steeper
 or flatter the slope became in segment 3), along with its credibility
@@ -418,9 +418,9 @@ posterior::subset_draws(draws, variable = c("slope_change", "jump", "cp_distance
     ## # A tibble: 3 × 10
     ##   variable        mean  median     sd    mad      q5     q95  rhat ess_bulk ess_tail
     ##   <chr>          <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl> <dbl>    <dbl>    <dbl>
-    ## 1 slope_change  -0.750  -0.750 0.0957 0.0973  -0.912  -0.591 1.000     870.     938.
-    ## 2 jump         -17.5   -17.4   2.01   2.01   -20.7   -14.3   1.00      999.     761.
-    ## 3 cp_distance   39.6    39.6   2.02   2.08    36.1    42.9   0.999     936.     867.
+    ## 1 slope_change  -0.750  -0.747 0.0936 0.0866  -0.900  -0.601 1.000    1068.     938.
+    ## 2 jump         -17.4   -17.4   2.07   2.03   -21.0   -14.0   1.00     1042.     772.
+    ## 3 cp_distance   39.5    39.4   1.97   2.08    36.4    42.8   1.01      930.     948.
 
 Because the change points differ between draws, the jump/change is
 evaluated exactly at the change point in each draw.

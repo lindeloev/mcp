@@ -105,13 +105,13 @@ between segments. See details or <a href="https://lindeloev.github.io/mcp/">the 
 <dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>A list of formulas, one for each segment, in the format
 <code>model = list(response ~ predictors, ~ cp(...) + predictors)</code>, where <code>cp()</code> is optional. See <a href="mcp-formula.html">mcp-formula</a> for how segments connect
-and the full formula syntax.</p></dd>
+and the full formula syntax. <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Read more</a>.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>Table-like data in long format (data.frame, tibble, data.table, etc.)
-with syntactic column names.
-Missing values in the response variable are imputed jointly with the parameters.</p></dd>
+with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
+<a href="https://lindeloev.github.io/mcp/articles/missing.html">Read more</a>.</p></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
@@ -120,7 +120,8 @@ List names are parameter names (<code>cp_1</code>, <code>Intercept_1</code>, <co
 <code>sigma_1</code>, etc.) and values are a distribution string (e.g., <code>"dnorm(0, 1) T(0, )"</code>),
 a fixed value (e.g., <code>-2.1</code>), or the name of another parameter to share its value.
 Weakly informative defaults are used where priors are not specified;
-see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See <a href="mcp-priors.html">mcp-priors</a> for the full syntax.</p></dd>
+see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See <a href="mcp-priors.html">mcp-priors</a> for the full syntax.
+<a href="https://lindeloev.github.io/mcp/articles/priors.html">Read more</a>.</p></dd>
 
 
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
@@ -128,13 +129,13 @@ see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See
 <li><p><code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> or <code><a href="bernoulli.html">bernoulli()</a></code> with <code>link = "logit"</code>, <code>"probit"</code>, or <code>"identity"</code></p></li>
 <li><p><code>poisson(link = "log")</code> or <code>poisson(link = "identity")</code></p></li>
 <li><p><code>negbinomial(link = "log", link_shape = "log")</code></p></li>
-</ul></dd>
+</ul><p><a href="https://lindeloev.github.io/mcp/articles/families.html">Read more</a>.</p></dd>
 
 
 <dt id="arg-par-x">par_x<a class="anchor" aria-label="anchor" href="#arg-par-x"></a></dt>
 <dd><p>String. Name of the change-point variable, i.e., the data column
 on which change points are located. <code>NULL</code> (default) auto-detects it as the
-only continuous predictor in the formulas.</p></dd>
+only continuous variable in the formulas.</p></dd>
 
 
 <dt id="arg-sample">sample<a class="anchor" aria-label="anchor" href="#arg-sample"></a></dt>
@@ -144,7 +145,7 @@ plots, summaries, and other methods to select prior draws.</p></li>
 <li><p><code>"both"</code>: Sample both prior and posterior. Plots, summaries, etc.
 will default to using the posterior. Use <code>prior = TRUE</code> to select prior draws.</p></li>
 <li><p><code>"none"</code> or <code>FALSE</code>: Do not sample. Returns an mcpfit
-object without sample. This is useful if you only want to check
+object without draws. This is useful if you only want to check
 prior strings (<code>fit$prior</code>), the JAGS model (<code>fit$jags_code</code>), etc.</p></li>
 </ul></dd>
 
@@ -166,10 +167,12 @@ use diagnostics to assess convergence.</p></dd>
 
 <dt id="arg-inits">inits<a class="anchor" aria-label="anchor" href="#arg-inits"></a></dt>
 <dd><p>A named list of initial values for the parameters, e.g., <code>list(Intercept_1 = 10)</code>,
-or a list of such lists with one per chain. This can be useful if a model fails to converge.
-Names must be stochastic nodes in <code>fit$jags_code</code> (lines with <code>~</code>). Change points, fixed parameters,
+or a list of such lists with one per chain. This can be useful if a model fails to converge
+(<a href="https://lindeloev.github.io/mcp/articles/tips.html">read more</a>).
+Names must be stochastic nodes in <code>fit$jags_code</code> (lines with <code>~</code>). Fixed parameters
 and parameters that <code>mcp</code> samples via reparameterization (e.g., <code>Intercept_3</code> is sampled as
 <code>Intercept_3_end_</code>) cannot be initialized directly. See <code>mcp_reparam</code> in <a href="mcp-package.html">mcp-package</a>.
+Initial values for change points must be ordered.
 Defaults to <code>NULL</code> where all chains start at equispaced change points and the prior medians.
 User-provided <code>inits</code> take precedence.</p></dd>
 
@@ -178,7 +181,8 @@ User-provided <code>inits</code> take precedence.</p></dd>
 <dd><p>String. Pass JAGS code to <code>mcp</code> to use directly. This is useful if
 you want to tweak the code in <code>fit$jags_code</code> and run it within the <code>mcp</code>
 framework. R-side simulation and prediction methods continue to use the
-mcp-default formulas (with warning), so they may no longer match custom JAGS code.</p></dd>
+mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+<a href="https://lindeloev.github.io/mcp/articles/implementation.html">Read more</a> about how <code>mcp</code> writes JAGS code.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -229,7 +233,8 @@ backwards compatibility.</p></dd>
 <p><img src="figures/mcp_demo.png" width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"></p>
 <p>Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
 See <a href="mcp-formula.html">mcp-formula</a> for the rules of how segments connect, the full formula syntax, and the
-underlying model. See <a href="mcp-priors.html">mcp-priors</a> for how to specify priors.</p>
+underlying model. See <a href="mcp-priors.html">mcp-priors</a> for how to specify priors.
+See <a href="https://lindeloev.github.io/mcp/">the mcp website</a> for worked examples of all model features.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -386,13 +391,12 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-in"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  Intercept_1 <span class="op">=</span> <span class="fl">15</span>,</span></span>
 <span class="r-in"><span>  time_2 <span class="op">=</span> <span class="st">"dt(0, 2, 1) T(0, )"</span>,  <span class="co"># t-dist slope. Truncated to positive.</span></span></span>
-<span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(cp_1, 80)"</span>        <span class="co"># change point to segment 3 &gt; cp_1 and &lt; 80.</span></span></span>
+<span class="r-in"><span>  cp_2 <span class="op">=</span> <span class="st">"dunif(min(time), 80)"</span>   <span class="co"># change point to segment 3 before 80 (and after cp_1).</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit3</span> <span class="op">=</span> <span class="fu">mcp</span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>`cp_2` = "dunif(cp_1, 80)": `cp_1` as the lower bound is already embodied in the mcp model and hence not needed. Each change point keeps its specified prior, restricted to ordered change points. To set a minimum segment length, use e.g. `cp_1 + 20` as the lower bound.</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)</span></span></span>
+<span class="r-in"><span><span class="co"># Reuse coefficients in later segments using same() (e.g., Intercept_1 in segment 3)</span></span></span>
 <span class="r-in"><span><span class="va">model_same</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">response</span> <span class="op">~</span> <span class="fl">1</span>,</span></span>
 <span class="r-in"><span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">time</span>,</span></span>
