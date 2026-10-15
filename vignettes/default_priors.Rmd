@@ -19,7 +19,11 @@ options(mcp_quiet = TRUE)
 set.seed(42)
 ```
 
-This article documents the default priors in `mcp`. These are the priors used if you do not specify otherwise in `mcp(..., prior = list())`. See [Working with priors](../articles/priors.html) for how to set your own priors and do prior predictive checks.
+This article documents the default priors in `mcp`. These are the priors used if you do not specify otherwise in `mcp(..., prior = list())`. 
+
+In short, `mcp` uses the conventional default priors of `rstanarm` for intercepts and coefficients and of `brms` for scale parameters, with `mcp`-specific defaults for change points and autocorrelation and a few [documented deviations](#deviations). 
+
+See [Working with priors](../articles/priors.html) for how to set your own priors and do prior predictive checks.
 
 
 # Default priors on regression parameters

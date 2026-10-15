@@ -81,7 +81,7 @@ plot_pars(fit)
 
 The intercept prior is a normal distribution centered on the rounded median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale equal to the maximum of 2.5 and its rounded MAD. Replacing zeros keeps the log finite and the minimum scale avoids an accidentally narrow prior.
 
-Categorical contrasts use `dnorm(0, 2.5)`; numeric coefficients use `dnorm(0, 2.5 / S)` scaled to a representative predictor change $S$. Group standard deviations similarly default to half-normal priors (`dnorm(0, ...) T(0, )`). Following the precedent of `rstanarm`, these normal defaults retain wide regularizing coverage while avoiding the infinite prior expected counts and explosive simulations produced by Student-t tails under exponentiation (used in some packages). See overview of [similarities and deviations from `rstanarm` and `brms`](../articles/default_priors.html#deviations) for log links.
+Coefficients are [autoscaled as in `rstanarm`](../articles/default_priors.html#default-priors-on-regression-parameters), e.g., `dnorm(0, 2.5 / sd(column))`, and group-level SDs default to half-normal priors. These normal priors avoid the infinite expected counts that heavier Student-t tails imply under the log link ([read more](../articles/default_priors.html#deviations)).
 
 ```{r, R.options = list(width = 9999)}
 prior_summary(fit)

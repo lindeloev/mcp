@@ -166,7 +166,7 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 
 Please keep in mind that when these priors combine through the model, the joint probability may be quite different.
 
-Coefficients and categorical contrasts are autoscaled as in `rstanarm`: `dnorm(0, 1.5 / sd(column))` for logit links and `dnorm(0, 1 / sd(column))` for probit links, where `sd(column)` is the SD of the coefficient's model-matrix column, including the 0/1 dummies of factors. For [x-terms](../articles/formulas.html#how-segments-connect) such as `x` and `state:x` (with `x` as the change-point variable), this is `sd(x)` over all data, so slope priors do not depend on the number of change points. Powers such as `I(x^2)` use `sd((x - min(x))^2)`.
+Coefficients and categorical contrasts use the same scales, [autoscaled as in `rstanarm`](../articles/default_priors.html#default-priors-on-regression-parameters): `dnorm(0, 1.5 / sd(column))` for logit links and `dnorm(0, 1 / sd(column))` for probit links.
 
 
 # JAGS code

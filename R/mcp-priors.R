@@ -23,21 +23,11 @@
 #'
 #' @section Regression priors:
 #' 
-#' Weakly informative defaults are used where priors are not specified. These are designed for stable
-#' estimation and prediction, but should be justified before hypothesis testing.
-#' Default priors follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with
-#' a few documented deviations. For example, with an identity link:
-#'
-#'  * *Coefficients* are autoscaled as in `rstanarm`, e.g., `normal(0, 2.5 * sd(y) / sd(x))` for a slope on `x`.
-#'      This makes the prior largely invariant to the units of `x` and `y`.
-#'  * *Intercepts* are `normal(mean(y), 2.5 * sd(y))`. Like `rstanarm` and `brms`, the default prior on `Intercept_1`
-#'      applies at the start of the data, `min(x)`. The reported `Intercept_1` is still at `x = 0`, as in [lm()], so
-#'      `fit$prior` shows its prior given the x-terms, e.g., `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))`.
-#'      Other predictors are not centered. User-specified priors on `Intercept_1` apply directly at `x = 0`.
-#'  * *`sigma` and group-level SDs* follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y))) T(0, )`.
-#'
+#' Weakly informative defaults are used where priors are not specified. These are the conventional defaults of
+#' `rstanarm` for intercepts and coefficients and of `brms` for scale parameters, with a few documented deviations.
+#' They are designed for stable estimation and prediction, but should be justified before hypothesis testing.
 #' Use `prior_summary(fit, verbose = TRUE)` to see the default priors of a model and the rules behind them.
-#' See [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for all families, links,
+#' For more details, read [the article on mcp default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for all families, links,
 #' and distributional parameters, and for how the defaults deviate from `rstanarm` and `brms`.
 #'
 #' @section Change point priors: 

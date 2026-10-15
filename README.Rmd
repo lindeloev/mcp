@@ -237,7 +237,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
 
-- Default priors are weakly informative and follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with a few [documented deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
+- Default priors are the weakly informative, conventional defaults of `rstanarm` for intercepts and coefficients and of `brms` for scale parameters, with a few [documented deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
 
 - The default prior on change points is a flat Dirichlet prior on the segment lengths ([read more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
 

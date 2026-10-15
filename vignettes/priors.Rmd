@@ -22,7 +22,9 @@ set.seed(42)
 
 *NOTE: the JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.*
 
-`mcp`'s default priors use established defaults where possible: [`rstanarm`](https://mc-stan.org/rstanarm/articles/priors.html) for intercepts and coefficients, and [`brms`](https://paulbuerkner.com/brms/reference/set_prior.html) for scale parameters such as `sigma` and group-level SDs. Change points (including their group-level SDs) and autocorrelation have `mcp`-specific defaults, and a few other deviations are [documented here](../articles/default_priors.html#deviations).
+This article is about setting your own priors.
+
+To learn more about priors when you do *not* set them yourself, read more about the [mcp default priors](../articles/default_priors.html). Briefly, `mcp` assigns default priors to all parameters that you do not set. These are the conventional defaults of `rstanarm` for intercepts and coefficients and of `brms` for scale parameters, with `mcp`-specific defaults for change points and autocorrelation. Inspect them using `prior_summary(fit)`.
 
 # Setting a prior
 
@@ -171,11 +173,6 @@ You can set priors on change points as shown in the initial example. Here are th
 - **Conditional priors.** Priors can refer to other change points in their distribution parameters, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`. Each change point then has its prior given the change points it refers to, still restricted to ordered change points.
 - **Regular spacing.** `cp_1 = "dirichlet(2)"` sets a Dirichlet prior with $\alpha = 2$ on all change points, which makes short segments less likely and so favors evenly spaced change points away from the limits of the data. $\alpha = 1$ is the default prior. All change points share the same $\alpha$, so it cannot be combined with other priors on change points. See [the math](../articles/default_priors.html#dirichlet).
 - **Initial values.** All chains start at the same, equally spaced change points, moved inside the limits of their priors if needed. Set other initial values using, e.g., `mcp(..., inits = list(cp_1 = 30))`, as long as they are ordered. More details on initialization in [the implementation article](../rticles/implementation.html)
-
-
-# Default priors
-
-`mcp` assigns default priors to all parameters that you do not set in `mcp(..., prior = list())`. Inspect them using `prior_summary(fit)`. The article on [default priors](../articles/default_priors.html) explains how they are chosen, with a [summary table](../articles/default_priors.html#summary-reference-table) and the [deviations from `rstanarm` and `brms`](../articles/default_priors.html#deviations). Note that for a factor without an intercept, e.g., `y ~ 0 + state`, each factor level's coefficient is an intercept and gets the intercept prior.
 
 
 # JAGS code
