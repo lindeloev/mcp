@@ -69,7 +69,7 @@ fit = mcp(model, data, par_x = 'time', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  gg1 = plot(fit) + ggplot2::labs(title = \"plot(fit)\")
+  gg1 = plot(fit) + ggplot2::labs(title = 'fit = mcp_example(\"ar\"); plot(fit)')
   set.seed(43)
   gg2 = plot_dpar(fit, \"ar1\") + ggplot2::labs(title = 'plot_dpar(fit, \"ar1\")')
 
@@ -108,7 +108,7 @@ fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
+  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"binomial\"); plot(fit, q_fit = TRUE)'))
 }",
 
 
@@ -142,7 +142,7 @@ fit = mcp(model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(78)
-  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
+  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"demo\"); plot(fit, q_fit = TRUE)'))
 }",
 
 
@@ -180,7 +180,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 if (plot) {
   set.seed(42)
   print(plot(fit, facet_by = 'id') + 
-      ggplot2::labs(title = 'plot(fit, facet_by = \"id\")'))
+      ggplot2::labs(title = 'fit = mcp_example(\"group_mu\"); plot(fit, facet_by = \"id\")'))
 }",
     intercepts = "# Define model
 model = list(
@@ -208,7 +208,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
+  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"intercepts\"); plot(fit, q_fit = TRUE)'))
 }",
     missing = "# Define model
 model = list(
@@ -246,7 +246,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 if (plot) {
   set.seed(42)
   print(plot(fit, q_fit = TRUE) + 
-      ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
+      ggplot2::labs(title = 'fit = mcp_example(\"missing\"); plot(fit, q_fit = TRUE)'))
 }",
     multiple = "# Define model
 model = list(
@@ -292,7 +292,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+  print(plot(fit) + ggplot2::labs(title = 'fit = mcp_example(\"multiple\"); plot(fit)'))
 }",
     sigma = "# Define model
 model = list(
@@ -324,7 +324,7 @@ fit = mcp(model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'plot(fit, q_predict = TRUE)')
+  gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"sigma\"); plot(fit, q_predict = TRUE)')
   set.seed(43)
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
 
@@ -359,7 +359,7 @@ fit = mcp(model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, facet_by = 'id') + ggplot2::labs(title = 'plot(fit, facet_by = \"id\")'))
+  print(plot(fit, facet_by = 'id') + ggplot2::labs(title = 'fit = mcp_example(\"group_cp\"); plot(fit, facet_by = \"id\")'))
 }",
 
     void = "# demo_fit, with data removed near change points
@@ -373,9 +373,9 @@ fit = mcp(demo_fit$model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  gg1 = plot(demo_fit, q_fit = TRUE) + ggplot2::labs(title = 'Original demo_fit (full data)')
+  gg1 = plot(demo_fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(demo_fit, q_fit = TRUE)')
   set.seed(43)
-  gg2 = plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'Data voids near change points')
+  gg2 = plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"void\"); plot(fit, q_fit = TRUE)')
 
   # Using patchwork: library(patchwork)
   print(gg1 / gg2)
