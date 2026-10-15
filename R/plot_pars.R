@@ -129,16 +129,22 @@ plot_pars = function(fit,
     }
   } else if ("group" %in% pars) {
     # Regex search for group-level deviations
-    regex_pars = paste0("^", mcp_pars(fit, scope = "group")$parameter, "\\[")
+    group_pars = mcp_pars(fit, scope = "group")$parameter
+    if (length(group_pars) == 0)
+      stop("`pars = \"group\"` requires group-level effects, but this model has none.")
+    regex_pars = paste0("^", group_pars, "\\[")
     pars = character(0)
   }
 
-  select_parameters = utils::getFromNamespace("select_parameters", "bayesplot")
-  pars = select_parameters(
-    explicit = pars,
-    patterns = regex_pars,
-    complete_pars = posterior::variables(draws)
-  )
+  # Select parameters like bayesplot does, but for all pages at once
+  all_pars = posterior::variables(draws)
+  unknown = setdiff(pars, all_pars)
+  if (length(unknown) > 0)
+    stop("Some `pars` don't match parameter names: ", and_collapse(unknown))
+  regex_matches = unlist(lapply(regex_pars, grep, x = all_pars, value = TRUE))
+  if (length(regex_pars) > 0 && length(regex_matches) == 0)
+    stop("No matches for `regex_pars`.")
+  pars = if (length(pars) + length(regex_pars) == 0) all_pars else unique(c(pars, regex_matches))
 
   # Handles combo. Returns a customizable ggplot which "combo" does not.
   if ("combo" %in% type)
