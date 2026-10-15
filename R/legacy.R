@@ -248,6 +248,34 @@ tidy_samples = function(...) {
 }
 
 
+#' Defunct functions in mcp
+#'
+#' These functions were exported in mcp v0.3.4 and removed in v0.4.0. They now
+#' throw an error pointing to their replacements.
+#'
+#' * `criterion()`: Use [loo()] or [waic()].
+#' * `get_segment_table()`: Use `fit = mcp(..., sample = FALSE)` followed by [mcp_pars()] or [mcp_columns()].
+#'
+#' @param ... Ignored.
+#' @name mcp-defunct
+#' @keywords internal
+NULL
+
+# LEGACY: remove in mcp 1.0.
+#' @rdname mcp-defunct
+#' @export
+criterion = function(...) {
+  lifecycle::deprecate_stop("0.4.0", "criterion()", I("`loo(fit)` or `waic(fit)`"))
+}
+
+# LEGACY: remove in mcp 1.0.
+#' @rdname mcp-defunct
+#' @export
+get_segment_table = function(...) {
+  lifecycle::deprecate_stop("0.4.0", "get_segment_table()", I("`mcp_pars(fit)` or `mcp_columns(fit)` on `fit = mcp(..., sample = FALSE)`"))
+}
+
+
 # Renamed to is_mcpfit() for consistency with `{posterior}`'s is_draws(). LEGACY: remove in mcp 1.0.
 #' @rdname is_mcpfit
 #' @export

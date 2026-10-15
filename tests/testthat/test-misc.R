@@ -182,6 +182,9 @@ test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", 
   expect_error(fit$pars, "mcp_pars(fit)", fixed = TRUE)
   expect_error(fit[["pars"]], "mcp_pars(fit)", fixed = TRUE)
   expect_error(fit$mcmc_loglik, "log_lik(fit)", fixed = TRUE)
+  expect_error(criterion(demo_fit), "loo(fit)", fixed = TRUE)
+  expect_error(get_segment_table(demo_fit$model), "mcp_pars(fit)", fixed = TRUE)
+  expect_error(mcp(list(y ~ 1), data.frame(x = 1:4, y = 1:4), family = Gamma(), par_x = "x", sample = FALSE), "not supported by mcp")
 
   binomial_fit = mcp(
     list(y | trials(N) ~ 1),

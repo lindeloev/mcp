@@ -68,7 +68,10 @@ as_mcpfamily = function(x) {
     bernoulli = mcpfamily_bernoulli(x),
     poisson = mcpfamily_poisson(x),
     negbinomial = mcpfamily_negbinomial(x),
-    if (is_mcpfamily(x)) assert_mcpfamily(x) else new_mcpfamily(x)
+    if (is_mcpfamily(x)) assert_mcpfamily(x) else stop(
+      "family = ", x$family, "() is not supported by mcp. Supported families are gaussian(), binomial(), ",
+      "bernoulli(), poisson(), and negbinomial().", call. = FALSE
+    )
   )
 }
 

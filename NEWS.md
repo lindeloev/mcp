@@ -199,6 +199,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - mcp now requires R \>= 4.1.0, matching its use of the native pipe (`|>`).
 
+  - Removed `criterion()` and `get_segment_table()`. They now throw an error pointing to their replacements: `loo(fit)` or `waic(fit)` instead of `criterion(fit)`, and `mcp_pars(fit)` or `mcp_columns(fit)` on `fit = mcp(..., sample = FALSE)` instead of `get_segment_table()`.
+
   - Removed the non-functional `exponential()` family. It had no default priors and could not be fitted. Exponential survival models would require dedicated support for censoring and survival likelihoods rather than the previous ordinary-response placeholder.
 
 ## Bug fixes
