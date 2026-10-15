@@ -70,7 +70,7 @@ df_dummy = data.frame(x = 1:100, y = 1:100)
 empty_manual = mcp(model, data = df_dummy, prior = prior, sample = FALSE)
 empty_default = mcp(model, data = df_dummy, sample = FALSE)
 
-# Inspect resolved priors and bounds
+# Inspect resolved priors and their bounds
 prior_summary(empty_manual)  # For more details: add verbose = TRUE
 prior_summary(empty_default)  # For more details: add verbose = TRUE
 ```
@@ -159,7 +159,7 @@ The default prior on change points is a flat Dirichlet prior on the segment leng
 
 ## Inspecting priors on change points
 
-- **`fit$prior` and `prior_summary(fit)`** show the prior specified for each change point. The default is `dunif(min(x), max(x))` on each change point, i.e., a uniform distribution on the observed range of `par_x`. In `fit$prior`, `min(x)` and `max(x)` are written as `cp_0` and `cp_K`, e.g., `cp_3` with two change points. `prior_summary(fit, verbose = TRUE)` describes which restrictions `mcp` applied, such as the ordering.
+- **`fit$prior` and `prior_summary(fit)`** show the prior specified for each change point. The default is `dunif(min(x), max(x))` on each change point, i.e., a uniform distribution on the observed range of `par_x`. In `fit$prior`, `min(x)` and `max(x)` are written as `cp_0` and `cp_K`, e.g., `cp_3` with two change points. `prior_summary(fit)` shows them as numbers, and its `bounds` column marks change points as "ordered". `prior_summary(fit, verbose = TRUE)` describes which restrictions `mcp` applied.
 - **`plot_pars(fit, prior = TRUE)`** shows the marginal priors, i.e., after the ordering. Where the specified priors overlap, the marginal priors differ from them. For example, the default priors on `cp_1` and `cp_2` in the plot [above](#setting-a-prior) are not flat but triangular, because `cp_1` must be before `cp_2`. Use `mcp(..., sample = "prior")` or `sample = "both"` to get prior draws.
 - **`fit$jags_code`** shows how JAGS samples them. See [From formulas to sampler code](../articles/implementation.html#change-point-priors).
 
@@ -167,12 +167,12 @@ The default prior on change points is a flat Dirichlet prior on the segment leng
 
 You can set priors on change points as shown in the initial example. Here are the rules:
 
-- **Lower and upper limits.** Priors without `dunif()` or `T()` are truncated to the observed range of $x$, e.g., `dnorm(30, 10)` becomes `dnorm(30, 10) T(min(x), max(x))`. The lower and upper limits that you set in `dunif()` or `T()` are used unchanged, also beyond the data, e.g., to place a change point in the future as in [this forecasting example](../articles/predict.html#forecasting-with-future-change-points). JAGS cannot truncate `dunif()`, so set its limits as its arguments instead of using `T()`.
-- **Minimum segment lengths.** To make the segment between `cp_1` and `cp_2` at least 20 long, write the previous change point plus the length as the lower limit: `cp_2 = "dunif(cp_1 + 20, max(x))"` or `cp_2 = "dnorm(70, 10) T(cp_1 + 20, )"`. An empty upper limit defaults to `max(x)`. Like the ordering, the minimum segment length is a restriction, not JAGS's renormalizing truncation `T(cp_1 + 20, )`. Other references to change points in the lower and upper limits are errors, because change points are already ordered. A lower limit of just the previous change point, e.g., `dunif(cp_1, max(x))` as in `mcp` v0.3, is not needed and gives a warning.
+- **Lower and upper bounds.** Priors without `dunif()` or `T()` are truncated to the observed range of $x$, e.g., `dnorm(30, 10)` becomes `dnorm(30, 10) T(min(x), max(x))`. The lower and upper bounds that you set in `dunif()` or `T()` are used unchanged, also beyond the data, e.g., to place a change point in the future as in [this forecasting example](../articles/predict.html#forecasting-with-future-change-points). JAGS cannot truncate `dunif()`, so set its bounds as its arguments instead of using `T()`.
+- **Minimum segment lengths.** To make the segment between `cp_1` and `cp_2` at least 20 long, write the previous change point plus the length as the lower bound: `cp_2 = "dunif(cp_1 + 20, max(x))"` or `cp_2 = "dnorm(70, 10) T(cp_1 + 20, )"`. An empty upper bound defaults to `max(x)`. Like the ordering, the minimum segment length is a restriction, not JAGS's renormalizing truncation `T(cp_1 + 20, )`. Other references to change points in the lower and upper bounds are errors, because change points are already ordered. A lower bound of just the previous change point, e.g., `dunif(cp_1, max(x))` as in `mcp` v0.3, is not needed and gives a warning.
 - **Fixed change points** such as `cp_2 = 80` are also ordered, i.e., `cp_1` stays below 80.
-- **Conditional priors.** Priors can refer to other change points in their distribution parameters, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`. Each change point then has its prior given the change points it refers to, still restricted to ordered change points. If JAGS stops with "Slicer stuck at value with infinite density", the conditional prior has (practically) no probability within its lower and upper limits for some values of the change points it refers to. Widen the prior or its limits.
-- **Regular spacing.** `cp_1 = "dirichlet(2)"` sets a Dirichlet prior with $\alpha = 2$ on all change points, which makes short segments less likely and so favors evenly spaced change points away from the limits of the data. $\alpha = 1$ is the default prior. All change points share the same $\alpha$, so it cannot be combined with other priors on change points. See [the math](../articles/default_priors.html#dirichlet).
-- **Initial values.** All chains start at the same, equally spaced change points, moved inside the limits of their priors if needed. Set other initial values using, e.g., `mcp(..., inits = list(cp_1 = 30))`, as long as they are ordered. More details on initialization in [the implementation article](../rticles/implementation.html)
+- **Conditional priors.** Priors can refer to other change points in their distribution parameters, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`. Each change point then has its prior given the change points it refers to, still restricted to ordered change points. If JAGS stops with "Slicer stuck at value with infinite density", the conditional prior has (practically) no probability within its lower and upper bounds for some values of the change points it refers to. Widen the prior or its bounds.
+- **Regular spacing.** `cp_1 = "dirichlet(2)"` sets a Dirichlet prior with $\alpha = 2$ on all change points, which makes short segments less likely and so favors evenly spaced change points away from the ends of the observed range. $\alpha = 1$ is the default prior. All change points share the same $\alpha$, so it cannot be combined with other priors on change points. See [the math](../articles/default_priors.html#dirichlet).
+- **Initial values.** All chains start at the same, equally spaced change points, moved inside the bounds of their priors if needed. Set other initial values using, e.g., `mcp(..., inits = list(cp_1 = 30))`, as long as they are ordered. More details on initialization in [the implementation article](../rticles/implementation.html)
 
 
 # JAGS code

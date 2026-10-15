@@ -105,8 +105,8 @@ get_segment_tables = function(model, data, family, par_x) {
   }
 
   # `segments`: shared segment metadata with the code of the change points that start
-  # and end each segment. Segment 1 starts at the fixed lower data limit `cp_0` and
-  # the last segment ends at the upper data limit `cp_K`.
+  # and end each segment. Segment 1 starts at `cp_0` = min(x) and the last
+  # segment ends at `cp_K` = max(x), i.e., the observed range of x.
   segments = segment_metadata %>%
     dplyr::left_join(dplyr::select(cps, "segment", cp_group_col = "group_col", cp_start = "code"), by = "segment") %>%
     dplyr::mutate(

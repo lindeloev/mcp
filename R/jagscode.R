@@ -84,11 +84,11 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
       value = paste0("dunif(cp_0, cp_", K, ")")
     } else if (prior_kind_[[name]] == "distribution") {
       # A minimum segment length goes in cp_order_
-      cp_prior = split_cp_limits(value)
-      min_length = get_min_segment_length(cp_prior$limits, i, names(cps))
+      cp_prior = split_cp_bounds(value)
+      min_length = get_min_segment_length(cp_prior$bounds, i, names(cps))
       if (!is.null(min_length)) {
         min_lengths[i] = min_length
-        value = cp_prior$rebuild(c("cp_0", cp_prior$limits[2]))
+        value = cp_prior$rebuild(c("cp_0", cp_prior$bounds[2]))
       }
     }
     mm = paste0(mm, cp_prior_str(name, value))

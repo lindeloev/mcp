@@ -35,7 +35,7 @@
 #' Change points are always ordered: each change point keeps its specified prior, restricted to ordered change points.
 #' The default is a flat Dirichlet prior on the segment lengths, written as `dunif(min(x), max(x))` on each change point
 #' ([read more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
-#' Set a minimum segment length using the previous change point in the lower limit, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`.
+#' Set a minimum segment length using the previous change point in the lower bound, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`.
 #' [Read more](https://lindeloev.github.io/mcp/articles/priors.html#cp_prior) about setting priors on change points.
 #'
 #' @section Notes on priors:

@@ -79,7 +79,7 @@ In general, this output contains:
  
  * **.sd:** The posterior standard deviation of the expected response. In `predict()` output, `.sd` is instead the posterior predictive standard deviation.
  
- * **.lower** and **.upper:** The bounds of the central interval. It is 95% by default, but you can set it using, e.g., `fitted(fit, width = 0.8)`. Use `summary = FALSE` to compute other quantiles from the draws.
+ * **.lower** and **.upper:** The lower and upper ends of the central interval. It is 95% by default, but you can set it using, e.g., `fitted(fit, width = 0.8)`. Use `summary = FALSE` to compute other quantiles from the draws.
  
 The columns computed by `mcp` are prefixed with a dot, so they never collide with columns in your data.
  

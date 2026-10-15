@@ -244,43 +244,43 @@ is_distribution = function(prior_value) {
 }
 
 
-# The lower and upper limits of a change point prior: the arguments of dunif() or T(), or NULL
-# without them. `rebuild(limits)` writes the prior with other T(low, high) limits.
-split_cp_limits = function(prior_value) {
+# The lower and upper bounds of a change point prior: the arguments of dunif() or T(), or NULL
+# without them. `rebuild(bounds)` writes the prior with other T(low, high) bounds.
+split_cp_bounds = function(prior_value) {
   parts = split_prior_truncation(prior_value)
   call = parse_prior_call(parts$distribution)
   if (call$name == "dunif") {
     if (!is.null(parts$truncation))
-      stop("JAGS cannot truncate dunif(). Set its lower and upper limits as its arguments instead, e.g., \"dunif(20, 50)\".", call. = FALSE)
-    return(list(limits = call$args, rebuild = function(limits) paste0("dunif(", limits[1], ", ", limits[2], ")")))
+      stop("JAGS cannot truncate dunif(). Set its lower and upper bounds as its arguments instead, e.g., \"dunif(20, 50)\".", call. = FALSE)
+    return(list(bounds = call$args, rebuild = function(bounds) paste0("dunif(", bounds[1], ", ", bounds[2], ")")))
   }
-  limits = if (!is.null(parts$truncation)) parse_prior_call(parts$truncation)$args
-  list(limits = limits, rebuild = function(limits) paste0(parts$distribution, " T(", limits[1], ", ", limits[2], ")"))
+  bounds = if (!is.null(parts$truncation)) parse_prior_call(parts$truncation)$args
+  list(bounds = bounds, rebuild = function(bounds) paste0(parts$distribution, " T(", bounds[1], ", ", bounds[2], ")"))
 }
 
 
 # Minimum length of the segment that ends at change point j, written as the lower
-# limit `cp_1 + 20` in dunif(cp_1 + 20, max(x)) or T(cp_1 + 20, ). Returns the length as a
+# bound `cp_1 + 20` in dunif(cp_1 + 20, max(x)) or T(cp_1 + 20, ). Returns the length as a
 # string. "0" for just `cp_1`, or NULL. Change points are ordered anyway, so other references
-# to change points in the limits are errors.
-get_min_segment_length = function(limits, j, cp_names) {
-  limits = lapply(limits, function(limit) if (nzchar(limit)) str2lang(limit))
+# to change points in the bounds are errors.
+get_min_segment_length = function(bounds, j, cp_names) {
+  bounds = lapply(bounds, function(bound) if (nzchar(bound)) str2lang(bound))
   previous = if (j > 1) as.name(cp_names[j - 1])
-  lower = limits[[1]]
+  lower = bounds[[1]]
   min_length = NULL
   if (!is.null(previous) && identical(lower, previous)) {
     min_length = "0"
-    limits[[1]] = NULL
+    bounds[[1]] = NULL
   } else if (!is.null(previous) && is.call(lower) && identical(lower[[1]], as.name("+")) && identical(lower[[2]], previous)) {
     min_length = deparse_prior(lower[[3]])
-    limits[[1]] = lower[[3]]
+    bounds[[1]] = lower[[3]]
   }
 
-  references = intersect(unlist(lapply(limits, all.vars)), cp_names)
+  references = intersect(unlist(lapply(bounds, all.vars)), cp_names)
   if (length(references) > 0) {
     stop(
-      "The lower or upper limit of the prior on `", cp_names[j], "` (in dunif() or T()) refers to ", and_collapse(paste0("`", references, "`")),
-      ". Change points are always ordered, so the limits can only refer to the previous change point to set a minimum segment length, ",
+      "The lower or upper bound of the prior on `", cp_names[j], "` (in dunif() or T()) refers to ", and_collapse(paste0("`", references, "`")),
+      ". Change points are always ordered, so the bounds can only refer to the previous change point to set a minimum segment length, ",
       "e.g., `cp_2 = \"dunif(cp_1 + 20, max(x))\"` or `cp_2 = \"dnorm(50, 10) T(cp_1 + 20, )\"`.",
       call. = FALSE
     )
@@ -291,27 +291,27 @@ get_min_segment_length = function(limits, j, cp_names) {
 
 # User priors on change points are used unchanged, restricted to ordered change points (see
 # get_jags_code()). Priors without dunif() or T() are truncated to the observed range of x.
-# An empty upper limit next to a minimum segment length, e.g., T(cp_1 + 20, ), is also max(x).
+# An empty upper bound next to a minimum segment length, e.g., T(cp_1 + 20, ), is also max(x).
 truncate_cp_prior = function(cps, j, prior_value, context) {
   if (!is_distribution(prior_value) || grepl("^\\s*dirichlet\\s*\\(", prior_value))
     return(prior_value)
 
   x_range = paste0(c("min(", "max("), context$x_display, ")")
-  cp_prior = split_cp_limits(prior_value)
-  if (is.null(cp_prior$limits))
+  cp_prior = split_cp_bounds(prior_value)
+  if (is.null(cp_prior$bounds))
     return(cp_prior$rebuild(x_range))
 
-  min_length = get_min_segment_length(cp_prior$limits, j, cps$name)
+  min_length = get_min_segment_length(cp_prior$bounds, j, cps$name)
   if (identical(min_length, "0")) {
     warning(
-      "`", cps$name[j], "` = \"", prior_value, "\": `", cps$name[j - 1], "` as the lower limit is already embodied in the mcp model and hence not needed. ",
+      "`", cps$name[j], "` = \"", prior_value, "\": `", cps$name[j - 1], "` as the lower bound is already embodied in the mcp model and hence not needed. ",
       "Each change point keeps its specified prior, restricted to ordered change points. ",
-      "To set a minimum segment length, use e.g. `", cps$name[j - 1], " + 20` as the lower limit.",
+      "To set a minimum segment length, use e.g. `", cps$name[j - 1], " + 20` as the lower bound.",
       call. = FALSE
     )
   }
-  if (!is.null(min_length) && !nzchar(cp_prior$limits[2]))
-    return(cp_prior$rebuild(c(cp_prior$limits[1], x_range[2])))
+  if (!is.null(min_length) && !nzchar(cp_prior$bounds[2]))
+    return(cp_prior$rebuild(c(cp_prior$bounds[1], x_range[2])))
   prior_value
 }
 

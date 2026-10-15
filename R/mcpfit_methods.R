@@ -231,7 +231,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'     [fixef.mcpfit()], [fitted.mcpfit()], etc. It is `NA` for change points. See also [mcp_pars()].
 #'   * `mean` is the posterior mean
 #'   * `sd` is the posterior standard deviation.
-#'   * `lower` and `upper` are the bounds of the central posterior interval
+#'   * `lower` and `upper` are the lower and upper ends of the central posterior interval
 #'     given in `width`.
 #'   * `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 #'   * `ess_bulk` and `ess_tail` are the bulk and tail effective sample sizes.

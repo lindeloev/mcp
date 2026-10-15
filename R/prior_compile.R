@@ -258,7 +258,8 @@ prior_quantile = function(dist, a, bounds, prob) {
 }
 
 
-# Summarize the support implied by a prior distribution or truncation.
+# The lower and upper bounds of a prior: the arguments of dunif() or T(), or the support
+# of the distribution.
 prior_bounds = function(x, context = list()) {
   parts = split_prior_truncation(x)
   if (!is.null(parts$truncation)) {
@@ -276,7 +277,7 @@ prior_bounds = function(x, context = list()) {
   if (call$name == "dunif" && length(call$args) == 2)
     return(paste0("[", call$args[1], ", ", call$args[2], "]"))
   if (call$name == "dirichlet")
-    return(paste0("[min(", context$x_display, "), max(", context$x_display, ")]"))
+    return(paste0("[", paste(vapply(range(context$data[[context$x_name]], na.rm = TRUE), format_prior_number, character(1)), collapse = ", "), "]"))
   if (call$name == "dbeta") return("[0, 1]")
   if (call$name %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
@@ -305,6 +306,13 @@ compile_prior_record = function(parameter, code, all_names, context, source,
   display_original = legacy_translate_prior(original, context)
   context$cp_limits = kind == "distribution" && parameter %in% context$cp_pars
   resolved = resolve_prior_value(code, context)
+  # Show the exact ends of the observed range, cp_0 and cp_K, as numbers
+  display_context = context
+  display_context$cp_limits = FALSE
+  display = resolve_prior_value(code, display_context)
+  bounds = prior_bounds(display, context)
+  if (context$cp_limits && parameter %in% context$cp_names)
+    bounds = paste0(bounds, ", ordered")
 
   if (kind == "expression") {
     expr = tryCatch(parse(text = resolved, keep.source = FALSE)[[1]], error = function(e) NULL)
@@ -330,8 +338,8 @@ compile_prior_record = function(parameter, code, all_names, context, source,
 
   tibble::tibble(
     parameter = parameter,
-    prior = format_prior_display(if (kind == "distribution") human_prior_call(resolved) else resolved),
-    bounds = format_prior_display(prior_bounds(display_original, context)),
+    prior = format_prior_display(if (kind == "distribution") human_prior_call(display) else display),
+    bounds = format_prior_display(bounds),
     rule = format_prior_display(rule),
     description = description,
     source = source,

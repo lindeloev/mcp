@@ -427,7 +427,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'      - `.sd`: The SD of the draws. With posterior draws (the default), this is the
 #'        posterior predictive SD for `predict()` and the posterior SD of the
 #'        evaluated quantity otherwise.
-#'      - `.lower` and `.upper`: The bounds of the central interval given in `width`.
+#'      - `.lower` and `.upper`: The lower and upper ends of the central interval given in `width`.
 #'
 #'     With `prior = TRUE`, these are the analogous prior summaries. mcp's own
 #'     columns are dot-prefixed to avoid collisions with data columns.

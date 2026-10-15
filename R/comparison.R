@@ -264,9 +264,9 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'   * `mean` is the posterior mean of the left-hand side of the hypothesis, or
 #'       the prior mean when `prior = TRUE`.
 #'   * `sd` is the posterior standard deviation of ditto, or the prior SD when `prior = TRUE`.
-#'   * `lower` is the lower bound of the central posterior interval of width `width`,
+#'   * `lower` is the lower end of the central posterior interval of width `width`,
 #'       or the corresponding prior interval when `prior = TRUE`.
-#'   * `upper` is the upper bound of ditto.
+#'   * `upper` is the upper end of ditto.
 #'   * `prob` is the posterior probability of a directional hypothesis, or the prior
 #'       probability when `prior = TRUE`. It is `NA`
 #'       for equality hypotheses, which compare models rather than an event

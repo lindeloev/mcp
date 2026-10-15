@@ -94,7 +94,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - The prior for user-specified priors on 2+ change points will differ from mcp v0.3.4, though for informative data, posteriors will be highly similar. User-specified priors on change points are now used unchanged, though restricted to ordered change points. v0.3.4 imposed ordering by truncating priors using `T()` at the previous change point, e.g., `dnorm(40, 10) T(cp_1, max(x))`, which pushed wide priors towards `max(x)`. `dunif()` priors and priors with `T()` were used unchanged, which allowed label switching. Fixed change points, e.g., `cp_2 = 80`, are now ordered relative to the other change points too. Priors without `dunif()` or `T()` are truncated to the observed range of `x`.
 
-  - The lower and upper limits of change point priors, i.e., the arguments of `dunif()` and `T()`, can no longer refer to other change points, except to set a minimum segment length, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`. Change points in the distribution's parameters remain allowed, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`.
+  - The lower and upper bounds of change point priors, i.e., the arguments of `dunif()` and `T()`, can no longer refer to other change points, except to set a minimum segment length, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`. Change points in the distribution's parameters remain allowed, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`.
 
   - `dirichlet(alpha)` now takes one shared `alpha >= 1` (non-integer allowed) for all change points and applies it to all segments, including the last. v0.3.4 allowed non-identical integer `alpha` per change point and silently used `alpha = 1` for the last segment, so `dirichlet(2)` now gives a different prior. Non-identical alphas now error.
 
@@ -112,7 +112,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Autoregression (`ar()`) has been generalized to link-scale observation-driven GARMA residuals for Gaussian, binomial, Bernoulli, Poisson, and negative-binomial models with their default links, using `ar(..., threshold = 0.1)` by default to keep observations finite on the link scale. Added moving-average terms with `ma(q)`, which can be used alone or combined with `ar(p)` in each segment. Independent time series can be separated using `ar(..., series = <column>)`. Set `series` and `threshold` once in any `ar()` or `ma()` term; they apply to all segments.
 
-  - GARMA observation thresholds are now validated with family-appropriate bounds: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
+  - GARMA observation thresholds are now validated against the support of the response: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
 
 
   - Explicit AR/MA prediction history control: predict() and the new posterior_predict() support conditional = TRUE (default) to condition on observed response histories, or conditional = FALSE to generate histories recursively. This applies to both prior and posterior prediction. Previously, AR history handling depended on whether response values were supplied.
@@ -141,7 +141,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - **Priors and hypotheses:**
 
-  - Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and bounds; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`).
+  - Added `prior_summary(fit)`. Its compact output shows each parameter's resolved prior and its lower and upper bounds, marking change points as ordered; `prior_summary(fit, verbose = TRUE)` also shows the data-dependent rule, a plain-language description, source, and kind (`distribution`, `alias`, `expression`, or `constant`).
 
   - With the introduction of multiple regression including categorical predictors (including for distributional parameters) come default priors. Coefficients are autoscaled as in [`rstanarm`](https://mc-stan.org/rstanarm/reference/priors.html), i.e., divided by the SD of their model-matrix column (see "Priors and distributions" below). See `prior_summary(fit, verbose = TRUE)` for details.
 

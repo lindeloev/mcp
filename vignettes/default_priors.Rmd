@@ -177,11 +177,11 @@ The change points divide the observed range of $x$ into $K$ segments. Instead of
 
 $$s_k = \frac{\tau_k - \tau_{k-1}}{\max(x) - \min(x)}, \qquad k = 1, \dots, K,$$
 
-with $\tau_0 = \min(x)$ and $\tau_K = \max(x)$, the limits of the data. They are positive and sum to 1. The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is the standard prior for such proportions. It also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)). The symmetric Dirichlet prior with concentration $\alpha$ has density
+with $\tau_0 = \min(x)$ and $\tau_K = \max(x)$, the ends of the observed range. They are positive and sum to 1. The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is the standard prior for such proportions. It also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)). The symmetric Dirichlet prior with concentration $\alpha$ has density
 
 $$p(s_1, \dots, s_K) \propto \prod_{k=1}^{K} s_k^{\alpha - 1}.$$
 
-With $\alpha = 1$, the density is constant, so every division of the range into ordered segments is equally likely. This is `mcp`'s default prior. With $\alpha > 1$, divisions with short segments are less likely, favoring evenly spaced change points away from the limits of the data. The marginal priors generalize to
+With $\alpha = 1$, the density is constant, so every division of the range into ordered segments is equally likely. This is `mcp`'s default prior. With $\alpha > 1$, divisions with short segments are less likely, favoring evenly spaced change points away from the ends of the observed range. The marginal priors generalize to
 
 $$\frac{\tau_k - \min(x)}{\max(x) - \min(x)} \sim \text{Beta}(k\alpha, (K - k)\alpha).$$
 

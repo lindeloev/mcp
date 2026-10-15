@@ -148,7 +148,7 @@ check_arma_model = function(family, predictors, segments, data, par_x, series = 
 }
 
 
-# Validate GARMA observation thresholds against family-appropriate bounds
+# Validate GARMA observation thresholds against the support of the response
 assert_arma_thresholds = function(family, threshold, data = list()) {
   threshold = unique(stats::na.omit(threshold))
   if (length(threshold) == 0)

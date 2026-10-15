@@ -206,10 +206,10 @@ testthat::test_that("Minimum segment lengths go in cp_order_", {
   testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0,cp_3)", fixed = TRUE)
   testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
 
-  # A lower limit at the previous change point is a minimum segment length of 0, i.e., just the ordering
+  # A lower bound at the previous change point is a minimum segment length of 0, i.e., just the ordering
   testthat::expect_warning(
     fit <- mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dunif(cp_1, max(x))"), sample = FALSE),
-    "as the lower limit is already embodied in the mcp model"
+    "as the lower bound is already embodied in the mcp model"
   )
   testthat::expect_match(fit$jags_code, "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
   testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)
@@ -606,7 +606,7 @@ test_that("resolved priors keep full precision regardless of options(digits)", {
 })
 
 
-test_that("change point priors refer to the exact data limits cp_0 and cp_K", {
+test_that("change point priors refer to the exact ends of the observed range, cp_0 and cp_K", {
   data = data.frame(x = c(0.618632254190743, 2:9, 9.87654321), y = 1:10)
   fit = mcp(
     list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE,
@@ -616,6 +616,11 @@ test_that("change point priors refer to the exact data limits cp_0 and cp_K", {
   expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(cp_0, cp_3)")
   expect_equal(fit$prior$Intercept_1, "dnorm(0.618632254190743, 1)")
   expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0,cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
+
+  # prior_summary() shows the ends of the observed range as numbers
+  ps = prior_summary(fit)
+  expect_equal(ps$prior[1:2], c("uniform(min = 0.61863, max = 5)", "normal(mean = 7, sd = 1)"))
+  expect_equal(ps$bounds[1:2], c("[0.61863, 5], ordered", "[0.61863, 9.8765], ordered"))
 })
 
 

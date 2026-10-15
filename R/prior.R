@@ -35,6 +35,7 @@ validate_prior_v1 = function(prior) {
 get_prior = function(segments, cps, predictors, group_effects, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
   checkmate::assert_class(family, "mcpfamily")
   context = prior_context(data, segments, design_specs)
+  context$cp_names = cps$name
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
   legacy_prior_constants(prior, context)
   predictors$prior_type = get_prior_type(predictors)
@@ -60,10 +61,12 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #'
 #' `r lifecycle::badge("experimental")`
 #'
-#' Shows the effective, resolved prior distributions on the familiar SD/scale
-#' parameterization rather than JAGS precision. Symbolic expressions in bounds
-#' (e.g. `min(x)` or `max(x)`) may be retained in symbolic form in compact output,
-#' while `verbose = TRUE` displays the underlying rule, description, source, and kind.
+#' Shows the specified prior distributions, resolved to numbers and on the familiar SD/scale
+#' parameterization rather than JAGS precision. `bounds` are the lower and upper bounds of
+#' each prior, i.e., the arguments of `dunif()` or `T()`, or the support of the distribution.
+#' Change points are also "ordered": their specified priors are restricted to ordered change
+#' points. Use `plot_pars(fit, prior = TRUE)` to see the marginal priors after this restriction.
+#' `verbose = TRUE` also displays the underlying rule, description, source, and kind.
 #' Numbers are rounded to 5 significant digits for display. `fit$prior` holds the exact
 #' values used in the model. Parameter names within a prior describe its dependence on
 #' other parameters, e.g., the default prior on `Intercept_1` given `x_1`.
@@ -82,7 +85,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #'   [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for the rules behind them.
 #' @export
 #' @examples
-#' prior_summary(demo_fit)  # Show the effective priors and bounds
+#' prior_summary(demo_fit)  # Show the resolved priors and their bounds
 #' prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 prior_summary = function(object, ...) {
   # If mcp masks rstantools::prior_summary(), forward e.g. brmsfit objects to it
