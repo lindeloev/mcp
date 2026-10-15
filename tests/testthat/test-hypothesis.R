@@ -100,17 +100,33 @@ test_that("hypothesis()", {
   prior_equality = hypothesis(fit_same, equality_expr, prior = TRUE)
   expect_true(is.na(prior_equality$BF))
 
-  tail_val = format(max(cp_draws) + stats::sd(cp_draws), digits = 16)
+  tail_val = format(stats::quantile(cp_draws, 0.005), digits = 16)
   expect_warning(
     hypothesis(fit_user_prior, paste0("cp_1 = ", tail_val)),
     "tested value is in a sparse tail",
     fixed = TRUE
   )
 
-  # At a bound, the prior is dense (half-t mode at 0) and only the posterior is far away
+  # A legitimate boundary test also needs checking: draws cannot establish the bounds.
   fit_bound = demo_fit
   fit_bound$.internal$prior_table$source[fit_bound$.internal$prior_table$parameter == "sigma_1"] = "user"
-  expect_warning(hypothesis(fit_bound, "sigma_1 = 0"), "Few posterior draws are near the tested bound", fixed = TRUE)
+  expect_warning(hypothesis(fit_bound, "sigma_1 = 0"), "at or outside the prior bounds", fixed = TRUE)
+
+  # Kernel density is positive just outside the bounds, even with dense nearby draws.
+  fit_bounded = fit_user_prior
+  bounded_draws = .subset2(fit_bounded, "mcmc_prior")
+  for (chain in seq_along(bounded_draws)) {
+    bounded_draws[[chain]][, "cp_1"] = seq(0.001, 0.999, length.out = nrow(bounded_draws[[chain]]))
+  }
+  fit_bounded$mcmc_prior = bounded_draws
+  fit_bounded$mcmc_post = bounded_draws
+  for (value in c(-0.001, 1.001)) {
+    expect_warning(
+      result <- hypothesis(fit_bounded, paste0("cp_1 = ", value)),
+      "misleading Bayes factor for an impossible value", fixed = TRUE
+    )
+    expect_equal(result$BF, 1)
+  }
 
   # Degenerate hypotheses with constant prior contrasts are rejected
   expect_error(
@@ -189,8 +205,5 @@ test_that("Savage-Dickey density is evaluated directly", {
   expect_gte(get_density(x, 10), 0)
   expect_false(is_sparse_tail(x, 0))
   expect_true(is_sparse_tail(x, 3))
-  expect_false(is_sparse_tail(abs(x), 0, at_bound = TRUE))
-  expect_true(is_sparse_tail(abs(x) + 3, 0, at_bound = TRUE))
   expect_error(get_density(rep(1, 101), 0), "Cannot estimate density for constant values", fixed = TRUE)
 })
-

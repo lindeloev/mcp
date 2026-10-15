@@ -408,13 +408,16 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
           )
         }
 
-        # At a bound, e.g., `cp_1_id_sd = 0`, all prior draws are on one side but dense near it, so it is not a sparse tail.
-        # Both kernel densities are about halved at a bound, which cancels in their ratio.
-        at_bound = (all(prior_values >= 0) || all(prior_values <= 0)) && !is_sparse_tail(prior_values, 0, at_bound = TRUE)
-        if (is_sparse_tail(prior_values, 0, at_bound) || is_sparse_tail(post_values, 0, at_bound)) {
+        # Draws alone cannot distinguish a valid boundary test from an impossible null.
+        if (all(prior_values >= 0) || all(prior_values <= 0)) {
           warning(
-            if (at_bound) "Few posterior draws are near the tested bound" else "The tested value is in a sparse tail of the prior or posterior draws",
-            "; the Savage-Dickey estimate may be unreliable.",
+            "All prior draws lie on one side of the tested equality: ", expression,
+            ". The tested value may be at or outside the prior bounds. Kernel smoothing can give a misleading Bayes factor for an impossible value; verify that the null is allowed by the model.",
+            call. = FALSE
+          )
+        } else if (is_sparse_tail(prior_values, 0) || is_sparse_tail(post_values, 0)) {
+          warning(
+            "The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.",
             call. = FALSE
           )
         }
@@ -555,10 +558,7 @@ get_bandwidth = function(x) {
 }
 
 
-# Are there too few draws near the tested value? Outside the central 98% of draws, or, at a bound
-# of the draws (`at_bound`), fewer than 1% of draws within one kernel bandwidth of it.
-is_sparse_tail = function(x, value, at_bound = FALSE) {
-  if (at_bound)
-    return(mean(abs(x - value) < get_bandwidth(x)) < 0.01)
+# Is the tested value outside the central 98% of draws?
+is_sparse_tail = function(x, value) {
   mean(x <= value) < 0.01 || mean(x >= value) < 0.01
 }
