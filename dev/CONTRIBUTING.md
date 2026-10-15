@@ -20,6 +20,10 @@ functionality/bug-free against code simplicity. It is better to have
 simple/readable code than to add 200 lines of code to fix a rare edge
 case.
 
+See `dev/TERMINOLOGY.md` for the vocabulary used in documentation,
+messages, and output, e.g., “bounds” and “specified” vs. “marginal”
+priors.
+
 ## Branches
 
 - `main` is the current CRAN version. It renders site

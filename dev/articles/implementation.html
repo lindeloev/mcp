@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>From formulas to sampler code</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/implementation.Rmd" class="external-link"><code>vignettes/implementation.Rmd</code></a></small>
       <div class="d-none name"><code>implementation.Rmd</code></div>
@@ -153,11 +153,7 @@ uses the indicator formulation of change points:</p>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(x)</span></span>
-<span><span class="co">##   for (cp_i_ in 1:1) {</span></span>
-<span><span class="co">##     cp_unit_[cp_i_] ~ dunif(0, 1)</span></span>
-<span><span class="co">##   }</span></span>
-<span><span class="co">##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span></span>
-<span><span class="co">##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)</span></span>
+<span><span class="co">##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x</span></span>
 <span><span class="co">##   cp_2 = max(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
@@ -192,16 +188,8 @@ Some unnecessary stuff is added to segment 1 just because it makes the
 code easier to generate. (<code>x[i_] &gt;= cp_0</code> when
 <code>cp_0</code> is the smallest value of <code>x</code> is, of course,
 always true).</p>
-<p>The section under <code># Change points</code> implements the default
-<code>dirichlet(1)</code> prior on the change points, which is the
-distribution of sorted uniform draws (uniform order statistics).
-<code>mcp</code> samples uniform draws on the unit interval,
-<code>cp_unit_</code>, sorts them, and scales them to the observed range
-of <span class="math inline">x</span>. Moving one change point therefore
-leaves the others in place. The unit interval suits JAGS’s slice
-sampler, whose step size starts at 1. Other
-<code>dirichlet(alpha)</code> priors are sampled as a sequential
-stick-breaking Beta chain (<code>cp_1_frac_</code> etc.).</p>
+<p>The section under <code># Change points</code> implements the priors
+on the change points, explained <a href="#change-point-priors">below</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="modeling-changes-in-slope">Modeling changes in slope<a class="anchor" aria-label="anchor" href="#modeling-changes-in-slope"></a>
@@ -232,11 +220,11 @@ spans:</p>
 \cdot \beta_{k,1} X_{k,i}</span></p>
 <p>Because each segment’s contribution stays constant beyond its change
 point (<span class="math inline">\beta_{k-1,1}(\tau_{k-1} -
-\tau_{k-2})</span>), joining needs no parameter constraints: earlier
-segments provide the starting value for later segments. The expected
-response on the response scale is <span class="math inline">\mu_i =
-g^{-1}(\eta_i)</span> via link function <span class="math inline">g(\mu_i) = \eta_i</span> (identity for Gaussian, so
-<span class="math inline">\mu_i = \eta_i</span>).</p>
+\tau_{k-2})</span>), joining needs no restrictions on the parameters:
+earlier segments provide the starting value for later segments. The
+expected response on the response scale is <span class="math inline">\mu_i = g^{-1}(\eta_i)</span> via link function
+<span class="math inline">g(\mu_i) = \eta_i</span> (identity for
+Gaussian, so <span class="math inline">\mu_i = \eta_i</span>).</p>
 <p>When a segment is <strong>disjoined</strong> (<code>~ 1 + x</code>),
 it introduces a new intercept <span class="math inline">\beta_{k,0}</span> at <span class="math inline">\tau_{k-1}</span>, and all earlier terms get the
 indicator <span class="math inline">[x_i &lt; \tau_{k-1}]</span> so they
@@ -275,11 +263,7 @@ there.</p>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(x)</span></span>
-<span><span class="co">##   for (cp_i_ in 1:1) {</span></span>
-<span><span class="co">##     cp_unit_[cp_i_] ~ dunif(0, 1)</span></span>
-<span><span class="co">##   }</span></span>
-<span><span class="co">##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span></span>
-<span><span class="co">##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)</span></span>
+<span><span class="co">##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x</span></span>
 <span><span class="co">##   cp_2 = max(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
@@ -321,6 +305,85 @@ multiplied by its activation indicator (e.g.,
 <p><code><a href="../reference/execute-mcp-model.html">fitted()</a></code>, <code><a href="../reference/execute-mcp-model.html">predict()</a></code>,
 <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, etc. evaluate the exact same formula in R. See
 <a href="#the-model-in-r">the model in R</a>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="change-point-priors">Change point priors<a class="anchor" aria-label="anchor" href="#change-point-priors"></a>
+</h2>
+<p>Each change point keeps its specified prior, but through
+order-restriction, the resulting “marginal” prior is different (see <a href="../articles/priors.html#cp_prior">Working with priors</a>). In
+JAGS, each change point is a node with its own prior, and one more line
+restricts them to ordered change points. With the default prior on two
+change points:</p>
+<pre><code><span><span class="va">cp_0</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="va">cp_1</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span><span class="op">(</span><span class="va">cp_0</span>, <span class="va">cp_3</span><span class="op">)</span></span>
+<span><span class="va">cp_2</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span><span class="op">(</span><span class="va">cp_0</span>, <span class="va">cp_3</span><span class="op">)</span></span>
+<span><span class="va">cp_3</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="va">cp_order_</span> <span class="op">~</span> <span class="fu">dbern</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/step.html" class="external-link">step</a></span><span class="op">(</span><span class="va">cp_2</span> <span class="op">-</span> <span class="va">cp_1</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Ordered change points</span></span></code></pre>
+<div class="section level3">
+<h3 id="ordering-cp_order_">Ordering: <code>cp_order_</code><a class="anchor" aria-label="anchor" href="#ordering-cp_order_"></a>
+</h3>
+<p><code>cp_order_</code> is not used anywhere else in the model. It
+works because <code>mcp</code> passes <code>cp_order_ = 1</code> as
+data, so JAGS treats it like an observed response. Just as
+<code>y[i_] ~ dnorm(...)</code> adds the likelihood of each data point,
+<code>cp_order_ ~ dbern(p)</code> multiplies the density by the
+probability of observing 1, which is <span class="math inline">p</span>.
+Here, <span class="math inline">p</span> =
+<code>step(cp_2 - cp_1)</code>, which is 1 if the change points are
+ordered and 0 otherwise. Unordered change points therefore have zero
+prior probability, and the sampler rejects them. This is sometimes
+called the “ones trick”. With three change points, the line is
+<code>cp_order_ ~ dbern(step(cp_2 - cp_1) * step(cp_3 - cp_2))</code>,
+and so on.</p>
+<p>A minimum segment length, e.g.,
+<code>cp_2 = "dunif(cp_1 + 20, max(x))"</code>, goes in the same line as
+<code>step(cp_2 - cp_1 - 20)</code>, while the node itself gets the
+observed range of <span class="math inline">x</span>:
+<code>cp_2 ~ dunif(cp_0, cp_3)</code>.</p>
+<p><code>cp_order_ = 1</code> is also passed as data for prior sampling
+(<code>sample = "prior"</code>), so prior draws are ordered too. If you
+write your own <code>jags_code</code> based on
+<code>fit$jags_code</code>, <code>mcp</code> passes
+<code>cp_order_ = 1</code> whenever the code contains
+<code>cp_order_ ~</code>. Without it, JAGS would sample
+<code>cp_order_</code> like any other unknown, and the ordering would
+silently disappear.</p>
+</div>
+<div class="section level3">
+<h3 id="dirichlet-weight-cp_weight_">Dirichlet weight: <code>cp_weight_</code><a class="anchor" aria-label="anchor" href="#dirichlet-weight-cp_weight_"></a>
+</h3>
+<p><code>dirichlet(alpha)</code> with <span class="math inline">\alpha
+&gt; 1</span> is the default prior multiplied by the weight <span class="math inline">\prod_k s_k^{\alpha - 1}</span>, where <span class="math inline">s_k</span> are the relative segment lengths (see <a href="../articles/default_priors.html#dirichlet">the math</a>).</p>
+<p>JAGS only lets you specify priors through its built-in distributions,
+so it cannot multiply a prior by an arbitrary factor directly. A
+standard workaround is the “zeros trick”: add an observed data point
+whose likelihood equals the factor. <code>mcp</code> passes
+<code>cp_weight_ = 0</code> as data and models it as
+<code>cp_weight_ ~ dpois(lambda)</code>. The probability of observing 0
+from a Poisson distribution is <span class="math inline">e^{-\lambda}</span>, so with <span class="math inline">\lambda = -(\alpha - 1) \sum_k \log s_k</span>, this
+likelihood is exactly the weight. Since <span class="math inline">s_k
+\le 1</span>, <span class="math inline">\lambda \ge 0</span> for any
+<span class="math inline">\alpha \ge 1</span>, as <code><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">dpois()</a></code>
+requires. This is also why <span class="math inline">\alpha &lt;
+1</span> is not supported. For example, <code>dirichlet(2)</code> on two
+change points adds this line:</p>
+<pre><code><span><span class="va">cp_weight_</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">dpois</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span> <span class="op">*</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="op">(</span><span class="va">cp_1</span> <span class="op">-</span> <span class="va">cp_0</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">cp_3</span> <span class="op">-</span> <span class="va">cp_0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="op">(</span><span class="va">cp_2</span> <span class="op">-</span> <span class="va">cp_1</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">cp_3</span> <span class="op">-</span> <span class="va">cp_0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="op">(</span><span class="va">cp_3</span> <span class="op">-</span> <span class="va">cp_2</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">cp_3</span> <span class="op">-</span> <span class="va">cp_0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre>
+<p>As with <code>cp_order_</code>, <code>cp_weight_</code> is observed
+data (0), and it weights the <code>cp_*</code> parameters only through
+its likelihood. Thus, <code>cp_weight_</code> is not “used” elsewhere in
+the JAGS code.</p>
+</div>
+<div class="section level3">
+<h3 id="initial-values">Initial values<a class="anchor" aria-label="anchor" href="#initial-values"></a>
+</h3>
+<p>The ordering must also hold for the initial values, or JAGS stops
+with “Observed node inconsistent with unobserved parents at
+initialization”. By default, all chains start at the same, equally
+spaced change points, moved the least possible to be inside the bounds
+of their priors, at least the minimum segment lengths apart, and ordered
+around fixed change points. User-supplied initial values for change
+points must be ordered.</p>
 </div>
 </div>
 <div class="section level2">
@@ -406,7 +469,7 @@ Here is what <code>mcp</code> samples, with segment widths <span class="math inl
 </table>
 <p>We will go through them one by one for this model with
 <code>x = 1:100</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>,  <span class="co"># x_1 = 17.5</span></span>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,</span>
@@ -417,7 +480,7 @@ Here is what <code>mcp</code> samples, with segment widths <span class="math inl
 <div class="section level3">
 <h3 id="segment-1-intercept-_mid_">Segment 1 intercept: <code>_mid_</code><a class="anchor" aria-label="anchor" href="#segment-1-intercept-_mid_"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># mcp_reparam = FALSE</span></span>
 <span><span class="va">Intercept_1</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">-</span> <span class="va">x_1</span> <span class="op">*</span> <span class="fl">1</span>, <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">2.4</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>  <span class="co"># JAGS uses dnorm(mean, precision) with precision = 1/SD^2. Here SD = 2.4</span></span>
 <span></span>
@@ -426,15 +489,15 @@ Here is what <code>mcp</code> samples, with segment widths <span class="math inl
 <span><span class="va">Intercept_1</span> <span class="op">=</span> <span class="va">Intercept_1_mid_</span> <span class="op">-</span> <span class="op">(</span><span class="va">x_1</span> <span class="op">*</span> <span class="op">(</span><span class="fl">17.5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">x_1</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">0.084</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p>JAGS samples the value of segment 1 at the fixed point <span class="math inline">c = \min(x) + (\max(x) - \min(x)) / (2K)</span>,
-which is the midpoint of segment 1 under the <code>dirichlet(1)</code>
-prior. Here, <span class="math inline">c = 1 + (100 - 1) / (2 \cdot 3) =
-17.5</span>. <code>Intercept_1</code> is derived from it. Like centering
-<span class="math inline">x</span> in ordinary regression, this makes
-the intercept and slope less correlated. In the plain model, the
-intercept is the value at <span class="math inline">x = 0</span>, which
-can be far from the data. Then every change in the slope must be met by
-a large opposite change in the intercept, and a sampler that updates one
-at a time moves in tiny steps.</p>
+which is the midpoint of segment 1 under the default prior on change
+points. Here, <span class="math inline">c = 1 + (100 - 1) / (2 \cdot 3)
+= 17.5</span>. <code>Intercept_1</code> is derived from it. Like
+centering <span class="math inline">x</span> in ordinary regression,
+this makes the intercept and slope less correlated. In the plain model,
+the intercept is the value at <span class="math inline">x = 0</span>,
+which can be far from the data. Then every change in the slope must be
+met by a large opposite change in the intercept, and a sampler that
+updates one at a time moves in tiny steps.</p>
 <p>This is the same model because <span class="math inline">u =
 \beta_{1,0} + \beta_{1,1} c</span> is a mere shift (<span class="math inline">a = \beta_{1,1} c</span>, <span class="math inline">b = 1</span>), so the prior on
 <code>Intercept_1</code> is unchanged. The prior on
@@ -445,7 +508,7 @@ in the prior mean. A shift moves bounds by <span class="math inline">a</span> to
 <div class="section level3">
 <h3 id="joined-slope-_end_">Joined slope: <code>_end_</code><a class="anchor" aria-label="anchor" href="#joined-slope-_end_"></a>
 </h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># mcp_reparam = FALSE</span></span>
 <span><span class="va">x_2</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">0.084</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>  <span class="co"># SD = 0.084</span></span>
 <span></span>
@@ -468,7 +531,7 @@ change points and the earlier coefficients are.</p>
 <div class="section level3">
 <h3 id="further-joined-x-terms-_rise_">Further joined x-terms: <code>_rise_</code><a class="anchor" aria-label="anchor" href="#further-joined-x-terms-_rise_"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># mcp_reparam = FALSE</span></span>
 <span><span class="va">xE2_2</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">0.00082</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>  <span class="co"># SD = 0.00082</span></span>
 <span></span>
@@ -488,7 +551,7 @@ w_k^2</span>), so the prior SD is scaled by <span class="math inline">w_k^2</spa
 <div class="section level3">
 <h3 id="disjoined-intercept-_end_">Disjoined intercept: <code>_end_</code><a class="anchor" aria-label="anchor" href="#disjoined-intercept-_end_"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># mcp_reparam = FALSE</span></span>
 <span><span class="va">Intercept_3</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">2.4</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>  <span class="co"># SD = 2.4</span></span>
 <span></span>
@@ -512,9 +575,9 @@ depend on <span class="math inline">\tau_2</span> at all.</p>
 <p><code>mcp</code> only reparameterizes its default
 <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">dnorm()</a></code> and <code><a href="https://rdrr.io/r/stats/TDist.html" class="external-link">dt()</a></code> priors, and for the segment-1
 intercept also truncated and <code><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif()</a></code> priors. User-specified
-priors are sampled unchanged, and so are coefficients in segments
-bounded by group-level change points, where the segment widths differ
-between groups.</p>
+priors are sampled unchanged, and so are coefficients in segments that
+start or end at group-level change points, where the segment widths
+differ between groups.</p>
 </div>
 </div>
 <div class="section level2">
@@ -526,7 +589,7 @@ between groups.</p>
 translated from the formula in <code>fit$jags_code</code>, so the two
 always agree. The translation drops the <code>[i_]</code> loop index
 because R evaluates all rows at once:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">mcp</span><span class="fu">:::</span><span class="fu">get_formula_r</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">.internal</span><span class="op">$</span><span class="va">formula_jags</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## # par_x local to each segment</span></span>
@@ -545,7 +608,7 @@ because R evaluates all rows at once:</p>
 likelihood, which is in <code>fit$family$r</code>, e.g.,
 <code>fit$family$r$log_lik</code> and <code>fit$family$r$rng</code>. To
 step through the R-side evaluation of a sampled fit, run:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/debug.html" class="external-link">debugonce</a></span><span class="op">(</span><span class="fu">mcp</span><span class="fu">:::</span><span class="va">evaluate_model_dpars</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><code>get_formula_r()</code> and <code>evaluate_model_dpars()</code>

@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Default priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/default_priors.Rmd" class="external-link"><code>vignettes/default_priors.Rmd</code></a></small>
       <div class="d-none name"><code>default_priors.Rmd</code></div>
@@ -112,20 +112,23 @@
     
 <p>This article documents the default priors in <code>mcp</code>. These
 are the priors used if you do not specify otherwise in
-<code>mcp(..., prior = list())</code>. See <a href="../articles/priors.html">Working with priors</a> for how to set
-your own priors and do prior predictive checks, and for the <a href="../articles/priors.html#cp_prior">default prior on change
-points</a>.</p>
+<code>mcp(..., prior = list())</code>.</p>
+<p>In short, <code>mcp</code> uses the conventional default priors of
+<code>rstanarm</code> for intercepts and coefficients and of
+<code>brms</code> for scale parameters, with <code>mcp</code>-specific
+defaults for change points and autocorrelation and a few <a href="#deviations">documented deviations</a>.</p>
+<p>See <a href="../articles/priors.html">Working with priors</a> for how
+to set your own priors and do prior predictive checks.</p>
 <div class="section level2">
 <h2 id="default-priors-on-regression-parameters">Default priors on regression parameters<a class="anchor" aria-label="anchor" href="#default-priors-on-regression-parameters"></a>
 </h2>
 <p><code>mcp</code> automatically assigns <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations" class="external-link">weakly
-informative</a> default priors to regression terms (<code>mu</code>,
-<code>sigma</code>, <code>shape</code>, <code>ar</code>,
-<code>ma</code>). They rule out absurd values while staying wide enough
-that the data dominate in most applications. They are designed for
-stable estimation and prediction. You can inspect all resolved priors
-for any fitted model using
-<code>prior_summary(fit, verbose = TRUE)</code>.</p>
+informative</a> default priors to the coefficients of all distributional
+parameters (<code>mu</code>, <code>sigma</code>, <code>shape</code>, and
+AR/MA). They rule out absurd values while staying wide enough that the
+data dominate in most applications. They are designed for stable
+estimation and prediction. You can inspect all resolved priors for any
+fitted model using <code>prior_summary(fit, verbose = TRUE)</code>.</p>
 <p>Priors for hypothesis tests should be informed by the problem at
 hand.</p>
 <p>The default priors follow three principles:</p>
@@ -308,7 +311,7 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <code>normal(0, 2.5 / sd(column))</code>
 </td>
 <td>
-<code>normal(0, 2.5) T(0, )</code>†</td>
+<code>normal(0, 2.5) T(0, )</code>**</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -325,7 +328,8 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <tr class="even">
 <td>
 <strong>Change points</strong> (<code>cp_i</code>)</td>
-<td><code>dirichlet(1)</code></td>
+<td>
+<code>uniform(min(x), max(x))</code>***</td>
 <td>—</td>
 <td><code>normal(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )</code></td>
 <td></td>
@@ -335,9 +339,84 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <p>* For <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>, these are <code>rstanarm</code>’s
 Gaussian defaults (see <a href="#deviations">deviations</a>), and the
 intercept is truncated <code>T(0, )</code>, or
-<code>T(-min(offset), )</code> with an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>. † Group
+<code>T(-min(offset), )</code> with an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>. ** Group
 SDs for slopes are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>. A blank
-precedent means that the default is <code>mcp</code>-specific; see <a href="#deviations">deviations</a>.</p>
+precedent means that the default is <code>mcp</code>-specific; see <a href="#deviations">deviations</a>. *** Ordered (<a href="#change-points">flat Dirichlet</a>)</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="change-points">Default prior on change points<a class="anchor" aria-label="anchor" href="#change-points"></a>
+</h2>
+<p>The default prior on change points is a flat Dirichlet prior on the
+segment lengths, also known as “uniform order statistics”. It treats any
+set of ordered change points within the observed range of <span class="math inline">x</span> as equally likely. Equivalently, the change
+points are distributed like sorted draws from <span class="math inline">\text{Uniform}(\min(x), \max(x))</span>. This is
+also how <code>fit$prior</code> and the JAGS code write it:
+<code>dunif(min(x), max(x))</code> on each change point, restricted to
+ordered change points. See <a href="../articles/priors.html#cp_prior">Working with priors</a> for how
+to set other priors on change points.</p>
+<p>With <span class="math inline">K</span> segments, i.e., <span class="math inline">K - 1</span> change points <span class="math inline">\tau_1 &lt; \dots &lt; \tau_{K-1}</span>, this prior
+has some nice properties:</p>
+<ul>
+<li>
+<p><strong>Beta marginals:</strong> Each change point has a beta
+prior, scaled to the observed range of <span class="math inline">x</span>:</p>
+<p><span class="math display">\frac{\tau_k - \min(x)}{\max(x) - \min(x)}
+\sim \text{Beta}(k, K - k)</span></p>
+<p>For 1 change point, this is <span class="math inline">\text{Beta}(1,
+1)</span>, i.e., <span class="math inline">\text{Uniform}(\min(x),
+\max(x))</span>. For 2 change points, <span class="math inline">\tau_1</span> and <span class="math inline">\tau_2</span> have scaled <span class="math inline">\text{Beta}(1, 2)</span> and <span class="math inline">\text{Beta}(2, 1)</span> priors.</p>
+</li>
+<li>
+<p><strong>Evenly spaced on average:</strong> The prior means
+are</p>
+<p><span class="math display">\mathbb{E}[\tau_k] = \min(x) + \frac{k}{K}
+(\max(x) - \min(x))</span></p>
+<p>For example, with 2 change points, the prior means are at 33% and 67%
+of the observed range of <span class="math inline">x</span>. With 5
+change points, they are at 16.7%, 33.3%, 50%, 66.7%, and 83.3%.</p>
+</li>
+<li><p><strong>Symmetry and flat sum:</strong> The prior is symmetric
+along <span class="math inline">x</span>, and the sum of the prior
+densities of all change points is uniform across the observed range of
+<span class="math inline">x</span>.</p></li>
+<li><p><strong>More change points, more informative:</strong> For a
+given range, adding change points makes the prior on each change point
+more informative because they are “squeezed” together.</p></li>
+</ul>
+<p>The plot below compares these theoretical beta marginals (black
+lines) with prior draws from <code>mcp</code> (red lines) for 2 and 5
+change points:</p>
+<p><img src="default_priors_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="672"></p>
+<div class="section level3">
+<h3 id="dirichlet">The Dirichlet prior on segment lengths<a class="anchor" aria-label="anchor" href="#dirichlet"></a>
+</h3>
+<p>The change points divide the observed range of <span class="math inline">x</span> into <span class="math inline">K</span>
+segments. Instead of a prior on each change point, one can place a prior
+on how the range is divided, i.e., on the relative segment lengths</p>
+<p><span class="math display">s_k = \frac{\tau_k - \tau_{k-1}}{\max(x) -
+\min(x)}, \qquad k = 1, \dots, K,</span></p>
+<p>with <span class="math inline">\tau_0 = \min(x)</span> and <span class="math inline">\tau_K = \max(x)</span>, the ends of the observed
+range. They are positive and sum to 1. The <a href="https://en.wikipedia.org/wiki/Dirichlet_distribution" class="external-link">Dirichlet
+distribution</a> is the standard prior for such proportions. It also
+underlies monotonic effects in <code>brms</code> (<a href="https://doi.org/10.1111/bmsp.12195" class="external-link">Bürkner &amp; Charpentier,
+2020</a>). The symmetric Dirichlet prior with concentration <span class="math inline">\alpha</span> has density</p>
+<p><span class="math display">p(s_1, \dots, s_K) \propto \prod_{k=1}^{K}
+s_k^{\alpha - 1}.</span></p>
+<p>With <span class="math inline">\alpha = 1</span>, the density is
+constant, so every division of the range into ordered segments is
+equally likely. This is <code>mcp</code>’s default prior. With <span class="math inline">\alpha &gt; 1</span>, divisions with short segments
+are less likely, favoring evenly spaced change points away from the ends
+of the observed range. The marginal priors generalize to</p>
+<p><span class="math display">\frac{\tau_k - \min(x)}{\max(x) - \min(x)}
+\sim \text{Beta}(k\alpha, (K - k)\alpha).</span></p>
+<p>The segment lengths are a linear function of the change points, so
+the same density applies to the ordered change points. For <span class="math inline">\alpha &gt; 1</span>, the prior is therefore the
+default prior multiplied by the factor <span class="math inline">\prod_k
+s_k^{\alpha - 1}</span>. This factor is 1 when all segments are equally
+long and approaches 0 when a segment becomes very short. See <a href="../articles/priors.html#cp_prior">Working with priors</a> for how
+to set <span class="math inline">\alpha</span> and <a href="../articles/implementation.html#change-point-priors">From formulas
+to sampler code</a> for how JAGS samples it, including why <span class="math inline">\alpha &lt; 1</span> is not supported.</p>
 </div>
 </div>
 <div class="section level2">
@@ -357,38 +436,39 @@ SD are on that parameter’s link scale (for example, effects inside
 <div class="section level3">
 <h3 id="group-level-change-points">Group-level change points<a class="anchor" aria-label="anchor" href="#group-level-change-points"></a>
 </h3>
-<p>Change-point effects use the same ordinary normal hierarchy, with
-additional range and within-group ordering constraints. Therefore,
-<code>cp_i_sd</code> is the SD of the normal distribution <strong>before
-truncation</strong> rather than the realized sample SD. See <a href="../articles/group_effects.html">group-level effects with mcp</a>
+<p>Change-point effects use the same ordinary normal hierarchy,
+additionally bounded by the observed range of <span class="math inline">x</span> and ordered within each group. Therefore,
+<code>cp_i_id_sd</code> is the SD of the normal distribution
+<strong>before truncation</strong> rather than the realized SD. See <a href="../articles/group_effects.html">group-level effects with mcp</a>
 for the model equation and practical interpretation.</p>
 <p>The default prior on the SD of group-level change points, e.g.,
 <code>cp_1_id_sd</code>, is <span class="math display">\text{Normal}\left(0, \frac{W}{4}\right) T(0, ),
 \qquad W = \frac{2 (\max(x) - \min(x))}{N + 1}</span> where <span class="math inline">N</span> is the number of change points. <span class="math inline">W</span> is the expected width of the interval in
 which a group’s change point can vary, i.e., between its two neighboring
-change points. Under the default <code>dirichlet(1)</code> prior,
-adjacent change points are on average <span class="math inline">(\max(x)
-- \min(x)) / (N + 1)</span> apart. With one change point, <span class="math inline">W</span> is the observed range of <span class="math inline">x</span>.</p>
+change points. Under the default prior, adjacent change points are on
+average <span class="math inline">(\max(x) - \min(x)) / (N + 1)</span>
+apart. With one change point, <span class="math inline">W</span> is the
+observed range of <span class="math inline">x</span>.</p>
 <p>The scale <span class="math inline">W / 4</span> is calibrated on the
 realized spread of the group-level change points rather than on
-<code>cp_i_sd</code> itself. Because group-level change points are
+<code>cp_i_id_sd</code> itself. Because group-level change points are
 truncated to an interval of width <span class="math inline">W</span>,
 their realized SD cannot exceed <span class="math inline">W /
 \sqrt{12}</span>, the SD of a uniform distribution on that interval.
-When <code>cp_i_sd</code> is larger than about <span class="math inline">W / 2</span>, the truncated normal is practically
+When <code>cp_i_id_sd</code> is larger than about <span class="math inline">W / 2</span>, the truncated normal is practically
 uniform, so the data carry little information to distinguish between
 larger values. With the default prior, the realized SD as a fraction of
 its maximum <span class="math inline">W / \sqrt{12}</span> is
 approximately uniform between 0 and 1 a priori (prior deciles: 0.10,
 0.20, 0.30, 0.39, 0.49, 0.59, 0.69, 0.79, 0.87; simulated with <span class="math inline">\text{cp}_i</span> uniform within the interval).
 This is similar to how the logit and probit intercept priors are
-(approximately) uniform on the probability scale <a href="#deviations">read more in this section</a>. Thus, a priori,
-group-level change points are exchangeable around the population change
-point, so groups with little information about their change point are
-pooled towards it.</p>
+(approximately) uniform on the probability scale (<a href="#deviations">read more</a>). Thus, a priori, group-level change
+points are exchangeable around the population-level change point, so
+groups with little information about their change point are pooled
+towards it.</p>
 <p>The prior is half-normal rather than the half-Student-t used for
 predictor group-level SDs. Because the data carry little information
-about large values of <code>cp_i_sd</code>, a heavy upper tail would
+about large values of <code>cp_i_id_sd</code>, a heavy upper tail would
 pass largely unchanged into the posterior. When adjacent change points
 both vary by group, the actual interval depends on the neighboring
 group-level change points, so <span class="math inline">W</span> is an
@@ -490,9 +570,8 @@ possible differences (<code>uniform(-1, 1)</code>), and slopes of
 priors to favor stationary and invertible dynamics, with modest changes
 across segments and predictors (<code>normal(0, 0.25)</code>).</p></li>
 <li><p><strong>Change points:</strong> <code>mcp</code>-specific, as
-described in <a href="../articles/priors.html#cp_prior">Working with
-priors</a>. The SDs of group-level change points have an
-<code>mcp</code>-specific prior, described <a href="#group-level-change-points">above</a>.</p></li>
+described <a href="#change-points">above</a>. The SDs of group-level
+change points have an <code>mcp</code>-specific prior, described <a href="#group-level-change-points">above</a>.</p></li>
 </ul>
 </div>
 <div class="section level2">

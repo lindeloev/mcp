@@ -9,43 +9,42 @@ status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/pa
 [![mcp CRAN
 downloads](https://cranlogs.r-pkg.org/badges/mcp)](https://cranlogs.r-pkg.org/badges/mcp)
 
-`mcp` is regression with multiple change points. At its simplest, it
-feels like [`lm()`](https://rdrr.io/r/stats/lm.html), but with one
-formula per segment. At its most flexible, it aims to be
-**[`brms`](https://paulbuerkner.com/brms/) for change points**: GLM
-families (Gaussian, binomial, Bernoulli, Poisson, negative binomial),
-group-level effects (random effects), AR/MA, and regression on
-distributional parameters (e.g., `sigma`, `shape`), all inferred with
-full Bayesian uncertainty, including the change points themselves.
+`mcp` is regression with multiple change points, inferring full Bayesian
+uncertainty for all parameters, including the change points themselves.
+At its simplest, it feels like [`lm()`](https://rdrr.io/r/stats/lm.html)
+with one formula per segment. At its most flexible, it aims to be
+[**`brms`**](https://paulbuerkner.com/brms/) **for change points**:
 
-You specify the number of change points and the form of each segment,
-making it easy to express expert knowledge or hypotheses. Compare
-alternatives with
-[`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
-Methods like
-[`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
-[`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
-[`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md),
-[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md),
-and
-[`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
-follow the conventions of [`brms`](https://paulbuerkner.com/brms/),
-[`rstanarm`](https://mc-stan.org/rstanarm/), and
-[`posterior`](https://mc-stan.org/posterior/articles/posterior.html),
-adapted to change point regression. Under the hood, `mcp` turns the
-formulas into [JAGS](https://sourceforge.net/projects/mcmc-jags/) code
-(see `fit$jags_code`).
+- *GLMM and distributional regression:* Gaussian, binomial, Bernoulli,
+  Poisson, and Negative Binomial families. Group-level (random) effects,
+  AR/MA, and regression on distributional parameters (e.g., `sigma`,
+  `shape`).
+
+- *Express expert knowledge:* Specify the number of change points, the
+  form of each segment, and constrain coefficients via priors. Compare
+  hypotheses using
+  [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+  and
+  [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md).
+
+- *Native feel:*
+  [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+  [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+  [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md),
+  and
+  [`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+  follow the conventions of [`brms`](https://paulbuerkner.com/brms/),
+  [`rstanarm`](https://mc-stan.org/rstanarm/), and
+  [`posterior`](https://mc-stan.org/posterior/articles/posterior.html),
+  adapted to change point regression. Inspect the sampled JAGS model in
+  `fit$jags_code`.
 
 `mcp` has [200+ academic
 citations](https://scholar.google.com/scholar?cites=5590697509718421309)
 across ecology, astronomy, neuroscience, epidemiology, and other
-disciplines. See applications in the citing literature.
-
-Change points are also called **switch points**, **break points**,
-**broken line** regression, **broken stick** regression, **bilinear**
-regression, **piecewise linear** regression, **local linear**
-regression, **segmented** regression, and (performance)
-**discontinuity** models. `mcp` aims to be useful for all of them.
+disciplines. You will find many aliases for change point regression in
+the literature, including piecewise linear, discontinuity, segmented,
+and broken stick regression.
 
 # Install
 
@@ -164,16 +163,16 @@ summary(fit)
 ## 
 ## Change point parameters:
 ##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  cp_1        31.70 1.777 28.31 35.259 1.00     3211     4153 30.0    OK
-##  cp_2        71.16 0.997 69.47 72.765 1.00     3792     6331 70.0    OK
+##  cp_1        31.67 1.789 28.37 35.278 1.00     3301     4250 30.0    OK
+##  cp_2        71.15 0.995 69.47 72.782 1.00     3649     6590 70.0    OK
 ## 
 ## Population-level parameters:
 ##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  Intercept_1  9.95 0.652  8.65 11.200 1.00     4613     6693 10.0    OK
-##  time_2       0.55 0.048  0.46  0.643 1.00     5251     6627  0.5    OK
-##  Intercept_3 13.94 1.333 11.32 16.585 1.00     2471     4562 15.0    OK
-##  time_3      -0.20 0.082 -0.37 -0.046 1.00     1300     2400 -0.3    OK
-##  sigma_1      3.86 0.281  3.35  4.452 1.00     4945     4456  3.5    OK
+##  Intercept_1  9.94 0.662  8.62 11.217 1.00     4835     6307 10.0    OK
+##  time_2       0.55 0.047  0.46  0.642 1.00     5165     6622  0.5    OK
+##  Intercept_3 13.95 1.334 11.36 16.574 1.00     2306     4675 15.0    OK
+##  time_3      -0.21 0.082 -0.37 -0.045 1.00     1287     2440 -0.3    OK
+##  sigma_1      3.87 0.279  3.36  4.463 1.00     4455     4623  3.5    OK
 ```
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -213,7 +212,9 @@ pp_check(fit) + ggtitle("Posterior Predictive check for change point regression"
 You can expect most generics from R, `posterior`, `tidybayes` to work on
 mcpfits. E.g., use `fitted(fit)` and `predict(fit)` to get fits and
 predictions for in-sample and out-of-sample data, use `as_draws(fit)` to
-get draws, etc.
+get draws (see
+[`?as_draws.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
+for all formats), etc.
 
 ## Tests and model comparison
 
@@ -222,7 +223,7 @@ We can test (joint) probabilities in the model using
 ([see more
 here](https://lindeloev.github.io/mcp/articles/comparison.html)). For
 example, what is the evidence (given priors) that the first change point
-(`cp_1`) is later than 25 against it being less than 25?
+(`cp_1`) is later than 30 against it being earlier than 30?
 
 ``` r
 
@@ -233,7 +234,7 @@ hypothesis(fit, "cp_1 > 30")
 ## # A tibble: 1 × 7
 ##   hypothesis     mean    sd lower upper  prob    BF
 ##   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 cp_1 - 30 > 0  1.70  1.78 -1.69  5.26 0.829  5.18
+## 1 cp_1 - 30 > 0  1.67  1.79 -1.63  5.28 0.826  4.92
 ```
 
 For model comparisons, we can fit a null model and compare the
@@ -269,7 +270,7 @@ loo::loo_compare(fit_loo, fit_null_loo)
 ``` R
 ##   model elpd_diff se_diff p_worse diag_diff diag_elpd
 ##  model1       0.0     0.0      NA                    
-##  model2     -58.1     9.0    1.00
+##  model2     -58.2     9.0    1.00
 ```
 
 # Highlights from in-depth guides
@@ -292,8 +293,8 @@ formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
   starts afresh. Use `same(z)` to reuse a coefficient from the preceding
   segment.
 
-- The change point model is basically an `ifelse` model with order
-  constraints on the change points.
+- The change point model is basically an `ifelse` model with ordered
+  change points.
 
 - Generate data for all supported models using `fit$simulate()`. See
   examples in, e.g., `mcp_example("demo")$example_code`.
@@ -342,8 +343,8 @@ effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 - Plot using `plot(fit, facet_by = "my_group")` and
   `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
 
-- Default priors bound group-specific change points relative to adjacent
-  population-level change points.
+- Group-specific change points are restricted to the observed range of
+  `x` and ordered within each group.
 
 Modeling
 [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and
@@ -380,25 +381,23 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
   `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
 
-- Default priors are weakly informative and follow `rstanarm` for
-  intercepts and coefficients and `brms` for scale parameters, with a
-  few [documented
+- Default priors are the weakly informative, conventional defaults of
+  `rstanarm` for intercepts and coefficients and of `brms` for scale
+  parameters, with a few [documented
   deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
 
-- The default prior on change points is `dirichlet(1)` (uniform order
-  statistics). For a single change point, this is the Beta(1, 1) /
-  uniform distribution over `[min(x), max(x)]`. For multiple change
-  points, it corresponds to a flat Dirichlet distribution over segment
-  lengths with equal spacing between change points. Informativeness
-  increases as the number of change points increases.
+- The default prior on change points is a flat Dirichlet prior on the
+  segment lengths ([read
+  more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
 
-- Fix parameters to specific values using `cp_1 = 45`. To share a
-  coefficient between segments, use `same()` in the model, e.g.,
+- Fix parameters to specific values using `cp_1 = 45`. To reuse a
+  coefficient in a later segment, use `same()` in the model, e.g.,
   `~ 0 + same(x)`.
 
 - Truncate priors using `T(lower, upper)`, e.g.,
-  `Intercept_1 = "dnorm(0, 1) T(0, )"`. `mcp` adds ordering bounds to
-  population-level change-point priors. Users can override these.
+  `Intercept_1 = "dnorm(0, 1) T(0, )"`. Change points are always
+  ordered. Set a minimum segment length using, e.g.,
+  `cp_2 = "dunif(cp_1 + 20, max(x))"`.
 
 - Do prior predictive checks using
   `mcp(model, data, sample = "prior") |> plot(prior = TRUE)`.
@@ -425,47 +424,7 @@ debugging](https://lindeloev.github.io/mcp/articles/tips.html)
 - Help convergence along using
   `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`.
 
-- Most errors will be caused by circularly defined priors.
-
-# Do more with the MCMC samples
-
-Use the `posterior` package generics to extract draws in any format:
-
-``` r
-
-library(posterior)
-library(tidybayes)
-
-as_draws_df(fit)    # draws_df (tidybayes-compatible)
-as_draws_array(fit) # draws array (iterations x chains x parameters)
-coda::as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
-spread_draws(as_draws_df(fit), cp_1, cp_2, Intercept_1)  # tidybayes
-```
-
-Get draws in a tidybayes-like format with `fitted(fit, summary = FALSE)`
-or `predict(fit, summary = FALSE)`. Same for `residuals(fit)` and
-`log_lik(fit)`.
-
-For example:
-
-``` r
-
-head(fitted(fit, summary = FALSE))  # column .epred
-```
-
-``` R
-## # A tibble: 6 × 14
-##   response  time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1
-##      <dbl> <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>
-## 1     12.2  76.3         1      1          1     1  31.4  70.5        9.78
-## 2     12.2  76.3         1      1          2     2  30.4  70.5        9.43
-## 3     12.2  76.3         1      1          3     3  31.6  72.6       10.3 
-## 4     12.2  76.3         1      1          4     4  31.0  71.1        9.59
-## 5     12.2  76.3         1      1          5     5  32.0  69.7       10.1 
-## 6     12.2  76.3         1      1          6     6  32.5  71.3       11.1 
-## # ℹ 5 more variables: time_2 <dbl>, Intercept_3 <dbl>, time_3 <dbl>,
-## #   sigma_1 <dbl>, .epred <dbl>
-```
+- Most errors stem from impossible or circularly defined priors.
 
 # Citation
 
@@ -488,7 +447,7 @@ into your reference manager:
 
 ## Fit and show mcpfit
 
-mcp() returns and `mcpfit`. These functions illuminate what this fit
+mcp() returns an `mcpfit`. These functions illuminate what this fit
 contains structurally.
 
 - [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) : Fit

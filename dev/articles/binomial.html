@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -155,7 +155,7 @@ we need to simulate data.</p>
 and 3.</li>
 <li>It takes two slopes (<code>year_*</code>), for segment 2 and 3.</li>
 <li>It takes two change points (<code>cp_*</code>) - one between each
-segment.</li>
+pair of adjacent segments.</li>
 </ul>
 <p><code>empty$simulate</code> is now a function that can predict data
 given these parameters (signature:
@@ -209,15 +209,15 @@ slopes are on a <code>logit</code> scale.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match</span></span>
-<span><span class="co">##  cp_1        1921.574 2.8273 1915.779 1926.87 1.00     3989     6561 1925.0    OK</span></span>
-<span><span class="co">##  cp_2        1974.274 0.7362 1972.243 1974.98 1.00     4105     2074 1975.0    OK</span></span>
+<span><span class="co">##  cp_1        1921.529 2.8467 1915.617 1926.82 1.00     3888     6842 1925.0    OK</span></span>
+<span><span class="co">##  cp_2        1974.270 0.8097 1972.185 1974.98 1.00     3462     1549 1975.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match</span></span>
-<span><span class="co">##  Intercept_1    2.177 0.1860    1.835    2.57 1.00     4732     6979    2.0    OK</span></span>
-<span><span class="co">##  year_2        -0.093 0.0066   -0.106   -0.08 1.00     8028    12552   -0.1    OK</span></span>
-<span><span class="co">##  Intercept_3   -0.769 0.2264   -1.252   -0.37 1.00     1657     2343   -0.5    OK</span></span>
-<span><span class="co">##  year_3         0.111 0.0102    0.092    0.13 1.00     1019     2242    0.1    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1    2.182 0.1869    1.837    2.58 1.00     4564     7680    2.0    OK</span></span>
+<span><span class="co">##  year_2        -0.093 0.0067   -0.107   -0.08 1.00     7275    11366   -0.1    OK</span></span>
+<span><span class="co">##  Intercept_3   -0.761 0.2342   -1.264   -0.36 1.00     1665     1643   -0.5    OK</span></span>
+<span><span class="co">##  year_3         0.110 0.0101    0.091    0.13 1.01     1125     2155    0.1    OK</span></span></code></pre>
 <p><code>summary</code> uses 95% central posterior intervals by default,
 but you can change it using <code>summary(fit, width = 0.80)</code>. If
 you have <a href="../articles/group_effects.html">group-level
@@ -227,10 +227,10 @@ discontinuities at the two change points:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
-<p>These lines are just <code>fit$simulate</code> applied to a random
-draw of the posterior samples. In other words, they represent the joint
-distribution of the parameters. You can change the number of draws
-(lines) using <code>plot(fit, lines = 50)</code>.</p>
+<p>These lines are just <code>fit$simulate</code> applied to random
+posterior draws. In other words, they represent the joint distribution
+of the parameters. You can change the number of draws (lines) using
+<code>plot(fit, lines = 50)</code>.</p>
 <p>Speaking of alternative visualizations, you can also plot this on the
 logit scale, where the linear trends are modeled:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -249,7 +249,7 @@ look at the posterior distributions and trace plots:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, npars <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p><img src="binomial_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="576"></p>
-<p>Convergence is perfect here as evidenced by the overlapping trace
+<p>Convergence looks good here as evidenced by the overlapping trace
 plots that look like fat caterpillars (Bayesians love fat caterpillars).
 Notice that the posterior distribution of change points can be quite
 non-normal and sometimes even bimodal. Therefore, one should be careful
@@ -277,20 +277,20 @@ so it ran with default priors:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span>  <span class="co"># Raw view</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># Richer view. Try adding verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">##             [,1]                            </span></span>
-<span><span class="co">## cp_1        "dirichlet(1)"                  </span></span>
-<span><span class="co">## cp_2        "dirichlet(1)"                  </span></span>
+<span><span class="co">## cp_1        "dunif(cp_0, cp_3)"             </span></span>
+<span><span class="co">## cp_2        "dunif(cp_0, cp_3)"             </span></span>
 <span><span class="co">## Intercept_1 "dnorm(0, 1.5)"                 </span></span>
 <span><span class="co">## year_2      "dnorm(0, 0.043121968093205169)"</span></span>
 <span><span class="co">## Intercept_3 "dnorm(0, 1.5)"                 </span></span>
 <span><span class="co">## year_3      "dnorm(0, 0.043121968093205169)"</span></span>
 <span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                           bounds           </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)            [min(year), cp_2]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)            [cp_1, max(year)]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    normal(mean = 0, sd = 0.043122) none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none             </span></span>
+<span><span class="co">##   parameter   segment dpar  prior                           bounds               </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 1901, max = 2020) [1901, 2020], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    uniform(min = 1901, max = 2020) [1901, 2020], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    normal(mean = 0, sd = 0.043122) none                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none                 </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    normal(mean = 0, sd = 0.043122) none</span></span></code></pre>
 <p>The priors on change points are discussed extensively in the <a href="../articles/priors.html#cp_prior">prior article</a>. With the
 default logit link, intercepts use <code>dnorm(0, 1.5)</code>, which is
@@ -325,15 +325,10 @@ to probabilities.</p>
 <p><img src="binomial_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.</p>
-<p>Coefficients and categorical contrasts are autoscaled as in
-<code>rstanarm</code>: <code>dnorm(0, 1.5 / sd(column))</code> for logit
-links and <code>dnorm(0, 1 / sd(column))</code> for probit links, where
-<code>sd(column)</code> is the SD of the coefficient’s model-matrix
-column, including the 0/1 dummies of factors. For <a href="../articles/formulas.html#how-segments-connect">x-terms</a> such
-as <code>x</code> and <code>state:x</code> (with <code>x</code> as the
-change-point variable), this is <code>sd(x)</code> over all data, so
-slope priors do not depend on the number of change points. Powers such
-as <code>I(x^2)</code> use <code>sd((x - min(x))^2)</code>.</p>
+<p>Coefficients and categorical contrasts use the same scales, <a href="../articles/default_priors.html#default-priors-on-regression-parameters">autoscaled
+as in <code>rstanarm</code></a>: <code>dnorm(0, 1.5 / sd(column))</code>
+for logit links and <code>dnorm(0, 1 / sd(column))</code> for probit
+links.</p>
 </div>
 <div class="section level2">
 <h2 id="jags-code">JAGS code<a class="anchor" aria-label="anchor" href="#jags-code"></a>
@@ -344,13 +339,10 @@ as <code>I(x^2)</code> use <code>sd((x - min(x))^2)</code>.</p>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(year)</span></span>
-<span><span class="co">##   for (cp_i_ in 1:2) {</span></span>
-<span><span class="co">##     cp_unit_[cp_i_] ~ dunif(0, 1)</span></span>
-<span><span class="co">##   }</span></span>
-<span><span class="co">##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span></span>
-<span><span class="co">##   cp_1 = cp_0 + cp_sorted_[1] * (cp_3 - cp_0)</span></span>
-<span><span class="co">##   cp_2 = cp_0 + cp_sorted_[2] * (cp_3 - cp_0)</span></span>
+<span><span class="co">##   cp_1 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths</span></span>
+<span><span class="co">##   cp_2 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths</span></span>
 <span><span class="co">##   cp_3 = max(year)</span></span>
+<span><span class="co">##   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
 <span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale</span></span>

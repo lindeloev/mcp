@@ -118,6 +118,6 @@ loo2 = loo(fit2)
 loo_compare(loo1, loo2)
 #>   model elpd_diff se_diff p_worse diag_diff diag_elpd
 #>  model1       0.0     0.0      NA                    
-#>  model2    -133.8     8.2    1.00                    
+#>  model2    -133.8     8.1    1.00                    
 # }
 ```

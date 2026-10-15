@@ -62,9 +62,9 @@ Let us see the two intercepts (lambda in log-units) and the change point
 result = summary(fit)
 ```
 
-We can see that the model ran well with good convergence and a large
-number of effective samples. At a first glance, the change point is
-estimated to lie between the years 1886 and 1896 (95% interval).
+We can see that the model ran well with good convergence and large
+effective sample sizes. At a first glance, the change point is estimated
+to lie between the years 1886 and 1897 (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 
@@ -101,8 +101,8 @@ priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter \lambda. \lambda has the nice property
 of being the mean number of events. So we see that the mean number of
-events in segment 1 is `exp(result$mean[2])` (3.1029864) and it is
-`exp(result$mean[3])` (0.9154709) for segment 2.
+events in segment 1 is `exp(result$mean[2])` (3.0978228) and it is
+`exp(result$mean[3])` (0.9135371) for segment 2.
 
 The intercept prior is a normal distribution centered on the rounded
 median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale
@@ -110,16 +110,12 @@ equal to the maximum of 2.5 and its rounded MAD. Replacing zeros keeps
 the log finite and the minimum scale avoids an accidentally narrow
 prior.
 
-Categorical contrasts use `dnorm(0, 2.5)`; numeric coefficients use
-`dnorm(0, 2.5 / S)` scaled to a representative predictor change S. Group
-standard deviations similarly default to half-normal priors
-(`dnorm(0, ...) T(0, )`). Following the precedent of `rstanarm`, these
-normal defaults retain wide regularizing coverage while avoiding the
-infinite prior expected counts and explosive simulations produced by
-Student-t tails under exponentiation (used in some packages). See
-overview of [similarities and deviations from `rstanarm` and
-`brms`](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviations)
-for log links.
+Coefficients are [autoscaled as in
+`rstanarm`](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#default-priors-on-regression-parameters),
+e.g., `dnorm(0, 2.5 / sd(column))`, and group-level SDs default to
+half-normal priors. These normal priors avoid the infinite expected
+counts that heavier Student-t tails imply under the log link ([read
+more](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#deviations)).
 
 ``` r
 
@@ -127,11 +123,11 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 3 × 5
-    ##   parameter   segment dpar  prior                      bounds                
-    ##   <chr>         <int> <chr> <chr>                      <chr>                 
-    ## 1 cp_1              2 NA    dirichlet(alpha = 1)       [min(date), max(date)]
-    ## 2 Intercept_1       1 mu    normal(mean = 0, sd = 2.5) none                  
-    ## 3 Intercept_2       2 mu    normal(mean = 0, sd = 2.5) none
+    ##   parameter   segment dpar  prior                           bounds               
+    ##   <chr>         <int> <chr> <chr>                           <chr>                
+    ## 1 cp_1              2 NA    uniform(min = 1851, max = 1962) [1851, 1962], ordered
+    ## 2 Intercept_1       1 mu    normal(mean = 0, sd = 2.5)      none                 
+    ## 3 Intercept_2       2 mu    normal(mean = 0, sd = 2.5)      none
 
 As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
@@ -161,12 +157,11 @@ strong overdispersion and the large-shape Poisson limit.
 
 An explicit `shape()` formula models log-shape. Harmonizing with
 log-mean coefficients, its intercept and contrasts default to
-`dnorm(0, 2.5)` and numeric coefficients to `dnorm(0, 2.5 / S)` scaled
-to predictor change S (group SDs default to `dnorm(0, ...) T(0, )`).
-Where `brms` uses flat coefficients and a Student-t intercept, `mcp`
-uses proper normal priors to avoid heavy tails that pull shape toward
-extreme overdispersion. Shape regression can be weakly identified, so
-informed priors may be useful.
+`dnorm(0, 2.5)` and slopes to `dnorm(0, 2.5 / sd(column))` (group SDs
+default to `dnorm(0, ...) T(0, )`). Where `brms` uses flat coefficients
+and a Student-t intercept, `mcp` uses proper normal priors to avoid
+heavy tails that pull shape toward extreme overdispersion. Shape
+regression can be weakly identified, so informed priors may be useful.
 
 ## Modeling rates using `offset()`
 
@@ -205,8 +200,9 @@ at 2.5.
 
 Despite the popularity of this dataset, a question rarely asked is what
 the evidence is that there is a change point at all. Let us fit two
-no-changepoint models and use approximate leave-one-out cross-validation
-to see how the predictive performance of the two models compare.
+models without change points and use approximate leave-one-out
+cross-validation to see how the predictive performance of the two models
+compare.
 
 A flat model and a one-decay model. The intercept in `mcp` is at
 `date = 0`, far from the data, so we measure the decay from the first
@@ -252,7 +248,7 @@ loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 
     ##   model elpd_diff se_diff p_worse       diag_diff      diag_elpd
     ##  model1       0.0     0.0      NA                 4 k_psis > 0.7
-    ##  model3      -3.3     3.6    0.82 |elpd_diff| < 4               
+    ##  model3      -3.2     3.6    0.82 |elpd_diff| < 4               
     ##  model2     -32.9     8.3    1.00
 
 The flat model is clearly worse, with `elpd_diff / se_diff` around 4, so
@@ -273,9 +269,9 @@ loo::loo_model_weights(loo_list, method="pseudobma")
     ## Method: pseudo-BMA+ with Bayesian bootstrap
     ## ------
     ##        weight
-    ## model1 0.800 
+    ## model1 0.794 
     ## model2 0.000 
-    ## model3 0.200
+    ## model3 0.206
 
 Again, the change point model is preferred and the weights show the same
 ranking as implied by `loo_compare`, but the decay model retains a
@@ -293,11 +289,7 @@ fit$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(date)
-    ##   for (cp_i_ in 1:1) {
-    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
-    ##   }
-    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)
+    ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of date
     ##   cp_2 = max(date)
     ## 
     ##   # Priors for population-level effects

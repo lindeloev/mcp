@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -155,9 +155,9 @@ intercepts. This is very simple to do in <code>mcp</code>:</p>
 point (in years):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">=</span> <span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p>We can see that the model ran well with good convergence and a large
-number of effective samples. At a first glance, the change point is
-estimated to lie between the years 1886 and 1896 (95% interval).</p>
+<p>We can see that the model ran well with good convergence and large
+effective sample sizes. At a first glance, the change point is estimated
+to lie between the years 1886 and 1897 (95% interval).</p>
 <p>Let us take a more direct look, using the default <code>mcp</code>
 plot:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -184,32 +184,26 @@ overview of all default priors</a></em></p>
 that we have to exponentiate the estimates to get the “raw” Poisson
 parameter <span class="math inline">\lambda</span>. <span class="math inline">\lambda</span> has the nice property of being the
 mean number of events. So we see that the mean number of events in
-segment 1 is <code>exp(result$mean[2])</code> (3.1029864) and it is
-<code>exp(result$mean[3])</code> (0.9154709) for segment 2.</p>
+segment 1 is <code>exp(result$mean[2])</code> (3.0978228) and it is
+<code>exp(result$mean[3])</code> (0.9135371) for segment 2.</p>
 <p>The intercept prior is a normal distribution centered on the rounded
 median of <code>log(n)</code>, with zeros replaced by 0.1 (as in
 <code>brms</code>), and scale equal to the maximum of 2.5 and its
 rounded MAD. Replacing zeros keeps the log finite and the minimum scale
 avoids an accidentally narrow prior.</p>
-<p>Categorical contrasts use <code>dnorm(0, 2.5)</code>; numeric
-coefficients use <code>dnorm(0, 2.5 / S)</code> scaled to a
-representative predictor change <span class="math inline">S</span>.
-Group standard deviations similarly default to half-normal priors
-(<code>dnorm(0, ...) T(0, )</code>). Following the precedent of
-<code>rstanarm</code>, these normal defaults retain wide regularizing
-coverage while avoiding the infinite prior expected counts and explosive
-simulations produced by Student-t tails under exponentiation (used in
-some packages). See overview of <a href="../articles/default_priors.html#deviations">similarities and
-deviations from <code>rstanarm</code> and <code>brms</code></a> for log
-links.</p>
+<p>Coefficients are <a href="../articles/default_priors.html#default-priors-on-regression-parameters">autoscaled
+as in <code>rstanarm</code></a>, e.g.,
+<code>dnorm(0, 2.5 / sd(column))</code>, and group-level SDs default to
+half-normal priors. These normal priors avoid the infinite expected
+counts that heavier Student-t tails imply under the log link (<a href="../articles/default_priors.html#deviations">read more</a>).</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                      bounds                </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dirichlet(alpha = 1)       [min(date), max(date)]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    normal(mean = 0, sd = 2.5) none                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    normal(mean = 0, sd = 2.5) none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                           bounds               </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 1851, max = 1962) [1851, 1962], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    normal(mean = 0, sd = 2.5)      none                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_2       2 mu    normal(mean = 0, sd = 2.5)      none</span></span></code></pre>
 <p>As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
 so update them with more informed priors for your particular case when
@@ -235,8 +229,8 @@ possible, e.g.:</p>
 large-shape Poisson limit.</p>
 <p>An explicit <code>shape()</code> formula models log-shape.
 Harmonizing with log-mean coefficients, its intercept and contrasts
-default to <code>dnorm(0, 2.5)</code> and numeric coefficients to
-<code>dnorm(0, 2.5 / S)</code> scaled to predictor change <span class="math inline">S</span> (group SDs default to
+default to <code>dnorm(0, 2.5)</code> and slopes to
+<code>dnorm(0, 2.5 / sd(column))</code> (group SDs default to
 <code>dnorm(0, ...) T(0, )</code>). Where <code>brms</code> uses flat
 coefficients and a Student-t intercept, <code>mcp</code> uses proper
 normal priors to avoid heavy tails that pull shape toward extreme
@@ -282,8 +276,9 @@ t_i</span>, using <code>offset(log(delta_t))</code> is valid.</p>
 </h2>
 <p>Despite the popularity of this dataset, a question rarely asked is
 what the evidence is that there is a change point at all. Let us fit two
-no-changepoint models and use approximate leave-one-out cross-validation
-to see how the predictive performance of the two models compare.</p>
+models without change points and use approximate leave-one-out
+cross-validation to see how the predictive performance of the two models
+compare.</p>
 <p>A flat model and a one-decay model. The intercept in <code>mcp</code>
 is at <code>date = 0</code>, far from the data, so we measure the decay
 from the first year (<code>I(date - 1851)</code>) to reduce the
@@ -312,7 +307,7 @@ sampling:</p>
 <span><span class="co">## or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre>
 <pre><code><span><span class="co">##   model elpd_diff se_diff p_worse       diag_diff      diag_elpd</span></span>
 <span><span class="co">##  model1       0.0     0.0      NA                 4 k_psis &gt; 0.7</span></span>
-<span><span class="co">##  model3      -3.3     3.6    0.82 |elpd_diff| &lt; 4               </span></span>
+<span><span class="co">##  model3      -3.2     3.6    0.82 |elpd_diff| &lt; 4               </span></span>
 <span><span class="co">##  model2     -32.9     8.3    1.00</span></span></code></pre>
 <p>The flat model is clearly worse, with
 <code>elpd_diff / se_diff</code> around 4, so the disaster rate did
@@ -329,9 +324,9 @@ Another approach is to look at the model weights:</p>
 <pre><code><span><span class="co">## Method: pseudo-BMA+ with Bayesian bootstrap</span></span>
 <span><span class="co">## ------</span></span>
 <span><span class="co">##        weight</span></span>
-<span><span class="co">## model1 0.800 </span></span>
+<span><span class="co">## model1 0.794 </span></span>
 <span><span class="co">## model2 0.000 </span></span>
-<span><span class="co">## model3 0.200</span></span></code></pre>
+<span><span class="co">## model3 0.206</span></span></code></pre>
 <p>Again, the change point model is preferred and the weights show the
 same ranking as implied by <code>loo_compare</code>, but the decay model
 retains a non-negligible weight.</p>
@@ -346,11 +341,7 @@ above.</p>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(date)</span></span>
-<span><span class="co">##   for (cp_i_ in 1:1) {</span></span>
-<span><span class="co">##     cp_unit_[cp_i_] ~ dunif(0, 1)</span></span>
-<span><span class="co">##   }</span></span>
-<span><span class="co">##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span></span>
-<span><span class="co">##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)</span></span>
+<span><span class="co">##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of date</span></span>
 <span><span class="co">##   cp_2 = max(date)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>

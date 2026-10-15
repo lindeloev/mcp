@@ -54,7 +54,8 @@ mcp_pars(empty)
 
 - It takes two intercepts (`Intercept_*`), for segments 1 and 3.
 - It takes two slopes (`year_*`), for segment 2 and 3.
-- It takes two change points (`cp_*`) - one between each segment.
+- It takes two change points (`cp_*`) - one between each pair of
+  adjacent segments.
 
 `empty$simulate` is now a function that can predict data given these
 parameters (signature: `empty$simulate(fit, newdata, ...)`). If you are
@@ -124,15 +125,15 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match
-    ##  cp_1        1921.574 2.8273 1915.779 1926.87 1.00     3989     6561 1925.0    OK
-    ##  cp_2        1974.274 0.7362 1972.243 1974.98 1.00     4105     2074 1975.0    OK
+    ##  cp_1        1921.529 2.8467 1915.617 1926.82 1.00     3888     6842 1925.0    OK
+    ##  cp_2        1974.270 0.8097 1972.185 1974.98 1.00     3462     1549 1975.0    OK
     ## 
     ## Population-level parameters:
     ##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match
-    ##  Intercept_1    2.177 0.1860    1.835    2.57 1.00     4732     6979    2.0    OK
-    ##  year_2        -0.093 0.0066   -0.106   -0.08 1.00     8028    12552   -0.1    OK
-    ##  Intercept_3   -0.769 0.2264   -1.252   -0.37 1.00     1657     2343   -0.5    OK
-    ##  year_3         0.111 0.0102    0.092    0.13 1.00     1019     2242    0.1    OK
+    ##  Intercept_1    2.182 0.1869    1.837    2.58 1.00     4564     7680    2.0    OK
+    ##  year_2        -0.093 0.0067   -0.107   -0.08 1.00     7275    11366   -0.1    OK
+    ##  Intercept_3   -0.761 0.2342   -1.264   -0.36 1.00     1665     1643   -0.5    OK
+    ##  year_3         0.110 0.0101    0.091    0.13 1.01     1125     2155    0.1    OK
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
@@ -149,9 +150,9 @@ plot(fit)
 
 ![](binomial_files/figure-html/unnamed-chunk-9-1.png)
 
-These lines are just `fit$simulate` applied to a random draw of the
-posterior samples. In other words, they represent the joint distribution
-of the parameters. You can change the number of draws (lines) using
+These lines are just `fit$simulate` applied to random posterior draws.
+In other words, they represent the joint distribution of the parameters.
+You can change the number of draws (lines) using
 `plot(fit, lines = 50)`.
 
 Speaking of alternative visualizations, you can also plot this on the
@@ -183,7 +184,7 @@ plot_pars(fit, npars = NULL)
 
 ![](binomial_files/figure-html/unnamed-chunk-11-1.png)
 
-Convergence is perfect here as evidenced by the overlapping trace plots
+Convergence looks good here as evidenced by the overlapping trace plots
 that look like fat caterpillars (Bayesians love fat caterpillars).
 Notice that the posterior distribution of change points can be quite
 non-normal and sometimes even bimodal. Therefore, one should be careful
@@ -218,20 +219,20 @@ prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
     ##             [,1]                            
-    ## cp_1        "dirichlet(1)"                  
-    ## cp_2        "dirichlet(1)"                  
+    ## cp_1        "dunif(cp_0, cp_3)"             
+    ## cp_2        "dunif(cp_0, cp_3)"             
     ## Intercept_1 "dnorm(0, 1.5)"                 
     ## year_2      "dnorm(0, 0.043121968093205169)"
     ## Intercept_3 "dnorm(0, 1.5)"                 
     ## year_3      "dnorm(0, 0.043121968093205169)"
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                           bounds           
-    ##   <chr>         <int> <chr> <chr>                           <chr>            
-    ## 1 cp_1              2 NA    dirichlet(alpha = 1)            [min(year), cp_2]
-    ## 2 cp_2              3 NA    dirichlet(alpha = 1)            [cp_1, max(year)]
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none             
-    ## 4 year_2            2 mu    normal(mean = 0, sd = 0.043122) none             
-    ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none             
+    ##   parameter   segment dpar  prior                           bounds               
+    ##   <chr>         <int> <chr> <chr>                           <chr>                
+    ## 1 cp_1              2 NA    uniform(min = 1901, max = 2020) [1901, 2020], ordered
+    ## 2 cp_2              3 NA    uniform(min = 1901, max = 2020) [1901, 2020], ordered
+    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none                 
+    ## 4 year_2            2 mu    normal(mean = 0, sd = 0.043122) none                 
+    ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none                 
     ## 6 year_3            3 mu    normal(mean = 0, sd = 0.043122) none
 
 The priors on change points are discussed extensively in the [prior
@@ -273,15 +274,11 @@ ggplot(data.frame(logits = 0), aes(x = logits)) +
 Please keep in mind that when these priors combine through the model,
 the joint probability may be quite different.
 
-Coefficients and categorical contrasts are autoscaled as in `rstanarm`:
+Coefficients and categorical contrasts use the same scales, [autoscaled
+as in
+`rstanarm`](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#default-priors-on-regression-parameters):
 `dnorm(0, 1.5 / sd(column))` for logit links and
-`dnorm(0, 1 / sd(column))` for probit links, where `sd(column)` is the
-SD of the coefficient’s model-matrix column, including the 0/1 dummies
-of factors. For
-[x-terms](https://lindeloev.github.io/mcp/dev/articles/formulas.html#how-segments-connect)
-such as `x` and `state:x` (with `x` as the change-point variable), this
-is `sd(x)` over all data, so slope priors do not depend on the number of
-change points. Powers such as `I(x^2)` use `sd((x - min(x))^2)`.
+`dnorm(0, 1 / sd(column))` for probit links.
 
 ## JAGS code
 
@@ -295,13 +292,10 @@ fit$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(year)
-    ##   for (cp_i_ in 1:2) {
-    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
-    ##   }
-    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_3 - cp_0)
-    ##   cp_2 = cp_0 + cp_sorted_[2] * (cp_3 - cp_0)
+    ##   cp_1 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
+    ##   cp_2 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
     ##   cp_3 = max(year)
+    ##   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points
     ## 
     ##   # Priors for population-level effects
     ##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale

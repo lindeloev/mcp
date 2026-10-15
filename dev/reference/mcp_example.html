@@ -176,7 +176,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Illustrative plot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> if (plot) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   set.seed(42)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit) + ggplot2::labs(title = 'fit = mcp_example("multiple"); plot(fit)'))</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Without sampling</span></span></span>
@@ -202,7 +202,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> set.seed(42)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data = data.frame(</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   x = 1:100,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   N = base::sample(15, 25, replace=TRUE),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   N = base::sample(15:25, 100, replace=TRUE),</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   y = 0.  # Numeric placeholder that is valid for every sampled trial count.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> empty = mcp(model, data, family = binomial(), sample = FALSE)</span>
@@ -221,7 +221,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Illustrative plot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> if (plot) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   set.seed(42)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, q_fit = TRUE)'))</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Now sample this model</span></span></span>

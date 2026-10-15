@@ -458,31 +458,31 @@ fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses f
 #>       y     x state .mean   .sd .lower .upper
 #>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
 #> 1    NA     8 B      35.4 1.09    33.2   37.5
-#> 2    NA    19 A      15.5 0.831   13.9   17.1
-#> 3    NA    27 A      17.1 0.758   15.6   18.6
+#> 2    NA    19 A      15.5 0.833   13.8   17.1
+#> 3    NA    27 A      17.1 0.759   15.6   18.6
 #> 4    NA    28 B      39.4 0.758   37.9   40.9
-#> 5    NA    29 A      17.5 0.758   16.0   19.0
-#> 6    NA    30 B      39.8 0.759   38.3   41.3
+#> 5    NA    29 A      17.5 0.759   16.0   19.0
+#> 6    NA    30 B      39.8 0.760   38.3   41.3
 fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 #> # A tibble: 6 × 14
 #>       y     x state .data_row .chain .iteration .draw  cp_1 Intercept_1   x_1
 #>   <dbl> <int> <fct>     <int>  <int>      <int> <int> <dbl>       <dbl> <dbl>
-#> 1    NA     8 B             8      1          1     1  57.9        11.1 0.192
-#> 2    NA     8 B             8      1          2     2  59.6        10.7 0.203
-#> 3    NA     8 B             8      1          3     3  55.9        12.4 0.175
-#> 4    NA     8 B             8      1          4     4  57.0        10.9 0.209
-#> 5    NA     8 B             8      1          5     5  59.4        11.7 0.176
-#> 6    NA     8 B             8      1          6     6  56.9        12.9 0.138
+#> 1    NA     8 B             8      1          1     1  54.1        12.9 0.202
+#> 2    NA     8 B             8      1          2     2  54.1        11.8 0.204
+#> 3    NA     8 B             8      1          3     3  57.7        11.7 0.183
+#> 4    NA     8 B             8      1          4     4  61.1        13.0 0.177
+#> 5    NA     8 B             8      1          5     5  57.9        13.7 0.160
+#> 6    NA     8 B             8      1          6     6  58.0        11.0 0.242
 #> # ℹ 4 more variables: stateB_1 <dbl>, x_2 <dbl>, sigma_1 <dbl>, .epred <dbl>
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #> # A tibble: 6 × 7
 #>       y     x state .mean   .sd .lower .upper
 #>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    NA     8 B      35.4  4.41  26.7    44.1
-#> 2    NA    19 A      15.5  4.39   6.95   24.1
-#> 3    NA    27 A      17.1  4.39   8.56   25.7
-#> 4    NA    28 B      39.4  4.32  30.8    47.9
-#> 5    NA    29 A      17.5  4.36   8.96   26.1
+#> 1    NA     8 B      35.4  4.40  26.7    44.1
+#> 2    NA    19 A      15.5  4.36   6.93   24.1
+#> 3    NA    27 A      17.0  4.38   8.55   25.6
+#> 4    NA    28 B      39.4  4.31  30.8    47.9
+#> 5    NA    29 A      17.5  4.34   8.95   26.0
 #> 6    NA    30 B      39.7  4.38  31.2    48.3
 # }
 ```

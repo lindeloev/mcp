@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Variance change points and other distributional parameters</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/dpar.Rmd" class="external-link"><code>vignettes/dpar.Rmd</code></a></small>
       <div class="d-none name"><code>dpar.Rmd</code></div>
@@ -146,8 +146,7 @@ formulas <a href="../articles/formulas.html">here</a>.</p>
 <code>dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )</code> directly on the
 residual SD, i.e., an <strong>identity link</strong>. The
 response-calibrated scale adapts to the units of <code>y</code>, with a
-minimum of 2.5 to avoid an accidentally narrow prior. This matches
-<code>brms</code>.</p>
+minimum of 2.5 to avoid an accidentally narrow prior.</p>
 <p>With an explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formula, the intercept instead
 defaults to <code>dt(0, 2.5, 3)</code> on <strong>log-SD</strong>, as in
 <code>brms</code>. Contrasts use the same prior, and slopes are scaled
@@ -211,13 +210,13 @@ because <code>sigma</code> is required by the likelihood.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##          parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  cp_1              49.7 1.64  46.1  52.2 1.00     3277     3827 50.0    OK</span></span>
+<span><span class="co">##  cp_1              49.7 1.74  45.9  52.3 1.00     2726     3031 50.0    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##          parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1       20.1 0.82  18.5  21.7 1.00     7972     8574 20.0    OK</span></span>
-<span><span class="co">##  sigma_Intercept_1  1.8 0.11   1.6   2.0 1.00     4639     4599  1.6    OK</span></span>
-<span><span class="co">##  sigma_Intercept_2  2.9 0.10   2.7   3.1 1.00     5458     5230  3.0    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1       20.1 0.82  18.5  21.7 1.00     8008     8485 20.0    OK</span></span>
+<span><span class="co">##  sigma_Intercept_1  1.8 0.11   1.6   2.0 1.00     4318     4062  1.6    OK</span></span>
+<span><span class="co">##  sigma_Intercept_2  2.9 0.10   2.7   3.1 1.00     5201     5277  3.0    OK</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="advanced-example">Advanced example<a class="anchor" aria-label="anchor" href="#advanced-example"></a>
@@ -244,7 +243,7 @@ demonstrates that flexibility:</p>
 <li>
 <code>same(x)</code> ensures that the mean slope remains constant
 between segment 3 and 4. So only <code>sigma</code> changes there.
-Sharing the slope effectively removes the change point in the mean (read
+Reusing the slope effectively removes the change point in the mean (read
 more about <a href="../articles/formulas.html">formulas in
 mcp</a>).</li>
 <li>Segment 4: <code>sigma</code> is required by the likelihood, so it
@@ -315,24 +314,24 @@ standard-deviation growth.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
 <span><span class="co">##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match</span></span>
-<span><span class="co">##  cp_1               4.9e+01 4.4e-01  4.8e+01  5.0e+01 1.00     4143     2544  5.0e+01    OK</span></span>
-<span><span class="co">##  cp_2               8.1e+01 2.0e+00  7.7e+01  8.4e+01 1.01     2039     3133  8.0e+01    OK</span></span>
-<span><span class="co">##  cp_3               1.5e+02 1.4e+01  1.3e+02  1.9e+02 1.13       16       13  1.4e+02    OK</span></span>
+<span><span class="co">##  cp_1               4.9e+01  0.4470  4.8e+01  50.4264 1.00     4117     2582  5.0e+01    OK</span></span>
+<span><span class="co">##  cp_2               8.1e+01  1.8915  7.7e+01  84.5915 1.01     2689     3078  8.0e+01    OK</span></span>
+<span><span class="co">##  cp_3               1.5e+02 15.3248  1.3e+02 194.5313 1.19       11       11  1.4e+02    OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
 <span><span class="co">##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match</span></span>
-<span><span class="co">##  Intercept_1       -2.0e+01 3.5e-01 -2.1e+01 -1.9e+01 1.00     8424     8362 -2.0e+01    OK</span></span>
-<span><span class="co">##  Intercept_2        4.8e-01 6.9e-01 -8.5e-01  1.8e+00 1.00     4199     5557  0.0e+00    OK</span></span>
-<span><span class="co">##  x_3                7.8e-01 6.3e-02  6.5e-01  9.0e-01 1.01     1527     4773  8.0e-01    OK</span></span>
-<span><span class="co">##  sigma_Intercept_1  1.1e-01 2.4e-01 -3.3e-01  5.9e-01 1.00     4984     5447  0.0e+00    OK</span></span>
-<span><span class="co">##  sigma_x_1          4.2e-02 8.4e-03  2.6e-02  5.9e-02 1.00     4842     4880  4.6e-02    OK</span></span>
-<span><span class="co">##  sigma_Intercept_2  1.3e+00 1.2e-01  1.1e+00  1.6e+00 1.01      319     1718  1.4e+00    OK</span></span>
-<span><span class="co">##  sigma_x_3          3.7e-02 1.2e-02  1.4e-02  5.9e-02 1.12       19       30  3.0e-02    OK</span></span>
-<span><span class="co">##  sigma_xE2_3        6.4e-05 2.2e-04 -3.2e-04  5.1e-04 1.14       16       20  1.5e-04    OK</span></span></code></pre>
+<span><span class="co">##  Intercept_1       -2.0e+01  0.3452 -2.1e+01 -19.2193 1.00     8722     8495 -2.0e+01    OK</span></span>
+<span><span class="co">##  Intercept_2        5.2e-01  0.6759 -8.3e-01   1.8619 1.00     5051     6816  0.0e+00    OK</span></span>
+<span><span class="co">##  x_3                7.9e-01  0.0607  6.7e-01   0.9025 1.01     1684     5339  8.0e-01    OK</span></span>
+<span><span class="co">##  sigma_Intercept_1  1.0e-01  0.2308 -3.3e-01   0.5738 1.00     4867     5210  0.0e+00    OK</span></span>
+<span><span class="co">##  sigma_x_1          4.3e-02  0.0082  2.7e-02   0.0589 1.00     4762     4942  4.6e-02    OK</span></span>
+<span><span class="co">##  sigma_Intercept_2  1.3e+00  0.1162  1.1e+00   1.5801 1.01      593     2208  1.4e+00    OK</span></span>
+<span><span class="co">##  sigma_x_3          3.9e-02  0.0108  1.9e-02   0.0597 1.21       10       30  3.0e-02    OK</span></span>
+<span><span class="co">##  sigma_xE2_3        3.1e-05  0.0002 -3.3e-04   0.0004 1.25        9       20  1.5e-04    OK</span></span></code></pre>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
-<p>The low ESS for sigma in segment 3 reveal some unidentifiability
+<p>The low ESS for sigma in segment 3 reveals some unidentifiability
 concerning whether the variance increase is driven by a linear
 (<code>sigma_x_3</code>) or quadratic term (<code>sigma_xE2_3</code>).
 This spills over to a lower ESS for <code>cp_3</code> too. Other
@@ -361,14 +360,11 @@ for sigma”).</p>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(x)</span></span>
-<span><span class="co">##   for (cp_i_ in 1:3) {</span></span>
-<span><span class="co">##     cp_unit_[cp_i_] ~ dunif(0, 1)</span></span>
-<span><span class="co">##   }</span></span>
-<span><span class="co">##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics</span></span>
-<span><span class="co">##   cp_1 = cp_0 + cp_sorted_[1] * (cp_4 - cp_0)</span></span>
-<span><span class="co">##   cp_2 = cp_0 + cp_sorted_[2] * (cp_4 - cp_0)</span></span>
-<span><span class="co">##   cp_3 = cp_0 + cp_sorted_[3] * (cp_4 - cp_0)</span></span>
+<span><span class="co">##   cp_1 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths</span></span>
+<span><span class="co">##   cp_2 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths</span></span>
+<span><span class="co">##   cp_3 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths</span></span>
 <span><span class="co">##   cp_4 = max(x)</span></span>
+<span><span class="co">##   cp_order_ ~ dbern(step(cp_2 - cp_1) * step(cp_3 - cp_2))  # Ordered change points</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
 <span><span class="co">##   Intercept_1 ~ dnorm(24.911544437719712, 1/(117.52798194134313)^2)   # Mean intercept (rstanarm default)</span></span>
@@ -448,7 +444,7 @@ change-point deviations. Here we model a by-person change in
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">df</span>, par_x <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: Some parameters may not have converged well:</span></span>
-<span><span class="co">##   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1_id_sd and cp_1_id[3]</span></span>
+<span><span class="co">##   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_1 and cp_1_id_sd and cp_1_id[2] and cp_1_id[3] and cp_1_id[4] and cp_1_id[5] and cp_1_id[8]</span></span>
 <span><span class="co">## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span></span></code></pre>
 <p>Plot it:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
@@ -458,17 +454,17 @@ change-point deviations. Here we model a by-person change in
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">ranef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 10</span></span></span>
-<span><span class="co">##   parameter    mean    sd lower upper  rhat ess_bulk ess_tail   sim match</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1_id[1]   1.06  12.3 -<span style="color: #BB0000;">23.7</span> 26.3   1.00     <span style="text-decoration: underline;">2</span>769     <span style="text-decoration: underline;">1</span>831 -<span style="color: #BB0000;">26.9</span> <span style="color: #949494;">""</span>   </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_id[2]  12.1   16.4 -<span style="color: #BB0000;">14.0</span> 44.9   1.00      701      763  11.4 <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id[3]  -<span style="color: #BB0000;">4.30</span>  12.9 -<span style="color: #BB0000;">32.7</span> 14.5   1.01      823      276 -<span style="color: #BB0000;">42.5</span> <span style="color: #949494;">""</span>   </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> cp_1_id[4]  10.4   13.9 -<span style="color: #BB0000;">12.5</span> 42.0   1.00      938     <span style="text-decoration: underline;">1</span>372  11.6 <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> cp_1_id[5]   5.01  11.3 -<span style="color: #BB0000;">17.6</span> 25.8   1.00     <span style="text-decoration: underline;">1</span>871     <span style="text-decoration: underline;">1</span>560 -<span style="color: #BB0000;">26.6</span> <span style="color: #949494;">""</span>   </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> cp_1_id[6] -<span style="color: #BB0000;">11.2</span>   12.7 -<span style="color: #BB0000;">40.2</span>  5.58  1.00      633      857 -<span style="color: #BB0000;">30.0</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> cp_1_id[7] -<span style="color: #BB0000;">10.3</span>   10.5 -<span style="color: #BB0000;">32.8</span>  5.36  1.00      699     <span style="text-decoration: underline;">1</span>196 -<span style="color: #BB0000;">24.8</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> cp_1_id[8]  -<span style="color: #BB0000;">1.02</span>  10.4 -<span style="color: #BB0000;">22.8</span> 17.0   1.00     <span style="text-decoration: underline;">2</span>107     <span style="text-decoration: underline;">1</span>345 -<span style="color: #BB0000;">28.5</span> <span style="color: #949494;">""</span>   </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> cp_1_id[9]  -<span style="color: #BB0000;">2.10</span>  12.1 -<span style="color: #BB0000;">25.7</span> 16.8   1.00     <span style="text-decoration: underline;">1</span>553     <span style="text-decoration: underline;">1</span>234 -<span style="color: #BB0000;">18.3</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span></span></span></code></pre>
+<span><span class="co">##   parameter     mean    sd lower upper  rhat ess_bulk ess_tail   sim match</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1_id[1]   1.86   13.6 -<span style="color: #BB0000;">24.3</span> 32.5   1.01     <span style="text-decoration: underline;">1</span>770      402 -<span style="color: #BB0000;">26.9</span> <span style="color: #949494;">""</span>   </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_id[2]  13.5    17.6 -<span style="color: #BB0000;">13.4</span> 51.5   1.01      370      240  11.4 <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id[3]  -<span style="color: #BB0000;">5.62</span>   16.1 -<span style="color: #BB0000;">56.5</span> 14.6   1.01      427      118 -<span style="color: #BB0000;">42.5</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> cp_1_id[4]  11.7    15.7 -<span style="color: #BB0000;">12.1</span> 48.9   1.01      364      334  11.6 <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> cp_1_id[5]   6.23   12.2 -<span style="color: #BB0000;">16.3</span> 30.7   1.00      970      307 -<span style="color: #BB0000;">26.6</span> <span style="color: #949494;">""</span>   </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> cp_1_id[6] -<span style="color: #BB0000;">11.3</span>    13.3 -<span style="color: #BB0000;">43.7</span>  7.04  1.00      833      665 -<span style="color: #BB0000;">30.0</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> cp_1_id[7]  -<span style="color: #BB0000;">9.38</span>   11.2 -<span style="color: #BB0000;">31.7</span>  8.46  1.01      735      407 -<span style="color: #BB0000;">24.8</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span> </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> cp_1_id[8]  -<span style="color: #BB0000;">0.325</span>  11.4 -<span style="color: #BB0000;">23.1</span> 20.1   1.01     <span style="text-decoration: underline;">1</span>547      298 -<span style="color: #BB0000;">28.5</span> <span style="color: #949494;">""</span>   </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> cp_1_id[9]  -<span style="color: #BB0000;">2.14</span>   12.8 -<span style="color: #BB0000;">30.4</span> 20.7   1.01     <span style="text-decoration: underline;">1</span>853      425 -<span style="color: #BB0000;">18.3</span> <span style="color: #949494;">"</span>OK<span style="color: #949494;">"</span></span></span></code></pre>
 <p>… and verify via posterior predictive checks:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span>, facet_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></code></pre></div>
@@ -519,10 +515,6 @@ argument to extract or visualize specific distributional parameters:</p>
 <strong><code>fitted(fit, dpar = "sigma")</code> or
 <code>fitted(fit, dpar = "shape")</code></strong>: Returns fitted values
 for the target <code>dpar</code> evaluated on the response scale.</li>
-<li>
-<strong><code>predict(fit, dpar = "sigma")</code></strong>:
-Generates posterior predictive draws for the specified distributional
-parameter.</li>
 <li>
 <strong><code>plot_dpar(fit, dpar = "sigma")</code> or
 <code>plot_dpar(fit, dpar = "shape")</code></strong>: Plots the

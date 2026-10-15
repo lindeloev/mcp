@@ -77,7 +77,7 @@ mcp exports these generics, so they work without {rstantools}. If {rstantools} o
     <div class="ref-description section level2">
     <p>Methods for the <code>{rstantools}</code> posterior-prediction generics. They return a
 draws-by-observation matrix and enable <code>{tidybayes}</code> workflows such as
-<code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">add_epred_draws()</a></code>, <code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">add_predicted_draws()</a></code>, and <code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">add_linpred_draws()</a></code>.
+<code>add_epred_draws()</code>, <code>add_predicted_draws()</code>, and <code>add_linpred_draws()</code>.
 mcp exports these generics, so they work without <code>{rstantools}</code>. If <code>{rstantools}</code> or
 <code>{brms}</code> masks them, their generics dispatch to the same methods.</p>
     </div>
@@ -219,7 +219,7 @@ distributions whose means <code>posterior_epred()</code> returns, including at m
 rows. These methods require posterior draws. For prior prediction, use
 <code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>; <code>conditional</code> selects the same behavior.</p>
 <p>For binomial models, <code>posterior_epred()</code> and <code>posterior_predict()</code> (and
-corresponding <code>{tidybayes}</code> workflows such as <code><a href="https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html" class="external-link">add_epred_draws()</a></code>) follow
+corresponding <code>{tidybayes}</code> workflows such as <code>add_epred_draws()</code>) follow
 <code>{brms}</code> and <code>{rstantools}</code> conventions by returning values on the outcome
 count scale (<code>rate = FALSE</code>), i.e., expected counts \(E[Y] = n\mu\) and
 simulated counts in \(\{0, \dots, n\}\), matching <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>.

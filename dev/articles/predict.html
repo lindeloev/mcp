@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -153,7 +153,7 @@ predictive interval:</p>
 <p>To review what we see here:</p>
 <ul>
 <li>The black dots are the data from <code>data</code>.</li>
-<li>The gray lines are 25 samples from the posterior (control using
+<li>The gray lines are 25 posterior draws (control using
 <code>plot(fit, lines = 100)</code>).</li>
 <li>The dashed red lines are the 2.5% and 97.5% quantiles of the fitted
 (expected) values.</li>
@@ -178,11 +178,11 @@ inferences.</p>
 <span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9 0.991  10.9    14.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4 0.713  10.0    12.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5 0.880  23.7    27.1</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4 0.711  10.0    12.8</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.4 0.886  23.7    27.2</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2 1.09   11.1    15.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9 0.708   9.52   12.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5 0.639  13.2    15.7</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9 0.703   9.59   12.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5 0.647  13.1    15.7</span></span></code></pre>
 <p>In general, this output contains:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here,
@@ -198,9 +198,9 @@ value in <code>.epred</code>, matching
 <li><p><strong>.sd:</strong> The posterior standard deviation of the
 expected response. In <code><a href="../reference/execute-mcp-model.html">predict()</a></code> output, <code>.sd</code> is
 instead the posterior predictive standard deviation.</p></li>
-<li><p><strong>.lower</strong> and <strong>.upper:</strong> The bounds
-of the central interval. It is 95% by default, but you can set it using,
-e.g., <code>fitted(fit, width = 0.8)</code>. Use
+<li><p><strong>.lower</strong> and <strong>.upper:</strong> The lower
+and upper ends of the central interval. It is 95% by default, but you
+can set it using, e.g., <code>fitted(fit, width = 0.8)</code>. Use
 <code>summary = FALSE</code> to compute other quantiles from the
 draws.</p></li>
 </ul>
@@ -221,9 +221,9 @@ behind the scenes.</p>
 <span><span class="co">##    time  .mean   .sd .lower .upper</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">1</span>  76.3  12.9  0.991  10.9   14.8 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>  25     9.94 0.661   8.62  11.2 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> -<span style="color: #BB0000;">20</span>     9.94 0.661   8.62  11.2 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> 200   -<span style="color: #BB0000;">12.2</span>  9.37  -<span style="color: #BB0000;">31.1</span>    6.15</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>  25     9.93 0.659   8.65  11.2 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> -<span style="color: #BB0000;">20</span>     9.93 0.659   8.65  11.2 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> 200   -<span style="color: #BB0000;">12.1</span>  9.29  -<span style="color: #BB0000;">30.4</span>    6.01</span></span></code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -233,7 +233,7 @@ merely a shortcut to do
 <code>fitted(fit, newdata = fit$data)</code>.</li>
 <li>The second value (<code>time = 25</code>) is within the observed
 region, but not in the dataset.</li>
-<li>The third value (<code>time = - 20</code>) is outside the observed
+<li>The third value (<code>time = -20</code>) is outside the observed
 region, but <code>mcp</code> merely extends the first segment backwards
 in time. Because it’s a plateau, we see approximately the same values as
 for <code>time = 25</code>.</li>
@@ -277,12 +277,12 @@ predictive interval):</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.8  4.00   7.77   18.0</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4  3.94   6.40   16.5</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.8  4.02   7.76   18.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4  3.94   6.39   16.5</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5  3.97  20.4    30.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2  4.01   8.07   18.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.1  4.05   8.05   18.3</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.8  3.95   5.92   16.0</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  3.90   9.46   19.5</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  3.91   9.46   19.5</span></span></code></pre>
 <p>Note that <code><a href="../reference/execute-mcp-model.html">predict()</a></code> uses random sampling under the hood,
 so these values will differ slightly from call to call. You can make it
 replicable using <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> as above. In general, the more
@@ -304,10 +304,10 @@ the call-to-call variation described above:</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
 <span><span class="co">##   .data_row  time quantile .prediction</span></span>
 <span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>         1  76.3      0.1        7.82</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>         1  76.3      0.5       13.0 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>         1  76.3      0.1        7.80</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>         1  76.3      0.5       12.9 </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">3</span>         1  76.3      0.9       18.0 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>         2  83.5      0.1        6.53</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>         2  83.5      0.1        6.47</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">5</span>         2  83.5      0.5       11.4 </span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">6</span>         2  83.5      0.9       16.5</span></span></code></pre>
 </div>
@@ -333,7 +333,7 @@ In <code>mcp</code>, most functions come with a
 <code>fitted(fit, prior = TRUE)</code>, or
 <code>predict(fit, prior = TRUE)</code>.</p>
 <p>Say you want to forecast at <code>time = 125</code> and you know that
-a changepoint to the baseline level (an intercept change to
+a change point to the baseline level (an intercept change to
 <code>Intercept_1</code>) will occur approximately after the same
 interval as between <code>cp_1</code> and <code>cp_2</code> (i.e., at
 <code>cp_2 + (cp_2 - cp_1)</code>). Here is a way to “hack”
@@ -371,9 +371,9 @@ outcome. It may be helpful to review <a href="../articles/priors.html">the artic
 <span><span class="va">data_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="va">forecast_horizon</span>, response <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">observed_start</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
 <span><span class="va">observed_end</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
-<span><span class="va">prior_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span> <span class="op"><a href="https://mc-stan.org/posterior/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span><span class="va">prior_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  cp_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif("</span>, <span class="va">observed_start</span>, <span class="st">", "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,</span>
-<span>  cp_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif(cp_1, "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,</span>
+<span>  cp_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif("</span>, <span class="va">observed_start</span>, <span class="st">", "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,  <span class="co"># Change points are ordered, so cp_2 is after cp_1</span></span>
 <span>  cp_3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dnorm(cp_2 + (cp_2 - cp_1), 20) T("</span>, <span class="va">observed_end</span>, <span class="st">", "</span>, <span class="va">forecast_horizon</span>, <span class="st">")"</span><span class="op">)</span>  <span class="co"># In the future at the same interval</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Now let’s fit it:</p>
@@ -391,7 +391,7 @@ outcome. It may be helpful to review <a href="../articles/priors.html">the artic
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
 <span><span class="co">##    time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.63  5.51 0.088<span style="text-decoration: underline;">9</span>   14.2</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.64  5.48 0.089<span style="text-decoration: underline;">0</span>   14.2</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
 manually doing our plot:</p>
@@ -430,13 +430,13 @@ credence.</p>
 <p>Without doing this formal model of the future change point, one may
 have thought that the change point should occur around
 <code>time = 110</code> since that’s the expected value of
-<code>cp_2 + (cp_2 - cp_1)</code>. However, we truncated the prior for
-the future change point (<code>cp_3</code>) so that it occurs
-<em>after</em> the last data point (<code>max(time)</code>), i.e., at
-<code>time &gt; 100</code>. This is knowledge that the third change
-point had not yet been observed at <code>time = 100</code>, and this
-pushes the distribution further into the future (actually around 120;
-see <code>summary(fit_forecast)</code>).</p>
+<code>cp_2 + (cp_2 - cp_1)</code>. However, we set the lower bound of
+the prior on the future change point (<code>cp_3</code>) to the last
+data point (<code>max(time)</code>), so that it occurs <em>after</em>
+it, i.e., at <code>time &gt; 100</code>. This is knowledge that the
+third change point had not yet been observed at <code>time = 100</code>,
+and this pushes the distribution further into the future (actually
+around 120; see <code>summary(fit_forecast)</code>).</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

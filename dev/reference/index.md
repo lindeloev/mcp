@@ -2,7 +2,7 @@
 
 ## Fit and show mcpfit
 
-mcp() returns and `mcpfit`. These functions illuminate what this fit
+mcp() returns an `mcpfit`. These functions illuminate what this fit
 contains structurally.
 
 - [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) : Fit

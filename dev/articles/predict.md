@@ -58,7 +58,7 @@ plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
 To review what we see here:
 
 - The black dots are the data from `data`.
-- The gray lines are 25 samples from the posterior (control using
+- The gray lines are 25 posterior draws (control using
   `plot(fit, lines = 100)`).
 - The dashed red lines are the 2.5% and 97.5% quantiles of the fitted
   (expected) values.
@@ -88,11 +88,11 @@ head(fitted(fit))
     ##   response  time .mean   .sd .lower .upper
     ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
     ## 1    12.2   76.3  12.9 0.991  10.9    14.8
-    ## 2     6.35  83.5  11.4 0.713  10.0    12.8
-    ## 3    28.0   60.2  25.5 0.880  23.7    27.1
+    ## 2     6.35  83.5  11.4 0.711  10.0    12.8
+    ## 3    28.0   60.2  25.4 0.886  23.7    27.2
     ## 4    15.7   74.7  13.2 1.09   11.1    15.3
-    ## 5    16.2   85.9  10.9 0.708   9.52   12.3
-    ## 6    22.3   40.1  14.5 0.639  13.2    15.7
+    ## 5    16.2   85.9  10.9 0.703   9.59   12.3
+    ## 6    22.3   40.1  14.5 0.647  13.1    15.7
 
 In general, this output contains:
 
@@ -113,8 +113,8 @@ In general, this output contains:
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   output, `.sd` is instead the posterior predictive standard deviation.
 
-- **.lower** and **.upper:** The bounds of the central interval. It is
-  95% by default, but you can set it using, e.g.,
+- **.lower** and **.upper:** The lower and upper ends of the central
+  interval. It is 95% by default, but you can set it using, e.g.,
   `fitted(fit, width = 0.8)`. Use `summary = FALSE` to compute other
   quantiles from the draws.
 
@@ -143,9 +143,9 @@ fitted(fit, newdata = newdata)
     ##    time  .mean   .sd .lower .upper
     ##   <dbl>  <dbl> <dbl>  <dbl>  <dbl>
     ## 1  76.3  12.9  0.991  10.9   14.8 
-    ## 2  25     9.94 0.661   8.62  11.2 
-    ## 3 -20     9.94 0.661   8.62  11.2 
-    ## 4 200   -12.2  9.37  -31.1    6.15
+    ## 2  25     9.93 0.659   8.65  11.2 
+    ## 3 -20     9.93 0.659   8.65  11.2 
+    ## 4 200   -12.1  9.29  -30.4    6.01
 
 Note that:
 
@@ -155,7 +155,7 @@ Note that:
   `fitted(fit, newdata = fit$data)`.
 - The second value (`time = 25`) is within the observed region, but not
   in the dataset.
-- The third value (`time = - 20`) is outside the observed region, but
+- The third value (`time = -20`) is outside the observed region, but
   `mcp` merely extends the first segment backwards in time. Because it’s
   a plateau, we see approximately the same values as for `time = 25`.
 - The fourth value (`time = 200`) is way outside the observed region.
@@ -204,12 +204,12 @@ head(predict(fit, width = 0.8))
     ## # A tibble: 6 × 6
     ##   response  time .mean   .sd .lower .upper
     ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    12.2   76.3  12.8  4.00   7.77   18.0
-    ## 2     6.35  83.5  11.4  3.94   6.40   16.5
+    ## 1    12.2   76.3  12.8  4.02   7.76   18.0
+    ## 2     6.35  83.5  11.4  3.94   6.39   16.5
     ## 3    28.0   60.2  25.5  3.97  20.4    30.5
-    ## 4    15.7   74.7  13.2  4.01   8.07   18.3
+    ## 4    15.7   74.7  13.1  4.05   8.05   18.3
     ## 5    16.2   85.9  10.8  3.95   5.92   16.0
-    ## 6    22.3   40.1  14.5  3.90   9.46   19.5
+    ## 6    22.3   40.1  14.5  3.91   9.46   19.5
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -238,10 +238,10 @@ predict(fit, summary = FALSE) |>
     ## # A tibble: 6 × 4
     ##   .data_row  time quantile .prediction
     ##       <int> <dbl>    <dbl>       <dbl>
-    ## 1         1  76.3      0.1        7.82
-    ## 2         1  76.3      0.5       13.0 
+    ## 1         1  76.3      0.1        7.80
+    ## 2         1  76.3      0.5       12.9 
     ## 3         1  76.3      0.9       18.0 
-    ## 4         2  83.5      0.1        6.53
+    ## 4         2  83.5      0.1        6.47
     ## 5         2  83.5      0.5       11.4 
     ## 6         2  83.5      0.9       16.5
 
@@ -263,9 +263,9 @@ In `mcp`, most functions come with a `prior = FALSE` default, but you
 can simply do `plot(fit, prior = TRUE)`, `fitted(fit, prior = TRUE)`, or
 `predict(fit, prior = TRUE)`.
 
-Say you want to forecast at `time = 125` and you know that a changepoint
-to the baseline level (an intercept change to `Intercept_1`) will occur
-approximately after the same interval as between `cp_1` and `cp_2`
+Say you want to forecast at `time = 125` and you know that a change
+point to the baseline level (an intercept change to `Intercept_1`) will
+occur approximately after the same interval as between `cp_1` and `cp_2`
 (i.e., at `cp_2 + (cp_2 - cp_1)`). Here is a way to “hack” `mcp` to do
 this. *(NOTE: I plan on implementing this in a much more user-friendly
 way in a future release; see the discussion in [this github
@@ -310,7 +310,7 @@ observed_start = min(data$time)
 observed_end = max(data$time)
 prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
   cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
-  cp_2 = paste0("dunif(cp_1, ", observed_end, ")"),
+  cp_2 = paste0("dunif(", observed_start, ", ", observed_end, ")"),  # Change points are ordered, so cp_2 is after cp_1
   cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
 ))
 ```
@@ -337,7 +337,7 @@ predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
     ## # A tibble: 1 × 5
     ##    time .mean   .sd .lower .upper
     ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1   125  7.63  5.51 0.0889   14.2
+    ## 1   125  7.64  5.48 0.0890   14.2
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
@@ -382,9 +382,9 @@ has been updated using data or not - it’s all credence.
 
 Without doing this formal model of the future change point, one may have
 thought that the change point should occur around `time = 110` since
-that’s the expected value of `cp_2 + (cp_2 - cp_1)`. However, we
-truncated the prior for the future change point (`cp_3`) so that it
-occurs *after* the last data point (`max(time)`), i.e., at `time > 100`.
-This is knowledge that the third change point had not yet been observed
-at `time = 100`, and this pushes the distribution further into the
-future (actually around 120; see `summary(fit_forecast)`).
+that’s the expected value of `cp_2 + (cp_2 - cp_1)`. However, we set the
+lower bound of the prior on the future change point (`cp_3`) to the last
+data point (`max(time)`), so that it occurs *after* it, i.e., at
+`time > 100`. This is knowledge that the third change point had not yet
+been observed at `time = 100`, and this pushes the distribution further
+into the future (actually around 120; see `summary(fit_forecast)`).

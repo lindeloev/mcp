@@ -67,26 +67,32 @@
     Fits now also store a proper matched `$call`. Printed summaries now
     report posterior `sd` and has a new layout.
 
-- **Dirichlet is now the default prior on change points:** The default
-  change point prior is now the mathematically beautiful and principled
-  `dirichlet(1)` (flat Dirichlet / uniform order statistics).
-  Effectively, the prior remain unchanged for models with 1 change point
-  because Dirichlet reduces to the same uniform prior. For models with
-  2+ change points, the previous “truncated-t” prior has been removed.
-  It only served the purpose of higher ESS/s at the expense of being
-  mathematically unprincipled. While previous `mcp` versions supported a
-  slow implementation of Dirichlet, achieving good ESS/s was made
-  possible by sampling `dirichlet(1)` as sorted uniforms (other
-  `dirichlet(alpha)` use a sequential stick-breaking Beta chain, z_j
-  \sim \text{Beta}(\alpha, (N - j + 1) \alpha)). Comparing all
-  [`mcp_example()`](https://lindeloev.github.io/mcp/dev/reference/mcp_example.md),
-  estimates remain essentially identical between truncated-t and
-  dirichlet. Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes
-  Factor) on default priors will likely differ, but BF is ill advised on
-  default priors anyway - that is why
+- **Dirichlet is now the default prior on change points:** For
+  one-change-point models, this prior is identical to v0.3.4. The
+  default change point prior is now the mathematically beautiful and
+  principled Dirichlet prior, which was previously only supported as a
+  secondary option. It is uniform order statistics, i.e., uniform priors
+  on all change points, restricted to observed data range,
+  `cp_i = "dunif(min(x), max(x))"`, and ordered: `cp_1 < cp_2 < ...`.
+  After ordering, this results in a scaled beta prior for each change
+  point. [See a more formal description
+  here](https://lindeloev.github.io/mcp/articles/default_priors.html#dirichlet).
+  While the dunif()-specification is the new default, the old
+  `cp_i = "dirichlet(alpha)"` syntax remains supported (see breaking
+  changes below). New: set a minimum segment length, e.g.,
+  `cp_2 = "dunif(cp_1 + 20, max(x))"`. For models with 2+ change points,
+  the previous sequentially truncated t-distributions centered at
+  `min(x)` have been removed. Truncated-t only served the purpose of
+  higher ESS/s at the expense of being mathematically unprincipled. A
+  new implementation in JAGS makes it fast. Although this is a
+  mathematical change, parameter posteriors remain essentially identical
+  to previous fits for all
+  [`mcp_example()`](https://lindeloev.github.io/mcp/dev/reference/mcp_example.md).
+  Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes Factor) on
+  default priors will likely differ, but BF is ill advised on default
+  priors anyway - that is why
   [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
-  throws a warning if this is attempted. Read more on the [the mcp
-  website](https://lindeloev.github.io/mcp/).
+  now throws a warning if this is attempted.
 
 - **Negative binomial and offset():** You can now do
   `mcp(..., family = negbinomial())`. NB (and Poisson) can now model
@@ -371,6 +377,38 @@ been added until we reach 1.0.
 
 - **Fitting and priors:**
 
+  - The prior for user-specified priors on 2+ change points will differ
+    from mcp v0.3.4, though for informative data, posteriors will be
+    highly similar. User-specified priors on change points are now used
+    unchanged, though restricted to ordered change points. v0.3.4
+    imposed ordering by truncating priors using
+    [`T()`](https://rdrr.io/r/base/logical.html) at the previous change
+    point, e.g., `dnorm(40, 10) T(cp_1, max(x))`, which pushed wide
+    priors towards `max(x)`.
+    [`dunif()`](https://rdrr.io/r/stats/Uniform.html) priors and priors
+    with [`T()`](https://rdrr.io/r/base/logical.html) were used
+    unchanged, which allowed label switching. Fixed change points, e.g.,
+    `cp_2 = 80`, are now ordered relative to the other change points
+    too. Priors without
+    [`dunif()`](https://rdrr.io/r/stats/Uniform.html) or
+    [`T()`](https://rdrr.io/r/base/logical.html) are truncated to the
+    observed range of `x`.
+
+  - The lower and upper bounds of change point priors, i.e., the
+    arguments of [`dunif()`](https://rdrr.io/r/stats/Uniform.html) and
+    [`T()`](https://rdrr.io/r/base/logical.html), can no longer refer to
+    other change points, except to set a minimum segment length, e.g.,
+    `cp_2 = "dunif(cp_1 + 20, max(x))"`. Change points in the
+    distribution’s parameters remain allowed, e.g.,
+    `cp_3 = "dnorm(cp_2 + 30, 10)"`.
+
+  - `dirichlet(alpha)` now takes one shared `alpha >= 1` (non-integer
+    allowed) for all change points and applies it to all segments,
+    including the last. v0.3.4 allowed non-identical integer `alpha` per
+    change point and silently used `alpha = 1` for the last segment, so
+    `dirichlet(2)` now gives a different prior. Non-identical alphas now
+    error.
+
   - Group-level change points `(1|id)` now use a standard hierarchical
     normal model sampled efficiently through their absolute locations.
     This makes `cp_i_sd` the SD of the normal distribution before
@@ -417,11 +455,11 @@ been added until we reach 1.0.
     `threshold` once in any [`ar()`](https://rdrr.io/r/stats/ar.html) or
     `ma()` term; they apply to all segments.
 
-  - GARMA observation thresholds are now validated with
-    family-appropriate bounds: strictly below 0.5 for
-    `family = bernoulli()`, and strictly below half the smallest trial
-    count for `family = binomial()`, preventing thresholds from erasing
-    the binary response history.
+  - GARMA observation thresholds are now validated against the support
+    of the response: strictly below 0.5 for `family = bernoulli()`, and
+    strictly below half the smallest trial count for
+    `family = binomial()`, preventing thresholds from erasing the binary
+    response history.
 
   - Explicit AR/MA prediction history control: predict() and the new
     posterior_predict() support conditional = TRUE (default) to
@@ -501,10 +539,10 @@ been added until we reach 1.0.
 - **Priors and hypotheses:**
 
   - Added `prior_summary(fit)`. Its compact output shows each
-    parameter’s resolved prior and bounds;
-    `prior_summary(fit, verbose = TRUE)` also shows the data-dependent
-    rule, a plain-language description, source, and kind
-    (`distribution`, `alias`, `expression`, or `constant`).
+    parameter’s resolved prior and its lower and upper bounds, marking
+    change points as ordered; `prior_summary(fit, verbose = TRUE)` also
+    shows the data-dependent rule, a plain-language description, source,
+    and kind (`distribution`, `alias`, `expression`, or `constant`).
 
   - With the introduction of multiple regression including categorical
     predictors (including for distributional parameters) come default
@@ -643,8 +681,9 @@ been added until we reach 1.0.
     warning.
 
   - `mcp(..., inits)` can only set stochastic nodes in `fit$jags_code`.
-    Change points (e.g., `cp_1`) and parameters reparameterized for
-    faster sampling can no longer be initialized directly.
+    Parameters reparameterized for faster sampling can no longer be
+    initialized directly. Initial values for change points must be
+    ordered.
 
   - `fit$data` now only contains the data columns that are used in the
     model.
@@ -678,13 +717,18 @@ been added until we reach 1.0.
   - [`is.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.md)
     is deprecated in favor of
     [`is_mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/is_mcpfit.md),
-    matching [posterior](https://mc-stan.org/posterior/)’s
-    [`is_draws()`](https://mc-stan.org/posterior/reference/draws.html).
+    matching [posterior](https://mc-stan.org/posterior/)’s `is_draws()`.
 
 - **Requirements and removals:**
 
   - mcp now requires R \>= 4.1.0, matching its use of the native pipe
     (`|>`).
+
+  - Removed `criterion()` and `get_segment_table()`. They now throw an
+    error pointing to their replacements: `loo(fit)` or `waic(fit)`
+    instead of `criterion(fit)`, and `mcp_pars(fit)` or
+    `mcp_columns(fit)` on `fit = mcp(..., sample = FALSE)` instead of
+    `get_segment_table()`.
 
   - Removed the non-functional `exponential()` family. It had no default
     priors and could not be fitted. Exponential survival models would

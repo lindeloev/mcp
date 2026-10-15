@@ -31,7 +31,7 @@ Aligning with `brms` convention, without an explicit
 the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`
 directly on the residual SD, i.e., an **identity link**. The
 response-calibrated scale adapts to the units of `y`, with a minimum of
-2.5 to avoid an accidentally narrow prior. This matches `brms`.
+2.5 to avoid an accidentally narrow prior.
 
 With an explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html)
 formula, the intercept instead defaults to `dt(0, 2.5, 3)` on
@@ -116,13 +116,13 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##          parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1              49.7 1.64  46.1  52.2 1.00     3277     3827 50.0    OK
+    ##  cp_1              49.7 1.74  45.9  52.3 1.00     2726     3031 50.0    OK
     ## 
     ## Population-level parameters:
     ##          parameter mean   sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1       20.1 0.82  18.5  21.7 1.00     7972     8574 20.0    OK
-    ##  sigma_Intercept_1  1.8 0.11   1.6   2.0 1.00     4639     4599  1.6    OK
-    ##  sigma_Intercept_2  2.9 0.10   2.7   3.1 1.00     5458     5230  3.0    OK
+    ##  Intercept_1       20.1 0.82  18.5  21.7 1.00     8008     8485 20.0    OK
+    ##  sigma_Intercept_1  1.8 0.11   1.6   2.0 1.00     4318     4062  1.6    OK
+    ##  sigma_Intercept_2  2.9 0.10   2.7   3.1 1.00     5201     5277  3.0    OK
 
 ## Advanced example
 
@@ -150,7 +150,7 @@ model = list(
 Notice a few things here:
 
 - `same(x)` ensures that the mean slope remains constant between segment
-  3 and 4. So only `sigma` changes there. Sharing the slope effectively
+  3 and 4. So only `sigma` changes there. Reusing the slope effectively
   removes the change point in the mean (read more about [formulas in
   mcp](https://lindeloev.github.io/mcp/dev/articles/formulas.md)).
 - Segment 4: `sigma` is required by the likelihood, so it cannot be
@@ -241,20 +241,20 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  cp_1               4.9e+01 4.4e-01  4.8e+01  5.0e+01 1.00     4143     2544  5.0e+01    OK
-    ##  cp_2               8.1e+01 2.0e+00  7.7e+01  8.4e+01 1.01     2039     3133  8.0e+01    OK
-    ##  cp_3               1.5e+02 1.4e+01  1.3e+02  1.9e+02 1.13       16       13  1.4e+02    OK
+    ##  cp_1               4.9e+01  0.4470  4.8e+01  50.4264 1.00     4117     2582  5.0e+01    OK
+    ##  cp_2               8.1e+01  1.8915  7.7e+01  84.5915 1.01     2689     3078  8.0e+01    OK
+    ##  cp_3               1.5e+02 15.3248  1.3e+02 194.5313 1.19       11       11  1.4e+02    OK
     ## 
     ## Population-level parameters:
     ##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  Intercept_1       -2.0e+01 3.5e-01 -2.1e+01 -1.9e+01 1.00     8424     8362 -2.0e+01    OK
-    ##  Intercept_2        4.8e-01 6.9e-01 -8.5e-01  1.8e+00 1.00     4199     5557  0.0e+00    OK
-    ##  x_3                7.8e-01 6.3e-02  6.5e-01  9.0e-01 1.01     1527     4773  8.0e-01    OK
-    ##  sigma_Intercept_1  1.1e-01 2.4e-01 -3.3e-01  5.9e-01 1.00     4984     5447  0.0e+00    OK
-    ##  sigma_x_1          4.2e-02 8.4e-03  2.6e-02  5.9e-02 1.00     4842     4880  4.6e-02    OK
-    ##  sigma_Intercept_2  1.3e+00 1.2e-01  1.1e+00  1.6e+00 1.01      319     1718  1.4e+00    OK
-    ##  sigma_x_3          3.7e-02 1.2e-02  1.4e-02  5.9e-02 1.12       19       30  3.0e-02    OK
-    ##  sigma_xE2_3        6.4e-05 2.2e-04 -3.2e-04  5.1e-04 1.14       16       20  1.5e-04    OK
+    ##  Intercept_1       -2.0e+01  0.3452 -2.1e+01 -19.2193 1.00     8722     8495 -2.0e+01    OK
+    ##  Intercept_2        5.2e-01  0.6759 -8.3e-01   1.8619 1.00     5051     6816  0.0e+00    OK
+    ##  x_3                7.9e-01  0.0607  6.7e-01   0.9025 1.01     1684     5339  8.0e-01    OK
+    ##  sigma_Intercept_1  1.0e-01  0.2308 -3.3e-01   0.5738 1.00     4867     5210  0.0e+00    OK
+    ##  sigma_x_1          4.3e-02  0.0082  2.7e-02   0.0589 1.00     4762     4942  4.6e-02    OK
+    ##  sigma_Intercept_2  1.3e+00  0.1162  1.1e+00   1.5801 1.01      593     2208  1.4e+00    OK
+    ##  sigma_x_3          3.9e-02  0.0108  1.9e-02   0.0597 1.21       10       30  3.0e-02    OK
+    ##  sigma_xE2_3        3.1e-05  0.0002 -3.3e-04   0.0004 1.25        9       20  1.5e-04    OK
 
 ``` r
 
@@ -263,7 +263,7 @@ pp_check(fit)
 
 ![](dpar_files/figure-html/unnamed-chunk-12-1.png)
 
-The low ESS for sigma in segment 3 reveal some unidentifiability
+The low ESS for sigma in segment 3 reveals some unidentifiability
 concerning whether the variance increase is driven by a linear
 (`sigma_x_3`) or quadratic term (`sigma_xE2_3`). This spills over to a
 lower ESS for `cp_3` too. Other coefficients seem to be reasonably
@@ -301,14 +301,11 @@ fit$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(x)
-    ##   for (cp_i_ in 1:3) {
-    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
-    ##   }
-    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_4 - cp_0)
-    ##   cp_2 = cp_0 + cp_sorted_[2] * (cp_4 - cp_0)
-    ##   cp_3 = cp_0 + cp_sorted_[3] * (cp_4 - cp_0)
+    ##   cp_1 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths
+    ##   cp_2 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths
+    ##   cp_3 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths
     ##   cp_4 = max(x)
+    ##   cp_order_ ~ dbern(step(cp_2 - cp_1) * step(cp_3 - cp_2))  # Ordered change points
     ## 
     ##   # Priors for population-level effects
     ##   Intercept_1 ~ dnorm(24.911544437719712, 1/(117.52798194134313)^2)   # Mean intercept (rstanarm default)
@@ -398,7 +395,7 @@ fit = mcp(model, data = df, par_x = "x")
 ```
 
     ## Warning: Some parameters may not have converged well:
-    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1_id_sd and cp_1_id[3]
+    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1 and cp_1_id_sd and cp_1_id[2] and cp_1_id[3] and cp_1_id[4] and cp_1_id[5] and cp_1_id[8]
     ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
 
 Plot it:
@@ -418,17 +415,17 @@ ranef(fit)
 ```
 
     ## # A tibble: 9 × 10
-    ##   parameter    mean    sd lower upper  rhat ess_bulk ess_tail   sim match
-    ##   <chr>       <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
-    ## 1 cp_1_id[1]   1.06  12.3 -23.7 26.3   1.00     2769     1831 -26.9 ""   
-    ## 2 cp_1_id[2]  12.1   16.4 -14.0 44.9   1.00      701      763  11.4 "OK" 
-    ## 3 cp_1_id[3]  -4.30  12.9 -32.7 14.5   1.01      823      276 -42.5 ""   
-    ## 4 cp_1_id[4]  10.4   13.9 -12.5 42.0   1.00      938     1372  11.6 "OK" 
-    ## 5 cp_1_id[5]   5.01  11.3 -17.6 25.8   1.00     1871     1560 -26.6 ""   
-    ## 6 cp_1_id[6] -11.2   12.7 -40.2  5.58  1.00      633      857 -30.0 "OK" 
-    ## 7 cp_1_id[7] -10.3   10.5 -32.8  5.36  1.00      699     1196 -24.8 "OK" 
-    ## 8 cp_1_id[8]  -1.02  10.4 -22.8 17.0   1.00     2107     1345 -28.5 ""   
-    ## 9 cp_1_id[9]  -2.10  12.1 -25.7 16.8   1.00     1553     1234 -18.3 "OK"
+    ##   parameter     mean    sd lower upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1_id[1]   1.86   13.6 -24.3 32.5   1.01     1770      402 -26.9 ""   
+    ## 2 cp_1_id[2]  13.5    17.6 -13.4 51.5   1.01      370      240  11.4 "OK" 
+    ## 3 cp_1_id[3]  -5.62   16.1 -56.5 14.6   1.01      427      118 -42.5 "OK" 
+    ## 4 cp_1_id[4]  11.7    15.7 -12.1 48.9   1.01      364      334  11.6 "OK" 
+    ## 5 cp_1_id[5]   6.23   12.2 -16.3 30.7   1.00      970      307 -26.6 ""   
+    ## 6 cp_1_id[6] -11.3    13.3 -43.7  7.04  1.00      833      665 -30.0 "OK" 
+    ## 7 cp_1_id[7]  -9.38   11.2 -31.7  8.46  1.01      735      407 -24.8 "OK" 
+    ## 8 cp_1_id[8]  -0.325  11.4 -23.1 20.1   1.01     1547      298 -28.5 ""   
+    ## 9 cp_1_id[9]  -2.14   12.8 -30.4 20.7   1.01     1853      425 -18.3 "OK"
 
 … and verify via posterior predictive checks:
 
@@ -480,8 +477,6 @@ specific distributional parameters:
 - **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**:
   Returns fitted values for the target `dpar` evaluated on the response
   scale.
-- **`predict(fit, dpar = "sigma")`**: Generates posterior predictive
-  draws for the specified distributional parameter.
 - **`plot_dpar(fit, dpar = "sigma")` or
   `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the
   distributional parameter over x, complete with credible intervals

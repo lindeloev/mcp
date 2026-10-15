@@ -20,13 +20,14 @@ change-point structures.
 The first segment has the format `response ~ predictor`. Later segments
 use the same response, so they are one-sided, `~ predictor`, and each
 starts at a change point that can be modeled using `cp()`, e.g.,
-`~ cp((1 | id)) + 0 + x`. The predictor part works like in
+`~ cp((1 | id)) + 0 + x`. `cp()` is the change-point part of the formula
+and the rest is the predictor part, which works like in
 [`lm()`](https://rdrr.io/r/stats/lm.html)/[`glm()`](https://rdrr.io/r/stats/glm.html)/[`brms::brm()`](https://paulbuerkner.com/brms/reference/brm.html).
 
 **1. Response (segment 1 only):**
 
-- `y ~ ...`: Standard continuous or count response (Gaussian, Poisson,
-  Bernoulli).
+- `y ~ ...`: Standard continuous, binary, or count response (Gaussian,
+  Bernoulli, Poisson, negative binomial).
 - `successes | trials(total) ~ ...`: Binomial response
   (`family = binomial()`).
 - `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies
@@ -37,16 +38,16 @@ starts at a change point that can be modeled using `cp()`, e.g.,
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries
   using `+`.
 
-**2. Change-point modeling (`cp()`, segments 2+):**
+**2. Change-point part (`cp()`, segments 2+):**
 
-- `~ x` (i.e., `cp()` omitted): Population-level change point (default).
-  Same as `~ cp(1) + x`.
+- `~ x` (i.e., `cp()` not included): Population-level change point
+  (default). Same as `~ cp(1) + x`.
 - `~ cp((1 | id)) + x`: Group-level change-point deviations around the
-  population change point ([read
+  population-level change point ([read
   more](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)).
   The intercept is implicit, so this is the same as `cp(1 + (1 | id))`.
 
-**3. Regression formula (all segments):**
+**3. Predictor part (all segments):**
 
 - `~ 1 + x`: Disjoined slope with a new segment intercept.
 - `~ 0 + x`: Joined slope (no new intercept).
@@ -100,7 +101,7 @@ the change-point variable, i.e., `time` above):
     A segment includes the terms in its formula, plus an intercept
     unless removed with `0 +`. Each included term gets a new coefficient
     (`x_2`, `stateB_2`) or reuses an existing one with
-    [`same()`](#sharing-coefficients-between-segments).
+    [`same()`](#reusing-coefficients-between-segments).
 2.  **x-terms are measured from the change point.**  
     `x`, `x:z`, `state:x`, and `I(x^2)` start at zero at the segment’s
     change point and stop growing at the next change point (they
@@ -180,7 +181,7 @@ model = list(
     ~ 0 + x             # At cp_2: Joined slope (x_3); state not included
 )
 
-# 3. Group-level effects in the predictor
+# 3. Group-level effects in the predictor part
 model = list(
   y ~ 1 + x + (1 | id),  # Intercept_1, x_1, group intercept deviations
     ~ 0 + x + (1 | id),  # At cp_1: Joined slope (x_2); new group deviations and SD
@@ -203,7 +204,7 @@ model = list(
 )
 ```
 
-### Sharing coefficients between segments
+### Reusing coefficients between segments
 
 To reuse a coefficient instead of estimating a new one, include
 `same(term)`. The coefficient keeps its source name:
@@ -222,10 +223,10 @@ model = list(
 ```
 
 `same()` refers to the preceding segment by default; use `as` to pick an
-earlier segment. It works for factors (`same(state)`), group effects
-(`same((1 | id))` reuses deviations and SD), and inside distributional
-parameters (`sigma(0 + same(x))`). Reused x-terms are still measured
-from the current change point.
+earlier segment. It works for factors (`same(state)`), group-level
+effects (`same((1 | id))` reuses deviations and SD), and inside
+distributional parameters (`sigma(0 + same(x))`). Reused x-terms are
+still measured from the current change point.
 
 Reused coefficients are estimated jointly from all segments where they
 are included, not fitted in one segment and copied to another.
@@ -273,10 +274,10 @@ Factors use ordinary R formula coding: with treatment coding,
 `1 + state` gives contrasts to a reference level, while `0 + state`
 gives coefficients for all levels. In segment 1, these are the
 intercepts of each level; in a joined segment, they are jumps from where
-the earlier segment left off. A predictor group effect such as
-`(1 | id)` applies where it is included. A change-point group effect
-applies only at the change point where it is included; it does not
-introduce group effects in the predictor.
+the earlier segment left off. A predictor group-level effect such as
+`(1 | id)` applies where it is included. A change-point group-level
+effect applies only at the change point where it is included; it does
+not introduce group-level effects in the predictor part.
 
 Only bare `x`, powers such as `I(x^2)`, and their interactions are
 x-terms. Other transformations, such as `sin(x)` and `poly(x, 2)`, use
@@ -363,10 +364,11 @@ Key features of multiple regression models in `mcp`:
 
 ## Relative changes between segments
 
-Parameters in `mcp` represent the absolute values within each segment
+Coefficients in `mcp` represent the absolute values within each segment
 (e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in
-segment 3). To evaluate the *relative change* between segments, you can
-use
+segment 3). Relative changes between segments, such as changes in slope,
+jumps at change points, and distances between change points, are derived
+quantities. You can use
 [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
 for quick estimates or use
 [`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md)
@@ -391,35 +393,52 @@ interval, posterior probability, and directional Bayes factor. [Read
 more about hypothesis testing in the comparison
 article](https://lindeloev.github.io/mcp/dev/articles/comparison.md).
 Here, the estimate is negative, so the slope is smaller in segment 3
-than in segment, with great certainty (`prob = 0`).
+than in segment 2, with great certainty (`prob = 0`).
 
 If you need the full posterior distribution of the change (e.g., for
 [`quantile()`](https://rdrr.io/r/stats/quantile.html),
 [`hist()`](https://rdrr.io/r/graphics/hist.html), or plotting with
 `ggplot2`), extract draws, e.g., using
-[`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md):
+[`as_draws_df()`](https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.md),
+and compute the change in each draw:
 
 ``` r
 
-draws = as_draws_df(demo_fit) |> 
-  dplyr::mutate(diff_time = time_3 - time_2)
+draws = as_draws_df(demo_fit) |>
+  dplyr::mutate(
+    slope_change = time_3 - time_2,                               # Change in slope at cp_2
+    jump = Intercept_3 - (Intercept_1 + time_2 * (cp_2 - cp_1)),  # Jump at cp_2 (segment 3 start minus segment 2 end)
+    cp_distance = cp_2 - cp_1                                     # Length of segment 2
+  )
 
-head(draws)
+posterior::subset_draws(draws, variable = c("slope_change", "jump", "cp_distance")) |>
+  posterior::summarise_draws()
 ```
 
-    ## # A draws_df: 6 iterations, 1 chains, and 8 variables
-    ##   cp_1 cp_2 Intercept_1 time_2 Intercept_3 time_3 sigma_1 diff_time
-    ## 1   29   72         8.8   0.51          17  -0.37     3.7     -0.88
-    ## 2   35   72         9.6   0.56          13  -0.13     4.0     -0.69
-    ## 3   31   73         9.9   0.54          16  -0.28     4.2     -0.82
-    ## 4   29   72         9.6   0.47          14  -0.18     3.8     -0.65
-    ## 5   30   72        10.2   0.50          14  -0.21     3.8     -0.71
-    ## 6   35   70        10.5   0.55          14  -0.24     4.3     -0.79
-    ## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
+    ## # A tibble: 3 × 10
+    ##   variable        mean  median     sd    mad      q5     q95  rhat ess_bulk ess_tail
+    ##   <chr>          <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl> <dbl>    <dbl>    <dbl>
+    ## 1 slope_change  -0.750  -0.750 0.0957 0.0973  -0.912  -0.591 1.000     870.     938.
+    ## 2 jump         -17.5   -17.4   2.01   2.01   -20.7   -14.3   1.00      999.     761.
+    ## 3 cp_distance   39.6    39.6   2.02   2.08    36.1    42.9   0.999     936.     867.
 
-You can now use `diff_time` directly with base R functions like
-`quantile(draws$diff_time, c(0.025, 0.975))` and
-`hist(draws$diff_time)`.
+Because the change points differ between draws, the jump/change is
+evaluated exactly at the change point in each draw.
+[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+cannot do this, since `newdata` fixes `x` while the change point varies,
+so a fitted value near `cp_2` mixes draws from before and after the
+change point.
+
+You can now use these columns directly with base R functions like
+`quantile(draws$jump, c(0.025, 0.975))` and `hist(draws$cp_distance)`.
+
+The same applies to all other dpars, e.g., `sigma`, `shape`, and `ar1`.
+For example, `sigma_Intercept_3 - sigma_Intercept_2` is the change in
+log-SD with `sigma(1)` in both segments, so
+[`exp()`](https://rdrr.io/r/base/Log.html) of it is the ratio of the
+residual SDs. Similarly, `ar1_3 - ar1_2` is the change in the lag-1
+autoregressive coefficient. Use `mcp_pars(fit)` to see the parameter
+names of a model.
 
 ## Modeling slope change points
 

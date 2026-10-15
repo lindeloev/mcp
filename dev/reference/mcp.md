@@ -248,16 +248,16 @@ summary(demo_fit)
 #> 
 #> Change point parameters:
 #>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        31.76 1.752 28.47 35.205 1.00     2984     4169 30.0    OK
-#>  cp_2        71.10 1.010 69.46 72.777 1.00     3519     6257 70.0    OK
+#>  cp_1        31.75 1.736 28.48 35.084 1.00     3249     4358 30.0    OK
+#>  cp_2        71.12 1.004 69.48 72.776 1.00     3660     6245 70.0    OK
 #> 
 #> Population-level parameters:
 #>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.96 0.657  8.66 11.238 1.00     5050     6982 10.0    OK
-#>  time_2       0.55 0.047  0.46  0.645 1.00     4902     6607  0.5    OK
-#>  Intercept_3 13.91 1.350 11.30 16.601 1.00     2544     4746 15.0    OK
-#>  time_3      -0.20 0.082 -0.36 -0.042 1.00     1347     2446 -0.3    OK
-#>  sigma_1      3.87 0.283  3.37  4.470 1.00     4995     4702  3.5    OK
+#>  Intercept_1  9.96 0.651  8.69 11.255 1.00     4919     6791 10.0    OK
+#>  time_2       0.55 0.048  0.46  0.643 1.00     5176     6667  0.5    OK
+#>  Intercept_3 13.95 1.370 11.31 16.678 1.00     2254     4267 15.0    OK
+#>  time_3      -0.20 0.084 -0.37 -0.039 1.00     1238     2159 -0.3    OK
+#>  sigma_1      3.87 0.286  3.35  4.470 1.00     5025     5407  3.5    OK
 
 # Visual inspection of the results
 plot(demo_fit)  # Visualization of model fit/predictions
@@ -273,36 +273,36 @@ hypothesis(demo_fit, "cp_1 > 30")
 #> # A tibble: 1 × 7
 #>   hypothesis     mean    sd lower upper  prob    BF
 #>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  1.76  1.75 -1.53  5.21 0.840  5.37
+#> 1 cp_1 - 30 > 0  1.75  1.74 -1.52  5.08 0.836  5.13
 
 # Make predictions
 head(fitted(demo_fit))
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9 0.995  10.9    14.8
-#> 2     6.35  83.5  11.4 0.716   9.99   12.8
-#> 3    28.0   60.2  25.5 0.896  23.7    27.2
-#> 4    15.7   74.7  13.2 1.09   11.0    15.3
-#> 5    16.2   85.9  11.0 0.712   9.55   12.3
-#> 6    22.3   40.1  14.5 0.651  13.1    15.6
+#> 1    12.2   76.3  12.9 1.01   10.9    14.9
+#> 2     6.35  83.5  11.4 0.714  10.0    12.8
+#> 3    28.0   60.2  25.5 0.897  23.7    27.2
+#> 4    15.7   74.7  13.2 1.11   11.1    15.4
+#> 5    16.2   85.9  10.9 0.708   9.54   12.3
+#> 6    22.3   40.1  14.5 0.649  13.1    15.6
 head(predict(demo_fit))
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9  3.96   5.00   20.7
-#> 2     6.35  83.5  11.4  3.94   3.68   19.2
-#> 3    28.0   60.2  25.4  3.97  17.7    33.3
-#> 4    15.7   74.7  13.2  3.98   5.27   21.1
-#> 5    16.2   85.9  10.9  3.95   3.21   18.7
-#> 6    22.3   40.1  14.5  4.00   6.72   22.2
+#> 1    12.2   76.3  12.9  3.97   5.01   20.8
+#> 2     6.35  83.5  11.4  3.94   3.67   19.2
+#> 3    28.0   60.2  25.4  3.96  17.6    33.3
+#> 4    15.7   74.7  13.3  3.97   5.29   21.1
+#> 5    16.2   85.9  10.9  3.96   3.18   18.7
+#> 6    22.3   40.1  14.5  4.01   6.73   22.2
 head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
 #> # A tibble: 3 × 5
 #>    time .mean   .sd .lower .upper
 #>   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1  55.5 23.0   3.93  15.2    30.7
+#> 1  55.5 23.0   3.94  15.2    30.7
 #> 2  80   12.2   3.98   4.35   19.9
-#> 3 132    1.68  5.48  -9.12   12.5
+#> 3 132    1.44  5.59  -9.52   12.4
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
@@ -325,17 +325,17 @@ summary(demo_fit, prior = TRUE)
 #>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>    parameter     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1         3.4e+01 23.34   1.91  84.1 1.00     9099     8683 30.0    OK
-#>  cp_2         6.7e+01 23.34  16.83  98.6 1.00     8991     9116 70.0    OK
+#>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>  cp_1        34.0031 23.49   1.81  84.5 1.00     3984     5301 30.0    OK
+#>  cp_2        66.6937 23.21  17.01  98.4 1.00     3496     5260 70.0    OK
 #> 
 #> Population-level parameters:
-#>    parameter     mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  1.4e+01 17.36 -19.81  47.4 1.00     9079     8921 10.0    OK
-#>  time_2       1.1e-05  0.62  -1.23   1.2 1.00     8713     8812  0.5    OK
-#>  Intercept_3  1.4e+01 17.46 -20.79  47.5 1.00     8799     8219 15.0    OK
-#>  time_3      -3.8e-03  0.62  -1.24   1.2 1.00     8718     8866 -0.3    OK
-#>  sigma_1      6.3e+00  7.57   0.21  23.8 1.00     9162     8633  3.5    OK
+#>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match
+#>  Intercept_1 13.9557 17.53 -19.87  47.7 1.00     9356     8910 10.0    OK
+#>  time_2      -0.0088  0.63  -1.24   1.2 1.00     9087     8988  0.5    OK
+#>  Intercept_3 13.5636 17.41 -20.94  47.9 1.00     8841     8553 15.0    OK
+#>  time_3       0.0193  0.62  -1.22   1.2 1.00     9023     8947 -0.3    OK
+#>  sigma_1      6.3353  7.29   0.19  25.0 1.00     8599     8635  3.5    OK
 plot(demo_fit, prior = TRUE)
 
 
@@ -344,8 +344,8 @@ prior_summary(demo_fit)
 #> # A tibble: 7 × 5
 #>   parameter   segment dpar  prior                                        bounds 
 #>   <chr>         <int> <chr> <chr>                                        <chr>  
-#> 1 cp_1              2 NA    dirichlet(alpha = 1)                         [min(t…
-#> 2 cp_2              3 NA    dirichlet(alpha = 1)                         [cp_1,…
+#> 1 cp_1              2 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
+#> 2 cp_2              3 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
 #> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
 #> 4 time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   
 #> 5 Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   
@@ -360,6 +360,7 @@ prior = list(
 )
 
 fit3 = mcp(model, data = data, prior = prior, seed = 42)
+#> Warning: `cp_2` = "dunif(cp_1, 80)": `cp_1` as the lower bound is already embodied in the mcp model and hence not needed. Each change point keeps its specified prior, restricted to ordered change points. To set a minimum segment length, use e.g. `cp_1 + 20` as the lower bound.
 
 # Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
 model_same = list(
@@ -374,13 +375,10 @@ demo_fit$jags_code
 #> model {
 #>   # Change points
 #>   cp_0 = min(time)
-#>   for (cp_i_ in 1:2) {
-#>     cp_unit_[cp_i_] ~ dunif(0, 1)
-#>   }
-#>   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-#>   cp_1 = cp_0 + cp_sorted_[1] * (cp_3 - cp_0)
-#>   cp_2 = cp_0 + cp_sorted_[2] * (cp_3 - cp_0)
+#>   cp_1 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
+#>   cp_2 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
 #>   cp_3 = max(time)
+#>   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points
 #> 
 #>   # Priors for population-level effects
 #>   Intercept_1 ~ dnorm(13.825120048974153, 1/(17.382500430759464)^2)   # Mean intercept (rstanarm default)

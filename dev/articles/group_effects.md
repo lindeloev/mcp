@@ -5,7 +5,7 @@ the predictor and change-point parts of a formula. The syntax follows
 `lme4` and `brms`: `(1|group)` specifies a group-level intercept,
 `(factor||group)` specifies independent group coefficients,
 [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
-reports population-level effects, and
+reports population-level coefficients, and
 [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
 reports group-level deviations.
 
@@ -17,7 +17,7 @@ This article in brief:
 - Get posteriors using `ranef(fit)`
 - Plot using `plot(fit, facet_by="my_group")` and
   `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
-- How group-specific change points are kept in range and ordered.
+- How group-specific change points are bounded and ordered.
 - The article on modeling standard deviation via
   [`sigma()`](https://rdrr.io/r/stats/sigma.html) contains [another
   group-level change-point
@@ -46,8 +46,8 @@ model = list(
 ```
 
 You can have multiple group-level change points, but they must use the
-same grouping factor so their realized locations can be ordered within
-each group:
+same grouping factor so their group-specific change points can be
+ordered within each group:
 
 ``` r
 
@@ -65,25 +65,25 @@ For change point i and group g, the hierarchy is
 \qquad cp\_{i,\mathrm{id}\[g\]} = \kappa\_{ig} - cp_i,
 
 where \kappa\_{ig} is the group-specific location. Thus `cp_i_id[g]` is
-the reported deviation and `cp_i_sd` is the SD of the normal
+the reported deviation and `cp_i_id_sd` is the SD of the normal
 distribution *before truncation* (see below). The deviations are not
 forced to sum to zero.
 
 The hierarchy is subject to x\_{\min} \< \kappa\_{1g} \< \cdots \<
 \kappa\_{Kg} \< x\_{\max}. Thus, if adjacent change points both vary,
 their group-specific locations are ordered against each other—not
-against the adjacent population change point. Internally, JAGS samples
-\kappa\_{ig} directly for efficiency.
+against the adjacent population-level change point. Internally, JAGS
+samples \kappa\_{ig} directly for efficiency.
 
 Because of this truncation, the realized SD of the group-specific change
-points is smaller than `cp_i_sd`, and their mean is pulled away from
-cp_i when cp_i is near a boundary. When `cp_i_sd` is large relative to
-the available span, the truncated normal approaches a uniform
-distribution, so the data carry little information about how large
-`cp_i_sd` is. Its posterior then has a long upper tail that mostly
-reflects the prior.
+points is smaller than `cp_i_id_sd`, and their mean is pulled away from
+cp_i when cp_i is near a boundary. When `cp_i_id_sd` is large relative
+to the distance between these bounds, the truncated normal approaches a
+uniform distribution, so the data carry little information about how
+large `cp_i_id_sd` is. Its posterior then has a long upper tail that
+mostly reflects the prior.
 
-Unlike predictor group-level effects, a change-point group effect
+Unlike predictor group-level effects, a change-point group-level effect
 applies only at the change point where it is included.
 
 ## Predictor group-level effects
@@ -97,11 +97,11 @@ model = list(
   y ~ 1 + (1|id),  # Starts group-level intercept
   ~ 0 + x,         # (1|id) not included, so group intercepts end at cp_1
   ~ 1 + (0|id),    # (0|id) turns it off
-  ~0 + same((1|id), as = 1)  # Share/reuse group-level intercept from segment 1
+  ~0 + same((1|id), as = 1)  # Reuse group-level intercept from segment 1
 )
 ```
 
-Group terms follow the [rules for how segments
+Group-level terms follow the [rules for how segments
 connect](https://lindeloev.github.io/mcp/dev/articles/formulas.html#how-segments-connect),
 separately for each grouping factor and distributional parameter. Group
 intercepts apply only in segments that include them, so each group can
@@ -110,10 +110,10 @@ slopes on `x`, such as `(0 + x||id)`, are x-terms: they join until a
 disjoined segment (`~ 1 + ...`), a later group intercept for the same
 grouping factor, or `(0|id)`, which ends all group terms for `id`.
 
-Notice `same()` above. It reuses the complete group term from the source
-segment (deviations and SD), never a subset of it. Reused group slopes
-are still measured from the current change point. The same syntax works
-inside [`sigma()`](https://rdrr.io/r/stats/sigma.html) and other
+Notice `same()` above. It reuses the complete group-level term from the
+source segment (deviations and SD), never a subset of it. Reused group
+slopes are still measured from the current change point. The same syntax
+works inside [`sigma()`](https://rdrr.io/r/stats/sigma.html) and other
 distributional parameters. See `mcp_example("group_mu")`.
 
 Use `||` for independent group-level slopes and factor coefficients:
@@ -153,8 +153,9 @@ example `sigma(1 + (state||id))`.
 A later group intercept starts the group terms afresh. Thus, if
 `(state||id)` is followed in a later segment by `(1||id)`, only the new
 intercept deviations apply from that segment onward. In a joined
-segment, a group term without an intercept, such as `(0 + x||id)`, joins
-earlier group slopes, while `(0|id)` ends all group terms for `id`.
+segment, a group-level term without an intercept, such as `(0 + x||id)`,
+joins earlier group slopes, while `(0|id)` ends all group terms for
+`id`.
 
 Multi-coefficient terms with `|`, such as `(1 + x|id)`, would imply
 correlated group coefficients and are not yet supported; use
@@ -188,8 +189,8 @@ model = list(
 This follows the same interface as predictor group-level effects: supply
 the population-level SD and `fit$simulate()` draws one deviation per
 group from the same truncated normal hierarchy as the JAGS model (see
-above), keeping each group’s change point in range. The deviations are
-therefore not centered exactly on zero.
+above), keeping each group-specific change point within its bounds. The
+deviations are therefore not centered exactly on zero.
 
 ``` r
 
@@ -221,9 +222,9 @@ head(df)
     ## 6 51.90959 Clark 20.15997
 
 For models with multiple group-level change points, `fit$simulate()`
-draws the deviations in change-point order, truncated so each group’s
-change point lies after its preceding one, just like the JAGS model. The
-result:
+draws the deviations in change-point order, truncated so each
+group-specific change point lies after its preceding one, just like the
+JAGS model. The result:
 
 ``` r
 
@@ -256,12 +257,12 @@ plot(fit, facet_by = "id")
 
 It seems that `mcp` recovered the group-specific change points well.
 There is a lot of information in these data because the population-level
-intercept and slopes on either side of the change point are shared
-across participants (`id`).
+intercept and slopes on either side of the change point are common to
+all participants (`id`).
 
-`summary(fit)` (or `fixef(fit)`) returns posterior summaries for the
-population-level effects. To get the group-level deviations (random
-effects), use:
+`summary(fit)` returns posterior summaries for the population-level
+parameters, and `fixef(fit)` for the population-level coefficients. To
+get the group-level deviations (random effects), use:
 
 ``` r
 
@@ -269,14 +270,14 @@ mcp::ranef(fit)
 ```
 
     ## # A tibble: 6 × 10
-    ##   parameter            mean    sd lower upper  rhat ess_bulk ess_tail   sim match
-    ##   <chr>               <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
-    ## 1 cp_1_id[Batgirl]   -17.9   10.4 -43.8  1.47  1.00     4366     2864 -9.68 OK   
-    ## 2 cp_1_id[Batman]    -14.7   10.3 -40.7  4.54  1.00     4397     2927 -7.14 OK   
-    ## 3 cp_1_id[Clark]      13.4   10.3 -12.2 32.9   1.00     4391     2845 20.8  OK   
-    ## 4 cp_1_id[Jane]        1.26  10.4 -24.2 20.7   1.00     4374     2908  9.98 OK   
-    ## 5 cp_1_id[Louis]       9.69  10.3 -16.0 29.0   1.00     4394     2957 16.4  OK   
-    ## 6 cp_1_id[Spiderman]   1.07  10.3 -24.5 20.8   1.00     4401     2886  9.74 OK
+    ##   parameter             mean    sd lower  upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>                <dbl> <dbl> <dbl>  <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1_id[Batgirl]   -18.1    10.3 -44.5  0.388  1.00     3480     2398 -9.68 OK   
+    ## 2 cp_1_id[Batman]    -14.9    10.3 -41.0  3.72   1.00     3458     2403 -7.14 OK   
+    ## 3 cp_1_id[Clark]      13.2    10.3 -13.3 31.9    1.00     3402     2343 20.8  OK   
+    ## 4 cp_1_id[Jane]        1.04   10.3 -25.3 19.7    1.00     3477     2429  9.98 OK   
+    ## 5 cp_1_id[Louis]       9.47   10.3 -16.9 28.1    1.00     3420     2425 16.4  OK   
+    ## 6 cp_1_id[Spiderman]   0.834  10.3 -25.9 19.5    1.00     3524     2475  9.74 OK
 
 Inspecting the `sim` and `match` columns, we see that the simulated
 deviations lie within the intervals. However, the intervals are wide
@@ -286,11 +287,12 @@ which is informed by only six groups. The group-specific locations
 
 Prediction methods include all group-level effects by default. Set
 `group_effects = FALSE` (or `NA`, as in `brms`) for population-level
-predictions, `group_effects = "cp"` for the change-point group-level
-effects, `group_effects = "predictor"` for the other group-level
-effects, or supply parameter names such as `group_effects = "cp_1_id"`.
-Use `*` as a wildcard, e.g., `"cp_*"` or `"*_id"`. `ranef(fit)`
-deliberately remains simple and returns all group-level effects.
+predictions, `group_effects = "cp"` for the group-level effects in the
+change-point part, `group_effects = "predictor"` for those in the
+predictor part, or supply parameter names such as
+`group_effects = "cp_1_id"`. Use `*` as a wildcard, e.g., `"cp_*"` or
+`"*_id"`. `ranef(fit)` deliberately remains simple and returns all
+group-level deviations.
 
 Good convergence is not always as obvious as in this example. While
 `plot_pars(fit)` shows population-level parameters only, you can select
@@ -317,11 +319,10 @@ plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, npars =
 
 ![](group_effects_files/figure-html/unnamed-chunk-15-1.png)
 
-You can also do posterior predictive checking with facets. I think that
-for the relatively univariate models supported as of `mcp` 0.3, this
-does not add much new information over and above
-`plot(fit, facet_by = "id")`, but it’s a standard assessment that many
-will be acquainted with:
+You can also do posterior predictive checks with facets. For a
+single-response model like this, it adds little over
+`plot(fit, facet_by = "id")`, but it is a standard check that many will
+be familiar with:
 
 ``` r
 
@@ -343,19 +344,19 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                                        bounds                        
-    ##   <chr>         <int> <chr> <chr>                                        <chr>                         
-    ## 1 cp_1              2 NA    dirichlet(alpha = 1)                         [min(x), max(x)]              
-    ## 2 cp_1_id_sd        2 NA    normal(mean = 0, sd = 24.716)                [0, Inf]                      
-    ## 3 cp_1_id           2 NA    normal(mean = 0, sd = cp_1_id_sd)            [min(x) - cp_1, max(x) - cp_1]
-    ## 4 Intercept_1       1 mu    normal(mean = 25.186, sd = 18.621)           none                          
-    ## 5 x_2               2 mu    normal(mean = 0, sd = 0.64588)               none                          
+    ##   parameter   segment dpar  prior                                        bounds                         
+    ##   <chr>         <int> <chr> <chr>                                        <chr>                          
+    ## 1 cp_1              2 NA    uniform(min = 0.02389, max = 98.889)         [0.02389, 98.889], ordered     
+    ## 2 cp_1_id_sd        2 NA    normal(mean = 0, sd = 24.716)                [0, Inf]                       
+    ## 3 cp_1_id           2 NA    normal(mean = 0, sd = cp_1_id_sd)            [0.02389 - cp_1, 98.889 - cp_1]
+    ## 4 Intercept_1       1 mu    normal(mean = 25.186, sd = 18.621)           none                           
+    ## 5 x_2               2 mu    normal(mean = 0, sd = 0.64588)               none                           
     ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0, Inf]
 
 `cp_1_id_sd` is the SD of the normal distribution, before truncation,
 governing the `cp_1_id` deviations. Unlike predictor group-level
-effects, change-point locations are also constrained to remain in range
-and ordered within each group.
+effects, change-point locations are also bounded by the observed range
+of x and ordered within each group.
 
 For predictor group-level effects (e.g., `(state || id)`), the SDs
 default to the `brms` half-Student-t prior on the response scale,
@@ -376,11 +377,7 @@ fit$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(x)
-    ##   for (cp_i_ in 1:1) {
-    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
-    ##   }
-    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)
+    ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation
     ##   for (id_ in 1:n_unique_id) {
     ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Ordered group-level change-point deviations from the population location

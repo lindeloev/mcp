@@ -9,9 +9,9 @@ and non-converging lines in `plot_pars(fit)`. By default,
 [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
 warn when `rhat > 1.01` or ESS \< 400.
 
-- The first thing to try is always to make the model warm up longer to
-  see if it reaches convergence later:
-  `mcp(model, data, warmup = 10000)`.
+- The first thing to try is always to make the model warm up longer and
+  sample longer, e.g.: `mcp(model, data, warmup = 10000, iter = 20000)`.
+  This is often needed with many (e.g., 5+) change points.
 
 - It can be a sign of a deeper non-identifiability in the model. This
   will show up as strong correlations in the joint distribution of any
@@ -20,10 +20,16 @@ warn when `rhat > 1.01` or ESS \< 400.
   This may give you ideas how to change the model.
 
 - You can set the initial values for the JAGS sampler using, e.g.,
-  `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`. Names must be
-  stochastic nodes in `fit$jags_code` (lines with `~`), so change points
-  and parameters reparameterized for faster sampling cannot be
-  initialized directly.
+  `mcp(..., inits = list(cp_1 = 30, Intercept_1 = 10, sigma_1 = 2))`.
+  Names must be stochastic nodes in `fit$jags_code` (lines with `~`), so
+  parameters reparameterized for faster sampling cannot be initialized
+  directly. Initial values for change points must be ordered.
+
+  - By default, all chains start at the same change points. Change
+    points cannot pass each other, so a chain that starts with change
+    points in the wrong places may get stuck there. If you give chains
+    different change point inits, disagreement between chains may
+    reflect poor starting points rather than a problem with the model.
 
 ## Speed
 
@@ -35,10 +41,11 @@ A lot of data and complicated models will slow down fitting.
   `future::plan(future::sequential)`. Without a parallel future plan,
   chains run sequentially.
 
-- More data usually means better identifiability and faster convergence.
-  Lower the warmup using, e.g., `mcp(..., warmup = 300)`. For JAGS,
-  warmup iterations are used for sampler adaptation and discarded before
-  sampling.
+- While more data usually slows warmup and sampling, it also typically
+  has better identifiability and faster convergence. You can therefore
+  try reducing both, e.g., `mcp(..., warmup = 300, iter = 1000)`. For
+  JAGS, warmup iterations are used for sampler adaptation and discarded
+  before sampling.
 
 ## Errors or won’t run
 
@@ -54,13 +61,10 @@ helpful, but in particular:
   this is an infinite regress.
 
 - Errors on “incompatible with parent nodes” usually stem from
-  impossible values. For example, the implicit `sigma_1` in a model
-  without [`sigma()`](https://rdrr.io/r/stats/sigma.html) is an SD, so a
-  custom normal prior should be truncated above zero. Coefficients in an
-  explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html) model are
-  instead unconstrained log-SD values and do not need positive
-  truncation.
+  impossible values. For example, setting `prior = list(sigma_1 = -1)`
+  when the sigma-link is identity or setting
+  `prior = list(cp_1 = 10, cp_2 = 5)`, which are not ordered.
 
-If you encounter these or other problems, don’t hesitate to [raise a
-Github Issue](https://github.com/lindeloev/mcp/issues), asking for help
-or filing a bug report.
+If you encounter problems not readily resolved, don’t hesitate to [raise
+a Github Issue](https://github.com/lindeloev/mcp/issues), asking for
+help or filing a bug report.

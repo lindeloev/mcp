@@ -102,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Understanding mcp formulas</h1>
             
-            <h4 data-toc-skip class="date">2026-10-12</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/formulas.Rmd" class="external-link"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="d-none name"><code>formulas.Rmd</code></div>
@@ -128,13 +128,15 @@ different models and change-point structures.</div>
 Later segments use the same response, so they are one-sided,
 <code>~ predictor</code>, and each starts at a change point that can be
 modeled using <code>cp()</code>, e.g.,
-<code>~ cp((1 | id)) + 0 + x</code>. The predictor part works like in
+<code>~ cp((1 | id)) + 0 + x</code>. <code>cp()</code> is the
+change-point part of the formula and the rest is the predictor part,
+which works like in
 <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>/<code><a href="https://paulbuerkner.com/brms/reference/brm.html" class="external-link">brms::brm()</a></code>.</p>
 <p><strong>1. Response (segment 1 only):</strong></p>
 <ul>
 <li>
-<code>y ~ ...</code>: Standard continuous or count response
-(Gaussian, Poisson, Bernoulli).</li>
+<code>y ~ ...</code>: Standard continuous, binary, or count response
+(Gaussian, Bernoulli, Poisson, negative binomial).</li>
 <li>
 <code>successes | trials(total) ~ ...</code>: Binomial response
 (<code>family = binomial()</code>).</li>
@@ -147,18 +149,19 @@ weights (multiplies each observation’s log-likelihood contribution by
 <code>y | trials(total) + weights(w) ~ ...</code>: Combine response
 auxiliaries using <code>+</code>.</li>
 </ul>
-<p><strong>2. Change-point modeling (<code>cp()</code>, segments
+<p><strong>2. Change-point part (<code>cp()</code>, segments
 2+):</strong></p>
 <ul>
 <li>
-<code>~ x</code> (i.e., <code>cp()</code> omitted): Population-level
-change point (default). Same as <code>~ cp(1) + x</code>.</li>
+<code>~ x</code> (i.e., <code>cp()</code> not included):
+Population-level change point (default). Same as
+<code>~ cp(1) + x</code>.</li>
 <li>
 <code>~ cp((1 | id)) + x</code>: Group-level change-point deviations
-around the population change point (<a href="../articles/group_effects.html">read more</a>). The intercept is
+around the population-level change point (<a href="../articles/group_effects.html">read more</a>). The intercept is
 implicit, so this is the same as <code>cp(1 + (1 | id))</code>.</li>
 </ul>
-<p><strong>3. Regression formula (all segments):</strong></p>
+<p><strong>3. Predictor part (all segments):</strong></p>
 <ul>
 <li>
 <code>~ 1 + x</code>: Disjoined slope with a new segment
@@ -211,7 +214,7 @@ above):</p>
 A segment includes the terms in its formula, plus an intercept unless
 removed with <code>0 +</code>. Each included term gets a new coefficient
 (<code>x_2</code>, <code>stateB_2</code>) or reuses an existing one with
-<a href="#sharing-coefficients-between-segments"><code>same()</code></a>.</li>
+<a href="#reusing-coefficients-between-segments"><code>same()</code></a>.</li>
 <li>
 <strong>x-terms are measured from the change point.</strong><br><code>x</code>, <code>x:z</code>, <code>state:x</code>, and
 <code>I(x^2)</code> start at zero at the segment’s change point and stop
@@ -284,7 +287,7 @@ automatically select the correct change-point variable.</p>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>             <span class="co"># At cp_2: Joined slope (x_3); state not included</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># 3. Group-level effects in the predictor</span></span>
+<span><span class="co"># 3. Group-level effects in the predictor part</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># Intercept_1, x_1, group intercept deviations</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># At cp_1: Joined slope (x_2); new group deviations and SD</span></span>
@@ -307,7 +310,7 @@ automatically select the correct change-point variable.</p>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="sharing-coefficients-between-segments">Sharing coefficients between segments<a class="anchor" aria-label="anchor" href="#sharing-coefficients-between-segments"></a>
+<h3 id="reusing-coefficients-between-segments">Reusing coefficients between segments<a class="anchor" aria-label="anchor" href="#reusing-coefficients-between-segments"></a>
 </h3>
 <p>To reuse a coefficient instead of estimating a new one, include
 <code>same(term)</code>. The coefficient keeps its source name:</p>
@@ -323,10 +326,10 @@ automatically select the correct change-point variable.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p><code>same()</code> refers to the preceding segment by default; use
 <code>as</code> to pick an earlier segment. It works for factors
-(<code>same(state)</code>), group effects (<code>same((1 | id))</code>
-reuses deviations and SD), and inside distributional parameters
-(<code>sigma(0 + same(x))</code>). Reused x-terms are still measured
-from the current change point.</p>
+(<code>same(state)</code>), group-level effects
+(<code>same((1 | id))</code> reuses deviations and SD), and inside
+distributional parameters (<code>sigma(0 + same(x))</code>). Reused
+x-terms are still measured from the current change point.</p>
 <p>Reused coefficients are estimated jointly from all segments where
 they are included, not fitted in one segment and copied to another.</p>
 </div>
@@ -371,10 +374,11 @@ before sampling:</p>
 <code>1 + state</code> gives contrasts to a reference level, while
 <code>0 + state</code> gives coefficients for all levels. In segment 1,
 these are the intercepts of each level; in a joined segment, they are
-jumps from where the earlier segment left off. A predictor group effect
-such as <code>(1 | id)</code> applies where it is included. A
-change-point group effect applies only at the change point where it is
-included; it does not introduce group effects in the predictor.</p>
+jumps from where the earlier segment left off. A predictor group-level
+effect such as <code>(1 | id)</code> applies where it is included. A
+change-point group-level effect applies only at the change point where
+it is included; it does not introduce group-level effects in the
+predictor part.</p>
 <p>Only bare <code>x</code>, powers such as <code>I(x^2)</code>, and
 their interactions are x-terms. Other transformations, such as
 <code>sin(x)</code> and <code>poly(x, 2)</code>, use the original values
@@ -456,10 +460,11 @@ variables (like <code>z</code>) are held at their mean automatically by
 <div class="section level2">
 <h2 id="relative-changes-between-segments">Relative changes between segments<a class="anchor" aria-label="anchor" href="#relative-changes-between-segments"></a>
 </h2>
-<p>Parameters in <code>mcp</code> represent the absolute values within
+<p>Coefficients in <code>mcp</code> represent the absolute values within
 each segment (e.g., <code>time_2</code> is the slope in segment 2 and
-<code>time_3</code> is the slope in segment 3). To evaluate the
-<em>relative change</em> between segments, you can use
+<code>time_3</code> is the slope in segment 3). Relative changes between
+segments, such as changes in slope, jumps at change points, and
+distances between change points, are derived quantities. You can use
 <code><a href="../reference/hypothesis.html">hypothesis()</a></code> for quick estimates or use
 <code><a href="../reference/as_draws.mcpfit.html">as_draws_df()</a></code> to work with the distribution.</p>
 <p>First, using <code><a href="../reference/hypothesis.html">hypothesis()</a></code>:</p>
@@ -474,29 +479,45 @@ each segment (e.g., <code>time_2</code> is the slope in segment 2 and
 its credibility interval, posterior probability, and directional Bayes
 factor. <a href="../articles/comparison.html">Read more about hypothesis
 testing in the comparison article</a>. Here, the estimate is negative,
-so the slope is smaller in segment 3 than in segment, with great
+so the slope is smaller in segment 3 than in segment 2, with great
 certainty (<code>prob = 0</code>).</p>
 <p>If you need the full posterior distribution of the change (e.g., for
 <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code>, <code><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist()</a></code>, or plotting with
 <code>ggplot2</code>), extract draws, e.g., using
-<code><a href="../reference/as_draws.mcpfit.html">as_draws_df()</a></code>:</p>
+<code><a href="../reference/as_draws.mcpfit.html">as_draws_df()</a></code>, and compute the change in each draw:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/as_draws.mcpfit.html">as_draws_df</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>diff_time <span class="op">=</span> <span class="va">time_3</span> <span class="op">-</span> <span class="va">time_2</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/as_draws.mcpfit.html">as_draws_df</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    slope_change <span class="op">=</span> <span class="va">time_3</span> <span class="op">-</span> <span class="va">time_2</span>,                               <span class="co"># Change in slope at cp_2</span></span>
+<span>    jump <span class="op">=</span> <span class="va">Intercept_3</span> <span class="op">-</span> <span class="op">(</span><span class="va">Intercept_1</span> <span class="op">+</span> <span class="va">time_2</span> <span class="op">*</span> <span class="op">(</span><span class="va">cp_2</span> <span class="op">-</span> <span class="va">cp_1</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># Jump at cp_2 (segment 3 start minus segment 2 end)</span></span>
+<span>    cp_distance <span class="op">=</span> <span class="va">cp_2</span> <span class="op">-</span> <span class="va">cp_1</span>                                     <span class="co"># Length of segment 2</span></span>
+<span>  <span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## # A draws_df: 6 iterations, 1 chains, and 8 variables</span></span>
-<span><span class="co">##   cp_1 cp_2 Intercept_1 time_2 Intercept_3 time_3 sigma_1 diff_time</span></span>
-<span><span class="co">## 1   29   72         8.8   0.51          17  -0.37     3.7     -0.88</span></span>
-<span><span class="co">## 2   35   72         9.6   0.56          13  -0.13     4.0     -0.69</span></span>
-<span><span class="co">## 3   31   73         9.9   0.54          16  -0.28     4.2     -0.82</span></span>
-<span><span class="co">## 4   29   72         9.6   0.47          14  -0.18     3.8     -0.65</span></span>
-<span><span class="co">## 5   30   72        10.2   0.50          14  -0.21     3.8     -0.71</span></span>
-<span><span class="co">## 6   35   70        10.5   0.55          14  -0.24     4.3     -0.79</span></span>
-<span><span class="co">## # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span></span></code></pre>
-<p>You can now use <code>diff_time</code> directly with base R functions
-like <code>quantile(draws$diff_time, c(0.025, 0.975))</code> and
-<code>hist(draws$diff_time)</code>.</p>
+<span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/subset_draws.html" class="external-link">subset_draws</a></span><span class="op">(</span><span class="va">draws</span>, variable <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"slope_change"</span>, <span class="st">"jump"</span>, <span class="st">"cp_distance"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">summarise_draws</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 3 × 10</span></span></span>
+<span><span class="co">##   variable        mean  median     sd    mad      q5     q95  rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> slope_change  -<span style="color: #BB0000;">0.750</span>  -<span style="color: #BB0000;">0.750</span> 0.095<span style="text-decoration: underline;">7</span> 0.097<span style="text-decoration: underline;">3</span>  -<span style="color: #BB0000;">0.912</span>  -<span style="color: #BB0000;">0.591</span> 1.000     870.     938.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> jump         -<span style="color: #BB0000;">17.5</span>   -<span style="color: #BB0000;">17.4</span>   2.01   2.01   -<span style="color: #BB0000;">20.7</span>   -<span style="color: #BB0000;">14.3</span>   1.00      999.     761.</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_distance   39.6    39.6   2.02   2.08    36.1    42.9   0.999     936.     867.</span></span></code></pre>
+<p>Because the change points differ between draws, the jump/change is
+evaluated exactly at the change point in each draw.
+<code><a href="../reference/execute-mcp-model.html">fitted()</a></code> cannot do this, since <code>newdata</code> fixes
+<code>x</code> while the change point varies, so a fitted value near
+<code>cp_2</code> mixes draws from before and after the change
+point.</p>
+<p>You can now use these columns directly with base R functions like
+<code>quantile(draws$jump, c(0.025, 0.975))</code> and
+<code>hist(draws$cp_distance)</code>.</p>
+<p>The same applies to all other dpars, e.g., <code>sigma</code>,
+<code>shape</code>, and <code>ar1</code>. For example,
+<code>sigma_Intercept_3 - sigma_Intercept_2</code> is the change in
+log-SD with <code>sigma(1)</code> in both segments, so
+<code><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp()</a></code> of it is the ratio of the residual SDs. Similarly,
+<code>ar1_3 - ar1_2</code> is the change in the lag-1 autoregressive
+coefficient. Use <code>mcp_pars(fit)</code> to see the parameter names
+of a model.</p>
 </div>
 <div class="section level2">
 <h2 id="modeling-slope-change-points">Modeling slope change points<a class="anchor" aria-label="anchor" href="#modeling-slope-change-points"></a>

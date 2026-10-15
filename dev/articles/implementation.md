@@ -53,11 +53,7 @@ fit$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(x)
-    ##   for (cp_i_ in 1:1) {
-    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
-    ##   }
-    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)
+    ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_2 = max(x)
     ## 
     ##   # Priors for population-level effects
@@ -93,14 +89,8 @@ unnecessary stuff is added to segment 1 just because it makes the code
 easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value
 of `x` is, of course, always true).
 
-The section under `# Change points` implements the default
-`dirichlet(1)` prior on the change points, which is the distribution of
-sorted uniform draws (uniform order statistics). `mcp` samples uniform
-draws on the unit interval, `cp_unit_`, sorts them, and scales them to
-the observed range of x. Moving one change point therefore leaves the
-others in place. The unit interval suits JAGS’s slice sampler, whose
-step size starts at 1. Other `dirichlet(alpha)` priors are sampled as a
-sequential stick-breaking Beta chain (`cp_1_frac_` etc.).
+The section under `# Change points` implements the priors on the change
+points, explained [below](#change-point-priors).
 
 ## Modeling changes in slope
 
@@ -137,9 +127,9 @@ X\_{k,i}
 
 Because each segment’s contribution stays constant beyond its change
 point (\beta\_{k-1,1}(\tau\_{k-1} - \tau\_{k-2})), joining needs no
-parameter constraints: earlier segments provide the starting value for
-later segments. The expected response on the response scale is \mu_i =
-g^{-1}(\eta_i) via link function g(\mu_i) = \eta_i (identity for
+restrictions on the parameters: earlier segments provide the starting
+value for later segments. The expected response on the response scale is
+\mu_i = g^{-1}(\eta_i) via link function g(\mu_i) = \eta_i (identity for
 Gaussian, so \mu_i = \eta_i).
 
 When a segment is **disjoined** (`~ 1 + x`), it introduces a new
@@ -189,11 +179,7 @@ fit$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(x)
-    ##   for (cp_i_ in 1:1) {
-    ##     cp_unit_[cp_i_] ~ dunif(0, 1)
-    ##   }
-    ##   cp_sorted_ = sort(cp_unit_)  # Uniform order statistics
-    ##   cp_1 = cp_0 + cp_sorted_[1] * (cp_2 - cp_0)
+    ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_2 = max(x)
     ## 
     ##   # Priors for population-level effects
@@ -238,6 +224,80 @@ indicator (e.g., `(x[i_] >= cp_1)`).
 [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 etc. evaluate the exact same formula in R. See [the model in
 R](#the-model-in-r).
+
+## Change point priors
+
+Each change point keeps its specified prior, but through
+order-restriction, the resulting “marginal” prior is different (see
+[Working with
+priors](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior)).
+In JAGS, each change point is a node with its own prior, and one more
+line restricts them to ordered change points. With the default prior on
+two change points:
+
+    cp_0 = min(x)
+    cp_1 ~ dunif(cp_0, cp_3)
+    cp_2 ~ dunif(cp_0, cp_3)
+    cp_3 = max(x)
+    cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points
+
+### Ordering: `cp_order_`
+
+`cp_order_` is not used anywhere else in the model. It works because
+`mcp` passes `cp_order_ = 1` as data, so JAGS treats it like an observed
+response. Just as `y[i_] ~ dnorm(...)` adds the likelihood of each data
+point, `cp_order_ ~ dbern(p)` multiplies the density by the probability
+of observing 1, which is p. Here, p = `step(cp_2 - cp_1)`, which is 1 if
+the change points are ordered and 0 otherwise. Unordered change points
+therefore have zero prior probability, and the sampler rejects them.
+This is sometimes called the “ones trick”. With three change points, the
+line is `cp_order_ ~ dbern(step(cp_2 - cp_1) * step(cp_3 - cp_2))`, and
+so on.
+
+A minimum segment length, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`,
+goes in the same line as `step(cp_2 - cp_1 - 20)`, while the node itself
+gets the observed range of x: `cp_2 ~ dunif(cp_0, cp_3)`.
+
+`cp_order_ = 1` is also passed as data for prior sampling
+(`sample = "prior"`), so prior draws are ordered too. If you write your
+own `jags_code` based on `fit$jags_code`, `mcp` passes `cp_order_ = 1`
+whenever the code contains `cp_order_ ~`. Without it, JAGS would sample
+`cp_order_` like any other unknown, and the ordering would silently
+disappear.
+
+### Dirichlet weight: `cp_weight_`
+
+`dirichlet(alpha)` with \alpha \> 1 is the default prior multiplied by
+the weight \prod_k s_k^{\alpha - 1}, where s_k are the relative segment
+lengths (see [the
+math](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#dirichlet)).
+
+JAGS only lets you specify priors through its built-in distributions, so
+it cannot multiply a prior by an arbitrary factor directly. A standard
+workaround is the “zeros trick”: add an observed data point whose
+likelihood equals the factor. `mcp` passes `cp_weight_ = 0` as data and
+models it as `cp_weight_ ~ dpois(lambda)`. The probability of observing
+0 from a Poisson distribution is e^{-\lambda}, so with \lambda =
+-(\alpha - 1) \sum_k \log s_k, this likelihood is exactly the weight.
+Since s_k \le 1, \lambda \ge 0 for any \alpha \ge 1, as
+[`dpois()`](https://rdrr.io/r/stats/Poisson.html) requires. This is also
+why \alpha \< 1 is not supported. For example, `dirichlet(2)` on two
+change points adds this line:
+
+    cp_weight_ ~ dpois(-1 * (log((cp_1 - cp_0) / (cp_3 - cp_0)) + log((cp_2 - cp_1) / (cp_3 - cp_0)) + log((cp_3 - cp_2) / (cp_3 - cp_0))))
+
+As with `cp_order_`, `cp_weight_` is observed data (0), and it weights
+the `cp_*` parameters only through its likelihood. Thus, `cp_weight_` is
+not “used” elsewhere in the JAGS code.
+
+### Initial values
+
+The ordering must also hold for the initial values, or JAGS stops with
+“Observed node inconsistent with unobserved parents at initialization”.
+By default, all chains start at the same, equally spaced change points,
+moved the least possible to be inside the bounds of their priors, at
+least the minimum segment lengths apart, and ordered around fixed change
+points. User-supplied initial values for change points must be ordered.
 
 ## Reparameterizations
 
@@ -307,8 +367,8 @@ x_1 ~ dnorm(0, 1/(0.084)^2)
 
 JAGS samples the value of segment 1 at the fixed point c = \min(x) +
 (\max(x) - \min(x)) / (2K), which is the midpoint of segment 1 under the
-`dirichlet(1)` prior. Here, c = 1 + (100 - 1) / (2 \cdot 3) = 17.5.
-`Intercept_1` is derived from it. Like centering x in ordinary
+default prior on change points. Here, c = 1 + (100 - 1) / (2 \cdot 3) =
+17.5. `Intercept_1` is derived from it. Like centering x in ordinary
 regression, this makes the intercept and slope less correlated. In the
 plain model, the intercept is the value at x = 0, which can be far from
 the data. Then every change in the slope must be met by a large opposite
@@ -400,9 +460,9 @@ a mere shift (a = \beta\_{k,1} w_k, b = 1), so the prior on
 [`dt()`](https://rdrr.io/r/stats/TDist.html) priors, and for the
 segment-1 intercept also truncated and
 [`dunif()`](https://rdrr.io/r/stats/Uniform.html) priors. User-specified
-priors are sampled unchanged, and so are coefficients in segments
-bounded by group-level change points, where the segment widths differ
-between groups.
+priors are sampled unchanged, and so are coefficients in segments that
+start or end at group-level change points, where the segment widths
+differ between groups.
 
 ## The model in R
 

@@ -126,7 +126,7 @@ print(fit$example_code) # See how the data was simulated
 #> # Illustrative plot
 #> if (plot) {
 #>   set.seed(42)
-#>   print(plot(fit) + ggplot2::labs(title = 'plot(fit)'))
+#>   print(plot(fit) + ggplot2::labs(title = 'fit = mcp_example("multiple"); plot(fit)'))
 #> }
 
 # Without sampling
@@ -152,7 +152,7 @@ print(empty$example_code)
 #> set.seed(42)
 #> data = data.frame(
 #>   x = 1:100,
-#>   N = base::sample(15, 25, replace=TRUE),
+#>   N = base::sample(15:25, 100, replace=TRUE),
 #>   y = 0.  # Numeric placeholder that is valid for every sampled trial count.
 #> )
 #> empty = mcp(model, data, family = binomial(), sample = FALSE)
@@ -171,7 +171,7 @@ print(empty$example_code)
 #> # Illustrative plot
 #> if (plot) {
 #>   set.seed(42)
-#>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
+#>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, q_fit = TRUE)'))
 #> }
 
 # Now sample this model

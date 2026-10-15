@@ -66,7 +66,7 @@ hypothesis(fit_void, c(
     ## # A tibble: 2 × 7
     ##   hypothesis             mean    sd lower upper  prob    BF
     ##   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.937    NA
+    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.935    NA
     ## 2 cp_2 > 70 & cp_2 < 80    NA    NA    NA    NA 0.840    NA
 
 ## Imputing missing responses
@@ -129,16 +129,16 @@ imputed
     ## # A tibble: 10 × 7
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.5  4.39  29.8    41.0
-    ##  2    NA    19 A      15.5  4.38   9.95   21.1
-    ##  3    NA    27 A      17.1  4.31  11.6    22.7
-    ##  4    NA    28 B      39.3  4.34  33.8    44.9
-    ##  5    NA    29 A      17.5  4.35  12.0    23.1
-    ##  6    NA    30 B      39.9  4.33  34.2    45.3
-    ##  7    NA    31 A      17.8  4.36  12.4    23.5
-    ##  8    NA    68 B      40.9  4.47  35.2    46.6
-    ##  9    NA    84 B      34.2  4.34  28.6    39.8
-    ## 10    NA    96 B      29.2  4.45  23.5    34.9
+    ##  1    NA     8 B      35.4  4.39  29.7    41.0
+    ##  2    NA    19 A      15.4  4.39   9.93   21.1
+    ##  3    NA    27 A      17.1  4.30  11.5    22.6
+    ##  4    NA    28 B      39.3  4.33  33.8    44.9
+    ##  5    NA    29 A      17.5  4.35  11.9    23.0
+    ##  6    NA    30 B      39.9  4.30  34.2    45.3
+    ##  7    NA    31 A      17.8  4.35  12.3    23.4
+    ##  8    NA    68 B      40.9  4.42  35.2    46.6
+    ##  9    NA    84 B      34.2  4.32  28.7    39.8
+    ## 10    NA    96 B      29.2  4.49  23.5    34.9
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 has the same syntax as
@@ -157,14 +157,14 @@ fitted(fit, width = 0.8) |>
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
     ##  1    NA     8 B      35.4 1.09    34.0   36.8
-    ##  2    NA    19 A      15.5 0.831   14.5   16.6
-    ##  3    NA    27 A      17.1 0.758   16.1   18.1
+    ##  2    NA    19 A      15.5 0.833   14.4   16.5
+    ##  3    NA    27 A      17.1 0.759   16.1   18.0
     ##  4    NA    28 B      39.4 0.758   38.4   40.3
-    ##  5    NA    29 A      17.5 0.758   16.6   18.5
-    ##  6    NA    30 B      39.8 0.759   38.8   40.7
-    ##  7    NA    31 A      17.9 0.765   16.9   18.9
+    ##  5    NA    29 A      17.5 0.759   16.5   18.4
+    ##  6    NA    30 B      39.8 0.760   38.8   40.7
+    ##  7    NA    31 A      17.9 0.767   16.9   18.9
     ##  8    NA    68 B      40.9 1.16    39.5   42.5
-    ##  9    NA    84 B      34.2 0.879   33.1   35.4
+    ##  9    NA    84 B      34.2 0.893   33.1   35.4
     ## 10    NA    96 B      29.2 1.28    27.6   30.9
 
 ### Visualizing imputations
@@ -244,7 +244,7 @@ missing_draws |>
     ## # A tibble: 1 × 3
     ##   p_greater p_lower p_between
     ##       <dbl>   <dbl>     <dbl>
-    ## 1     0.151   0.102     0.747
+    ## 1     0.146   0.106     0.747
 
 ### Imputations and other continuous predictors
 
@@ -352,5 +352,5 @@ predict(fit, newdata = newdata, width = 0.8)
     ## # A tibble: 2 × 6
     ##       x state .mean   .sd .lower .upper
     ##   <dbl> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    20 A      15.8  4.40   10.2   21.3
-    ## 2    80 B      35.9  4.42   30.3   41.5
+    ## 1    20 A      15.8  4.40   10.1   21.2
+    ## 2    80 B      35.9  4.41   30.3   41.5

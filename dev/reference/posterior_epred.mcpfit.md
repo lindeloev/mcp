@@ -2,14 +2,10 @@
 
 Methods for the `{rstantools}` posterior-prediction generics. They
 return a draws-by-observation matrix and enable `{tidybayes}` workflows
-such as
-[`add_epred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html),
-[`add_predicted_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html),
-and
-[`add_linpred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html).
-mcp exports these generics, so they work without `{rstantools}`. If
-`{rstantools}` or `{brms}` masks them, their generics dispatch to the
-same methods.
+such as `add_epred_draws()`, `add_predicted_draws()`, and
+`add_linpred_draws()`. mcp exports these generics, so they work without
+`{rstantools}`. If `{rstantools}` or `{brms}` masks them, their generics
+dispatch to the same methods.
 
 ## Usage
 
@@ -180,8 +176,7 @@ require posterior draws. For prior prediction, use
 with `prior = TRUE`; `conditional` selects the same behavior.
 
 For binomial models, `posterior_epred()` and `posterior_predict()` (and
-corresponding `{tidybayes}` workflows such as
-[`add_epred_draws()`](https://mjskay.github.io/tidybayes/reference/add_predicted_draws.html))
+corresponding `{tidybayes}` workflows such as `add_epred_draws()`)
 follow `{brms}` and `{rstantools}` conventions by returning values on
 the outcome count scale (`rate = FALSE`), i.e., expected counts \\E\[Y\]
 = n\mu\\ and simulated counts in \\\\0, \dots, n\\\\, matching
