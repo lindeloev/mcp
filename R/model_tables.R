@@ -89,9 +89,9 @@ get_segment_tables = function(model, data, family, par_x) {
       cp = .data$segment - 1,
       segment = .data$segment,
       name = paste0("cp_", .data$cp),
-      group_col = .data$cp_group_col,
-      sd_name = ifelse(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col, "_sd"), NA),
-      group_name = ifelse(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA)
+      group_col = as.character(.data$cp_group_col),
+      sd_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col, "_sd"), NA_character_),
+      group_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA_character_)
     ) %>%
     dplyr::mutate(
       code = ifelse(!is.na(.data$group_name), yes = paste0("(", .data$name, " + ", .data$group_name, "CP_", .data$segment, "_INDEX)"), no = .data$name)
@@ -135,86 +135,34 @@ get_segment_tables = function(model, data, family, par_x) {
 #'   `group_col`, and `population_parameter`.
 #' @noRd
 get_pars_table = function(predictors, cps, group_effects, family) {
-  cp_pars = tibble::tibble(
-    parameter = character(), part = character(), scope = character(), role = character(),
-    segment = integer(), dpar = character(), order = integer(),
-    group_col = character(), population_parameter = character(), .tie = integer()
+  group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
+  group_preds = group_effects[group_effects$part == "predictor", , drop = FALSE]
+
+  # One tibble per kind of parameter. Zero-row tables recycle to zero rows. `.tie` orders each
+  # change point and coefficient (by model-matrix column) before its group-level SD and deviations.
+  pars = dplyr::bind_rows(
+    tibble::tibble(parameter = cps$name, part = "cp", scope = "population", role = "change_point", segment = cps$segment,
+      dpar = "cp", group_col = NA_character_, population_parameter = NA_character_, .tie = 0),
+    tibble::tibble(parameter = group_cps$sd_name, part = "cp", scope = "population", role = "group_sd", segment = group_cps$segment,
+      dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1),
+    tibble::tibble(parameter = group_cps$group_name, part = "cp", scope = "group", role = "change_point", segment = group_cps$segment,
+      dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2),
+    tibble::tibble(parameter = predictors$name, part = "predictor", scope = "population", role = "coefficient", segment = predictors$segment,
+      dpar = predictors$dpar, order = predictors$order, .tie = predictors$matrix_col),
+    tibble::tibble(parameter = group_preds$sd_name, part = "predictor", scope = "population", role = "group_sd", segment = group_preds$segment,
+      dpar = group_preds$dpar, order = group_preds$order, group_col = group_preds$group_col,
+      population_parameter = group_preds$population_name, .tie = group_preds$matrix_col + 0.1),
+    tibble::tibble(parameter = group_preds$name, part = "predictor", scope = "group", role = "coefficient", segment = group_preds$segment,
+      dpar = group_preds$dpar, order = group_preds$order, group_col = group_preds$group_col,
+      population_parameter = group_preds$population_name, .tie = group_preds$matrix_col + 0.2)
   )
-  if (nrow(cps) > 0) {
-    cp_pars = tibble::tibble(
-      parameter = cps$name, part = "cp", scope = "population", role = "change_point",
-      segment = cps$segment, dpar = "cp", order = NA_integer_,
-      group_col = NA_character_, population_parameter = NA_character_, .tie = 0L
-    )
-    group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
-    if (nrow(group_cps) > 0) {
-      cp_pars = dplyr::bind_rows(
-        cp_pars,
-        tibble::tibble(
-          parameter = group_cps$sd_name, part = "cp", scope = "population", role = "group_sd",
-          segment = group_cps$segment, dpar = "cp", order = NA_integer_,
-          group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1L
-        ),
-        tibble::tibble(
-          parameter = group_cps$group_name, part = "cp", scope = "group", role = "change_point",
-          segment = group_cps$segment, dpar = "cp", order = NA_integer_,
-          group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2L
-        )
-      )
-    }
-  }
-
-  predictor_pars = predictors %>%
-    dplyr::transmute(
-      parameter = .data$name,
-      part = "predictor",
-      scope = "population",
-      role = "coefficient",
-      segment = .data$segment,
-      dpar = .data$dpar,
-      order = .data$order,
-      group_col = NA_character_,
-      population_parameter = NA_character_,
-      .tie = .data$matrix_col
-    )
-
-  predictor_group_pars = group_effects %>%
-    dplyr::filter(.data$part == "predictor") %>%
-    dplyr::transmute(
-      parameter = .data$sd_name,
-      part = "predictor",
-      scope = "population",
-      role = "group_sd",
-      segment = .data$segment,
-      dpar = .data$dpar,
-      order = .data$order,
-      group_col = .data$group_col,
-      population_parameter = .data$population_name,
-      .tie = .data$matrix_col + 0.1
-    ) %>%
-    dplyr::bind_rows(
-      group_effects %>%
-        dplyr::filter(.data$part == "predictor") %>%
-        dplyr::transmute(
-          parameter = .data$name,
-          part = "predictor",
-          scope = "group",
-          role = "coefficient",
-          segment = .data$segment,
-          dpar = .data$dpar,
-          order = .data$order,
-          group_col = .data$group_col,
-          population_parameter = .data$population_name,
-          .tie = .data$matrix_col + 0.2
-        )
-    )
 
   # Canonical group order: cp, mu, other family dpars (family order), then
   # ar/ma components (ar before ma) and their lag order.
   dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), "ar", "ma")
 
   # Public `dpar` values are those accepted by `dpar` arguments, e.g., "ar1". Change points have none.
-  dplyr::bind_rows(cp_pars, predictor_pars, predictor_group_pars) %>%
+  pars %>%
     dplyr::arrange(factor(.data$dpar, levels = dpar_levels), .data$order, .data$segment, .data$.tie) %>%
     dplyr::mutate(dpar = dplyr::case_when(
       .data$part == "cp" ~ NA_character_,
