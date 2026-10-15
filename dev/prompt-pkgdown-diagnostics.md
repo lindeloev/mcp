@@ -5,7 +5,8 @@ Review all output blocks in the pkgdown site vignettes and function examples. Re
  - Any warning()-like warnings
  - Any diagnostics firing from {mcp}, e.g., `mcp()` or mcp-summary saying parameters had low ESS or high rhat.
  - Any diagnostics firing from {loo}, e.g., divergent transitions.
- - Any diagnostics firimg from other functions/packages.
+ - Any diagnostics firing from other functions/packages.
+ - If simulated values are not recovered. This can be OK if it is just one or two out of many, but otherwise flag it.
  - Any messages that does not seem to be purposeful.
 
 
