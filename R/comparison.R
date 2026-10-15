@@ -4,7 +4,8 @@
 #' Information Criteria for Model Comparison
 #'
 #' Compare models using \code{\link[loo]{loo_compare}} (re-exported by mcp) and \code{\link[loo]{loo_model_weights}}.
-#' Read more in \code{\link[loo]{loo}}.
+#' Read more in \code{\link[loo]{loo}} and see
+#' [worked examples on the mcp website](https://lindeloev.github.io/mcp/articles/comparison.html#cross-validation).
 #'
 #' @aliases loo LOO loo.mcpfit loo_compare
 #' @param x An \code{\link{mcpfit}} object.

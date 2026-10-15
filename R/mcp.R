@@ -5,23 +5,26 @@
 #' between segments. See details or [the mcp website](https://lindeloev.github.io/mcp/).
 #'
 #' @aliases mcp
-#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
-#'   with syntactic column names.
-#'   Missing values in the response variable are imputed jointly with the parameters.
 #' @param model A list of formulas, one for each segment, in the format
 #'   `model = list(response ~ predictors, ~ cp(...) + predictors)`, where `cp()` is optional. See [mcp-formula] for how segments connect
-#'   and the full formula syntax.
+#'   and the full formula syntax. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
+#'   with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
 #' @param prior Named list, e.g., `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`. 
 #'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
 #'   `sigma_1`, etc.) and values are a distribution string (e.g., `"dnorm(0, 1) T(0, )"`),
 #'   a fixed value (e.g., `-2.1`), or the name of another parameter to share its value.
 #'   Weakly informative defaults are used where priors are not specified;
 #'   see them with [prior_summary()]. See [mcp-priors] for the full syntax.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
 #' @param family A supported family and link function:
 #'   * `gaussian(link = "identity")` or `gaussian(link = "log")`
 #'   * `binomial()` or `bernoulli()` with `link = "logit"`, `"probit"`, or `"identity"`
 #'   * `poisson(link = "log")` or `poisson(link = "identity")`
 #'   * `negbinomial(link = "log", link_shape = "log")`
+#'
+#'   [Read more](https://lindeloev.github.io/mcp/articles/families.html).
 #' @param par_x String. Name of the change-point variable, i.e., the data column
 #'   on which change points are located. `NULL` (default) auto-detects it as the
 #'   only continuous predictor in the formulas.
@@ -47,7 +50,8 @@
 #'   use diagnostics to assess convergence.
 #' @param adapt Deprecated; use `warmup` instead.
 #' @param inits A named list of initial values for the parameters, e.g., `list(Intercept_1 = 10)`,
-#'   or a list of such lists with one per chain. This can be useful if a model fails to converge.
+#'   or a list of such lists with one per chain. This can be useful if a model fails to converge
+#'   ([read more](https://lindeloev.github.io/mcp/articles/tips.html)).
 #'   Names must be stochastic nodes in `fit$jags_code` (lines with `~`). Change points, fixed parameters,
 #'   and parameters that `mcp` samples via reparameterization (e.g., `Intercept_3` is sampled as
 #'   `Intercept_3_end_`) cannot be initialized directly. See `mcp_reparam` in [mcp-package].
@@ -57,6 +61,7 @@
 #'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
 #'   framework. R-side simulation and prediction methods continue to use the
 #'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html) about how `mcp` writes JAGS code.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
 #'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
@@ -88,6 +93,7 @@
 #' Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
 #' See [mcp-formula] for the rules of how segments connect, the full formula syntax, and the
 #' underlying model. See [mcp-priors] for how to specify priors.
+#' See [the mcp website](https://lindeloev.github.io/mcp/) for worked examples of all model features.
 #'
 #' @references
 #' * Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.

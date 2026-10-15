@@ -4,6 +4,8 @@
 #' The `prior` argument of [mcp()] is a named list. Names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
 #' `sigma_1`, etc.; see [mcp-formula] for how they arise) and the values specify their priors.
 #' Use [prior_summary()] to see the resolved priors of a fitted model, including defaults.
+#' See [Working with priors](https://lindeloev.github.io/mcp/articles/priors.html) for worked examples
+#' and prior predictive checks.
 #'
 #' @details
 #' Each value in the list is either
@@ -22,43 +24,19 @@
 #' Weakly informative defaults are used where priors are not specified. These are designed for stable
 #' estimation and prediction, but should be justified before hypothesis testing.
 #' Default priors follow `rstanarm` for intercepts and coefficients and `brms` for scale parameters, with
-#' a few documented deviations:
+#' a few documented deviations. For example, with an identity link:
 #'
-#'  * *Coefficients* are autoscaled as in `rstanarm`. For the mean (`mu`),
-#'      \deqn{\beta \sim \mathrm{Normal}\left(0, \frac{2.5 \cdot s_y}{\mathrm{sd}(\mathrm{column})}\right)}{beta ~ Normal(0, 2.5 * s_y / sd(column))}
-#'      where \eqn{s_y = \mathrm{sd}(y)}{s_y = sd(y)} for identity links and \eqn{s_y = 1}{s_y = 1} for other links.
-#'      \eqn{\mathrm{sd}(\mathrm{column})}{sd(column)} is the SD of the coefficient's model-matrix column, including
-#'      the 0/1 dummies of factors. This makes the prior largely invariant to the units of `x` and `y`. Logit and
-#'      probit links use 1.5 and 1 instead of 2.5. For x-terms, `sd(column)` is `sd(x)` over all data (powers such
-#'      as `I(x^2)` use `sd((x - min(x))^2)`) times the SD of the term without `x`, e.g., `sd(x) * sd(z)`
-#'      for `x:z`. 0/1 indicators such as the dummies in `x:state` contribute a factor of 1. Unlike `rstanarm`, this
-#'      does not depend on the location of `x` and `z`.
-#'  * *Intercepts* are `normal(mean(y), 2.5 * sd(y))` for identity links, `normal(0, 1.5)` for logit, and
-#'      `normal(0, 1)` for probit. The latter two are (approximately) uniform on the probability scale.
-#'      For log links (Gaussian, Poisson, and negative binomial), intercepts are
-#'      `normal(median(log(y)), max(2.5, mad(log(y))))`, rounded to one decimal and with `y <= 0` replaced by 0.1 so that the
-#'      log is defined. This robustly centers the prior on the typical log-response, as in `brms` (which uses a
-#'      Student-t shape and replaces zeros the same way), whereas `rstanarm` uses `normal(0, 2.5)`.
-#'      For a factor without an intercept, e.g., `y ~ 0 + state`, each factor level's coefficient is an intercept and
-#'      gets this prior where the segment starts at zero (segment 1 or joined to nothing).
-#'      With an `offset()`, the intercept location and scale are computed from the offset-adjusted response,
-#'      `y - offset` for identity links and `log(y) - offset` for log links.
-#'  * *`sigma` and group-level SDs* follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y)))`, since
-#'      half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
-#'      For `mu` with a log link and for modeled `shape`, group-level SDs are half-normal instead, e.g., `normal(0, 2.5) T(0, )`,
-#'      because exponentiated heavy tails imply extreme group multipliers.
+#'  * *Coefficients* are autoscaled as in `rstanarm`, e.g., `normal(0, 2.5 * sd(y) / sd(x))` for a slope on `x`.
+#'      This makes the prior largely invariant to the units of `x` and `y`.
+#'  * *Intercepts* are `normal(mean(y), 2.5 * sd(y))`. Like `rstanarm` and `brms`, the default prior on `Intercept_1`
+#'      applies at the start of the data, `min(x)`. The reported `Intercept_1` is still at `x = 0`, as in [lm()], so
+#'      `fit$prior` shows its prior given the x-terms, e.g., `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))`.
+#'      Other predictors are not centered. User-specified priors on `Intercept_1` apply directly at `x = 0`.
+#'  * *`sigma` and group-level SDs* follow `brms`, e.g., `student_t(3, 0, max(2.5, mad(y))) T(0, )`.
 #'
-#' Like `rstanarm` and `brms`, which place intercept priors on centered predictors, the default prior on
-#' the segment-1 intercept applies to the value at the start of the segment, `min(x)`. The reported
-#' `Intercept_1` is still at `x = 0`, as in [lm()], so its prior is given the x-terms, e.g.,
-#' `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))` in `fit$prior`. Later segments' intercepts are at their change point.
-#' Likewise, factor levels and contrasts with their own x-terms apply at `min(x)`, e.g., `stateb_1` in `y ~ 1 + state * x`
-#' gets `dnorm(-stateb.x_1 * min(x), ...)`.
-#' Unlike in `rstanarm` and `brms`, other predictors are not centered, so the prior applies where they are zero.
-#' If such a predictor is far from zero, center it before fitting or set a prior on `Intercept_1`.
-#' User-specified intercept priors apply directly to `Intercept_1` (at `x = 0`). The autoscaling does not account for
-#' segment length. If you expect steep slopes or strong curvature within short segments, consider setting a
-#' wider prior.
+#' Use `prior_summary(fit, verbose = TRUE)` to see the default priors of a model and the rules behind them.
+#' See [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for all families, links,
+#' and distributional parameters, and for how the defaults deviate from `rstanarm` and `brms`.
 #'
 #' The default prior on change points is `dirichlet(1)` (uniform order statistics).
 #' For a single change point, this is the Beta(1, 1) / Uniform distribution over `[min(x), max(x)]`.
@@ -67,7 +45,7 @@
 #' change points to regularize spacing (`alpha > 1` penalizes change points from occurring close together,
 #' while `alpha < 1` favors clustering). Under the hood, `dirichlet(1)` is sampled as sorted uniforms
 #' and other `alpha` as an exact sequential stick-breaking Beta chain for fast and robust sampling.
-#' [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
+#' [Read more](https://lindeloev.github.io/mcp/articles/priors.html#cp_prior).
 #'
 #' @section Notes on priors:
 #'
@@ -80,6 +58,7 @@
 #'   * *Group-level change points:* Group-specific locations follow a hierarchical
 #'       normal distribution around their population change point, truncated so
 #'       that realized locations remain in the observed range and ordered.
+#'       [Read more](https://lindeloev.github.io/mcp/articles/default_priors.html#group-level-change-points).
 #'   * *Parameterization:* Prior strings use conventional scale parameterizations. `mcp` converts
 #'       these to the parameterization required by JAGS when generating code:
 #'       inverse variance for `dnorm()`, `dt()`, and `dlnorm()`, and inverse

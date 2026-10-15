@@ -2,7 +2,8 @@
 #' Posterior Predictive Checks For Mcpfit Objects
 #'
 #' Plot posterior (default) or prior (`prior = TRUE`) predictive checks. This is convenience wrapper
-#' around the `bayesplot::ppc_*()` methods.
+#' around the `bayesplot::ppc_*()` methods. See
+#' [prior predictive checks](https://lindeloev.github.io/mcp/articles/priors.html#prior-predictive-checks) for an example.
 #'
 #' @rdname pp_check
 #' @aliases pp_check pp_check.mcpfit

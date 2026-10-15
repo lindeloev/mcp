@@ -21,10 +21,13 @@
 #' \if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
 #'
 #' Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
-#' Three rules govern how segments connect (with `x` as the change-point variable, i.e., `time` above):
+#' 
+#' The modeling options and behvior is described below. They are described in a more applied and comprehensive way [on the mcp website](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect)).
+#' 
+#' Three rules govern how segments connect (with `x` as the change-point variable, i.e., `time` above:
 #' 1. **Only included terms get coefficients.** A segment includes the terms in its formula,
 #'    plus an intercept unless removed with `0 +`. Each included term gets a new coefficient
-#'    (`x_2`, `stateB_2`) or reuses an existing one with `same()`.
+#'    (`x_2`, `stateB_2`) or reuses an existing one if wrapped in `same()`.
 #' 2. **x-terms are measured from the change point.** `x`, `x:z`, `state:x`, and `I(x^2)` start at zero
 #'    at the segment's change point and stop growing at the next change point.
 #' 3. **Joined or disjoined.** Without an intercept (`0 + ...`), a segment is *joined*: it continues
@@ -42,6 +45,7 @@
 #' **1. Response (segment 1 only):**
 #' * `y ~ ...`: Standard continuous, binary, or count response (Gaussian, Bernoulli, Poisson, negative binomial).
 #' * `successes | trials(total) ~ ...`: Binomial response (`family = binomial()`).
+#'   [Read more](https://lindeloev.github.io/mcp/articles/binomial.html).
 #' * `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's
 #'   log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but
 #'   not predictions).
@@ -60,7 +64,7 @@
 #'   (`scale()`, `poly()`, `splines::ns()`). Bases are evaluated before sampling and reused for `newdata`.
 #' * `~ 1 + offset(log(exposure))`: Offset with a fixed coefficient of 1. If one segment includes an offset,
 #'   all segments must include one. The same applies within `sigma()`, etc., and within `ar()`/`ma()` in the
-#'   segments that include them.
+#'   segments that include them. [Read more](https://lindeloev.github.io/mcp/articles/poisson.html#modeling-rates-using-offset).
 #' * `~ 1 + (1 | id)`: Group-level intercepts (or `(1 + x || id)` for independent slopes and intercepts).
 #'   [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #' * `~ sigma(1 + x)`: Distributional parameters on the link scale (e.g., log residual SD), with parameters
@@ -72,6 +76,7 @@
 #' * `~ 1 + same(x)` or `0 + same(z, as = 1)`: Reuse a coefficient from the preceding segment (default)
 #'   or from segment `as`. Reused coefficients are estimated jointly from all segments where they are
 #'   included, not fitted in one segment and copied to another.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/formulas.html#sharing-coefficients-between-segments).
 #'
 #' @section The mcp model:
 #' An `mcp` model divides the change-point variable \eqn{x} into \eqn{K} segments separated by
@@ -116,10 +121,8 @@
 #'
 #' where \eqn{\phi_{j,t}} is the lag-\eqn{j} autoregressive (AR) coefficient at time \eqn{t},
 #' \eqn{\theta_{k,t}} is the lag-\eqn{k} moving-average (MA) coefficient at time \eqn{t},
-#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the threshold-constrained observation with threshold constant \eqn{c} (set via argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale:
-#' * **Gaussian:** \eqn{y^*_t = y_t}.
-#' * **Poisson / Negative Binomial:** \eqn{y^*_t = \max(y_t, c)} to prevent \eqn{\log(0)}. Here \eqn{c} replaces zero counts with a small positive threshold value.
-#' * **Binomial / Bernoulli:** \eqn{y^*_t = \min(\max(y_t, c), n_t - c) / n_t}, where \eqn{y_t} is observed successes, \eqn{n_t} is the number of trials (\eqn{n_t = 1} for Bernoulli), and \eqn{c} constrains counts to the interval \eqn{[c, n_t - c]} before converting to a rate, preventing \eqn{\text{logit}(0)} and \eqn{\text{logit}(1)}.
+#' \eqn{g(\cdot)} is the link function, and \eqn{y^*_t} is the observation, constrained by a threshold constant \eqn{c} (argument \code{threshold = 0.1} in \code{ar()} / \code{ma()}) to keep residuals finite on the link scale,
+#' e.g., \eqn{y^*_t = \max(y_t, c)} for zero counts in Poisson models. [Read more](https://lindeloev.github.io/mcp/articles/arma.html#observation-threshold).
 #'
 #' Implications:
 #' * For an \eqn{N}-order component, the last \eqn{N} values *before* the segment's change point are input to the first \eqn{\eta_t} in the segment.

@@ -327,7 +327,8 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' Evaluate the model on data, either summarised (per data-row) or per draw. You
 #' can use draws from the prior (`prior = TRUE`), select a distributional
 #' parameter with `dpar`, and choose the response or linear-predictor scale with
-#' `scale` where applicable.
+#' `scale` where applicable. See [Fits and predictions](https://lindeloev.github.io/mcp/articles/predict.html)
+#' for worked examples, including forecasts with future change points.
 #'
 #' @details
 #' `fitted()` and `posterior_epred()` evaluate the same expected responses;
@@ -353,6 +354,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' `fitted()` returns their expected responses, while `predict()` generates fresh
 #' posterior predictive response draws (including at missing rows). In GARMA models,
 #' retained JAGS imputations supply the history used for later fitted and predicted rows.
+#' [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
 #'
 #' @param group_effects Group-level effects to include. One of:
 #'   * `TRUE` All group-level deviations.

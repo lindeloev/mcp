@@ -25,6 +25,7 @@
 #'   posterior and prior draws, respectively. Do not access these directly; 
 #'   use as_draws(fit) or similar.
 #' * `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show it.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html).
 #' * `simulate`: A function to simulate data from supplied parameter values.
 #' * `.internal`: Information used internally by mcp.
 NULL
@@ -235,7 +236,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   * `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 #'   * `ess_bulk` and `ess_tail` are the bulk and tail effective sample sizes.
 #'     Low effective sample sizes are also obvious as poor mixing in trace plots
-#'     (see `plot_pars(fit)`). Read how to deal with such problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
+#'     (see `plot_pars(fit)`). Read how to deal with such problems in
+#'     [Diagnosing and fixing problems](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
 #'
 #'  Group-level change-point deviations (`cp_i_id`) follow a hierarchical normal
 #'  distribution around the population change point before truncation. Realized
@@ -244,6 +246,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'  exactly.
 #'  Predictor group-level effects (such as `Intercept_1_id`) use standard
 #'  hierarchical zero-mean priors, without change-point constraints.
+#'  [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #'
 #'  For simulated data, the summary contains two additional columns so that it
 #'  is easy to inspect whether the model can recover the parameters. Run

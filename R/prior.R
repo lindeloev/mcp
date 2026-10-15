@@ -78,7 +78,8 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #'   the same way as `summary()`: change points first, then `mu`, then the
 #'   other distributional parameters, then `ar`/`ma` components - each with
 #'   `segment` and `dpar` columns.
-#' @seealso [mcp-priors] for how to specify priors.
+#' @seealso [mcp-priors] for how to specify priors, and
+#'   [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for the rules behind them.
 #' @export
 #' @examples
 #' prior_summary(demo_fit)  # Show the effective priors and bounds

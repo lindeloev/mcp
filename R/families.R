@@ -2,6 +2,9 @@
 
 #' Bernoulli Family for mcp
 #'
+#' Binary responses (0 or 1). See [Binomial and Bernoulli](https://lindeloev.github.io/mcp/articles/binomial.html)
+#' for worked examples.
+#'
 #' @aliases bernoulli
 #' @param link Link function.
 #' @export
@@ -24,6 +27,7 @@ bernoulli = function(link = "logit") {
 #' Parameterized as `mu` (the conditional mean) and `shape` (the same quantity
 #' as `size` in `rnbinom()`). Thus `Var(y) = mu + mu^2 / shape`, which approaches
 #' the Poisson variance as `shape` approaches infinity.
+#' [Read more](https://lindeloev.github.io/mcp/articles/poisson.html#negative-binomial-extension).
 #'
 #' @aliases negbinomial
 #' @param link Link function for `mu`.

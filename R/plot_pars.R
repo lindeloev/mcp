@@ -36,6 +36,7 @@
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
 #'   a sign that you may want to increase argument 'warmup' and 'iter' in \code{\link{mcp}}.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
 #'
 #'   Up to `npars` parameters are shown on each page. Multi-page plots are
 #'   printed in sequence; in interactive use, `ask = TRUE` pauses between pages.
