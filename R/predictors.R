@@ -197,7 +197,7 @@ get_par_x = function(vars, data, par_x = NULL) {
     if (length(par_x_candidates) == 0)
       stop("No continuous column for change points found in the formulas. Either provide mcp(..., par_x = 'my_col') or update the model.")
     if (length(par_x_candidates) > 1)
-      stop("Could not automatically determine the change point dimension (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explicitly using mcp(..., par_x = 'my_col').")
+      stop("Could not automatically determine the change-point variable (multiple candidates: ", and_collapse(par_x_candidates), "). Set it explicitly using mcp(..., par_x = 'my_col').")
     par_x = par_x_candidates
   }
 
@@ -545,7 +545,7 @@ parse_same_call = function(expr, segment, env) {
       (length(args) == 2 && arg_names[2] != "as"))
     stop("`same()` accepts one selection and an optional named `as` segment, e.g. `same(x, as = 1)`.", call. = FALSE)
   if (segment == 1)
-    stop("`same()` cannot be used in segment 1 because there is no earlier coefficient to share.", call. = FALSE)
+    stop("`same()` cannot be used in segment 1 because there is no earlier coefficient to reuse.", call. = FALSE)
 
   # Resolve and validate the source segment
   source = segment - 1L
@@ -591,7 +591,7 @@ standardize_shared_component = function(form_rhs, segment) {
     bare_expr = Reduce(function(a, b) call("+", a, b), c(list(0), bare))
     bare_terms = attr(stats::terms(stats::as.formula(call("~", bare_expr), env = environment(form_rhs))), "term.labels")
     if (any(selected$term_key %in% bare_terms))
-      stop("A term cannot be both bare and shared in segment ", segment, ".", call. = FALSE)
+      stop("A term cannot be both included directly and reused with `same()` in segment ", segment, ".", call. = FALSE)
 
     # Unwrap selectors for coding; 0 + same(1) still includes an intercept
     leaves[shared] = lapply(leaves[shared], function(x) x[[2]])

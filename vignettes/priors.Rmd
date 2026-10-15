@@ -54,11 +54,11 @@ Other notes:
 
 - Change points are always ordered (`cp_1 < cp_2 < ...`), whatever their priors. See [priors on change points](#cp_prior).
 
-- `mcp` allows inserting data-dependent values: for example, `min(x)`, `max(x)`, `mean(y)`, `median(y)`, `sd(y)`, `mad(y)`, `max(x) - min(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older `mcp` v0.3.4 uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
+- `mcp` allows inserting data-dependent terms: for example, `min(x)`, `max(x)`, `mean(y)`, `median(y)`, `sd(y)`, `mad(y)`, `max(x) - min(x)`, `n_segments()`, and `n_cp()`. `mcp` resolves these expressions before generating JAGS code. The older `mcp` v0.3.4 uppercase constants (`MINX`, `MAXX`, and so on) remain temporarily supported with a deprecation warning.
 
 - You can fix any parameter to a specific value. Simply set it to a numerical value (as `cp_2` above). A constant is a 100% prior belief in that value, and it will therefore not be estimated.
 
-- To share a coefficient between segments, prefer `same()` in the model, e.g., `~ 1 + same(x)` in segment 3. This reuses `x_2` instead of estimating `x_3`. Equating parameters in the prior (`x_3 = "x_2"` above) gives the same fit but keeps `x_3` as a duplicate. Read more about `same()` in [Understanding mcp formulas](../articles/formulas.html#sharing-coefficients-between-segments).
+- To reuse a coefficient in a later segment, prefer `same()` in the model, e.g., `~ 1 + same(x)` in segment 3. This reuses `x_2` instead of estimating `x_3`. Equating parameters in the prior (`x_3 = "x_2"` above) gives the same fit but keeps `x_3` as a duplicate. Read more about `same()` in [Understanding mcp formulas](../articles/formulas.html#reusing-coefficients-between-segments).
 
 - You can write deterministic expression such as `x_3 = "x_2 + 5 - cp_1/10"`. Since `x_3` is now deterministic given `x_2` and `cp_1`, this leaves one fewer free parameter to estimate.
 
@@ -96,7 +96,7 @@ fit_manual = mcp(model, data = df, sample = "both", prior = prior)
 fit_default = mcp(model, data = df, sample = "both")
 ```
 
-First, let's look at the priors side by side. Notice the use of `prior = TRUE` to show prior samples. This works in `plot()`, `plot_pars()`, and `summary()` among others.
+First, let's look at the priors side by side. Notice the use of `prior = TRUE` to show prior draws. This works in `plot()`, `plot_pars()`, and `summary()` among others.
 
 ```{r, fig.height=12, fig.width=6}
 library(ggplot2)

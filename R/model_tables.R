@@ -272,7 +272,7 @@ mcp_pars = function(fit, scope = NULL, role = NULL) {
 #' `r lifecycle::badge("experimental")`
 #'
 #' Return the resolved data-column roles for an `mcpfit` object. In particular,
-#' `par_x` is the change-point predictor chosen automatically or supplied to
+#' `par_x` is the change-point variable chosen automatically or supplied to
 #' [mcp()]. Family-defined response auxiliaries, such as `trials` and
 #' `weights`, are listed when relevant.
 #'

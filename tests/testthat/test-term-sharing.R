@@ -179,7 +179,7 @@ test_that("same() validates sources, competing terms, and group blocks", {
 
   expect_error(mcp(list(y ~ same(1)), data, par_x = "x", sample = FALSE), "segment 1")
   expect_error(mcp(list(y ~ 1, ~ same(x)), data, par_x = "x", sample = FALSE), "cannot find")
-  expect_error(mcp(list(y ~ 1 + x, ~ x + same(x)), data, par_x = "x", sample = FALSE), "both bare and shared")
+  expect_error(mcp(list(y ~ 1 + x, ~ x + same(x)), data, par_x = "x", sample = FALSE), "both included directly and reused")
   expect_error(
     mcp(list(y ~ 1 + x, ~ 0 + same(x)), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE),
     "Set prior on `x_1` instead of `x_2`"
@@ -231,9 +231,9 @@ test_that("whole group slopes reuse local coordinates, endpoints, and explicit s
   b = attr(values, "simulated")$x_1_id
   expect_equal(as.numeric(values), 1 + b * pmin(data$x, 8))
   expect_error(mcp(list(y ~ 1 + (1 + x || id), ~ 0 + same((0 + x || id))),
-    data, par_x = "x", sample = FALSE), "complete group term with coefficients")
+    data, par_x = "x", sample = FALSE), "complete group-level term with coefficients")
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ 0, ~ same((1 | id))),
-    data, par_x = "x", sample = FALSE), "complete group term with coefficients")
+    data, par_x = "x", sample = FALSE), "complete group-level term with coefficients")
   expect_no_error(mcp(list(y ~ 1 + (1 | id), ~ 0, ~ same((1 | id), as = 1)),
     data, par_x = "x", sample = FALSE))
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ (0 + x || id) + same((1 | id))),

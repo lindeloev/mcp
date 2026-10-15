@@ -27,7 +27,7 @@
 #'   [Read more](https://lindeloev.github.io/mcp/articles/families.html).
 #' @param par_x String. Name of the change-point variable, i.e., the data column
 #'   on which change points are located. `NULL` (default) auto-detects it as the
-#'   only continuous predictor in the formulas.
+#'   only continuous variable in the formulas.
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.
 #'   * `"prior"`: Sample only the prior. Use `prior = TRUE` explicitly in
@@ -35,7 +35,7 @@
 #'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
 #'       will default to using the posterior. Use `prior = TRUE` to select prior draws.
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
-#'       object without sample. This is useful if you only want to check
+#'       object without draws. This is useful if you only want to check
 #'       prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 #' @param cores Deprecated and ignored. Configure parallel processing with a
 #'   [future][future::plan] plan instead, for example
@@ -163,7 +163,7 @@
 #'
 #' fit3 = mcp(model, data = data, prior = prior, seed = 42)
 #'
-#' # Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
+#' # Reuse coefficients in later segments using same() (e.g., Intercept_1 in segment 3)
 #' model_same = list(
 #'   response ~ 1,
 #'   ~ 0 + time,

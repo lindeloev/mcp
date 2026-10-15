@@ -26,6 +26,7 @@
 #' @param ask Logical. In an interactive session, prompt before printing each
 #'   page after the first. Only used when there are multiple pages.
 #' @param prior Logical. Plot prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)? Useful for `mcp(..., sample = "both")`.
+#'   Prior draws show the marginal priors, e.g., of ordered change points, rather than the specified priors in [prior_summary()].
 #'
 #' @details
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these

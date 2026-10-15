@@ -156,7 +156,7 @@ evaluate_model_dpars = function(fit, args, pred_pars) {
 simulate_truncated_normal = function(mean, sd, lower, upper) {
   if (sd == 0) {
     if (any(mean <= lower | mean >= upper))
-      stop("A zero change-point SD places a group change point outside its ordered interval.")
+      stop("A zero change-point SD places a group-specific change point outside its bounds.")
     return(mean)
   }
   lower_prob = stats::pnorm(lower, mean, sd)

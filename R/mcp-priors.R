@@ -17,7 +17,7 @@
 #'      and all priors accept data-dependent terms such as `sd(y)` (see below).
 #'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), sharing that parameter's value.
-#'      Note that sharing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
+#'      Note that reusing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
 #'      is generally preferred. If two group-level deviations are shared via the prior,
 #'      they will need to have the same grouping variable.
 #'
@@ -33,6 +33,7 @@
 #' @section Change point priors: 
 #' 
 #' Change points are always ordered: each change point keeps its specified prior, restricted to ordered change points.
+#' Use `plot_pars(fit, prior = TRUE)` to see the resulting marginal priors.
 #' The default is a flat Dirichlet prior on the segment lengths, written as `dunif(min(x), max(x))` on each change point
 #' ([read more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
 #' Set a minimum segment length using the previous change point in the lower bound, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`.
@@ -44,9 +45,9 @@
 #'       e.g., `dnorm(30, 10)` becomes `dnorm(30, 10) T(min(x), max(x))`.
 #'   * *Data-dependent terms:* If `mcp` encounters a data-dependent term like `min(time)`, `max(time)`, `mean(response)`, `median(response)`, `sd(response)`, or `mad(response)` in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: `n_segments()` and `n_cp()`.
 #'       The older constants `MINX`, `MAXX`, `MEANX`, `SDX`, `MINY`, `MAXY`, `MEANY`, `SDY`, and `N_CP` remain accepted with a deprecation warning.
-#'   * *Group-level change points:* Group-specific locations follow a hierarchical
-#'       normal distribution around their population change point, truncated so
-#'       that realized locations remain in the observed range and ordered.
+#'   * *Group-level change points:* Group-specific change points follow a hierarchical
+#'       normal distribution around their population-level change point, truncated so
+#'       that they remain in the observed range and ordered.
 #'       [Read more](https://lindeloev.github.io/mcp/articles/default_priors.html#group-level-change-points).
 #'   * *Parameterization:* Prior strings use conventional scale parameterizations. `mcp` converts
 #'       these to the parameterization required by JAGS when generating code:

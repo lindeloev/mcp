@@ -346,7 +346,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' `log_lik()` defaults to an unsummarised draws-by-observation matrix, as used
 #' by `loo` and other posterior workflows. Non-default `group_effects` and `arma`
 #' settings evaluate conditional or counterfactual log-likelihoods (e.g.,
-#' omitting random effects or serial correlation); they cannot be used in
+#' without group-level effects or serial correlation); they cannot be used in
 #' `loo()` or `waic()` because estimating information criteria for reduced
 #' models requires refitting.
 #'

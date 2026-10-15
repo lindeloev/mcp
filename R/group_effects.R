@@ -142,7 +142,7 @@ get_predictor_group_definitions_segment = function(
       source = selected$source[match(terms, selected$term_key)]) %>%
       dplyr::distinct(.data$key, .data$source, .keep_all = TRUE)
     if (anyDuplicated(blocks$group))
-      stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment; bare/shared or competing blocks cannot be combined.", call. = FALSE)
+      stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment, including terms reused with `same()`.", call. = FALSE)
 
     # Group terms are atomic blocks; source coding and all coefficients are reused together
     for (i in seq_len(nrow(blocks))) {
@@ -152,7 +152,7 @@ get_predictor_group_definitions_segment = function(
         source = previous[previous$dpar == dpar & previous$segment == source_segment &
           previous$has_coefficients & previous$group_key == blocks$key[i], , drop = FALSE]
         if (is.null(source) || nrow(source) == 0)
-          stop("`same()` requires a complete group term with coefficients in segment ", source_segment,
+          stop("`same()` requires a complete group-level term with coefficients in segment ", source_segment,
             " for ", dpar, ": (", term, "). Partial block sharing is not supported.", call. = FALSE)
         block = source
         block$segment = segment

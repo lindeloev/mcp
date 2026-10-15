@@ -79,7 +79,7 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #' @param ... Must be empty. Reserved for future use.
 #' @return A tibble with one row per model parameter, ordered and labeled
 #'   the same way as `summary()`: change points first, then `mu`, then the
-#'   other distributional parameters, then `ar`/`ma` components - each with
+#'   other distributional parameters, then AR/MA lags - each with
 #'   `segment` and `dpar` columns.
 #' @seealso [mcp-priors] for how to specify priors, and
 #'   [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for the rules behind them.

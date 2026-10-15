@@ -187,7 +187,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Only terms included in a segment get coefficients there. `~ 0 + ...` is joined: it continues from where the earlier intercept and [x-terms](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect) (`x`, `state:x`, `I(x^2)`) left off. `~ 1 + ...` is disjoined and starts afresh. Use `same(z)` to reuse a coefficient from the preceding segment.
 
-- The change point model is basically an `ifelse` model with order constraints on the change points.
+- The change point model is basically an `ifelse` model with ordered change points.
 
 - Generate data for all supported models using `fit$simulate()`. See examples in, e.g., `mcp_example("demo")$example_code`.
 
@@ -241,7 +241,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - The default prior on change points is a flat Dirichlet prior on the segment lengths ([read more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
 
-- Fix parameters to specific values using `cp_1 = 45`. To share a coefficient between segments, use `same()` in the model, e.g., `~ 0 + same(x)`.
+- Fix parameters to specific values using `cp_1 = 45`. To reuse a coefficient in a later segment, use `same()` in the model, e.g., `~ 0 + same(x)`.
 
 - Truncate priors using `T(lower, upper)`, e.g., `Intercept_1 = "dnorm(0, 1) T(0, )"`. Change points are always ordered. Set a minimum segment length using, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"`.
 

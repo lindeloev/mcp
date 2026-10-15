@@ -27,7 +27,7 @@ The formulas are called "segments" because they divide the (observed) x-axis int
 
 # Formula format for segments
 
-The first segment has the format `response ~ predictor`. Later segments use the same response, so they are one-sided, `~ predictor`, and each starts at a change point that can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`. The predictor part works like in `lm()`/`glm()`/`brms::brm()`.
+The first segment has the format `response ~ predictor`. Later segments use the same response, so they are one-sided, `~ predictor`, and each starts at a change point that can be modeled using `cp()`, e.g., `~ cp((1 | id)) + 0 + x`. `cp()` is the change-point part of the formula and the rest is the predictor part, which works like in `lm()`/`glm()`/`brms::brm()`.
 
 **1. Response (segment 1 only):**
 
@@ -36,12 +36,12 @@ The first segment has the format `response ~ predictor`. Later segments use the 
 - `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but not predictions).
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
 
-**2. Change-point modeling (`cp()`, segments 2+):**
+**2. Change-point part (`cp()`, segments 2+):**
 
-- `~ x` (i.e., `cp()` omitted): Population-level change point (default). Same as `~ cp(1) + x`.
-- `~ cp((1 | id)) + x`: Group-level change-point deviations around the population change point ([read more](../articles/group_effects.html)). The intercept is implicit, so this is the same as `cp(1 + (1 | id))`.
+- `~ x` (i.e., `cp()` not included): Population-level change point (default). Same as `~ cp(1) + x`.
+- `~ cp((1 | id)) + x`: Group-level change-point deviations around the population-level change point ([read more](../articles/group_effects.html)). The intercept is implicit, so this is the same as `cp(1 + (1 | id))`.
 
-**3. Regression formula (all segments):**
+**3. Predictor part (all segments):**
 
 - `~ 1 + x`: Disjoined slope with a new segment intercept.
 - `~ 0 + x`: Joined slope (no new intercept).
@@ -70,7 +70,7 @@ plot(demo_fit)
 Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept. Three rules govern this (with `x` as the change-point variable, i.e., `time` above):
 
 1. **Only included terms get coefficients.**\
-   A segment includes the terms in its formula, plus an intercept unless removed with `0 +`. Each included term gets a new coefficient (`x_2`, `stateB_2`) or reuses an existing one with [`same()`](#sharing-coefficients-between-segments).
+   A segment includes the terms in its formula, plus an intercept unless removed with `0 +`. Each included term gets a new coefficient (`x_2`, `stateB_2`) or reuses an existing one with [`same()`](#reusing-coefficients-between-segments).
 2. **x-terms are measured from the change point.**\
    `x`, `x:z`, `state:x`, and `I(x^2)` start at zero at the segment's change point and stop growing at the next change point (they plateau). See the [math below](#modeling-slope-change-points).
 3. **Joined or disjoined.**\
@@ -124,7 +124,7 @@ model = list(
     ~ 0 + x             # At cp_2: Joined slope (x_3); state not included
 )
 
-# 3. Group-level effects in the predictor
+# 3. Group-level effects in the predictor part
 model = list(
   y ~ 1 + x + (1 | id),  # Intercept_1, x_1, group intercept deviations
     ~ 0 + x + (1 | id),  # At cp_1: Joined slope (x_2); new group deviations and SD
@@ -147,7 +147,7 @@ model = list(
 )
 ```
 
-## Sharing coefficients between segments
+## Reusing coefficients between segments
 
 To reuse a coefficient instead of estimating a new one, include `same(term)`. The coefficient keeps its source name:
 
@@ -163,7 +163,7 @@ model = list(
 )
 ```
 
-`same()` refers to the preceding segment by default; use `as` to pick an earlier segment. It works for factors (`same(state)`), group effects (`same((1 | id))` reuses deviations and SD), and inside distributional parameters (`sigma(0 + same(x))`). Reused x-terms are still measured from the current change point.
+`same()` refers to the preceding segment by default; use `as` to pick an earlier segment. It works for factors (`same(state)`), group-level effects (`same((1 | id))` reuses deviations and SD), and inside distributional parameters (`sigma(0 + same(x))`). Reused x-terms are still measured from the current change point.
 
 Reused coefficients are estimated jointly from all segments where they are included, not fitted in one segment and copied to another.
 
@@ -186,7 +186,7 @@ Thanks to `same()`, there is no `z_2` or `x_3`.
 
 ## Some clarifications on formula behavior
 
-Factors use ordinary R formula coding: with treatment coding, `1 + state` gives contrasts to a reference level, while `0 + state` gives coefficients for all levels. In segment 1, these are the intercepts of each level; in a joined segment, they are jumps from where the earlier segment left off. A predictor group effect such as `(1 | id)` applies where it is included. A change-point group effect applies only at the change point where it is included; it does not introduce group effects in the predictor.
+Factors use ordinary R formula coding: with treatment coding, `1 + state` gives contrasts to a reference level, while `0 + state` gives coefficients for all levels. In segment 1, these are the intercepts of each level; in a joined segment, they are jumps from where the earlier segment left off. A predictor group-level effect such as `(1 | id)` applies where it is included. A change-point group-level effect applies only at the change point where it is included; it does not introduce group-level effects in the predictor part.
 
 Only bare `x`, powers such as `I(x^2)`, and their interactions are x-terms. Other transformations, such as `sin(x)` and `poly(x, 2)`, use the original values of `x`, as in `lm()`, and do not join:
 
@@ -227,7 +227,7 @@ Key features of multiple regression models in `mcp`:
 
 # Relative changes between segments
 
-Parameters in `mcp` represent the absolute values within each segment (e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in segment 3). Relative changes between segments, such as changes in slope, jumps at change points, and distances between change points, are derived quantities. You can use `hypothesis()` for quick estimates or use `as_draws_df()` to work with the distribution.
+Coefficients in `mcp` represent the absolute values within each segment (e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in segment 3). Relative changes between segments, such as changes in slope, jumps at change points, and distances between change points, are derived quantities. You can use `hypothesis()` for quick estimates or use `as_draws_df()` to work with the distribution.
 
 First, using `hypothesis()`:
 
@@ -255,7 +255,7 @@ Because the change points differ between draws, the jump/change is evaluated exa
 
 You can now use these columns directly with base R functions like `quantile(draws$jump, c(0.025, 0.975))` and `hist(draws$cp_distance)`.
 
-The same applies to all distributional parameters (`sigma`, `shape`) and `ar`/`ma`. For example, `sigma_Intercept_3 - sigma_Intercept_2` is the change in log-SD with `sigma(1)` in both segments, so `exp()` of it is the ratio of the residual SDs. Similarly, `ar1_3 - ar1_2` is the change in the lag-1 autoregressive coefficient. Use `mcp_pars(fit)` to see the parameter names of a model.
+The same applies to all other dpars, e.g., `sigma`, `shape`, and `ar1`. For example, `sigma_Intercept_3 - sigma_Intercept_2` is the change in log-SD with `sigma(1)` in both segments, so `exp()` of it is the ratio of the residual SDs. Similarly, `ar1_3 - ar1_2` is the change in the lag-1 autoregressive coefficient. Use `mcp_pars(fit)` to see the parameter names of a model.
 
 
 # Modeling slope change points

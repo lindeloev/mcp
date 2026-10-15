@@ -30,7 +30,7 @@ authors:
 reference:
 
   - title: Fit and show mcpfit
-    desc: mcp() returns and `mcpfit`. These functions illuminate what this fit contains structurally.
+    desc: mcp() returns an `mcpfit`. These functions illuminate what this fit contains structurally.
     contents:
       - mcp
       - mcp_pars

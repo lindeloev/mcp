@@ -57,7 +57,7 @@ Let us see the two intercepts (lambda in log-units) and the change point (in yea
 result = summary(fit)
 ```
 
-We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$parameter == "cp_1"])` and `r round(result$upper[result$parameter == "cp_1"])` (95% interval).
+We can see that the model ran well with good convergence and large effective sample sizes. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$parameter == "cp_1"])` and `r round(result$upper[result$parameter == "cp_1"])` (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 
@@ -125,7 +125,7 @@ Adding a categorical predictor to the model, you can also model rate ratios. Whe
 
 # Model comparison
 
-Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare.
+Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two models without change points and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare.
 
 A flat model and a one-decay model. The intercept in `mcp` is at `date = 0`, far from the data, so we measure the decay from the first year (`I(date - 1851)`) to reduce the posterior correlation between intercept and slope. This helps sampling:
 

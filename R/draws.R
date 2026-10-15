@@ -197,16 +197,16 @@ niterations = posterior::niterations
 #' @inheritParams fitted.mcpfit
 #' @param population
 #'   * `TRUE` All population-level model parameters.
-#'   * `FALSE` No population-level effects. Same as `c()`.
+#'   * `FALSE` No population-level parameters. Same as `c()`.
 #'   * Character vector: Only include specified population-level parameters.
-#' @param group Group-level effects. One of:
+#' @param group Group-level deviations. One of:
 #'   * `TRUE` All group-level deviations.
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
 #'   * Character vector: Only include specified group-level parameters (`*` is a wildcard).
-#' @param absolute Logical. Return the absolute locations of the selected group-level change
-#'   points (`TRUE`) instead of their deviations (`FALSE`)?
+#' @param absolute Logical. Return the group-specific change points of the selected
+#'   group-level change points (`TRUE`) instead of their deviations (`FALSE`)?
 #' @param newdata Optional prediction data selecting group levels. Levels must
 #'   be in the fitted data.
 #' @return `tibble` of posterior draws in `tidybayes` format.

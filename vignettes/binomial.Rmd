@@ -102,7 +102,7 @@ Plotting the fit confirms good fit to the data, and we see the discontinuities a
 plot(fit)
 ```
 
-These lines are just `fit$simulate` applied to a random draw of the posterior samples. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
+These lines are just `fit$simulate` applied to random posterior draws. In other words, they represent the joint distribution of the parameters. You can change the number of draws (lines) using `plot(fit, lines = 50)`.
 
 Speaking of alternative visualizations, you can also plot this on the logit scale, where the linear trends are modeled:
 

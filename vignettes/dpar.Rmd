@@ -100,7 +100,7 @@ model = list(
 
 Notice a few things here:
 
-- `same(x)` ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Sharing the slope effectively removes the change point in the mean (read more about [formulas in mcp](../articles/formulas.html)).
+- `same(x)` ensures that the mean slope remains constant between segment 3 and 4. So only `sigma` changes there. Reusing the slope effectively removes the change point in the mean (read more about [formulas in mcp](../articles/formulas.html)).
 - Segment 4: `sigma` is required by the likelihood, so it cannot be turned off. A segment that does not include `sigma()` is joined, so the log-SD plateaus here.
 
 In general, the log-SD parameters are named `sigma_[normalname]`, where "normalname" is the usual parameter names in mcp (see more [here](../articles/formulas.html)). For example, the log-SD intercept in segment 2 is `sigma_Intercept_2` and the log-SD slope on `x` in segment 3 is `sigma_x_3`. In models without `sigma()`, the residual SD itself is simply `sigma_1`.

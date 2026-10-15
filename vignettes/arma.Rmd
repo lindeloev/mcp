@@ -27,7 +27,7 @@ The most common use case is still `ar(1)`. AR and MA follow the [rules for how s
 
 ## GARMA definition
 
-`mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $\eta^{\text{reg}}_t$ is the ordinary regression predictor from the segment formulas and $\eta_t$ is the predictor including serial dependence, then
+`mcp` implements AR and MA as a generalized ARMA (GARMA) recurrence on the response-family link scale. If $\eta^{\text{reg}}_t$ is the ordinary linear predictor from the segment formulas and $\eta_t$ is the linear predictor including serial dependence, then
 
 $$\begin{aligned}
 \text{AR}_t &= \sum_{j=1}^{p} \phi_{j,t} \left[g(y^*_{t-j}) - \eta^{\text{reg}}_{t-j}\right] \\
@@ -55,7 +55,7 @@ GARMA currently supports only the default links for `gaussian()` (identity), `bi
 
 ### Observation threshold
 
-The transformed observation $y^*_t$ keeps log and logit residuals finite when observations lie on the domain boundary of the link function, using a threshold constant $c$ (default `threshold = 0.1`). For Poisson and negative-binomial models, zero counts are replaced by $c$, so $y^*_t = \max(y_t, c)$. For binomial models, observed success counts are constrained to $[c, n_t - c]$ before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*_t$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
+The transformed observation $y^*_t$ keeps log and logit residuals finite when observations are 0 (log link) or 0 or 1 (logit link), where the link function is infinite, using a threshold constant $c$ (default `threshold = 0.1`). For Poisson and negative-binomial models, zero counts are replaced by $c$, so $y^*_t = \max(y_t, c)$. For binomial models, observed success counts are constrained to $[c, n_t - c]$ before conversion to a rate ($n_t = 1$ for `bernoulli()`, constraining $y^*_t$ to $[0.1, 0.9]$). It has no effect for Gaussian models.
 
 The default should usually be left unchanged. If needed, set it on either term, for example `ar(1, threshold = 0.01) + ma(1)`. Like `series`, the threshold is set once and applies to all `ar()` and `ma()` terms in all segments, since they transform the same response history. Supplying different thresholds is an error.
 
@@ -103,7 +103,7 @@ For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part o
 plot_pars(fit, npars = NULL)
 ```
 
-Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more samples (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.
+Sometimes, the trace plot shows that the change point (`cp_1`) is not well identified with this model and data. As discussed in the article on [tips, tricks, and debugging](../articles/tips.html), you could combine a more informative prior with more draws (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.
 
 You can do hypothesis testing with GARMA models using `hypothesis()`. [Read more here](../articles/comparison.html) or scroll down for an applied example.
 
@@ -334,7 +334,7 @@ AR and MA coefficient regressions use an identity link, while their residual inp
 Here are a few ways in which you may want to inform the AR or MA parameters:
 
 - For a constant AR(2) process, stationarity requires $-1 < \phi_2 < 1$ and $\phi_2 - 1 < \phi_1 < 1 - \phi_2$. One dependent-prior construction that stays in this region is `ar2_1 = "dunif(-1, 1)"` together with `ar1_1 = "dunif(ar2_1 - 1, 1 - ar2_1)"`. The simpler suggestion `ar2_1 = "dunif(0, ar1_1)"` is not sufficient. Higher orders require the corresponding joint root condition.
-- Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. Constrain their magnitude with reference to a plausible change over the predictor range. For example, a shallow negative change over the observed x-span could use `"dnorm(0, 0.1 / (max(x) - min(x))) T(, 0)"`.
+- Slopes can quickly make AR coefficients non-stationary or MA coefficients non-invertible. Set their prior scale relative to a plausible change over the observed range of $x$. For example, a shallow negative change over the observed range could use `"dnorm(0, 0.1 / (max(x) - min(x))) T(, 0)"`.
 
 # Notes on observed data vs simulated data
 
@@ -346,7 +346,7 @@ JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional re
 
 # JAGS code
 
-Here is the JAGS code for the autocorrelation-only change above, i.e., the one with a shared slope going from one AR(1) coefficient to another. `fitted()`, `predict()`, etc. evaluate the same formulas in R; see [the model in R](../articles/implementation.html#the-model-in-r).
+Here is the JAGS code for the autocorrelation-only change above, i.e., the one with a reused slope going from one AR(1) coefficient to another. `fitted()`, `predict()`, etc. evaluate the same formulas in R; see [the model in R](../articles/implementation.html#the-model-in-r).
 
 ```{r}
 fit$jags_code

@@ -218,7 +218,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'   It prints with model information, separate tables for change points and
 #'   population-level parameters, and convergence warnings. Rows
 #'   are ordered by change point first, then `mu`, then the other
-#'   distributional parameters, then `ar`/`ma` components - each ascending by
+#'   distributional parameters, then AR/MA lags - each ascending by
 #'   segment. Note: The change point distributions are often not unimodal and
 #'   symmetric so the intervals can be deceiving. Plot them using
 #'   `plot_pars(fit)`.
@@ -240,12 +240,11 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'     [Diagnosing and fixing problems](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
 #'
 #'  Group-level change-point deviations (`cp_i_id`) follow a hierarchical normal
-#'  distribution around the population change point before truncation. Realized
-#'  locations are truncated to remain in range and ordered, so the population change
-#'  point is generally close to the mean of the realized group change points, but not
-#'  exactly.
-#'  Predictor group-level effects (such as `Intercept_1_id`) use standard
-#'  hierarchical zero-mean priors, without change-point constraints.
+#'  distribution around the population-level change point before truncation. The
+#'  group-specific change points are truncated to the observed range of x and ordered, so the
+#'  population-level change point is generally close to their mean, but not exactly.
+#'  Predictor group-level deviations (such as `Intercept_1_id`) use standard
+#'  hierarchical zero-mean priors, without these bounds.
 #'  [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #'
 #'  For simulated data, the summary contains two additional columns so that it
@@ -382,7 +381,7 @@ print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
 
 
 #' @aliases fixef fixef.mcpfit
-#' @describeIn summary.mcpfit Population-level fixed effects (regression coefficients) of `mcpfit`.
+#' @describeIn summary.mcpfit Population-level coefficients (fixed effects) of `mcpfit`.
 #' @param dpar Distributional parameter(s) whose regression coefficients to
 #'   return, e.g., `"mu"`, `"sigma"`, or `"ar1"` (see [mcp-formula]). For modeled
 #'   distributional parameters such as `sigma()`, these coefficients are on the link scale.
@@ -399,7 +398,7 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 
 #' @aliases ranef ranef.mcpfit
 #' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
-#'   Change-point deviations are relative to their population change point;
+#'   Change-point deviations are relative to their population-level change point;
 #'   `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their normal distribution before truncation.
 #' @export ranef
 #' @exportS3Method nlme::ranef
@@ -580,7 +579,7 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
 # Fail helpfully instead of returning NULL. See dev/DECISIONS.md.
 #' @export
 coef.mcpfit = function(object, ...) {
-  stop("`coef()` is not implemented for mcpfit objects. Use `fixef(fit)` for population-level effects and `ranef(fit)` for group-level deviations.", call. = FALSE)
+  stop("`coef()` is not implemented for mcpfit objects. Use `fixef(fit)` for population-level coefficients and `ranef(fit)` for group-level deviations.", call. = FALSE)
 }
 
 
