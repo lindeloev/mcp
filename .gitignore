@@ -25,6 +25,7 @@ AGENTS.md
 CRAN-SUBMISSION
 dev/TODO.md
 fix_twittercard.R
+man/figures/README-*
 revdep/
 vignettes/*_cache/
 vignettes/*_files/

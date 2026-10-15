@@ -33,7 +33,11 @@ if (branch == "" || branch == "HEAD") {
 }
 if (!branch %in% c("dev", "main")) branch = "main"
 
-showcase_url = sprintf("https://lindeloev.github.io/mcp/%smcp_showcase_small.png", ifelse(branch == "dev", "dev/", ""))
+site_url = sprintf("https://lindeloev.github.io/mcp/%s", ifelse(branch == "dev", "dev/", ""))
+showcase_url = paste0(site_url, "mcp_showcase_small.png")
+
+# Link README figures to the pkgdown site (which renders them) instead of committing them
+knitr::knit_hooks$set(plot = function(x, options) knitr::hook_plot_md(sub("^man/", paste0(site_url, "reference/"), x), options))
 ```
 
 # mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;"/>
