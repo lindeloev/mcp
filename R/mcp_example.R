@@ -89,7 +89,7 @@ model = list(
 set.seed(42)
 data = data.frame(
   x = 1:100,
-  N = base::sample(15, 25, replace=TRUE),
+  N = base::sample(15:25, 100, replace=TRUE),
   y = 0.  # Numeric placeholder that is valid for every sampled trial count.
 )
 empty = mcp(model, data, family = binomial(), sample = FALSE)
