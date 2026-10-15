@@ -18,6 +18,17 @@ test_that("get_jags_inits creates separate reproducible streams", {
       vapply(prior, `[[`, integer(1), ".RNG.seed")
   ))
   expect_true(all(vapply(post, `[[`, numeric(1), "Intercept_1") == 0))
+
+  # Nearby seeds share no chains
+  chain_seeds = lapply(1:20, function(seed) vapply(get_jags_inits(NULL, seed, 4, "post"), `[[`, integer(1), ".RNG.seed"))
+  expect_length(unique(unlist(chain_seeds)), 80)
+
+  # The user's random number stream is unchanged
+  set.seed(1)
+  expected = stats::runif(1)
+  set.seed(1)
+  get_jags_inits(NULL, 42, 3, "post")
+  expect_identical(stats::runif(1), expected)
 })
 
 
@@ -49,7 +60,8 @@ test_that("get_jags_inits handles shared and chain-specific initial values", {
     vapply(seeded, `[[`, character(1), ".RNG.name") ==
       "base::Wichmann-Hill"
   ))
-  expect_equal(vapply(seeded, `[[`, integer(1), ".RNG.seed"), c(42L, 43L))
+  default_seeds = vapply(get_jags_inits(NULL, 42, 2, "post"), `[[`, integer(1), ".RNG.seed")
+  expect_equal(vapply(seeded, `[[`, integer(1), ".RNG.seed"), default_seeds)
 
   # Chain-specific inits attach RNG settings to each chain
   chain_inits = list(
@@ -62,7 +74,7 @@ test_that("get_jags_inits handles shared and chain-specific initial values", {
     vapply(chain_seeded, `[[`, character(1), ".RNG.name") ==
       "base::Wichmann-Hill"
   ))
-  expect_equal(vapply(chain_seeded, `[[`, integer(1), ".RNG.seed"), c(42L, 43L))
+  expect_equal(vapply(chain_seeded, `[[`, integer(1), ".RNG.seed"), default_seeds)
 
   # Mismatched length throws informative error
   expect_error(

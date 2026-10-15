@@ -89,7 +89,7 @@ run_jags = function(jags_code,
   n_workers = future::nbrOfWorkers()
   timer = proc.time()
   if (is.null(seed))
-    seed = sample.int(.Machine$integer.max - 2 * n.chains, 1)
+    seed = sample.int(.Machine$integer.max, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
 
   # Default inits where users supplied none: ordered change points (see get_cp_inits()) and
@@ -146,8 +146,10 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
     inits = rep(list(inits), n.chains)
   }
 
-  rng_seed = seq_len(n.chains) + if (sample == "prior") n.chains else 0
-  rng_seed = as.integer(((as.double(seed) - 1 + rng_seed - 1) %% .Machine$integer.max) + 1)
+  # Space the chain seeds by the golden-ratio fraction of the seed range, so that nearby seeds,
+  # e.g., 1 and 2, never share chains (for seeds less than 10^7 apart).
+  chain = seq_len(n.chains) - 1 + if (sample == "prior") n.chains else 0
+  rng_seed = as.integer((as.double(seed) - 1 + chain * 1327217884) %% .Machine$integer.max + 1)
 
   lapply(seq_len(n.chains), function(i) {
     ch = inits[[i]]
