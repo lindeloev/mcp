@@ -38,12 +38,12 @@
 #' See [Default priors](https://lindeloev.github.io/mcp/articles/default_priors.html) for all families, links,
 #' and distributional parameters, and for how the defaults deviate from `rstanarm` and `brms`.
 #'
-#' The default prior on change points is a flat Dirichlet prior on the segment lengths, `dirichlet(1)`
-#' (uniform order statistics). It is `uniform(min(x), max(x))` for one change point and results in a scaled beta distributions
+#' The default prior on change points is a flat Dirichlet prior on the segment lengths
+#' (uniform order statistics). It is `uniform(min(x), max(x))` for one change point and results in scaled beta distributions
 #' for each of two or more change points. `fit$prior` writes it as `dunif(min(x), max(x))` on each change point.
 #' Change points are always ordered: each change point has its prior as written, restricted to ordered
 #' change points. Set `cp_i = "dirichlet(alpha)"` with `alpha >= 1` to regularize spacing (`alpha > 1` penalizes change points
-#' from occurring close together). Set a minimum distance to the previous change point using it in the lower
+#' from occurring close together). Set a minimum segment length by using the previous change point in the lower
 #' limit, e.g., `cp_2 = "dunif(cp_1 + 20, max(x))"` or `cp_2 = "dnorm(70, 10) T(cp_1 + 20, )"`.
 #' [Read more](https://lindeloev.github.io/mcp/articles/priors.html#cp_prior).
 #'

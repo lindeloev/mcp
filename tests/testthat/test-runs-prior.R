@@ -20,7 +20,7 @@ bad_prior = list(
     cp_1 = "dunif(min(x), cp_2)"  # Limits can only refer to the previous change point
   ),
   list(
-    cp_2 = "dnorm(1, 1) T(cp_1 - 0.5, )"  # ... and only as a minimum distance
+    cp_2 = "dnorm(1, 1) T(cp_1 - 0.5, )"  # ... and only as a minimum segment length
   ),
   list(
     cp_2 = "dunif(0, 3) T(0, 2)"  # JAGS cannot truncate dunif()
@@ -100,10 +100,10 @@ good_prior = list(
     cp_2 = "dunif(-1, 3)"
   ),
   list(
-    cp_2 = "dunif(cp_1 + 0.5, max(x))"  # Minimum distance
+    cp_2 = "dunif(cp_1 + 0.5, max(x))"  # Minimum segment length
   ),
   list(
-    cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"  # Minimum distance with truncation
+    cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"  # Minimum segment length with truncation
   ),
   list(
     cp_2 = 2  # Fixed change point
@@ -200,13 +200,13 @@ testthat::test_that("Dirichlet change point prior matches direct R simulation", 
 })
 
 
-testthat::test_that("Minimum distances between change points go in cp_order_", {
+testthat::test_that("Minimum segment lengths go in cp_order_", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"), sample = FALSE)
   testthat::expect_equal(fit$prior$cp_2, "dnorm(2, 1) T(cp_1 + 0.5, cp_3)")
   testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0,cp_3)", fixed = TRUE)
   testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
 
-  # A lower limit at the previous change point is a distance of 0, i.e., just the ordering
+  # A lower limit at the previous change point is a minimum segment length of 0, i.e., just the ordering
   testthat::expect_warning(
     fit <- mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dunif(cp_1, max(x))"), sample = FALSE),
     "as the lower limit is already embodied in the mcp model"
@@ -221,7 +221,7 @@ testthat::test_that("Change points have their priors as written, restricted to o
   set.seed(123)
   n = 1e5
   rtnorm = function(mean, sd) stats::qnorm(stats::runif(n, stats::pnorm(0, mean, sd), stats::pnorm(1, mean, sd)), mean, sd)
-  restrict = function(cp_1, cp_2, gap = 0) cbind(cp_1, cp_2)[cp_2 - cp_1 >= gap, ]
+  restrict = function(cp_1, cp_2, min_length = 0) cbind(cp_1, cp_2)[cp_2 - cp_1 >= min_length, ]
   cases = list(
     list(prior = list(cp_1 = "dnorm(0.6, 0.2)", cp_2 = "dnorm(0.4, 0.2)"), r_draws = restrict(rtnorm(0.6, 0.2), rtnorm(0.4, 0.2))),
     list(prior = list(cp_2 = "dunif(cp_1 + 0.3, max(x))"), r_draws = restrict(stats::runif(n), stats::runif(n), 0.3))

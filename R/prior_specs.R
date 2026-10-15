@@ -259,20 +259,20 @@ split_cp_limits = function(prior_value) {
 }
 
 
-# Minimum distance from change point j to the previous change point, written as the lower
-# limit `cp_1 + 20` in dunif(cp_1 + 20, max(x)) or T(cp_1 + 20, ). Returns the distance as a
+# Minimum length of the segment that ends at change point j, written as the lower
+# limit `cp_1 + 20` in dunif(cp_1 + 20, max(x)) or T(cp_1 + 20, ). Returns the length as a
 # string. "0" for just `cp_1`, or NULL. Change points are ordered anyway, so other references
 # to change points in the limits are errors.
-get_cp_gap = function(limits, j, cp_names) {
+get_min_segment_length = function(limits, j, cp_names) {
   limits = lapply(limits, function(limit) if (nzchar(limit)) str2lang(limit))
   previous = if (j > 1) as.name(cp_names[j - 1])
   lower = limits[[1]]
-  gap = NULL
+  min_length = NULL
   if (!is.null(previous) && identical(lower, previous)) {
-    gap = "0"
+    min_length = "0"
     limits[[1]] = NULL
   } else if (!is.null(previous) && is.call(lower) && identical(lower[[1]], as.name("+")) && identical(lower[[2]], previous)) {
-    gap = deparse_prior(lower[[3]])
+    min_length = deparse_prior(lower[[3]])
     limits[[1]] = lower[[3]]
   }
 
@@ -280,18 +280,18 @@ get_cp_gap = function(limits, j, cp_names) {
   if (length(references) > 0) {
     stop(
       "The lower or upper limit of the prior on `", cp_names[j], "` (in dunif() or T()) refers to ", and_collapse(paste0("`", references, "`")),
-      ". Change points are always ordered, so the limits can only refer to the previous change point to set a minimum distance, ",
+      ". Change points are always ordered, so the limits can only refer to the previous change point to set a minimum segment length, ",
       "e.g., `cp_2 = \"dunif(cp_1 + 20, max(x))\"` or `cp_2 = \"dnorm(50, 10) T(cp_1 + 20, )\"`.",
       call. = FALSE
     )
   }
-  gap
+  min_length
 }
 
 
 # User change point priors apply as written, restricted to ordered change points (see
 # get_jags_code()). Priors without dunif() or T() are truncated to the observed range of x.
-# An empty upper limit next to a minimum distance, e.g., T(cp_1 + 20, ), is also max(x).
+# An empty upper limit next to a minimum segment length, e.g., T(cp_1 + 20, ), is also max(x).
 truncate_cp_prior = function(cps, j, prior_value, context) {
   if (!is_distribution(prior_value) || grepl("^\\s*dirichlet\\s*\\(", prior_value))
     return(prior_value)
@@ -301,16 +301,16 @@ truncate_cp_prior = function(cps, j, prior_value, context) {
   if (is.null(cp_prior$limits))
     return(cp_prior$rebuild(x_range))
 
-  gap = get_cp_gap(cp_prior$limits, j, cps$name)
-  if (identical(gap, "0")) {
+  min_length = get_min_segment_length(cp_prior$limits, j, cps$name)
+  if (identical(min_length, "0")) {
     warning(
       "`", cps$name[j], "` = \"", prior_value, "\": `", cps$name[j - 1], "` as the lower limit is already embodied in the mcp model and hence not needed. ",
       "Each change point has its prior as written, restricted to ordered change points. ",
-      "To set a minimum distance between change points, use e.g. `", cps$name[j - 1], " + 20` as the lower limit.",
+      "To set a minimum segment length, use e.g. `", cps$name[j - 1], " + 20` as the lower limit.",
       call. = FALSE
     )
   }
-  if (!is.null(gap) && !nzchar(cp_prior$limits[2]))
+  if (!is.null(min_length) && !nzchar(cp_prior$limits[2]))
     return(cp_prior$rebuild(c(cp_prior$limits[1], x_range[2])))
   prior_value
 }

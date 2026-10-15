@@ -196,7 +196,7 @@ get_jags_median_inits = function(jags_code) {
 
 #' Initial values for the change point parameters
 #'
-#' Equispaced in the observed range of x with room for minimum distances, then moved the least
+#' Equispaced in the observed range of x with room for minimum segment lengths, then moved the least
 #' possible to be within the lower and upper limits of their priors and ordered. Fixed change points and the
 #' user's initial values stay where they are. Sampler fails at init if impossible values are chosen because
 #' it is incompatible with the 1 ~ dbern(...) ordering node.
@@ -213,38 +213,38 @@ get_cp_inits = function(prior, x_range, user_inits = list()) {
   if (n == 0)
     return(list())
 
-  # Lower and upper limits (dunif() or T()) and minimum distance to the previous change point.
+  # Lower and upper limits (dunif() or T()) and minimum segment length.
   # Fixed change points and user-supplied initial values are limited to themselves.
   env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n + 1)))
   evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
   is_free = vapply(cps, is_distribution, logical(1))
-  lower = upper = gaps = numeric(n)
+  lower = upper = min_lengths = numeric(n)
   for (i in seq_len(n)) {
     fixed = c(user_inits[[names(cps)[i]]], suppressWarnings(as.numeric(cps[[i]])))[1]
     limits = if (is_free[i] && !startsWith(cps[[i]], "dirichlet")) split_cp_limits(cps[[i]])$limits
-    gap = if (!is.null(limits)) get_cp_gap(limits, i, names(cps))
-    if (!is.null(gap))
+    min_length = if (!is.null(limits)) get_min_segment_length(limits, i, names(cps))
+    if (!is.null(min_length))
       limits[1] = "cp_0"
-    gaps[i] = evaluate(gap, 0)
+    min_lengths[i] = evaluate(min_length, 0)
     lower[i] = if (!is.na(fixed)) fixed else evaluate(limits[1], -Inf)
     upper[i] = if (!is.na(fixed)) fixed else evaluate(limits[2], Inf)
   }
 
   # Keep 1% of the range of x from the limits and neighboring change points, but within narrow priors
   margin = pmin(0.01 * diff(x_range), (upper - lower) / 3)
-  distance = gaps + c(0, pmax(margin[-1], margin[-n]))
+  spacing = min_lengths + c(0, pmax(margin[-1], margin[-n]))
   lower = lower + margin
   upper = upper - margin
 
   # Earliest and latest positions of ordered change points within these limits
   for (i in seq_len(n)[-1])
-    lower[i] = max(lower[i], lower[i - 1] + distance[i])
+    lower[i] = max(lower[i], lower[i - 1] + spacing[i])
   for (i in rev(seq_len(n)[-1]))
-    upper[i - 1] = min(upper[i - 1], upper[i] - distance[i])
+    upper[i - 1] = min(upper[i - 1], upper[i] - spacing[i])
   if (any(lower > upper))
-    stop("The change point priors (and initial values) leave no room for ordered change points. Check the lower and upper limits (in dunif() or T()), minimum distances, and initial values of the change points.", call. = FALSE)
+    stop("The change point priors (and initial values) leave no room for ordered change points. Check the lower and upper limits (in dunif() or T()), minimum segment lengths, and initial values of the change points.", call. = FALSE)
 
-  target = x_range[1] + cumsum(gaps) + max((diff(x_range) - sum(gaps)) / (n + 1), 0) * seq_len(n)
+  target = x_range[1] + cumsum(min_lengths) + max((diff(x_range) - sum(min_lengths)) / (n + 1), 0) * seq_len(n)
   inits = stats::setNames(as.list(pmin(pmax(target, lower), upper)), names(cps))
   inits[is_free & names(cps) %notin% names(user_inits)]
 }

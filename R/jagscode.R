@@ -52,7 +52,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   # CHANGE POINT PRIORS #
   #######################
   # Each change point has its prior as written, and cp_order_ restricts them to ordered
-  # change points with any minimum distances. dirichlet(alpha) is the default uniform prior
+  # change points with any minimum segment lengths. dirichlet(alpha) is the default uniform prior
   # expanded to the segment length.
   cps = prior[intersect(paste0("cp_", seq_len(K - 1L)), names(prior))]
   is_dirichlet = grepl("^dirichlet\\(", unlist(cps))
@@ -76,18 +76,18 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     )
   }
   cp_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
-  gaps = rep("0", length(cps))
+  min_lengths = rep("0", length(cps))
   for (i in seq_along(cps)) {
     name = names(cps)[i]
     value = cps[[i]]
     if (any(is_dirichlet)) {
       value = paste0("dunif(cp_0, cp_", K, ")")
     } else if (prior_kind_[[name]] == "distribution") {
-      # A minimum distance to the previous change point goes in cp_order_
+      # A minimum segment length goes in cp_order_
       cp_prior = split_cp_limits(value)
-      gap = get_cp_gap(cp_prior$limits, i, names(cps))
-      if (!is.null(gap)) {
-        gaps[i] = gap
+      min_length = get_min_segment_length(cp_prior$limits, i, names(cps))
+      if (!is.null(min_length)) {
+        min_lengths[i] = min_length
         value = cp_prior$rebuild(c("cp_0", cp_prior$limits[2]))
       }
     }
@@ -102,8 +102,8 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
 
   # Observed nodes (data: cp_order_ = 1 and cp_weight_ = 0) that restrict the priors above
   if (length(cps) > 1) {
-    steps = paste0("step(cp_", 2:length(cps), " - cp_", 2:length(cps) - 1, ifelse(gaps[-1] == "0", "", paste0(" - ", gaps[-1])), ")")
-    mm = paste0(mm, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(gaps != "0")) " with minimum distances", "\n")
+    steps = paste0("step(cp_", 2:length(cps), " - cp_", 2:length(cps) - 1, ifelse(min_lengths[-1] == "0", "", paste0(" - ", min_lengths[-1])), ")")
+    mm = paste0(mm, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(min_lengths != "0")) " with minimum segment lengths", "\n")
   }
   if (any(is_dirichlet) && dirch_alpha[1] != 1) {
     # Zeros trick: dpois(0 | lambda) adds -lambda = (alpha - 1) * sum(log(segment length / range of x)) to the log density
