@@ -227,7 +227,7 @@ Key features of multiple regression models in `mcp`:
 
 # Relative changes between segments
 
-Parameters in `mcp` represent the absolute values within each segment (e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in segment 3). To evaluate the *relative change* between segments, you can use `hypothesis()` for quick estimates or use `as_draws_df()` to work with the distribution.
+Parameters in `mcp` represent the absolute values within each segment (e.g., `time_2` is the slope in segment 2 and `time_3` is the slope in segment 3). Relative changes between segments, such as changes in slope, jumps at change points, and distances between change points, are derived quantities. You can use `hypothesis()` for quick estimates or use `as_draws_df()` to work with the distribution.
 
 First, using `hypothesis()`:
 
@@ -235,18 +235,27 @@ First, using `hypothesis()`:
 hypothesis(demo_fit, "time_3 > time_2")
 ```
 
-The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its credibility interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, the estimate is negative, so the slope is smaller in segment 3 than in segment, with great certainty (`prob = 0`).
+The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its credibility interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, the estimate is negative, so the slope is smaller in segment 3 than in segment 2, with great certainty (`prob = 0`).
 
-If you need the full posterior distribution of the change (e.g., for `quantile()`, `hist()`, or plotting with `ggplot2`), extract draws, e.g., using `as_draws_df()`:
+If you need the full posterior distribution of the change (e.g., for `quantile()`, `hist()`, or plotting with `ggplot2`), extract draws, e.g., using `as_draws_df()`, and compute the change in each draw:
 
 ```{r, R.options = list(width = 9999)}
-draws = as_draws_df(demo_fit) |> 
-  dplyr::mutate(diff_time = time_3 - time_2)
+draws = as_draws_df(demo_fit) |>
+  dplyr::mutate(
+    slope_change = time_3 - time_2,                               # Change in slope at cp_2
+    jump = Intercept_3 - (Intercept_1 + time_2 * (cp_2 - cp_1)),  # Jump at cp_2 (segment 3 start minus segment 2 end)
+    cp_distance = cp_2 - cp_1                                     # Length of segment 2
+  )
 
-head(draws)
+posterior::subset_draws(draws, variable = c("slope_change", "jump", "cp_distance")) |>
+  posterior::summarise_draws()
 ```
 
-You can now use `diff_time` directly with base R functions like `quantile(draws$diff_time, c(0.025, 0.975))` and `hist(draws$diff_time)`.
+Because the change points differ between draws, the jump/change is evaluated exactly at the change point in each draw. `fitted()` cannot do this, since `newdata` fixes `x` while the change point varies, so a fitted value near `cp_2` mixes draws from before and after the change point.
+
+You can now use these columns directly with base R functions like `quantile(draws$jump, c(0.025, 0.975))` and `hist(draws$cp_distance)`.
+
+The same applies to all distributional parameters (`sigma`, `shape`) and `ar`/`ma`. For example, `sigma_Intercept_3 - sigma_Intercept_2` is the change in log-SD with `sigma(1)` in both segments, so `exp()` of it is the ratio of the residual SDs. Similarly, `ar1_3 - ar1_2` is the change in the lag-1 autoregressive coefficient. Use `mcp_pars(fit)` to see the parameter names of a model.
 
 
 # Modeling slope change points

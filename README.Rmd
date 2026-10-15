@@ -148,7 +148,7 @@ Do a posterior predictive check to see if the model recovers the empirical distr
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
-You can expect most generics from R, `posterior`, `tidybayes` to work on mcpfits. E.g., use `fitted(fit)` and `predict(fit)` to get fits and predictions for in-sample and out-of-sample data, use `as_draws(fit)` to get draws, etc.
+You can expect most generics from R, `posterior`, `tidybayes` to work on mcpfits. E.g., use `fitted(fit)` and `predict(fit)` to get fits and predictions for in-sample and out-of-sample data, use `as_draws(fit)` to get draws (see `?as_draws.mcpfit` for all formats), etc.
 
 ## Tests and model comparison
 
@@ -262,28 +262,6 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 - Help convergence along using `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`.
 
 - Most errors will be caused by circularly defined priors.
-
-# Do more with the MCMC samples
-
-Use the `posterior` package generics to extract draws in any format:
-
-``` r
-library(posterior)
-library(tidybayes)
-
-as_draws_df(fit)    # draws_df (tidybayes-compatible)
-as_draws_array(fit) # draws array (iterations x chains x parameters)
-coda::as.mcmc(fit)  # coda mcmc.list (for coda diagnostics)
-spread_draws(as_draws_df(fit), cp_1, cp_2, Intercept_1)  # tidybayes
-```
-
-Get draws in a tidybayes-like format with `fitted(fit, summary = FALSE)` or `predict(fit, summary = FALSE)`. Same for `residuals(fit)` and `log_lik(fit)`.
-
-For example:
-
-```{r output-fitted}
-head(fitted(fit, summary = FALSE))  # column .epred
-```
 
 # Citation
 
