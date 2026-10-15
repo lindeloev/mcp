@@ -177,7 +177,7 @@ The change points divide the observed range of $x$ into $K$ segments. Instead of
 
 $$s_k = \frac{\tau_k - \tau_{k-1}}{\max(x) - \min(x)}, \qquad k = 1, \dots, K,$$
 
-with $\tau_0 = \min(x)$ and $\tau_K = \max(x)$ here, to ensure that $\tau_1$ to $\tau_{k-1}$ are within the observed range of $$x$. They are positive and sum to 1. The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is the standard prior for such proportions. It also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)). The symmetric Dirichlet prior with concentration $\alpha$ has density
+with $\tau_0 = \min(x)$ and $\tau_K = \max(x)$, the limits of the data. They are positive and sum to 1. The [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) is the standard prior for such proportions. It also underlies monotonic effects in `brms` ([Bürkner & Charpentier, 2020](https://doi.org/10.1111/bmsp.12195)). The symmetric Dirichlet prior with concentration $\alpha$ has density
 
 $$p(s_1, \dots, s_K) \propto \prod_{k=1}^{K} s_k^{\alpha - 1}.$$
 
@@ -185,7 +185,7 @@ With $\alpha = 1$, the density is constant, so every division of the range into 
 
 $$\frac{\tau_k - \min(x)}{\max(x) - \min(x)} \sim \text{Beta}(k\alpha, (K - k)\alpha).$$
 
-The segment lengths are a linear function of the change points, so the same density applies to the ordered change points. For $\alpha > 1$, the prior is therefore the default prior multiplied by the factor $\prod_k s_k^{\alpha - 1}$. This factor is 1 when all segments are equally long and approaches 0 when a segment becomes very short. See [Working with priors](../articles/priors.html#cp_prior) for how to set $\alpha$ and [From formulas to sampler code](../articles/implementation.html#change-point-priors) for how JAGS samples it. $\alpha < 1$ is not supported because the density goes to infinity as a segment shrinks to zero.
+The segment lengths are a linear function of the change points, so the same density applies to the ordered change points. For $\alpha > 1$, the prior is therefore the default prior multiplied by the factor $\prod_k s_k^{\alpha - 1}$. This factor is 1 when all segments are equally long and approaches 0 when a segment becomes very short. See [Working with priors](../articles/priors.html#cp_prior) for how to set $\alpha$ and [From formulas to sampler code](../articles/implementation.html#change-point-priors) for how JAGS samples it, including why $\alpha < 1$ is not supported.
 
 
 # Default priors on group-level effects
