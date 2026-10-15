@@ -374,7 +374,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'   predictors and required response auxiliaries. `log_lik()`
 #'   is unavailable when a missing response enters a later observed history.
 #' - For models with `y | weights()`: Require the weights column except for `fitted()` and `predict()`.
-#' @param summary Summarise at each x-value
+#' @param summary Logical. Summarise the draws for each row in `newdata` (`TRUE`) or return the draws (`FALSE`)?
 #' @param width Width of the central interval (strictly between 0 and 1),
 #'   returned in the `.lower` and `.upper` columns. `FALSE` omits the interval.
 #'   Only in effect when `summary == TRUE`. To get custom quantiles, summarise the draws from

@@ -154,7 +154,7 @@ summary(fit)
 pp_check(fit)
 ```
 
-The low ESS for sigma in segment 3 reveal some unidentifiability concerning whether the variance increase is driven by a linear (`sigma_x_3`) or quadratic term (`sigma_xE2_3`). This spills over to a lower ESS for `cp_3` too. Other coefficients seem to be reasonably recovered. This is why I set `diagnostics = FALSE` to quiet warnings since this is just a demonstration. 
+The low ESS for sigma in segment 3 reveals some unidentifiability concerning whether the variance increase is driven by a linear (`sigma_x_3`) or quadratic term (`sigma_xE2_3`). This spills over to a lower ESS for `cp_3` too. Other coefficients seem to be reasonably recovered. This is why I set `diagnostics = FALSE` to quiet warnings since this is just a demonstration. 
 
 Let us verify this by taking a look at the posteriors and trace. For now, we just look at the sigmas:
 
@@ -249,5 +249,4 @@ You can inspect the parameters in a fitted model or family object using `mcp_par
 Many core `mcp` functions take a `dpar` argument to extract or visualize specific distributional parameters:
 
 - **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**: Returns fitted values for the target `dpar` evaluated on the response scale.
-- **`predict(fit, dpar = "sigma")`**: Generates posterior predictive draws for the specified distributional parameter.
 - **`plot_dpar(fit, dpar = "sigma")` or `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the distributional parameter over $x$, complete with credible intervals across segments.

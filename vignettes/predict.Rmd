@@ -100,7 +100,7 @@ Note that:
  * We get one row per value of `time`.
  * The first value for `time` is in the dataset. The values correspond to the same row in `fitted(fit)` because that's merely a shortcut to do `fitted(fit, newdata = fit$data)`. 
  * The second value (`time = 25`) is within the observed region, but not in the dataset.
- * The third value (`time = - 20`) is outside the observed region, but `mcp` merely extends the first segment backwards in time. Because it's a plateau, we see approximately the same values as for `time = 25`. 
+ * The third value (`time = -20`) is outside the observed region, but `mcp` merely extends the first segment backwards in time. Because it's a plateau, we see approximately the same values as for `time = 25`. 
  * The fourth value (`time = 200`) is way outside the observed region. Because it is the extrapolation of the slope in the third segment of which we've only observed the first tiny bit, the posterior distribution is very wide because even a small uncertainty in the slope results in very large differences further out.
 
 ## Arguments

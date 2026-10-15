@@ -156,7 +156,7 @@ JAGS only lets you specify priors through its built-in distributions, so it cann
 cp_weight_ ~ dpois(-1 * (log((cp_1 - cp_0) / (cp_3 - cp_0)) + log((cp_2 - cp_1) / (cp_3 - cp_0)) + log((cp_3 - cp_2) / (cp_3 - cp_0))))
 ```
 
-As with `cp_order_`, `cp_weight_` is 0 (not a stochastic node) and exerts it's restriction on the `cp_*` parameters in that way. Thus, `cp_weight_` is not "used" elsewhere in the JAGS code.
+As with `cp_order_`, `cp_weight_` is observed data (0), and it weights the `cp_*` parameters only through its likelihood. Thus, `cp_weight_` is not "used" elsewhere in the JAGS code.
 
 ## Initial values
 

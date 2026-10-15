@@ -23,7 +23,7 @@ Serial dependence is common in time series. Add autoregressive terms with `ar(p)
 model = list(y ~ 1 + x + ar(1) + ma(1))
 ```
 
-The most common use case is still `ar(1)`. AR and MA follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect): they apply only in segments that include them, so omitting a component turns it off (`ar(0)` and `ma(0)` also turn it off). A positive-order `ar(p, 0)` or `ma(q, 0)` is joined: it continues from where the earlier intercept and x-terms (e.g., the `x` in `ar(1, 1 + x)`) left off, for matching lags. Including `ar(p)` or `ma(q)` replaces the whole component: if `ar(1)` follows `ar(2)`, the lag-2 coefficient is removed in the later segment. Both accept a regression formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
+The most common use case is still `ar(1)`. AR and MA follow the [rules for how segments connect](../articles/formulas.html#how-segments-connect): they apply only in segments that include them, so a segment without `ar()` has no AR component (`ar(0)` and `ma(0)` also turn it off). A positive-order `ar(p, 0)` or `ma(q, 0)` is joined: it continues from where the earlier intercept and x-terms (e.g., the `x` in `ar(1, 1 + x)`) left off, for matching lags. Including `ar(p)` or `ma(q)` replaces the whole component: if `ar(1)` follows `ar(2)`, the lag-2 coefficient is removed in the later segment. Both accept a regression formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
 
 ## GARMA definition
 
@@ -206,13 +206,13 @@ df$response = empty$simulate(
 arima(df$response, order = c(3, 0, 0))
 ```
 
-OK, we can see that the `ar` coefficients and sigma ($sigma = sqrt(sigma^2)$) are simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
+OK, we can see that the `ar` coefficients and sigma (`arima()` reports $\sigma^2$) are simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
 ```{r, results = FALSE}
 fit = mcp(model, df, par_x = "time")
 ```
 
-The Bayesian parameter estimates are in perfect correspondence with `arima()`, even where they deviate from the simulation parameters (due to the inherent randomness in simulating data):
+The Bayesian parameter estimates closely match `arima()`, even where they deviate from the simulation parameters (due to the inherent randomness in simulating data):
 
 ```{r, R.options = list(width = 9999)}
 summary(fit)
@@ -269,7 +269,7 @@ summary(fit)
 We can also plot some of the parameters. As usual, we see that the change point is not well defined by any known distribution. The fact that the posterior mean is around `r round(mean(as_draws_df(fit)$cp_1))` does not (necessarily) mean that there is a high credence in this value. Usually, I find that any bi- or N-modality on the posterior matches well with what you would guess from looking at the raw data. As they say: Bayesian inference is common sense applied to data.
 
 ```{r}
-plot_pars(fit, regex_pars = "cp_1|ar_*")
+plot_pars(fit, regex_pars = "^cp_1|^ar1_")
 ```
 
 As usual, we can test hypotheses ([read more here](../articles/comparison.html)). We can also ask how much more likely it is (relative to the prior) that the two autocorrelations are equal compared to them differing. Because we sampled both the prior and posterior (`mcp(..., sample = "both")`), we can do a Savage-Dickey density ratio test:
@@ -278,7 +278,7 @@ As usual, we can test hypotheses ([read more here](../articles/comparison.html))
 hypothesis(fit, "ar1_1 = ar1_2")
 ```
 
-Notice the warning. We used default priors, so the Savage-Dickey ratio is quite meaningless because the prior does not represent our actual pre-likelihood beliefs. In any case, if it did, we would conclude that evidence for equality is very small so it was rarely visited by the sampler and hence the precision is low (as the second warning show).
+Notice the warning. We used default priors, so the Savage-Dickey ratio is quite meaningless because the prior does not represent our actual pre-likelihood beliefs. In any case, if it did, we would conclude that the evidence for equality is very small. The posterior density at equality is low, so few draws are near it, and the estimate is imprecise (as the second warning shows).
 
 Of course, we can also do directional tests. For example, what is the evidence that `ar1_1` is more than 0.3 greater than `ar1_2`? Answer: More than 100 to one.
 

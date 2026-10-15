@@ -119,9 +119,9 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' Likelihood weights are needed only when evaluating `log_lik()` and
 #' therefore need not be supplied here.
 #' @return A tibble with
-#'  * Cols for par_x
-#'  * unique levels combos of factorial vars
-#'  * fixed values for additional continuous predictors
+#'  * A column for the change-point variable (`par_x`)
+#'  * All combinations of categorical predictor levels
+#'  * Fixed values for additional continuous predictors
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export

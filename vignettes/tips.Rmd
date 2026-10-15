@@ -35,7 +35,7 @@ A lot of data and complicated models will slow down fitting.
 
 * Run the chains in parallel by selecting a future backend before fitting, e.g., `future::plan(future::multisession, workers = 4)`. The worker pool is reused across calls. Shut it down afterward with `future::plan(future::sequential)`. Without a parallel future plan, chains run sequentially.
 
-* While more data usually slows warmup and samling, it also typically has better identifiability and faster convergence. You can therefore try reducing both, e.g., `mcp(..., warmup = 300, iter = 1000)`. For JAGS, warmup iterations are used for sampler adaptation and discarded before sampling.
+* While more data usually slows warmup and sampling, it also typically has better identifiability and faster convergence. You can therefore try reducing both, e.g., `mcp(..., warmup = 300, iter = 1000)`. For JAGS, warmup iterations are used for sampler adaptation and discarded before sampling.
 
 
 # Errors or won't run
@@ -43,7 +43,7 @@ Most of these problems should stem from inappropriate priors and such problems m
 
  * Errors on "directed cycle" usually stem from using parameters in priors. For example, if you set `prior = list(Intercept_1 = "dnorm(Intercept_2, 1)", Intercept_2 = "dnorm(Intercept_1, 1)")` this is an infinite regress.
 
- * Errors on "incompatible with parent nodes" usually stem from impossible values. For example, setting `priors = list(sigma_1 = -1)` when the sigma-link is identity or setting `priors = list(cp_1 = 10, cp_2 = 5)` which violates order restriction.
+ * Errors on "incompatible with parent nodes" usually stem from impossible values. For example, setting `prior = list(sigma_1 = -1)` when the sigma-link is identity or setting `prior = list(cp_1 = 10, cp_2 = 5)`, which are not ordered.
 
 
 If you encounter problems not readily resolved, don't hesitate to [raise a Github Issue](https://github.com/lindeloev/mcp/issues), asking for help or filing a bug report.

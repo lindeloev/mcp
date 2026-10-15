@@ -152,7 +152,7 @@ You can expect most generics from R, `posterior`, `tidybayes` to work on mcpfits
 
 ## Tests and model comparison
 
-We can test (joint) probabilities in the model using `hypothesis()` ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point (`cp_1`) is later than 25 against it being less than 25?
+We can test (joint) probabilities in the model using `hypothesis()` ([see more here](https://lindeloev.github.io/mcp/articles/comparison.html)). For example, what is the evidence (given priors) that the first change point (`cp_1`) is later than 30 against it being earlier than 30?
 
 ```{r demo-hypothesis}
 hypothesis(fit, "cp_1 > 30")
@@ -215,7 +215,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
 
-- Default priors bound group-specific change points relative to adjacent population-level change points.
+- Group-specific change points are restricted to the observed range of `x` and ordered within each group.
 
 Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and distributional parameters like [Gaussian residual standard deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
 
@@ -261,7 +261,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - Help convergence along using `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`.
 
-- Most errors will be caused by circularly defined priors.
+- Most errors stem from impossible or circularly defined priors.
 
 # Citation
 

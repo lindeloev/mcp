@@ -31,6 +31,7 @@ This article in brief:
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
  * How group-specific change points are bounded and ordered.
  * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/dpar.html).
+
 ```{r}
 library(mcp)
 future::plan(future::multisession, workers = 3)
@@ -66,11 +67,11 @@ $$
 cp_{i,\mathrm{id}[g]} = \kappa_{ig} - cp_i,
 $$
 
-where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the reported deviation and `cp_i_sd` is the SD of the normal distribution *before truncation* (see below). The deviations are not forced to sum to zero.
+where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the reported deviation and `cp_i_id_sd` is the SD of the normal distribution *before truncation* (see below). The deviations are not forced to sum to zero.
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population-level change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
-Because of this truncation, the realized SD of the group-specific change points is smaller than `cp_i_sd`, and their mean is pulled away from $cp_i$ when $cp_i$ is near a boundary. When `cp_i_sd` is large relative to the distance between these bounds, the truncated normal approaches a uniform distribution, so the data carry little information about how large `cp_i_sd` is. Its posterior then has a long upper tail that mostly reflects the prior.
+Because of this truncation, the realized SD of the group-specific change points is smaller than `cp_i_id_sd`, and their mean is pulled away from $cp_i$ when $cp_i$ is near a boundary. When `cp_i_id_sd` is large relative to the distance between these bounds, the truncated normal approaches a uniform distribution, so the data carry little information about how large `cp_i_id_sd` is. Its posterior then has a long upper tail that mostly reflects the prior.
 
 Unlike predictor group-level effects, a change-point group-level effect applies only at the change point where it is included.
 
@@ -178,7 +179,7 @@ If we just use `plot(fit)`, we would see all points in one plot. We want to face
 plot(fit, facet_by = "id")
 ```
 
-It seems that `mcp` recovered the group-specific change points well. There is a lot of information in these data because the population-level intercept and slopes on either side of the change point are shared across participants (`id`).
+It seems that `mcp` recovered the group-specific change points well. There is a lot of information in these data because the population-level intercept and slopes on either side of the change point are common to all participants (`id`).
 
 `summary(fit)` returns posterior summaries for the population-level parameters, and `fixef(fit)` for the population-level coefficients. To get the group-level deviations (random effects), use:
 
@@ -204,7 +205,7 @@ Using `pars = "group"` plots all group-level deviations. To select one group-lev
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, npars = NULL)
 ```
 
-You can also do posterior predictive checking with facets. I think that for the relatively univariate models supported as of `mcp` 0.3, this does not add much new information over and above `plot(fit, facet_by = "id")`, but it's a standard assessment that many will be acquainted with:
+You can also do posterior predictive checks with facets. For a single-response model like this, it adds little over `plot(fit, facet_by = "id")`, but it is a standard check that many will be familiar with:
 
 ```{r}
 pp_check(fit, facet_by = "id")

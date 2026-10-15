@@ -32,7 +32,7 @@
 #'   For other `type`, it calls `bayesplot::mcmc_type()`. Use these
 #'   directly on `fit` if you want finer
 #'   control of plotting, e.g., `bayesplot::mcmc_dens(fit)`. There
-#'   are also a number of useful plots in the \pkg{coda} package, i.e.,
+#'   are also a number of useful plots in the \pkg{coda} package, e.g.,
 #'   `coda::gelman.plot(coda::as.mcmc(fit))` and `coda::crosscorr.plot(coda::as.mcmc(fit))`
 #'
 #'   In any case, if you see a few erratic lines or parameter estimates, this is
@@ -69,7 +69,7 @@
 #' # pages = plot_pars(my_fit, pars = "group", ask = FALSE)
 #' # pages[[1]]  # Inspect or customize one page
 #'
-#' # Customize multi-column ggplots using "*" instead of "+" (patchwork)
+#' # Customize multi-column ggplots using "&" instead of "+" (patchwork)
 #' library(ggplot2)
 #' library(patchwork)
 #' plot_pars(demo_fit, regex_pars = "cp") & theme_gray(15)
