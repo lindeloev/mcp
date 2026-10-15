@@ -15,6 +15,7 @@ negbinomial(link = "log", link_shape = "log")
 Parameterized as \code{mu} (the conditional mean) and \code{shape} (the same quantity
 as \code{size} in \code{rnbinom()}). Thus \code{Var(y) = mu + mu^2 / shape}, which approaches
 the Poisson variance as \code{shape} approaches infinity.
+\href{https://lindeloev.github.io/mcp/articles/poisson.html#negative-binomial-extension}{Read more}.
 }
 \details{
 \code{shape} is required by the likelihood, so it includes an intercept in segment 1.

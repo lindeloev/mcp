@@ -67,7 +67,7 @@ An \code{mcpsummary} tibble with parameter estimates and MCMC diagnostics.
 It prints with model information, separate tables for change points and
 population-level parameters, and convergence warnings. Rows
 are ordered by change point first, then \code{mu}, then the other
-distributional parameters, then \code{ar}/\code{ma} components - each ascending by
+distributional parameters, then AR/MA lags - each ascending by
 segment. Note: The change point distributions are often not unimodal and
 symmetric so the intervals can be deceiving. Plot them using
 \code{plot_pars(fit)}.
@@ -81,21 +81,22 @@ For change points, it is the segment that the change point starts, e.g., 2 for \
 \code{\link[=fixef.mcpfit]{fixef.mcpfit()}}, \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, etc. It is \code{NA} for change points. See also \code{\link[=mcp_pars]{mcp_pars()}}.
 \item \code{mean} is the posterior mean
 \item \code{sd} is the posterior standard deviation.
-\item \code{lower} and \code{upper} are the bounds of the central posterior interval
+\item \code{lower} and \code{upper} are the lower and upper ends of the central posterior interval
 given in \code{width}.
 \item \code{rhat} is the rank-normalized split-Rhat convergence diagnostic.
 \item \code{ess_bulk} and \code{ess_tail} are the bulk and tail effective sample sizes.
 Low effective sample sizes are also obvious as poor mixing in trace plots
-(see \code{plot_pars(fit)}). Read how to deal with such problems \href{https://lindeloev.github.io/mcp/articles/tips.html}{here}
+(see \code{plot_pars(fit)}). Read how to deal with such problems in
+\href{https://lindeloev.github.io/mcp/articles/tips.html#convergence}{Diagnosing and fixing problems}.
 }
 
 Group-level change-point deviations (\code{cp_i_id}) follow a hierarchical normal
-distribution around the population change point before truncation. Realized
-locations are truncated to remain in range and ordered, so the population change
-point is generally close to the mean of the realized group change points, but not
-exactly.
-Predictor group-level effects (such as \code{Intercept_1_id}) use standard
-hierarchical zero-mean priors, without change-point constraints.
+distribution around the population-level change point before truncation. The
+group-specific change points are truncated to the observed range of x and ordered, so the
+population-level change point is generally close to their mean, but not exactly.
+Predictor group-level deviations (such as \code{Intercept_1_id}) use standard
+hierarchical zero-mean priors, without these bounds.
+\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
 
 For simulated data, the summary contains two additional columns so that it
 is easy to inspect whether the model can recover the parameters. Run
@@ -103,7 +104,9 @@ simulation and summary multiple times to get a sense of the robustness.
 \itemize{
 \item \code{sim} is the value used to generate the data.
 \item \code{match} is \code{"OK"} if \code{sim} is contained in the central posterior
-interval (\code{lower} to \code{upper}).
+interval (\code{lower} to \code{upper}). For change points starting a disjoined
+segment, \code{sim} only needs to be between the same two adjacent observed
+\code{x} as the interval, since the likelihood is identical anywhere between them.
 }
 }
 \description{
@@ -114,10 +117,10 @@ Summarise parameter estimates and model diagnostics.
 \item \code{print(mcpsummary)}: Print an \code{mcpsummary} returned by \code{summary()}: model
 information, change point and population-level parameters, and diagnostics.
 
-\item \code{fixef(mcpfit)}: Population-level fixed effects (regression coefficients) of \code{mcpfit}.
+\item \code{fixef(mcpfit)}: Population-level coefficients (fixed effects) of \code{mcpfit}.
 
 \item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
-Change-point deviations are relative to their population change point;
+Change-point deviations are relative to their population-level change point;
 \verb{cp_i_<group>_sd} (e.g., \code{cp_1_id_sd}) is the SD of their normal distribution before truncation.
 
 \item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object,

@@ -18,7 +18,7 @@ family-defined response-auxiliary column roles.
 }
 \details{
 Return the resolved data-column roles for an \code{mcpfit} object. In particular,
-\code{par_x} is the change-point predictor chosen automatically or supplied to
+\code{par_x} is the change-point variable chosen automatically or supplied to
 \code{\link[=mcp]{mcp()}}. Family-defined response auxiliaries, such as \code{trials} and
 \code{weights}, are listed when relevant.
 }

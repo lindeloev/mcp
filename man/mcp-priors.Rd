@@ -8,6 +8,8 @@
 The \code{prior} argument of \code{\link[=mcp]{mcp()}} is a named list. Names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
 \code{sigma_1}, etc.; see \link{mcp-formula} for how they arise) and the values specify their priors.
 Use \code{\link[=prior_summary]{prior_summary()}} to see the resolved priors of a fitted model, including defaults.
+See \href{https://lindeloev.github.io/mcp/articles/priors.html}{Working with priors} for worked examples
+and prior predictive checks.
 }
 \details{
 Each value in the list is either
@@ -19,74 +21,44 @@ and scale for \code{dt()}, \code{ddexp()}, and \code{dlogis()}. Change points al
 and all priors accept data-dependent terms such as \code{sd(y)} (see below).
 \item A numerical value (e.g., \code{Intercept_1 = -2.1}) indicating a fixed value.
 \item A model parameter name (e.g., \code{Intercept_2 = "Intercept_1"}), sharing that parameter's value.
-Note that sharing coefficients via \code{same()} in the segment formulas (e.g., \code{~ same(1)})
+Note that reusing coefficients via \code{same()} in the segment formulas (e.g., \code{~ same(1)})
 is generally preferred. If two group-level deviations are shared via the prior,
 they will need to have the same grouping variable.
 }
+}
+\section{Regression priors}{
 
-Weakly informative defaults are used where priors are not specified. These are designed for stable
-estimation and prediction, but should be justified before hypothesis testing.
-Default priors follow \code{rstanarm} for intercepts and coefficients and \code{brms} for scale parameters, with
-a few documented deviations:
-\itemize{
-\item \emph{Coefficients} are autoscaled as in \code{rstanarm}. For the mean (\code{mu}),
-\deqn{\beta \sim \mathrm{Normal}\left(0, \frac{2.5 \cdot s_y}{\mathrm{sd}(\mathrm{column})}\right)}{beta ~ Normal(0, 2.5 * s_y / sd(column))}
-where \eqn{s_y = \mathrm{sd}(y)}{s_y = sd(y)} for identity links and \eqn{s_y = 1}{s_y = 1} for other links.
-\eqn{\mathrm{sd}(\mathrm{column})}{sd(column)} is the SD of the coefficient's model-matrix column, including
-the 0/1 dummies of factors. This makes the prior largely invariant to the units of \code{x} and \code{y}. Logit and
-probit links use 1.5 and 1 instead of 2.5. For x-terms, \code{sd(column)} is \code{sd(x)} over all data (powers such
-as \code{I(x^2)} use \code{sd((x - min(x))^2)}) times the SD of the term without \code{x}, e.g., \code{sd(x) * sd(z)}
-for \code{x:z}. 0/1 indicators such as the dummies in \code{x:state} contribute a factor of 1. Unlike \code{rstanarm}, this
-does not depend on the location of \code{x} and \code{z}.
-\item \emph{Intercepts} are \code{normal(mean(y), 2.5 * sd(y))} for identity links, \code{normal(0, 1.5)} for logit, and
-\code{normal(0, 1)} for probit. The latter two are (approximately) uniform on the probability scale.
-For log links (Gaussian, Poisson, and negative binomial), intercepts are
-\code{normal(median(log(y)), max(2.5, mad(log(y))))}, rounded to one decimal and with \code{y <= 0} replaced by 0.1 so that the
-log is defined. This robustly centers the prior on the typical log-response, as in \code{brms} (which uses a
-Student-t shape and replaces zeros the same way), whereas \code{rstanarm} uses \code{normal(0, 2.5)}.
-For a factor without an intercept, e.g., \code{y ~ 0 + state}, each factor level's coefficient is an intercept and
-gets this prior where the segment starts at zero (segment 1 or joined to nothing).
-With an \code{offset()}, the intercept location and scale are computed from the offset-adjusted response,
-\code{y - offset} for identity links and \code{log(y) - offset} for log links.
-\item \emph{\code{sigma} and group-level SDs} follow \code{brms}, e.g., \code{student_t(3, 0, max(2.5, mad(y)))}, since
-half-Student-t priors are a standard weakly informative choice for scale parameters (Gelman, 2006).
-For \code{mu} with a log link and for modeled \code{shape}, group-level SDs are half-normal instead, e.g., \verb{normal(0, 2.5) T(0, )},
-because exponentiated heavy tails imply extreme group multipliers.
+
+Weakly informative defaults are used where priors are not specified. These are the conventional defaults of
+\code{rstanarm} for intercepts and coefficients and of \code{brms} for scale parameters, with a few documented deviations.
+They are designed for stable estimation and prediction, but should be justified before hypothesis testing.
+Use \code{prior_summary(fit, verbose = TRUE)} to see the default priors of a model and the rules behind them.
+For more details, read \href{https://lindeloev.github.io/mcp/articles/default_priors.html}{the article on mcp default priors} for all families, links,
+and distributional parameters, and for how the defaults deviate from \code{rstanarm} and \code{brms}.
 }
 
-Like \code{rstanarm} and \code{brms}, which place intercept priors on centered predictors, the default prior on
-the segment-1 intercept applies to the value at the start of the segment, \code{min(x)}. The reported
-\code{Intercept_1} is still at \code{x = 0}, as in \code{\link[=lm]{lm()}}, so its prior is given the x-terms, e.g.,
-\code{dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))} in \code{fit$prior}. Later segments' intercepts are at their change point.
-Likewise, factor levels and contrasts with their own x-terms apply at \code{min(x)}, e.g., \code{stateb_1} in \code{y ~ 1 + state * x}
-gets \code{dnorm(-stateb.x_1 * min(x), ...)}.
-Unlike in \code{rstanarm} and \code{brms}, other predictors are not centered, so the prior applies where they are zero.
-If such a predictor is far from zero, center it before fitting or set a prior on \code{Intercept_1}.
-User-specified intercept priors apply directly to \code{Intercept_1} (at \code{x = 0}). The autoscaling does not account for
-segment length. If you expect steep slopes or strong curvature within short segments, consider setting a
-wider prior.
+\section{Change point priors}{
 
-The default prior on change points is \code{dirichlet(1)} (uniform order statistics).
-For a single change point, this is the Beta(1, 1) / Uniform distribution over \verb{[min(x), max(x)]}.
-For multiple change points, it corresponds to a flat Dirichlet distribution over segment lengths.
-You can also explicitly set \code{cp_i = "dirichlet(alpha)"} with the same positive \code{alpha} for all
-change points to regularize spacing (\code{alpha > 1} penalizes change points from occurring close together,
-while \code{alpha < 1} favors clustering). Under the hood, \code{dirichlet(1)} is sampled as sorted uniforms
-and other \code{alpha} as an exact sequential stick-breaking Beta chain for fast and robust sampling.
-\href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
+
+Change points are always ordered: each change point keeps its specified prior, restricted to ordered change points.
+Use \code{plot_pars(fit, prior = TRUE)} to see the resulting marginal priors.
+The default is a flat Dirichlet prior on the segment lengths, written as \code{dunif(min(x), max(x))} on each change point
+(\href{https://lindeloev.github.io/mcp/articles/default_priors.html#change-points}{read more}).
+Set a minimum segment length using the previous change point in the lower bound, e.g., \code{cp_2 = "dunif(cp_1 + 20, max(x))"}.
+\href{https://lindeloev.github.io/mcp/articles/priors.html#cp_prior}{Read more} about setting priors on change points.
 }
+
 \section{Notes on priors}{
 
 \itemize{
-\item \emph{Ordered change point priors:} Default population-level \code{cp_i} priors are ordered and the ordering is imposed through the priors. For user-defined priors,
-\code{mcp} adds truncation (e.g., \code{T(cp_1, )}) only when the prior has neither
-explicit truncation nor an inherently bounded form such as \code{dunif()} or
-\code{dirichlet()}.
+\item \emph{Change point priors} without \code{dunif()} or \code{T()} are truncated to the observed range of x,
+e.g., \code{dnorm(30, 10)} becomes \verb{dnorm(30, 10) T(min(x), max(x))}.
 \item \emph{Data-dependent terms:} If \code{mcp} encounters a data-dependent term like \code{min(time)}, \code{max(time)}, \code{mean(response)}, \code{median(response)}, \code{sd(response)}, or \code{mad(response)} in the prior string, they are resolved from the model data so a numerical value is passed to JAGS. The following terms are also allowed: \code{n_segments()} and \code{n_cp()}.
 The older constants \code{MINX}, \code{MAXX}, \code{MEANX}, \code{SDX}, \code{MINY}, \code{MAXY}, \code{MEANY}, \code{SDY}, and \code{N_CP} remain accepted with a deprecation warning.
-\item \emph{Group-level change points:} Group-specific locations follow a hierarchical
-normal distribution around their population change point, truncated so
-that realized locations remain in the observed range and ordered.
+\item \emph{Group-level change points:} Group-specific change points follow a hierarchical
+normal distribution around their population-level change point, truncated so
+that they remain in the observed range and ordered.
+\href{https://lindeloev.github.io/mcp/articles/default_priors.html#group-level-change-points}{Read more}.
 \item \emph{Parameterization:} Prior strings use conventional scale parameterizations. \code{mcp} converts
 these to the parameterization required by JAGS when generating code:
 inverse variance for \code{dnorm()}, \code{dt()}, and \code{dlnorm()}, and inverse

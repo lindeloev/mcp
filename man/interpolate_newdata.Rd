@@ -36,9 +36,9 @@ prior draws (\code{TRUE}) instead of the posterior draws (\code{FALSE}, default)
 \value{
 A tibble with
 \itemize{
-\item Cols for par_x
-\item unique levels combos of factorial vars
-\item fixed values for additional continuous predictors
+\item A column for the change-point variable (\code{par_x})
+\item All combinations of categorical predictor levels
+\item Fixed values for additional continuous predictors
 }
 }
 \description{

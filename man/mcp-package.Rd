@@ -6,31 +6,44 @@
 \alias{mcp-package}
 \title{mcp: Regression with Multiple Change Points}
 \description{
-\code{mcp} is regression with multiple change points. At its simplest, it feels like \code{lm()}, but with one formula per
-segment. At its most flexible, it aims to be \strong{\href{https://paulbuerkner.com/brms/}{\code{brms}} for change points}: GLM
-families (Gaussian, binomial, Bernoulli, Poisson, negative binomial), group-level effects (random effects), AR/MA,
-and regression on distributional parameters (e.g., \code{sigma}, \code{shape}), all inferred with full Bayesian uncertainty,
-including the change points themselves.
+\code{mcp} is regression with multiple change points, inferring full Bayesian uncertainty for all parameters, including
+the change points themselves. At its simplest, it feels like \code{lm()} with one formula per segment. At its most
+flexible, it aims to be \strong{\href{https://paulbuerkner.com/brms/}{\code{brms}} for change points}:
+\itemize{
+\item \emph{GLMM and distributional regression:} Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families.
+Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., \code{sigma}, \code{shape}).
+\item \emph{Express expert knowledge:} Specify the number of change points, the form of each segment, and constrain
+coefficients via priors. Compare hypotheses using \code{loo()} and \code{hypothesis()}.
+\item \emph{Native feel:} \code{summary()}, \code{plot_pars()}, \code{pp_check()}, and \code{as_draws_df()} follow the conventions of
+\href{https://paulbuerkner.com/brms/}{\code{brms}}, \href{https://mc-stan.org/rstanarm/}{\code{rstanarm}}, and
+\href{https://mc-stan.org/posterior/articles/posterior.html}{\code{posterior}}, adapted to change point regression.
+Inspect the sampled JAGS model in \code{fit$jags_code}.
+}
 
-Posterior predictive intervals are supported - also near the change points. \code{mcp} supports hypothesis testing via Savage-Dickey density
-ratios, posterior contrasts, and PSIS-LOO/WAIC model comparison.
+You will find many aliases for change point regression in the literature, including piecewise linear,
+discontinuity, segmented, and broken stick regression.
 
 See \code{\link[=mcp]{mcp()}} to fit models, \link{mcp-formula} for the model and formula syntax, and \link{mcp-priors} for priors.
 }
-\section{Extended formulas and model features}{
+\section{Extended formulas and model features - and links to worked examples}{
 
 \itemize{
 \item \emph{Distributional regression:} Model residual variance and other distributional parameters across segments,
-e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}.
+e.g., \code{~ sigma(1 + x)} or \code{~ shape(1)}. \href{https://lindeloev.github.io/mcp/articles/dpar.html}{Read more}.
 \item \emph{Time-series residuals:} Model serial dependence using \code{ar(p)} and \code{ma(q)} terms with a generalized link-scale
-recurrence.
+recurrence. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}.
 \item \emph{Group-level effects:} Add hierarchical (random) intercepts, slopes, and change points, e.g., \code{~ 1 + (1|id)}
-or \code{~ cp((1|id)) + 0 + x}.
+or \code{~ cp((1|id)) + 0 + x}. \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
+\item \emph{Families:} Binomial, Bernoulli, Poisson, and negative-binomial responses with several link functions.
+\href{https://lindeloev.github.io/mcp/articles/families.html}{Read more}.
 \item \emph{Model comparison and hypothesis testing:} Compare models using PSIS-LOO (\code{loo()}) or WAIC (\code{waic()}), and test hypotheses
 (\code{hypothesis()}) using Savage-Dickey density ratios for point-null tests or posterior-to-prior odds for directional tests.
+\href{https://lindeloev.github.io/mcp/articles/comparison.html}{Read more}.
+\item \emph{Fits, predictions, and forecasts:} \code{fitted()}, \code{predict()}, and \code{residuals()}, including forecasts beyond the data.
+\href{https://lindeloev.github.io/mcp/articles/predict.html}{Read more}.
+\item \emph{Missing responses:} Missing values in the response are imputed jointly with the parameters.
+\href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.
 }
-
-See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples.
 }
 
 \section{Options}{

@@ -27,18 +27,19 @@ mcp(
 \arguments{
 \item{model}{A list of formulas, one for each segment, in the format
 \code{model = list(response ~ predictors, ~ cp(...) + predictors)}, where \code{cp()} is optional. See \link{mcp-formula} for how segments connect
-and the full formula syntax.}
+and the full formula syntax. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.}
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
-with syntactic column names.
-Missing values in the response variable are imputed jointly with the parameters.}
+with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
+\href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.}
 
 \item{prior}{Named list, e.g., \code{prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")}.
 List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
 \code{sigma_1}, etc.) and values are a distribution string (e.g., \code{"dnorm(0, 1) T(0, )"}),
 a fixed value (e.g., \code{-2.1}), or the name of another parameter to share its value.
 Weakly informative defaults are used where priors are not specified;
-see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.}
+see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.
+\href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.}
 
 \item{family}{A supported family and link function:
 \itemize{
@@ -46,11 +47,13 @@ see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-prior
 \item \code{binomial()} or \code{bernoulli()} with \code{link = "logit"}, \code{"probit"}, or \code{"identity"}
 \item \code{poisson(link = "log")} or \code{poisson(link = "identity")}
 \item \code{negbinomial(link = "log", link_shape = "log")}
-}}
+}
+
+\href{https://lindeloev.github.io/mcp/articles/families.html}{Read more}.}
 
 \item{par_x}{String. Name of the change-point variable, i.e., the data column
 on which change points are located. \code{NULL} (default) auto-detects it as the
-only continuous predictor in the formulas.}
+only continuous variable in the formulas.}
 
 \item{sample}{One of
 \itemize{
@@ -60,7 +63,7 @@ plots, summaries, and other methods to select prior draws.
 \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
 will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
-object without sample. This is useful if you only want to check
+object without draws. This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 
@@ -74,17 +77,20 @@ are discarded before sampling. Set higher if needed for sampler adaptation;
 use diagnostics to assess convergence.}
 
 \item{inits}{A named list of initial values for the parameters, e.g., \code{list(Intercept_1 = 10)},
-or a list of such lists with one per chain. This can be useful if a model fails to converge.
-Names must be stochastic nodes in \code{fit$jags_code} (lines with \code{~}). Change points, fixed parameters,
+or a list of such lists with one per chain. This can be useful if a model fails to converge
+(\href{https://lindeloev.github.io/mcp/articles/tips.html}{read more}).
+Names must be stochastic nodes in \code{fit$jags_code} (lines with \code{~}). Fixed parameters
 and parameters that \code{mcp} samples via reparameterization (e.g., \code{Intercept_3} is sampled as
 \code{Intercept_3_end_}) cannot be initialized directly. See \code{mcp_reparam} in \link{mcp-package}.
+Initial values for change points must be ordered.
 Defaults to \code{NULL} where all chains start at equispaced change points and the prior medians.
 User-provided \code{inits} take precedence.}
 
 \item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
 you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
 framework. R-side simulation and prediction methods continue to use the
-mcp-default formulas (with warning), so they may no longer match custom JAGS code.}
+mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+\href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more} about how \code{mcp} writes JAGS code.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. If \code{NULL} (default), the seed is drawn from R's random-number generator,
@@ -134,6 +140,7 @@ Here is the demo model, which ships already fitted as \code{demo_fit} (see also 
 Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
 See \link{mcp-formula} for the rules of how segments connect, the full formula syntax, and the
 underlying model. See \link{mcp-priors} for how to specify priors.
+See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples of all model features.
 }
 \examples{
 \donttest{
@@ -183,12 +190,12 @@ prior_summary(demo_fit)
 prior = list(
   Intercept_1 = 15,
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-  cp_2 = "dunif(cp_1, 80)"        # change point to segment 3 > cp_1 and < 80.
+  cp_2 = "dunif(min(time), 80)"   # change point to segment 3 before 80 (and after cp_1).
 )
 
 fit3 = mcp(model, data = data, prior = prior, seed = 42)
 
-# Share coefficients across segments using same() (e.g., reuse Intercept_1 in segment 3)
+# Reuse coefficients in later segments using same() (e.g., Intercept_1 in segment 3)
 model_same = list(
   response ~ 1,
   ~ 0 + time,

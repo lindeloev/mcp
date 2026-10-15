@@ -205,6 +205,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 ## Bug fixes
 
+- Equality hypotheses now warn when all prior draws lie on one side of the tested value: kernel smoothing can otherwise give misleading Bayes factors for values outside the prior bounds. Boundary tests receive the same warning; Bayes factor calculations are unchanged.
+
 - Named arguments in prior distributions or truncations (e.g. `dnorm(sd = 1, mean = 10)`) are now rejected explicitly with an informative error rather than being silently re-interpreted positionally.
 
 - `hypothesis(..., prior = TRUE)` now reports `BF = NA` rather than comparing prior draws with themselves and returning a Bayes factor of 1.

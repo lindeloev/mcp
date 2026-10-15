@@ -70,9 +70,9 @@ A tibble with a row per hypothesis and the following columns:
 \item \code{mean} is the posterior mean of the left-hand side of the hypothesis, or
 the prior mean when \code{prior = TRUE}.
 \item \code{sd} is the posterior standard deviation of ditto, or the prior SD when \code{prior = TRUE}.
-\item \code{lower} is the lower bound of the central posterior interval of width \code{width},
+\item \code{lower} is the lower end of the central posterior interval of width \code{width},
 or the corresponding prior interval when \code{prior = TRUE}.
-\item \code{upper} is the upper bound of ditto.
+\item \code{upper} is the upper end of ditto.
 \item \code{prob} is the posterior probability of a directional hypothesis, or the prior
 probability when \code{prior = TRUE}. It is \code{NA}
 for equality hypotheses, which compare models rather than an event

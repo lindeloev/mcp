@@ -85,8 +85,9 @@ currently requires all such effects (\code{group_effects = TRUE}).
 A \code{ggplot2} object for single plots. Enriched by \code{patchwork} for faceted plots.
 }
 \description{
-Plot posterior (default) or prior (\code{prior = TRUE}) predictive checks. This is convenience wrapper
-around the \verb{bayesplot::ppc_*()} methods.
+Plot posterior (default) or prior (\code{prior = TRUE}) predictive checks. This is a convenience wrapper
+around the \verb{bayesplot::ppc_*()} methods. See
+\href{https://lindeloev.github.io/mcp/articles/priors.html#prior-predictive-checks}{prior predictive checks} for an example.
 }
 \details{
 Missing responses are omitted from the observed-data check. For

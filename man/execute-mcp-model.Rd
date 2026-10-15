@@ -108,7 +108,7 @@ is unavailable when a missing response enters a later observed history.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}
 
-\item{summary}{Summarise at each x-value}
+\item{summary}{Logical. Summarise the draws for each row in \code{newdata} (\code{TRUE}) or return the draws (\code{FALSE})?}
 
 \item{width}{Width of the central interval (strictly between 0 and 1),
 returned in the \code{.lower} and \code{.upper} columns. \code{FALSE} omits the interval.
@@ -191,7 +191,7 @@ trends are modeled.
 \item \code{.sd}: The SD of the draws. With posterior draws (the default), this is the
 posterior predictive SD for \code{predict()} and the posterior SD of the
 evaluated quantity otherwise.
-\item \code{.lower} and \code{.upper}: The bounds of the central interval given in \code{width}.
+\item \code{.lower} and \code{.upper}: The lower and upper ends of the central interval given in \code{width}.
 }
 
 With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
@@ -218,7 +218,8 @@ values (depending on the function). This format is used by \code{brms} and it's 
 Evaluate the model on data, either summarised (per data-row) or per draw. You
 can use draws from the prior (\code{prior = TRUE}), select a distributional
 parameter with \code{dpar}, and choose the response or linear-predictor scale with
-\code{scale} where applicable.
+\code{scale} where applicable. See \href{https://lindeloev.github.io/mcp/articles/predict.html}{Fits and predictions}
+for worked examples, including forecasts with future change points.
 }
 \details{
 \code{fitted()} and \code{posterior_epred()} evaluate the same expected responses;
@@ -236,7 +237,7 @@ but with fixed arguments for \code{fitted}: \verb{rate = FALSE, dpar = 'epred'}.
 \code{log_lik()} defaults to an unsummarised draws-by-observation matrix, as used
 by \code{loo} and other posterior workflows. Non-default \code{group_effects} and \code{arma}
 settings evaluate conditional or counterfactual log-likelihoods (e.g.,
-omitting random effects or serial correlation); they cannot be used in
+without group-level effects or serial correlation); they cannot be used in
 \code{loo()} or \code{waic()} because estimating information criteria for reduced
 models requires refitting.
 
@@ -244,6 +245,7 @@ Missing responses in the original data remain missing in the response column.
 \code{fitted()} returns their expected responses, while \code{predict()} generates fresh
 posterior predictive response draws (including at missing rows). In GARMA models,
 retained JAGS imputations supply the history used for later fitted and predicted rows.
+\href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.
 }
 \section{Functions}{
 \itemize{

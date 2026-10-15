@@ -25,6 +25,7 @@ Components:
 posterior and prior draws, respectively. Do not access these directly;
 use as_draws(fit) or similar.
 \item \code{jags_code}: A string with JAGS code; use \code{cat(fit$jags_code)} to show it.
+\href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more}.
 \item \code{simulate}: A function to simulate data from supplied parameter values.
 \item \code{.internal}: Information used internally by mcp.
 }

@@ -19,17 +19,19 @@ prior_summary(object, ...)
 \value{
 A tibble with one row per model parameter, ordered and labeled
 the same way as \code{summary()}: change points first, then \code{mu}, then the
-other distributional parameters, then \code{ar}/\code{ma} components - each with
+other distributional parameters, then AR/MA lags - each with
 \code{segment} and \code{dpar} columns.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
-Shows the effective, resolved prior distributions on the familiar SD/scale
-parameterization rather than JAGS precision. Symbolic expressions in bounds
-(e.g. \code{min(x)} or \code{max(x)}) may be retained in symbolic form in compact output,
-while \code{verbose = TRUE} displays the underlying rule, description, source, and kind.
+Shows the specified prior distributions, resolved to numbers and on the familiar SD/scale
+parameterization rather than JAGS precision. \code{bounds} are the lower and upper bounds of
+each prior, i.e., the arguments of \code{dunif()} or \code{T()}, or the support of the distribution.
+Change points are also "ordered": their specified priors are restricted to ordered change
+points. Use \code{plot_pars(fit, prior = TRUE)} to see the marginal priors after this restriction.
+\code{verbose = TRUE} also displays the underlying rule, description, source, and kind.
 Numbers are rounded to 5 significant digits for display. \code{fit$prior} holds the exact
 values used in the model. Parameter names within a prior describe its dependence on
 other parameters, e.g., the default prior on \code{Intercept_1} given \code{x_1}.
@@ -38,9 +40,10 @@ other parameters, e.g., the default prior on \code{Intercept_1} given \code{x_1}
 works for all of these models regardless of package load order.
 }
 \examples{
-prior_summary(demo_fit)  # Show the effective priors and bounds
+prior_summary(demo_fit)  # Show the resolved priors and their bounds
 prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 }
 \seealso{
-\link{mcp-priors} for how to specify priors.
+\link{mcp-priors} for how to specify priors, and
+\href{https://lindeloev.github.io/mcp/articles/default_priors.html}{Default priors} for the rules behind them.
 }

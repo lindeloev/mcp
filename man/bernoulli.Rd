@@ -10,7 +10,8 @@ bernoulli(link = "logit")
 \item{link}{Link function.}
 }
 \description{
-Bernoulli Family for mcp
+Binary responses (0 or 1). See \href{https://lindeloev.github.io/mcp/articles/binomial.html}{Binomial and Bernoulli}
+for worked examples.
 }
 \examples{
 # Fit a binary-response model with a probit link
