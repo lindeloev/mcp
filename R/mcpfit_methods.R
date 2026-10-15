@@ -31,6 +31,17 @@
 NULL
 
 
+# Parameter values used to simulate the response with `fit$simulate()`, or NULL. Only for fits of the
+# simulating model, i.e., with the same parameters, so that other models are not compared to them.
+get_simulated = function(fit) {
+  simulated = as.list(attr(fit$data[, mcp_columns(fit)$response], "simulated"))
+  simulated = simulated[vapply(simulated, is.numeric, logical(1))]  # Remove non-numeric
+  if (has_custom_jags_code(fit) || !setequal(names(simulated), mcp_pars(fit)$parameter))
+    return(NULL)
+  simulated
+}
+
+
 # Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 #
 # - fit: An \code{\link{mcpfit}}` object.
@@ -89,8 +100,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
       estimates$segment = integer()
       estimates$dpar = character()
     }
-    if (!is.null(attr(fit$data[, mcp_columns(fit)$response], "simulated")) &&
-        !has_custom_jags_code(fit)) {
+    if (!is.null(get_simulated(fit))) {
       estimates$sim = numeric()
       estimates$match = character()
     }
@@ -128,12 +138,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   estimates = estimates[order(match_idx), ]
 
   # Add simulation parameters if the data is simulated
-  sim_list = attr(fit$data[, mcp_columns(fit)$response], "simulated")
-  if (has_custom_jags_code(fit))
-    sim_list = NULL
-  if(!is.null(sim_list)) {
-    simulated = as.list(sim_list)  # Get as proper list
-    simulated = simulated[sapply(simulated, is.numeric)]  # Remove non-numeric
+  simulated = get_simulated(fit)
+  if(!is.null(simulated)) {
 
     # Handle group-level deviations. Find the matching labels.
     for (this_group_effect in mcp_pars(fit, scope = "group")$parameter) {

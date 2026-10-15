@@ -181,6 +181,21 @@ test_that("fit$simulate() errors with a helpful message on the pre-v0.4 calling 
   )
 })
 
+test_that("summary() only compares with values simulated from the same model", {
+  data = data.frame(x = 1:20, y = 0)
+  simulating = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE)
+  data$y = simulating$simulate(simulating, data, cp_1 = 10, Intercept_1 = 0, x_2 = 1, sigma_1 = 1)
+  simulating$data = data
+  expect_setequal(names(get_simulated(simulating)), mcp_pars(simulating)$parameter)
+
+  # A different model fitted to the simulated data shares Intercept_1 and sigma_1, but not cp_1 and x_2
+  fit = mcp(list(y ~ 1), data, par_x = "x", sample = FALSE)
+  draws = matrix(1:20, 10, 2, dimnames = list(NULL, c("Intercept_1", "sigma_1")))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  expect_null(get_simulated(fit))
+  expect_false(any(c("sim", "match") %in% names(get_summary(fit, width = 0.95))))
+})
+
 test_that("summary() matches simulated disjoined change points between adjacent observed x", {
   data = data.frame(x = 1:100, y = 0)
   get_match = function(model, sim_values) {
