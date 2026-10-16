@@ -23,7 +23,7 @@ Later segments that do not include \code{shape()} are joined. For example, \code
 models both the mean and shape. Regression coefficients for both dpars are
 on their link scales, e.g., \code{shape_Intercept_1} and \code{shape_x_1}.
 
-Without \code{shape()}, \code{shape_1} is the shape itself with an \code{inv_gamma(0.4, 0.3)} prior,
+Without \code{shape()}, \code{shape_1} is the shape itself with a \code{dinvgamma(0.4, 0.3)} prior,
 as in \code{brms}, much like the implicit \code{sigma_1} in \code{gaussian()}.
 }
 \examples{

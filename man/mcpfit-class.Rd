@@ -27,6 +27,9 @@ use as_draws(fit) or similar.
 \item \code{jags_code}: A string with JAGS code; use \code{cat(fit$jags_code)} to show it.
 \href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more}.
 \item \code{simulate}: A function to simulate data from supplied parameter values.
+\item \code{version}: A named list of \link{package_version}s for \code{mcp}, \code{R}, \code{rjags},
+and \code{jags}, e.g., \code{fit$version$mcp >= "0.4.0"}. \code{rjags} and \code{jags} are
+\code{NULL} for fits with \code{sample = "none"}. \code{NULL} for fits made with mcp < 0.4.0.
 \item \code{.internal}: Information used internally by mcp.
 }
 }

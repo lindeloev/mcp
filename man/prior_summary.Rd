@@ -26,8 +26,8 @@ other distributional parameters, then AR/MA lags - each with
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
-Shows the specified prior distributions, resolved to numbers and on the familiar SD/scale
-parameterization rather than JAGS precision. \code{bounds} are the lower and upper bounds of
+Shows the specified priors in the syntax of \code{mcp(..., prior)}, resolved to numbers.
+As in \code{prior}, scales are SD/scale rather than JAGS precision (see \link{mcp-priors}). \code{bounds} are the lower and upper bounds of
 each prior, i.e., the arguments of \code{dunif()} or \code{T()}, or the support of the distribution.
 Change points are also "ordered": their specified priors are restricted to ordered change
 points. Use \code{plot_pars(fit, prior = TRUE)} to see the marginal priors after this restriction.

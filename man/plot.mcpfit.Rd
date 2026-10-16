@@ -9,8 +9,8 @@
 \usage{
 \method{plot}{mcpfit}(
   x,
-  q_fit = FALSE,
-  q_predict = FALSE,
+  interval = "none",
+  width = 0.95,
   facet_by = NULL,
   color_by = "auto",
   lines = 25,
@@ -22,6 +22,8 @@
   ndraws = 500,
   scale = "response",
   at = NULL,
+  q_fit = lifecycle::deprecated(),
+  q_predict = lifecycle::deprecated(),
   nsamples = lifecycle::deprecated(),
   ...
 )
@@ -29,7 +31,8 @@
 plot_dpar(
   x,
   dpar = "epred",
-  q_fit = FALSE,
+  interval = "none",
+  width = 0.95,
   facet_by = NULL,
   color_by = "auto",
   lines = 25,
@@ -45,17 +48,19 @@ plot_dpar(
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object}
 
-\item{q_fit}{Whether to plot quantiles of the posterior (fitted value).
+\item{interval}{Which central intervals to plot as dashed lines:
 \itemize{
-\item \code{TRUE} Add 2.5\% and 97.5\% quantiles. Corresponds to
-\code{q_fit = c(0.025, 0.975)}.
-\item \code{FALSE} No quantiles
-\item A vector of quantiles (strictly between 0 and 1). For example, \code{q_fit = 0.5}
-plots the median and \code{q_fit = c(0.2, 0.8)} plots the 20\% and 80\%
-quantiles.
-}}
+\item \code{"none"} (default): No intervals.
+\item \code{"fitted"}: Interval of the fitted values (expected response), as in \code{fitted()}. Red lines.
+\item \code{"predict"}: Posterior predictive interval, as in \code{predict()}. Green lines.
+\item \code{c("fitted", "predict")}: Both. \code{plot_dpar()} supports only \code{"none"} and \code{"fitted"}.
+}
 
-\item{q_predict}{Same as \code{q_fit}, but for the posterior predictive interval.}
+For other quantiles, see \href{https://lindeloev.github.io/mcp/articles/plotting.html#other-quantiles}{the plotting article} for computing them from
+\code{fitted(..., summary = FALSE)} or \code{predict(..., summary = FALSE)} and adding them as a ggplot2 layer.}
+
+\item{width}{Width of the central interval(s) given in \code{interval} (strictly between 0 and 1).
+For example, \code{width = 0.8} plots the 10\% and 90\% quantiles.}
 
 \item{facet_by}{Character vector. Names of categorical data columns to split to facets.
 Can be grouping-factor or categorical predictor columns.}
@@ -67,7 +72,7 @@ Multiple columns are combined as an interaction. Curves and quantiles remain sep
 \item{lines}{Positive integer or \code{FALSE}. The number of fitted lines (draws).
 It is the number of joint posterior draws shown for every curve. FALSE or \code{lines = 0} plots no lines.
 Note that lines always plot fitted values - not predicted.
-For posterior predictive intervals, see the \code{q_predict} argument.}
+For posterior predictive intervals, use \code{interval = "predict"}.}
 
 \item{geom_data}{String. One of "point", "line" (good for time-series),
 or FALSE (do not plot).}
@@ -79,19 +84,25 @@ success proportion (\code{rate = TRUE}, the default here) or counts (\code{rate 
 This default is the opposite of \code{fitted()} and \code{predict()}, which return
 counts by default; plotting proportions keeps curves comparable across
 varying trial counts. Predictions and count-scale fitted values require a
-trials column in \code{newdata}/\code{at}.}
+trials column in \code{newdata}/\code{at}. Other families do not support \code{rate = TRUE},
+so the default only applies to binomial and Bernoulli models.}
 
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
 The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
 
-\item{arma}{Whether to include AR and MA effects.
+\item{arma}{How to include AR and MA effects.
 \itemize{
-\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{TRUE}: Condition on the observed response history, i.e., one-step-ahead evaluation of
+the GARMA residual recurrence. Requires the response variable in \code{newdata}.
+\item \code{FALSE}: Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{"replicate"}: Generate fresh response series recursively instead of conditioning on
+the observed responses. Only for predictions: \code{predict()}, \code{posterior_predict()}, and
+\code{pp_check()} (where it is the default). Applies equally to prior and posterior draws.
+}
+
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{group_effects = TRUE}).
-}}
+currently requires all such effects (\code{group_effects = TRUE}).}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
 \code{NULL} means "all". More draws trade speed for accuracy.}
@@ -107,6 +118,8 @@ trends are modeled.
 They default to their observed means. Family-specific response auxiliaries
 can be supplied as explicit scalar design values. Passed to
 \code{interpolate_newdata()}.}
+
+\item{q_fit, q_predict}{Deprecated. Use \code{interval} and \code{width} instead.}
 
 \item{nsamples}{Deprecated. Use \code{ndraws} instead.}
 
@@ -144,8 +157,8 @@ plot(demo_fit)
 \donttest{
 plot(demo_fit, prior = TRUE)  # The prior
 
-plot(demo_fit, lines = 0, q_fit = TRUE)  # 95\% central interval without lines
-plot(demo_fit, q_predict = c(0.1, 0.9))  # 80\% posterior predictive interval
+plot(demo_fit, lines = 0, interval = "fitted")  # 95\% central interval without lines
+plot(demo_fit, interval = "predict", width = 0.8)  # 80\% posterior predictive interval
 plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # Residual standard deviation on y
 
 # Show a panel for each group-level effect

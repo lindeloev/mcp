@@ -26,9 +26,13 @@ Categorical model predictors are always evaluated separately.}
 They default to their observed means. Family response auxiliaries can also
 be supplied as explicit scalar design values; e.g., \code{at = list(N = 20)}.}
 
-\item{arma}{Logical. If \code{TRUE}, preserve the observed response history for
-conditional AR/MA evaluation. Defaults to \code{TRUE} when the fit includes
-\code{ar()} or \code{ma()} terms. Set to \code{FALSE} to interpolate unconditional trends.}
+\item{arma}{How AR/MA terms will be evaluated (see \code{\link[=predict.mcpfit]{predict.mcpfit()}}). Defaults to \code{TRUE}
+when the fit includes \code{ar()} or \code{ma()} terms.
+\itemize{
+\item \code{TRUE}: Preserve the observed rows and response history for conditional AR/MA evaluation.
+\item \code{FALSE}: Interpolate unconditional trends.
+\item \code{"replicate"}: Preserve the observed rows, because AR/MA terms depend on the previous rows.
+}}
 
 \item{prior}{Logical. Increase the resolution around the change points of the
 prior draws (\code{TRUE}) instead of the posterior draws (\code{FALSE}, default).}

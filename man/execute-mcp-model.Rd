@@ -28,7 +28,6 @@
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
   probs = lifecycle::deprecated(),
-  conditional = TRUE,
   ...
 )
 
@@ -100,7 +99,7 @@ and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations as histories. Predictions
-are fresh response draws, including at missing rows. With \code{conditional = FALSE},
+are fresh response draws, including at missing rows. With \code{arma = "replicate"},
 \code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
 fresh response series recursively, so their \code{newdata} need only contain
 predictors and required response auxiliaries. \code{log_lik()}
@@ -119,7 +118,8 @@ Only in effect when \code{summary == TRUE}. To get custom quantiles, summarise t
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.
 Distributional parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
-and are unaffected by \code{rate}.}
+and are unaffected by \code{rate}. Other families do not support \code{rate = TRUE}. For rates per unit of exposure in models with
+\code{offset(log(exposure))}, set \code{exposure = 1} in \code{newdata}.}
 
 \item{prior}{Logical. Evaluate prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default).
 The selected draws must be available; prior-only fits require \code{prior = TRUE}.}
@@ -137,14 +137,19 @@ and \code{"*_id"} selects all effects by \code{id}. See names using \code{ranef(
 Can be combined, e.g., \code{c("cp", "sigma_*")}.
 }}
 
-\item{arma}{Whether to include AR and MA effects.
+\item{arma}{How to include AR and MA effects.
 \itemize{
-\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{TRUE}: Condition on the observed response history, i.e., one-step-ahead evaluation of
+the GARMA residual recurrence. Requires the response variable in \code{newdata}.
+\item \code{FALSE}: Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{"replicate"}: Generate fresh response series recursively instead of conditioning on
+the observed responses. Only for predictions: \code{predict()}, \code{posterior_predict()}, and
+\code{pp_check()} (where it is the default). Applies equally to prior and posterior draws.
+}
+
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{group_effects = TRUE}).
-}}
+currently requires all such effects (\code{group_effects = TRUE}).}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
 \code{NULL} means "all". More draws trade speed for accuracy.}
@@ -158,11 +163,6 @@ currently requires all such effects (\code{group_effects = TRUE}).
 \item{varying}{Deprecated. Use \code{group_effects} instead.}
 
 \item{probs}{Deprecated. Use \code{width} instead.}
-
-\item{conditional}{Logical. For AR/MA models, condition on observed response
-histories (\code{TRUE}, default) or generate fresh histories recursively (\code{FALSE}).
-Applies equally to prior and posterior draws. Predictive checks
-with \code{pp_check()} generate fresh histories.}
 
 \item{...}{Must be empty. Reserved for future use.}
 
@@ -198,13 +198,13 @@ With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
 columns are dot-prefixed to avoid collisions with data columns.
 \item If \code{summary = FALSE} and \code{draws_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior
 draws (\code{Nd}) evaluated at each row in \code{newdata} (\code{Nn}), i.e., with \verb{Nd x Nn} rows, ordered by
-\code{.data_row} and then \code{.draw}. If there are
+\code{.row} and then \code{.draw}. If there are
 group-level effects, the returned data is expanded with the relevant levels for each row.
 
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}, plus its response column when supplied.
-\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{.data_row}, the row number in the evaluated \code{newdata}.
+\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{.row}, the row number in the evaluated \code{newdata}.
 \item Draw values: one column for each parameter in the model.
 \item The estimate (matching tidybayes conventions): \code{.epred} for expected responses, \code{.linpred} with \code{scale = "linear"},
 the \code{.dpar} for other dpars (e.g., \code{.mu} or \code{.sigma}), \code{.prediction}, \code{.residual}, or \code{.loglik}.
@@ -274,7 +274,7 @@ head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 # Custom quantiles from the draws, here for fitted().
 # Note that for predict(), this adds more Monte Carlo error than `width`.
 fitted(demo_fit, summary = FALSE) |>
-  dplyr::group_by(.data_row, time) |>
+  dplyr::group_by(.row, time) |>
   dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .epred = quantile(.epred, quantile)) |>
   head()
 

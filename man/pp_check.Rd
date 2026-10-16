@@ -13,7 +13,7 @@
   newdata = NULL,
   prior = FALSE,
   group_effects = TRUE,
-  arma = TRUE,
+  arma = "replicate",
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
@@ -39,7 +39,7 @@ and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations as histories. Predictions
-are fresh response draws, including at missing rows. With \code{conditional = FALSE},
+are fresh response draws, including at missing rows. With \code{arma = "replicate"},
 \code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
 fresh response series recursively, so their \code{newdata} need only contain
 predictors and required response auxiliaries. \code{log_lik()}
@@ -63,14 +63,19 @@ and \code{"*_id"} selects all effects by \code{id}. See names using \code{ranef(
 Can be combined, e.g., \code{c("cp", "sigma_*")}.
 }}
 
-\item{arma}{Whether to include AR and MA effects.
+\item{arma}{How to include AR and MA effects.
 \itemize{
-\item \code{TRUE} Compute the GARMA residual recurrence. Requires the response variable in \code{newdata}.
-\item \code{FALSE} Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{TRUE}: Condition on the observed response history, i.e., one-step-ahead evaluation of
+the GARMA residual recurrence. Requires the response variable in \code{newdata}.
+\item \code{FALSE}: Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{"replicate"}: Generate fresh response series recursively instead of conditioning on
+the observed responses. Only for predictions: \code{predict()}, \code{posterior_predict()}, and
+\code{pp_check()} (where it is the default). Applies equally to prior and posterior draws.
+}
+
 For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (\code{group_effects = TRUE}).
-}}
+currently requires all such effects (\code{group_effects = TRUE}).}
 
 \item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
 \code{NULL} means "all". More draws trade speed for accuracy.}
@@ -90,11 +95,10 @@ around the \verb{bayesplot::ppc_*()} methods. See
 \href{https://lindeloev.github.io/mcp/articles/priors.html#prior-predictive-checks}{prior predictive checks} for an example.
 }
 \details{
-Missing responses are omitted from the observed-data check. For
-GARMA models, each replicated response series is generated recursively
-rather than conditioning on the observed response history. LOO predictive
+Missing responses are omitted from the observed-data check. LOO predictive
 checks use posterior draws and the original fitted data, so they do not
-support \code{prior = TRUE} or \code{newdata}.
+support \code{prior = TRUE} or \code{newdata}. For GARMA models, they default to \code{arma = TRUE}
+to match the one-step-ahead log-likelihood used for the LOO weights.
 }
 \examples{
 \donttest{

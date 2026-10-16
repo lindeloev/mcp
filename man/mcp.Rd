@@ -37,6 +37,7 @@ with syntactic column names. The response variable can contain missing values, w
 List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
 \code{sigma_1}, etc.) and values are a distribution string (e.g., \code{"dnorm(0, 1) T(0, )"}),
 a fixed value (e.g., \code{-2.1}), or the name of another parameter to share its value.
+\emph{OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so \code{dnorm(0, 0.001)} is a very narrow prior.}
 Weakly informative defaults are used where priors are not specified;
 see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.
 \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.}
@@ -79,17 +80,19 @@ use diagnostics to assess convergence.}
 \item{inits}{A named list of initial values for the parameters, e.g., \code{list(Intercept_1 = 10)},
 or a list of such lists with one per chain. This can be useful if a model fails to converge
 (\href{https://lindeloev.github.io/mcp/articles/tips.html}{read more}).
-Names must be stochastic nodes in \code{fit$jags_code} (lines with \code{~}). Fixed parameters
-and parameters that \code{mcp} samples via reparameterization (e.g., \code{Intercept_3} is sampled as
-\code{Intercept_3_end_}) cannot be initialized directly. See \code{mcp_reparam} in \link{mcp-package}.
+Names must be parameters in \code{\link[=mcp_pars]{mcp_pars()}}. Fixed parameters and parameters that are
+reparameterized for faster sampling cannot be initialized (see \code{mcp_reparam} in \link{mcp-package}).
 Initial values for change points must be ordered.
 Defaults to \code{NULL} where all chains start at equispaced change points and the prior medians.
 User-provided \code{inits} take precedence.}
 
-\item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
-you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
-framework. R-side simulation and prediction methods continue to use the
-mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+\item{jags_code}{String. JAGS code to sample instead of the code that \code{mcp} writes.
+This is an expert option for edits to \code{fit$jags_code} that keep the parameters in
+\code{\link[=mcp_pars]{mcp_pars()}}, the data, and the likelihood.
+Only the parameters in \code{\link[=mcp_pars]{mcp_pars()}} are monitored. R-side simulation and prediction
+methods continue to use the \code{mcp} formulas (with warning), so \code{fitted()}, \code{predict()},
+\code{plot()}, \code{loo()}, etc. are wrong if the custom code changes the formula or likelihood.
+The written JAGS code is not a stable interface and may change between \code{mcp} versions.
 \href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more} about how \code{mcp} writes JAGS code.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number

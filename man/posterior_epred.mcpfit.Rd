@@ -31,7 +31,7 @@
   re_formula = NULL,
   seed = NULL,
   rate = FALSE,
-  conditional = TRUE,
+  arma = TRUE,
   ...
 )
 
@@ -67,7 +67,7 @@ and \code{predict()} condition on the response history by default,
 so \code{newdata} must include the response. For \code{fitted()}, \code{predict()}, and
 \code{residuals()}, missing response histories are supported only in the original
 fitted data, using retained posterior imputations as histories. Predictions
-are fresh response draws, including at missing rows. With \code{conditional = FALSE},
+are fresh response draws, including at missing rows. With \code{arma = "replicate"},
 \code{predict()} and \code{\link[rstantools:posterior_predict]{posterior_predict()}} generate
 fresh response series recursively, so their \code{newdata} need only contain
 predictors and required response auxiliaries. \code{log_lik()}
@@ -90,14 +90,24 @@ effects and \code{NA} excludes them.}
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
 count-scale fitted values require a trials column in \code{newdata}.
 Distributional parameters such as \code{dpar = "mu"} evaluate the parameter itself (e.g., success probability)
-and are unaffected by \code{rate}.}
+and are unaffected by \code{rate}. Other families do not support \code{rate = TRUE}. For rates per unit of exposure in models with
+\code{offset(log(exposure))}, set \code{exposure = 1} in \code{newdata}.}
 
 \item{...}{Must be empty. Reserved for future use.}
 
-\item{conditional}{Logical. For AR/MA models, condition on observed response
-histories (\code{TRUE}, default) or generate fresh histories recursively (\code{FALSE}).
-Applies equally to prior and posterior draws. Predictive checks
-with \code{pp_check()} generate fresh histories.}
+\item{arma}{How to include AR and MA effects.
+\itemize{
+\item \code{TRUE}: Condition on the observed response history, i.e., one-step-ahead evaluation of
+the GARMA residual recurrence. Requires the response variable in \code{newdata}.
+\item \code{FALSE}: Disregard AR and MA effects. For \code{family = gaussian()}, \code{predict()} uses only \code{sigma} for residuals.
+\item \code{"replicate"}: Generate fresh response series recursively instead of conditioning on
+the observed responses. Only for predictions: \code{predict()}, \code{posterior_predict()}, and
+\code{pp_check()} (where it is the default). Applies equally to prior and posterior draws.
+}
+
+For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires all such effects (\code{group_effects = TRUE}).}
 
 \item{transform}{For \code{posterior_linpred()}, return the inverse-linked
 parameter on the response scale instead of the linear predictor. For
@@ -116,13 +126,13 @@ mcp exports these generics, so they work without \code{{rstantools}}. If \code{{
 }
 \details{
 For GARMA models, \code{posterior_predict()} conditions on the observed
-response history, just like \code{predict()}. Use \code{conditional = FALSE} in either
+response history, just like \code{predict()}. Use \code{arma = "replicate"} in either
 method to generate fresh response histories recursively. Missing responses
 in the original data are filled with retained imputations only to supply
-histories. Conditional \code{posterior_predict()} draws from the response
+histories. With \code{arma = TRUE}, \code{posterior_predict()} draws from the response
 distributions whose means \code{posterior_epred()} returns, including at missing
 rows. These methods require posterior draws. For prior prediction, use
-\code{predict()} with \code{prior = TRUE}; \code{conditional} selects the same behavior.
+\code{predict()} with \code{prior = TRUE}; \code{arma} selects the same behavior.
 
 For binomial models, \code{posterior_epred()} and \code{posterior_predict()} (and
 corresponding \code{{tidybayes}} workflows such as \code{add_epred_draws()}) follow
