@@ -186,18 +186,23 @@ test_that("prediction interfaces share conditional and replicated GARMA behavior
   expect_equal(conditional_matrix, tidy_to_matrix(conditional, ".prediction"))
   expect_equal(posterior_epred.mcpfit(fit), fitted(fit, summary = FALSE, draws_format = "matrix"))
   set.seed(42)
-  replicated = posterior_predict.mcpfit(fit, conditional = FALSE)
+  replicated = posterior_predict.mcpfit(fit, arma = "replicate")
   set.seed(42)
-  expect_equal(predict(fit, conditional = FALSE, summary = FALSE, draws_format = "matrix"), replicated)
+  expect_equal(predict(fit, arma = "replicate", summary = FALSE, draws_format = "matrix"), replicated)
   set.seed(42)
   predictor_only = posterior_predict.mcpfit(
     fit,
-    newdata = data.frame(x = data$x), conditional = FALSE
+    newdata = data.frame(x = data$x), arma = "replicate"
   )
 
   expect_equal(conditional$.prediction, rep(c(0, 5, 10), each = 2), tolerance = 0.01)
   expect_equal(unname(replicated), matrix(0, nrow = 2, ncol = 3), tolerance = 0.01)
   expect_equal(predictor_only, replicated)
+
+  # Replication generates new responses, so it applies only to predictions
+  for (method in list(fitted, residuals, log_lik))
+    expect_error(method(fit, arma = "replicate"), "applies only to predictions", fixed = TRUE)
+  expect_error(predict(fit, arma = "yes"), "must be TRUE, FALSE, or \"replicate\"", fixed = TRUE)
 
   novel_missing = data
   novel_missing$y[2] = NA
@@ -211,7 +216,7 @@ test_that("prediction interfaces share conditional and replicated GARMA behavior
 
   fit$data$y[2] = NA
   set.seed(42)
-  expect_equal(posterior_predict.mcpfit(fit, conditional = FALSE), replicated)
+  expect_equal(posterior_predict.mcpfit(fit, arma = "replicate"), replicated)
 })
 
 
@@ -232,13 +237,13 @@ test_that("prior predict uses the same explicit replication setting", {
   conditional = predict(fit, prior = TRUE, summary = FALSE)
   expect_equal(conditional$.prediction, rep(c(0, 5, 10), each = 2), tolerance = 0.01)
   set.seed(42)
-  predicted = predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, width = FALSE)
+  predicted = predict(fit, prior = TRUE, arma = "replicate", summary = FALSE, width = FALSE)
   set.seed(42)
   predictor_only = predict(
     fit,
     newdata = data.frame(x = data$x),
     prior = TRUE,
-    conditional = FALSE,
+    arma = "replicate",
     summary = FALSE,
     width = FALSE
   )

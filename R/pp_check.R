@@ -15,11 +15,10 @@
 #' @param varying Deprecated. Use `group_effects` instead.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
-#' @details Missing responses are omitted from the observed-data check. For
-#'   GARMA models, each replicated response series is generated recursively
-#'   rather than conditioning on the observed response history. LOO predictive
+#' @details Missing responses are omitted from the observed-data check. LOO predictive
 #'   checks use posterior draws and the original fitted data, so they do not
-#'   support `prior = TRUE` or `newdata`.
+#'   support `prior = TRUE` or `newdata`. For GARMA models, they default to `arma = TRUE`
+#'   to match the one-step-ahead log-likelihood used for the LOO weights.
 #' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
 #' @seealso \code{\link{plot.mcpfit}} \code{\link{predict.mcpfit}}
 #' @encoding UTF-8
@@ -40,7 +39,7 @@ pp_check.mcpfit = function(
   newdata = NULL,
   prior = FALSE,
   group_effects = TRUE,
-  arma = TRUE,
+  arma = "replicate",
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
@@ -55,7 +54,7 @@ pp_check.mcpfit = function(
   checkmate::assert_string(facet_by, null.ok = TRUE)
   checkmate::assert_flag(prior)
   checkmate::assert_multi_class(group_effects, c("logical", "character"))
-  checkmate::assert_flag(arma)
+  assert_arma(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
 
   if (is.null(newdata)) {
@@ -84,7 +83,9 @@ pp_check.mcpfit = function(
     stop("LOO predictive checks require posterior draws; `prior = TRUE` is not supported.")
   if (is_loo && !is.null(newdata))
     stop("LOO predictive checks require the original fitted data; `newdata` is not supported.")
-  if (is_loo && (!isTRUE(group_effects) || !arma))
+  if (is_loo && missing(arma))
+    arma = TRUE  # Match the one-step-ahead log-likelihood behind the LOO weights
+  if (is_loo && (!isTRUE(group_effects) || !isTRUE(arma)))
     stop("LOO predictive checks evaluate the fitted model; `group_effects = TRUE` and `arma = TRUE` are required.")
 
   # Get tidy draws to preserve group and draw identifiers
@@ -103,8 +104,7 @@ pp_check.mcpfit = function(
     # intact; bayesplot's `samples` argument controls plot sampling where
     # supported.
     ndraws = if (is_loo) NULL else ndraws,
-    draws_format = "tidy",
-    .garma_replicate = TRUE
+    draws_format = "tidy"
   )
 
   # LOO weights are computed once for all observed rows and subset per plot below.

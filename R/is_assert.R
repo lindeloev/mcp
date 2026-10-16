@@ -237,6 +237,18 @@ assert_width = function(width, name = "width", false_ok = FALSE) {
 }
 
 
+# AR/MA handling: TRUE conditions on the observed response history, FALSE omits AR/MA terms,
+# and "replicate" generates fresh response series.
+# - replicate_ok: Whether "replicate" is allowed. It only applies to predictions.
+assert_arma = function(arma, replicate_ok = TRUE) {
+  if (isTRUE(arma) || isFALSE(arma) || (replicate_ok && identical(arma, "replicate")))
+    return(invisible(arma))
+  if (identical(arma, "replicate"))
+    stop('`arma = "replicate"` generates fresh response series, so it applies only to predictions, e.g., `predict()` and `pp_check()`.', call. = FALSE)
+  stop('`arma` must be TRUE, FALSE, or "replicate".', call. = FALSE)
+}
+
+
 assert_typescale = function(type, scale) {
   rlang::arg_match0(type, c("predict", "fitted", "residuals", "loglik"))
   rlang::arg_match0(scale, c("response", "linear"))

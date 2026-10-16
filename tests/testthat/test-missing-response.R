@@ -118,6 +118,6 @@ test_that("completed histories stay paired across draws, groups, series, and seg
   expect_error(fitted(fit, group_effects = FALSE), "requires `group_effects = TRUE`", fixed = TRUE)
   fit$mcmc_prior = .subset2(fit, "mcmc_post")
   expect_error(predict(fit, prior = TRUE), "Missing GARMA histories require posterior draws", fixed = TRUE)
-  expect_no_error(predict(fit, prior = TRUE, conditional = FALSE, summary = FALSE, ndraws = 2))
+  expect_no_error(predict(fit, prior = TRUE, arma = "replicate", summary = FALSE, ndraws = 2))
   expect_no_error(ggplot2::ggplot_build(plot(fit, facet_by = "id")))
 })

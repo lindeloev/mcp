@@ -66,6 +66,7 @@ get_plot = function(x,
   ########################
   check_mcpfit_version(fit)
   checkmate::assert_flag(rate)
+  assert_arma(arma, replicate_ok = FALSE)
 
   # Counts scale with auxiliary response columns such as trials(N), so they must be explicit
   epred_aux = names(Filter(function(aux) "epred" %in% aux$operations, fit$family$response$auxiliary))

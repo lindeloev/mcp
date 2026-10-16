@@ -584,6 +584,7 @@ test_that("PPC and LOO draws stay aligned", {
   expect_error(waic(fit, group_effects = FALSE), "must be empty", fixed = TRUE)
   expect_error(waic(fit, arma = FALSE), "must be empty", fixed = TRUE)
   expect_error(pp_check(fit, type = "loo_intervals", arma = FALSE), "LOO predictive checks evaluate the fitted model", fixed = TRUE)
+  expect_error(pp_check(fit, type = "loo_intervals", arma = "replicate"), "LOO predictive checks evaluate the fitted model", fixed = TRUE)
 
   # log_lik still supports non-default group_effects and arma as diagnostics
   ll_group_false = log_lik(fit, ndraws = 10, group_effects = FALSE)

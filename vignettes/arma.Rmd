@@ -342,7 +342,7 @@ JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional re
 
 - `fitted()` and `predict()` use posterior imputations only to complete missing response histories. `predict()` generates fresh outcomes at all rows, even where the original response was missing.
 - `log_lik()` is unavailable if the data has missingness before some observed data.
-- `predict(..., conditional = FALSE)`, `posterior_predict(..., conditional = FALSE)`, and `pp_check()` generate each series recursively from the model posteriors without conditioning on the original response history. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful.
+- `predict(..., arma = "replicate")`, `posterior_predict(..., arma = "replicate")`, and `pp_check()` (where it is the default) generate each series recursively from the model posteriors without conditioning on the original response history. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful. Use `pp_check(fit, arma = TRUE)` to check the one-step-ahead predictions instead.
 
 # JAGS code
 

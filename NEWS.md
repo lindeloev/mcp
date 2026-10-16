@@ -115,7 +115,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
   - GARMA observation thresholds are now validated against the support of the response: strictly below 0.5 for `family = bernoulli()`, and strictly below half the smallest trial count for `family = binomial()`, preventing thresholds from erasing the binary response history.
 
 
-  - Explicit AR/MA prediction history control: predict() and the new posterior_predict() support conditional = TRUE (default) to condition on observed response histories, or conditional = FALSE to generate histories recursively. This applies to both prior and posterior prediction. Previously, AR history handling depended on whether response values were supplied.
+  - Explicit AR/MA prediction history control: `predict()` and the new `posterior_predict()` support `arma = "replicate"` to generate fresh response series recursively, in addition to `arma = TRUE` (default) to condition on observed response histories and `arma = FALSE` to omit AR/MA effects. This applies to both prior and posterior prediction. Previously, AR history handling depended on whether response values were supplied.
 
   - Added AR/MA warnings: (1) for AR/MA models to `loo()`, `predict()`, etc. where the serial dependence is currently ignored. Proper handling requires leave-future-out or blocked cross-validation, which are not currently implemented in `mcp`. (2) when posterior violation probabilities exceed the configurable `ar` or `ma` diagnostic thresholds (10% by default).
 
@@ -229,7 +229,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - For models with group-level change points, LOO checks with `facet_by != NULL` could pair group-specific predictions with weights from the wrong observations.
 
-  - For AR/MA models, `pp_check()` conditioned every prediction on the observed response history. They now generate each posterior replication recursively as a fresh time series.
+  - For AR/MA models, `pp_check()` conditioned every prediction on the observed response history. It now defaults to `arma = "replicate"`, generating each posterior replication recursively as a fresh time series. Use `arma = TRUE` for the previous one-step-ahead check. LOO predictive checks keep `arma = TRUE` to match the one-step-ahead log-likelihood behind their weights.
 
   - LOO checks with `prior = TRUE` incorrectly combined prior predictions with posterior LOO weights. A rare use case.
 

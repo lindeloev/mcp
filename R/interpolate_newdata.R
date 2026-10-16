@@ -101,9 +101,11 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 #' @param at Named list setting additional continuous predictors to fixed values.
 #'   They default to their observed means. Family response auxiliaries can also
 #'   be supplied as explicit scalar design values; e.g., `at = list(N = 20)`.
-#' @param arma Logical. If `TRUE`, preserve the observed response history for
-#'   conditional AR/MA evaluation. Defaults to `TRUE` when the fit includes
-#'   `ar()` or `ma()` terms. Set to `FALSE` to interpolate unconditional trends.
+#' @param arma How AR/MA terms will be evaluated (see [predict.mcpfit()]). Defaults to `TRUE`
+#'   when the fit includes `ar()` or `ma()` terms.
+#'   * `TRUE`: Preserve the observed rows and response history for conditional AR/MA evaluation.
+#'   * `FALSE`: Interpolate unconditional trends.
+#'   * `"replicate"`: Preserve the observed rows, because AR/MA terms depend on the previous rows.
 #' @param prior Logical. Increase the resolution around the change points of the
 #'   prior draws (`TRUE`) instead of the posterior draws (`FALSE`, default).
 #' @details
@@ -149,10 +151,11 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
   checkmate::assert_flag(prior)
   if (is.null(arma))
     arma = is_arma(fit)
+  assert_arma(arma)
 
-  # Conditional AR/MA predictions depend sequentially on the observed response
-  # history. Preserve the observed design rather than creating a factorial grid.
-  if (isTRUE(arma) && is.null(x_values)) {
+  # AR/MA predictions depend sequentially on the previous rows (and on the observed response
+  # history unless replicated). Preserve the observed design rather than creating a factorial grid.
+  if (!isFALSE(arma) && is.null(x_values)) {
     newdata = fit$data
     if (!is.null(at)) {
       for (col in intersect(names(at), names(newdata)))

@@ -6,8 +6,6 @@
 # - type: One of "fitted", "predict", "residuals", or "loglik".
 # - .return_fitted: Include fitted values with unsummarised predictions.
 # - .return_dpars: Include distributional parameters and response data as attributes with unsummarised predictions.
-# - .garma_replicate: For GARMA predictions, generate each response history recursively
-#   instead of conditioning on observed responses.
 pp_eval = function(
   object,
   newdata = NULL,
@@ -23,8 +21,7 @@ pp_eval = function(
   draws_format = "tidy",
   scale = 'response',
   .return_fitted = FALSE,
-  .return_dpars = FALSE,
-  .garma_replicate = FALSE
+  .return_dpars = FALSE
 ) {
   ########################
   # ASSERTS AND RECODING #
@@ -44,17 +41,14 @@ pp_eval = function(
   assert_width(width, false_ok = TRUE)
   checkmate::assert_flag(rate)
   checkmate::assert_flag(prior)
-  checkmate::assert_flag(arma)
+  assert_arma(arma, replicate_ok = type == "predict")
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
   checkmate::assert_flag(.return_fitted)
   checkmate::assert_flag(.return_dpars)
-  checkmate::assert_flag(.garma_replicate)
   if (.return_fitted && (type != "predict" || summary))
     stop_github("`.return_fitted` requires `type = 'predict'` and `summary = FALSE`.")
   if (.return_dpars && (type != "predict" || summary))
     stop_github("`.return_dpars` requires `type = 'predict'` and `summary = FALSE`.")
-  if (.garma_replicate && type != "predict")
-    stop_github("`.garma_replicate` requires `type = 'predict'`.")
 
   # What data to use
   using_original_data = is.null(newdata) || identical(data.frame(newdata), fit$data)
@@ -62,7 +56,8 @@ pp_eval = function(
     newdata = fit$data
 
   data_columns = mcp_columns(fit)
-  replicate_garma = .garma_replicate && arma && is_arma(fit)
+  replicate_garma = identical(arma, "replicate") && is_arma(fit)
+  arma = !isFALSE(arma)  # Whether AR/MA terms are included. `replicate_garma` says how.
   evaluating_arma = uses_garma(fit, arma, type, dpar)
   if (evaluating_arma)
     assert_arma_series(newdata, data_columns$series)
@@ -77,7 +72,7 @@ pp_eval = function(
     stop(
       "Conditional GARMA evaluation with missing responses is supported only for ",
       "the original fitted data, where retained posterior imputations are available. ",
-      "Use `posterior_predict(..., conditional = FALSE)` to generate fresh replicated response series from ",
+      "Use `predict(..., arma = \"replicate\")` to generate fresh replicated response series from ",
       "predictor-only `newdata`.",
       call. = FALSE
     )
@@ -166,7 +161,7 @@ pp_eval = function(
   # Complete the conditional history, keeping imputations out of prediction output.
   if (conditional_garma && anyNA(draws[[data_columns$response]])) {
     if (prior)
-      stop("Missing GARMA histories require posterior draws. Use `conditional = FALSE` for prior prediction.", call. = FALSE)
+      stop("Missing GARMA histories require posterior draws. Use `arma = \"replicate\"` for prior prediction.", call. = FALSE)
     if (!all(model_tables$group_effects$name %in% group_info$pars))
       stop(
         "This model has group-level effects, and its retained missing-response ",
@@ -368,7 +363,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'   so `newdata` must include the response. For `fitted()`, `predict()`, and
 #'   `residuals()`, missing response histories are supported only in the original
 #'   fitted data, using retained posterior imputations as histories. Predictions
-#'   are fresh response draws, including at missing rows. With `conditional = FALSE`,
+#'   are fresh response draws, including at missing rows. With `arma = "replicate"`,
 #'   `predict()` and [`posterior_predict()`][rstantools::posterior_predict] generate
 #'   fresh response series recursively, so their `newdata` need only contain
 #'   predictors and required response auxiliaries. `log_lik()`
@@ -394,9 +389,14 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'   * `"sigma"`: The standard deviation of the residuals.
 #'   * `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
 #'     coefficient you want to evaluate.
-#' @param arma Whether to include AR and MA effects.
-#'   * `TRUE` Compute the GARMA residual recurrence. Requires the response variable in `newdata`.
-#'   * `FALSE` Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
+#' @param arma How to include AR and MA effects.
+#'   * `TRUE`: Condition on the observed response history, i.e., one-step-ahead evaluation of
+#'     the GARMA residual recurrence. Requires the response variable in `newdata`.
+#'   * `FALSE`: Disregard AR and MA effects. For `family = gaussian()`, `predict()` uses only `sigma` for residuals.
+#'   * `"replicate"`: Generate fresh response series recursively instead of conditioning on
+#'     the observed responses. Only for predictions: `predict()`, `posterior_predict()`, and
+#'     `pp_check()` (where it is the default). Applies equally to prior and posterior draws.
+#'
 #'   For posterior evaluation of the original data, retained JAGS imputations
 #'   supply missing GARMA histories. In models with group-level effects, this
 #'   currently requires all such effects (`group_effects = TRUE`).
@@ -480,10 +480,6 @@ NULL
 
 #' @aliases predict predict.mcpfit
 #' @describeIn execute-mcp-model Predictive Distribution
-#' @param conditional Logical. For AR/MA models, condition on observed response
-#'   histories (`TRUE`, default) or generate fresh histories recursively (`FALSE`).
-#'   Applies equally to prior and posterior draws. Predictive checks
-#'   with `pp_check()` generate fresh histories.
 #' @export
 predict.mcpfit = function(
   object,
@@ -500,7 +496,6 @@ predict.mcpfit = function(
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
   probs = lifecycle::deprecated(),
-  conditional = TRUE,
   ...
 ) {
   ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "predict.mcpfit", "ndraws", "nsamples")
@@ -509,7 +504,6 @@ predict.mcpfit = function(
   draws_format = legacy_arg(draws_format, samples_format, missing(draws_format), "predict.mcpfit", "draws_format", "samples_format")
   legacy_which_y(list(...), "predict")
 
-  checkmate::assert_flag(conditional)
   if (missing(rate))
     legacy_binomial_rate(object, newdata, "predict")
 
@@ -525,8 +519,7 @@ predict.mcpfit = function(
     group_effects = group_effects,
     arma = arma,
     ndraws = ndraws,
-    draws_format = draws_format,
-    .garma_replicate = !conditional
+    draws_format = draws_format
   )
 }
 
@@ -606,13 +599,13 @@ fitted.mcpfit = function(
 #' @param ... Must be empty. Reserved for future use.
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
 #' @details For GARMA models, `posterior_predict()` conditions on the observed
-#'   response history, just like `predict()`. Use `conditional = FALSE` in either
+#'   response history, just like `predict()`. Use `arma = "replicate"` in either
 #'   method to generate fresh response histories recursively. Missing responses
 #'   in the original data are filled with retained imputations only to supply
-#'   histories. Conditional `posterior_predict()` draws from the response
+#'   histories. With `arma = TRUE`, `posterior_predict()` draws from the response
 #'   distributions whose means `posterior_epred()` returns, including at missing
 #'   rows. These methods require posterior draws. For prior prediction, use
-#'   `predict()` with `prior = TRUE`; `conditional` selects the same behavior.
+#'   `predict()` with `prior = TRUE`; `arma` selects the same behavior.
 #'
 #'   For binomial models, `posterior_epred()` and `posterior_predict()` (and
 #'   corresponding `{tidybayes}` workflows such as `add_epred_draws()`) follow
@@ -668,7 +661,7 @@ posterior_predict.mcpfit = function(
   re_formula = NULL,
   seed = NULL,
   rate = FALSE,
-  conditional = TRUE,
+  arma = TRUE,
   ...
 ) {
   posterior_prediction_matrix(
@@ -681,7 +674,7 @@ posterior_predict.mcpfit = function(
     re_formula = re_formula,
     seed = seed,
     rate = rate,
-    conditional = conditional,
+    arma = arma,
     ...
   )
 }
@@ -733,10 +726,9 @@ posterior_prediction_matrix = function(
   scale = "response",
   rate = FALSE,
   seed = NULL,
-  conditional = TRUE,
+  arma = TRUE,
   ...
 ) {
-  checkmate::assert_flag(conditional)
   checkmate::assert_class(object, "mcpfit")
   mcmclist_draws(object)
   dots = list(...)
@@ -765,11 +757,10 @@ posterior_prediction_matrix = function(
     prior = FALSE,
     dpar = if (type == "fitted") dpar else NULL,
     group_effects = group_effects,
-    arma = TRUE,
+    arma = arma,
     ndraws = ndraws,
     draws_format = "matrix",
-    scale = scale,
-    .garma_replicate = !conditional
+    scale = scale
   )
 }
 
