@@ -66,9 +66,11 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 
   # Specified priors that resolve to the default, e.g., from `mcp(..., prior = fit$prior)`, 
   # are treated as defaults (not specified). This ensures default optimizations remain active.
+  # Compare at 15 digits because R's parser can be 1 ulp off for 17-digit numbers on some platforms (macOS arm64).
   if (length(prior) > 0) {
     defaults = compile(list())
-    is_default = table$value[match(names(prior), table$parameter)] == defaults$value[match(names(prior), defaults$parameter)]
+    value = function(table) format_prior_display(table$value[match(names(prior), table$parameter)], digits = 15)
+    is_default = value(table) == value(defaults)
     if (any(is_default))
       table = compile(prior[!is_default])
   }
