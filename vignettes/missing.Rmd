@@ -96,7 +96,7 @@ Imputations are not added to `plot()` automatically. Since `plot()` returns a gg
 
 ```{r}
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
-plot(fit, color_by = "state", q_predict = c(0.1, 0.9)) +
+plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add imputation interval
   geom_linerange(

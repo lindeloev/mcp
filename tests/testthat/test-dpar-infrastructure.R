@@ -544,7 +544,7 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(sort(unname(quantile_layer$data$.epred)), c(0, 0, 10, 10))
   expect_equal(length(unique(quantile_layer$data$.group)), 2)
 
-  automatic = plot(fit, lines = 0, q_fit = c(0.25, 0.75))
+  automatic = plot(fit, lines = 0, interval = "fitted", width = 0.5)
   automatic_quantiles = ggplot2::ggplot_build(automatic)$data[[2]]
   expect_equal(automatic$labels$colour, "group")
   expect_equal(length(unique(automatic_quantiles$colour)), 2)
@@ -589,19 +589,19 @@ test_that("color_by controls color without pooling categorical curves", {
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
 
   expect_error(
-    plot(fit, lines = 0, q_fit = c(0.25, 0.75)),
+    plot(fit, lines = 0, interval = "fitted", width = 0.5),
     "Unmapped categorical predictors: 'group', 'state'.",
     fixed = TRUE
   )
   expect_error(
-    plot(fit, color_by = "group", lines = 0, q_fit = c(0.25, 0.75)),
+    plot(fit, color_by = "group", lines = 0, interval = "fitted", width = 0.5),
     "Unmapped categorical predictors: 'state'.",
     fixed = TRUE
   )
 
   # NULL disables color, but the two quantiles for all four categorical
   # curves must still remain separate.
-  no_color = plot(fit, color_by = NULL, lines = 0, q_fit = c(0.25, 0.75), q_predict = c(0.25, 0.75))
+  no_color = plot(fit, color_by = NULL, lines = 0, interval = c("fitted", "predict"), width = 0.5)
   no_color_layers = ggplot2::ggplot_build(no_color)$data
   no_color_quantiles = no_color_layers[[2]]
   expect_equal(unique(no_color_quantiles$colour), "red")
@@ -618,8 +618,8 @@ test_that("color_by controls color without pooling categorical curves", {
     color_by = "group",
     facet_by = "state",
     lines = 0,
-    q_fit = c(0.25, 0.75),
-    q_predict = c(0.25, 0.75)
+    interval = c("fitted", "predict"),
+    width = 0.5
   )
   one_color_layers = ggplot2::ggplot_build(one_color)$data
   one_color_quantiles = one_color_layers[[2]]
@@ -635,7 +635,7 @@ test_that("color_by controls color without pooling categorical curves", {
     fit,
     color_by = c("group", "state"),
     lines = 0,
-    q_fit = c(0.25, 0.75)
+    interval = "fitted", width = 0.5
   )
   interaction_quantiles = ggplot2::ggplot_build(interaction_color)$data[[2]]
   expect_setequal(unique(interaction_quantiles$colour), plot_colors)
@@ -646,7 +646,7 @@ test_that("color_by controls color without pooling categorical curves", {
     facet_by = "state",
     color_by = "group",
     lines = 0,
-    q_fit = c(0.25, 0.75)
+    interval = "fitted", width = 0.5
   )
   faceted_quantiles = ggplot2::ggplot_build(faceted)$data[[2]]
   expect_equal(length(unique(faceted_quantiles$PANEL)), 2)
@@ -669,7 +669,7 @@ test_that("color_by controls color without pooling categorical curves", {
     color_by = "group",
     facet_by = "state",
     lines = 0,
-    q_fit = c(0.25, 0.75)
+    interval = "fitted", width = 0.5
   )
   dpar_quantiles = ggplot2::ggplot_build(dpar_plot)$data[[1]]
   expect_setequal(unique(dpar_quantiles$colour), plot_colors[1:2])
@@ -737,7 +737,7 @@ test_that("integer grouping factors can control plot color", {
   expect_equal(sort(unique(interpolated$id)), 1:2)
   expect_false("id" %in% names(interpolate_newdata(fit, x_values = 1:4)))
 
-  automatic = plot(fit, lines = 0, q_fit = c(0.25, 0.75), cp_dens = FALSE)
+  automatic = plot(fit, lines = 0, interval = "fitted", width = 0.5, cp_dens = FALSE)
   automatic_quantiles = ggplot2::ggplot_build(automatic)$data[[2]]
   expect_equal(automatic$labels$colour, "state")
   expect_equal(length(unique(automatic_quantiles$colour)), 2)
@@ -748,7 +748,7 @@ test_that("integer grouping factors can control plot color", {
     fit,
     color_by = NULL,
     lines = 0,
-    q_fit = c(0.25, 0.75),
+    interval = "fitted", width = 0.5,
     cp_dens = FALSE
   )
   population_quantiles = ggplot2::ggplot_build(population_plot)$data[[2]]
@@ -758,7 +758,7 @@ test_that("integer grouping factors can control plot color", {
     fit,
     color_by = "id",
     lines = 0,
-    q_fit = c(0.25, 0.75),
+    interval = "fitted", width = 0.5,
     cp_dens = FALSE
   )
   quantiles = ggplot2::ggplot_build(plotted)$data[[2]]
@@ -771,7 +771,7 @@ test_that("integer grouping factors can control plot color", {
     color_by = "state",
     facet_by = "id",
     lines = 0,
-    q_fit = c(0.25, 0.75),
+    interval = "fitted", width = 0.5,
     cp_dens = FALSE
   )
   grouped_quantiles = ggplot2::ggplot_build(grouped)$data[[2]]
@@ -780,7 +780,7 @@ test_that("integer grouping factors can control plot color", {
   expect_equal(length(unique(grouped_quantiles$group)), 8)
 
   # color_by = "auto" still colors the sole categorical predictor when faceting by another column
-  auto_grouped = plot(fit, facet_by = "id", lines = 0, q_fit = c(0.25, 0.75), cp_dens = FALSE)
+  auto_grouped = plot(fit, facet_by = "id", lines = 0, interval = "fitted", width = 0.5, cp_dens = FALSE)
   expect_equal(auto_grouped$labels$colour, "state")
   expect_equal(ggplot2::ggplot_build(auto_grouped)$data[[2]], grouped_quantiles)
   expect_equal(plot_dpar(fit, dpar = "sigma", facet_by = "id", lines = 0, cp_dens = FALSE)$labels$colour, "state")

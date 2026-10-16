@@ -27,25 +27,10 @@ add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), col
 }
 
 
-# Validate `q_fit`/`q_predict` and translate TRUE to the 95% central interval
-resolve_plot_quantiles = function(q, arg) {
-  checkmate::assert(
-    checkmate::check_flag(q),
-    checkmate::check_numeric(q, min.len = 1, any.missing = FALSE),
-    .var.name = arg
-  )
-  if (isTRUE(q))
-    return(c(0.025, 0.975))
-  if (is.numeric(q) && any(q <= 0 | q >= 1))
-    stop("`", arg, "` must be strictly between 0 and 1.")
-  q
-}
-
-
 # Underlies plot() and plot_dpar(). Arguments are documented in ?plot.mcpfit.
 get_plot = function(x,
-                       q_fit = FALSE,
-                       q_predict = FALSE,
+                       interval = "none",
+                       width = 0.95,
                        facet_by = NULL,
                        color_by = "auto",
                        lines = 25,
@@ -93,11 +78,12 @@ get_plot = function(x,
   checkmate::assert_flag(cp_dens)
   assert_typescale(type = "fitted", scale = scale)
   dpar = assert_dpar(dpar, fit = fit, type = "fitted")
-  # Quantiles
-  q_fit = resolve_plot_quantiles(q_fit, "q_fit")
-  q_predict = resolve_plot_quantiles(q_predict, "q_predict")
-  show_q_fit = !isFALSE(q_fit)
-  show_q_predict = !isFALSE(q_predict)
+  # Intervals
+  interval = match.arg(interval, c("none", "fitted", "predict"), several.ok = TRUE)
+  assert_width(width)
+  probs = c((1 - width) / 2, (1 + width) / 2)
+  show_fitted = "fitted" %in% interval
+  show_predict = "predict" %in% interval
 
   # Validate columns used for faceting and color.
   checkmate::assert_character(facet_by, null.ok = TRUE)
@@ -136,7 +122,7 @@ get_plot = function(x,
   validate_plot_groups(color_by, "color_by")
 
   unmapped = setdiff(categorical_cols, plot_by)
-  if ((show_q_fit || show_q_predict) && length(categorical_cols) > 1 &&
+  if ((show_fitted || show_predict) && length(categorical_cols) > 1 &&
       check_unmapped && length(unmapped) > 0) {
     stop(
       "Unmapped categorical predictors: '", paste(unmapped, collapse = "', '"), "'. ",
@@ -191,7 +177,7 @@ get_plot = function(x,
       dplyr::select(-dplyr::any_of(yvar))
 
     # Fitted values are only present for `type = "fitted"` (or "predict" with
-    # `.return_fitted = TRUE`). Predict-only draws (no q_fit requested) have
+    # `.return_fitted = TRUE`). Predict-only draws (no fitted interval) have
     # no fitted values to rename.
     fitted_col = get_value_col("fitted", dpar, scale)
     if (fitted_col %in% names(draws))
@@ -208,22 +194,22 @@ get_plot = function(x,
   }
 
   plot_newdata = add_plot_groups(newdata, curve_by = curve_by, color_by = color_by)
-  q_fit_data = NULL
-  q_predict_data = NULL
-  if (show_q_fit || show_q_predict) {
-    type = if (show_q_predict) "predict" else "fitted"
+  fitted_data = NULL
+  predict_data = NULL
+  if (show_fitted || show_predict) {
+    type = if (show_predict) "predict" else "fitted"
     draws = local_pp_eval(
       type, newdata, ndraws = ndraws,
-      return_fitted = show_q_fit && type == "predict",
-      return_dpars = show_q_predict && type == "predict"
+      return_fitted = show_fitted && type == "predict",
+      return_dpars = show_predict && type == "predict"
     )
     draws = prepare_draws(draws)
     keep = unique(c(data_columns$par_x, facet_by, ".group", ".color"))
 
-    if (show_q_fit)
-      q_fit_data = get_quantiles(draws, q_fit, yvar, keep)
-    if (show_q_predict)
-      q_predict_data = get_mixture_quantiles(draws, q_predict, fit$family, keep, rate = rate)
+    if (show_fitted)
+      fitted_data = get_quantiles(draws, probs, yvar, keep)
+    if (show_predict)
+      predict_data = get_mixture_quantiles(draws, probs, fit$family, keep, rate = rate)
   }
 
 
@@ -290,12 +276,12 @@ get_plot = function(x,
     gg = gg + ggplot2::geom_line(line_mapping, data = eval_lines, alpha = 0.2)
   }
 
-  # Add quantiles?
-  if (show_q_fit) {
-    gg = gg + geom_quantiles(q_fit_data, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
+  # Add intervals?
+  if (show_fitted) {
+    gg = gg + geom_quantiles(fitted_data, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
   }
-  if (show_q_predict) {
-    gg = gg + geom_quantiles(q_predict_data, ".prediction", use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
+  if (show_predict) {
+    gg = gg + geom_quantiles(predict_data, ".prediction", use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
   }
 
   # Add change point densities?
@@ -305,10 +291,10 @@ get_plot = function(x,
     # This is faster than limits_y = ggplot2::ggplot_build(gg)$layout$panel_params[[1]]$y.range
     if (dpar == "epred" && geom_data != FALSE) {
       limits_y = range(fit$data[[data_columns$response]], finite = TRUE)
-    } else if (show_q_predict) {
-      limits_y = range(q_predict_data$.prediction)
-    } else if (show_q_fit) {
-      limits_y = range(dplyr::pull(q_fit_data, yvar))
+    } else if (show_predict) {
+      limits_y = range(predict_data$.prediction)
+    } else if (show_fitted) {
+      limits_y = range(dplyr::pull(fitted_data, yvar))
     } else if (yvar %in% names(eval_lines)) {
       limits_y = range(dplyr::pull(eval_lines, yvar))
     } else {
@@ -376,14 +362,16 @@ get_plot = function(x,
 #' @aliases plot plot.mcpfit
 #' @export
 #' @param x An \code{\link{mcpfit}} object
-#' @param q_fit Whether to plot quantiles of the posterior (fitted value).
-#'   * `TRUE` Add 2.5% and 97.5% quantiles. Corresponds to
-#'       `q_fit = c(0.025, 0.975)`.
-#'   * `FALSE` No quantiles
-#'   * A vector of quantiles (strictly between 0 and 1). For example, `q_fit = 0.5`
-#'       plots the median and `q_fit = c(0.2, 0.8)` plots the 20% and 80%
-#'       quantiles.
-#' @param q_predict Same as `q_fit`, but for the posterior predictive interval.
+#' @param interval Which central intervals to plot as dashed lines:
+#'   * `"none"` (default): No intervals.
+#'   * `"fitted"`: Interval of the fitted values (expected response), as in `fitted()`. Red lines.
+#'   * `"predict"`: Posterior predictive interval, as in `predict()`. Green lines.
+#'   * `c("fitted", "predict")`: Both. `plot_dpar()` supports only `"none"` and `"fitted"`.
+#'
+#'   For other quantiles, see `vignette("predict")` for computing them from
+#'   `fitted(..., summary = FALSE)` or `predict(..., summary = FALSE)` and adding them as a ggplot2 layer.
+#' @param width Width of the central interval(s) given in `interval` (strictly between 0 and 1).
+#'   For example, `width = 0.8` plots the 10% and 90% quantiles.
 #' @param facet_by Character vector. Names of categorical data columns to split to facets.
 #'   Can be grouping-factor or categorical predictor columns.
 #' @param color_by A character vector naming categorical predictor or grouping columns to color by.
@@ -396,7 +384,7 @@ get_plot = function(x,
 #' @param lines Positive integer or `FALSE`. The number of fitted lines (draws).
 #'   It is the number of joint posterior draws shown for every curve. FALSE or `lines = 0` plots no lines.
 #'   Note that lines always plot fitted values - not predicted.
-#'   For posterior predictive intervals, see the `q_predict` argument.
+#'   For posterior predictive intervals, use `interval = "predict"`.
 #' @param geom_data String. One of "point", "line" (good for time-series),
 #'   or FALSE (do not plot).
 #' @param cp_dens TRUE/FALSE. Plot posterior densities of the change point(s)?
@@ -408,6 +396,7 @@ get_plot = function(x,
 #'   trials column in `newdata`/`at`. Other families do not support `rate = TRUE`,
 #'   so the default only applies to binomial and Bernoulli models.
 #' @inheritParams fitted.mcpfit
+#' @param q_fit,q_predict Deprecated. Use `interval` and `width` instead.
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Must be empty. Reserved for future use.
 #' @encoding UTF-8
@@ -425,8 +414,8 @@ get_plot = function(x,
 #' \donttest{
 #' plot(demo_fit, prior = TRUE)  # The prior
 #'
-#' plot(demo_fit, lines = 0, q_fit = TRUE)  # 95% central interval without lines
-#' plot(demo_fit, q_predict = c(0.1, 0.9))  # 80% posterior predictive interval
+#' plot(demo_fit, lines = 0, interval = "fitted")  # 95% central interval without lines
+#' plot(demo_fit, interval = "predict", width = 0.8)  # 80% posterior predictive interval
 #' plot_dpar(demo_fit, dpar = "sigma", lines = 100)  # Residual standard deviation on y
 #'
 #' # Show a panel for each group-level effect
@@ -437,8 +426,8 @@ get_plot = function(x,
 #' plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 #' }
 plot.mcpfit = function(x,
-                    q_fit = FALSE,
-                    q_predict = FALSE,
+                    interval = "none",
+                    width = 0.95,
                     facet_by = NULL,
                     color_by = "auto",
                     lines = 25,
@@ -450,17 +439,20 @@ plot.mcpfit = function(x,
                     ndraws = 500,
                     scale = "response",
                     at = NULL,
+                    q_fit = lifecycle::deprecated(),
+                    q_predict = lifecycle::deprecated(),
                     nsamples = lifecycle::deprecated(),
                     ...) {
   ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "plot.mcpfit", "ndraws", "nsamples")
+  legacy = legacy_plot_interval(interval, width, q_fit, q_predict, missing(interval) && missing(width), "plot.mcpfit")
   which_y = legacy_which_y(list(...), "plot")
   if (missing(rate))
     rate = x$family$response$has_rate
 
   get_plot(
     x,
-    q_fit = q_fit,
-    q_predict = q_predict,
+    interval = legacy$interval,
+    width = legacy$width,
     facet_by = facet_by,
     color_by = color_by,
     at = at,
@@ -482,7 +474,8 @@ plot.mcpfit = function(x,
 #' @export
 plot_dpar = function(x,
                      dpar = "epred",
-                     q_fit = FALSE,
+                     interval = "none",
+                     width = 0.95,
                      facet_by = NULL,
                      color_by = "auto",
                      lines = 25,
@@ -494,11 +487,12 @@ plot_dpar = function(x,
                      at = NULL,
                      ...) {
   rlang::check_dots_empty()
+  interval = match.arg(interval, c("none", "fitted"))
 
   get_plot(
     x,
-    q_fit = q_fit,
-    q_predict = FALSE,
+    interval = interval,
+    width = width,
     facet_by = facet_by,
     color_by = color_by,
     at = at,

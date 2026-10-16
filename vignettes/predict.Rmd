@@ -47,17 +47,17 @@ model = list(
 fit = mcp(model, data = data)
 ```
 
-This is what the data and inferred fit look like with a 95% central posterior interval for the expected response and an 80% posterior predictive interval:
+This is what the data and inferred fit look like with 80% central intervals for the expected response and for the posterior predictive:
 
 ```{r}
-plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
+plot(fit, interval = c("fitted", "predict"), width = 0.8)
 ```
 
 To review what we see here:
 
  * The black dots are the data from `data`. 
  * The gray lines are 25 posterior draws (control using `plot(fit, lines = 100)`).
- * The dashed red lines are the 2.5% and 97.5% quantiles of the fitted (expected) values.
+ * The dashed red lines are the 10% and 90% quantiles of the fitted (expected) values.
  * The green lines are the 10% and 90% quantiles of the predicted values.
  * The blue curves on the x-axis are the posterior distributions of the change point locations (better viewed using `plot_pars(fit, pars = c("cp_1", "cp_2"))`).
 
@@ -128,7 +128,7 @@ predict(fit, summary = FALSE) |>
 
 
 # Residuals
-`residuals()` is simply `data$response - fitted()`. It may be useful for model checking, but the typical needs are covered using posterior predictive checking (`pp_check(fit)`) and visual inspection of `plot(fit, q_fit = TRUE, q_predict = TRUE)`.
+`residuals()` is simply `data$response - fitted()`. It may be useful for model checking, but the typical needs are covered using posterior predictive checking (`pp_check(fit)`) and visual inspection of `plot(fit, interval = c("fitted", "predict"))`.
 
 
 # Forecasting with future change points

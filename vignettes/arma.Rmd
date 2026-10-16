@@ -176,7 +176,7 @@ summary(fit)
 # Plot fit and ar(1) parameter
 library(patchwork)
 gg_trend = plot(fit, color_by = "id")
-gg_dpar  = plot_dpar(fit, "ar1", q_fit = TRUE)
+gg_dpar  = plot_dpar(fit, "ar1", interval = "fitted")
 gg_trend / gg_dpar
 ```
 

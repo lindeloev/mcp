@@ -119,10 +119,10 @@ fit = mcp(model, demo_fit$data, sample = "both")
 
 ## Plot and summary
 
-The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add fitted interval (`q_fit`):
+The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add the 95% central interval of the fitted values (`interval = "fitted"`):
 
 ```{r demo-plot}
-plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
+plot(fit, interval = "fitted") + ggtitle("Regression with two change points")
 ```
 
 ```{r include=FALSE}

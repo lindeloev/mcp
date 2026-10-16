@@ -108,7 +108,7 @@ fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"binomial\"); plot(fit, q_fit = TRUE)'))
+  print(plot(fit, interval = \"fitted\") + ggplot2::labs(title = 'fit = mcp_example(\"binomial\"); plot(fit, interval = \"fitted\")'))
 }",
 
 
@@ -142,7 +142,7 @@ fit = mcp(model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(78)
-  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"demo\"); plot(fit, q_fit = TRUE)'))
+  print(plot(fit, interval = \"fitted\") + ggplot2::labs(title = 'fit = mcp_example(\"demo\"); plot(fit, interval = \"fitted\")'))
 }",
 
 
@@ -208,7 +208,7 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"intercepts\"); plot(fit, q_fit = TRUE)'))
+  print(plot(fit, interval = \"fitted\") + ggplot2::labs(title = 'fit = mcp_example(\"intercepts\"); plot(fit, interval = \"fitted\")'))
 }",
     missing = "# Define model
 model = list(
@@ -245,8 +245,8 @@ fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  print(plot(fit, q_fit = TRUE) + 
-      ggplot2::labs(title = 'fit = mcp_example(\"missing\"); plot(fit, q_fit = TRUE)'))
+  print(plot(fit, interval = \"fitted\") + 
+      ggplot2::labs(title = 'fit = mcp_example(\"missing\"); plot(fit, interval = \"fitted\")'))
 }",
     multiple = "# Define model
 model = list(
@@ -324,7 +324,7 @@ fit = mcp(model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  gg1 = plot(fit, q_predict = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"sigma\"); plot(fit, q_predict = TRUE)')
+  gg1 = plot(fit, interval = \"predict\") + ggplot2::labs(title = 'fit = mcp_example(\"sigma\"); plot(fit, interval = \"predict\")')
   set.seed(43)
   gg2 = plot_dpar(fit, 'sigma') + ggplot2::labs(title = 'plot_dpar(fit, \"sigma\")')
 
@@ -373,9 +373,9 @@ fit = mcp(demo_fit$model, data, sample = sample, seed = 42)
 # Illustrative plot
 if (plot) {
   set.seed(42)
-  gg1 = plot(demo_fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(demo_fit, q_fit = TRUE)')
+  gg1 = plot(demo_fit, interval = \"fitted\") + ggplot2::labs(title = 'plot(demo_fit, interval = \"fitted\")')
   set.seed(43)
-  gg2 = plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example(\"void\"); plot(fit, q_fit = TRUE)')
+  gg2 = plot(fit, interval = \"fitted\") + ggplot2::labs(title = 'fit = mcp_example(\"void\"); plot(fit, interval = \"fitted\")')
 
   # Using patchwork: library(patchwork)
   print(gg1 / gg2)

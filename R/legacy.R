@@ -169,6 +169,12 @@ legacy_width = function(width, probs, width_missing, what,
     details = "The interval columns are now `.lower` and `.upper`. For other quantiles, summarise the draws from `summary = FALSE`.",
     env = env, user_env = user_env
   )
+  legacy_probs_to_width(probs, "probs")
+}
+
+
+# Translate deprecated quantile arguments (`TRUE`, `FALSE`, or a symmetric pair) to a central interval `width`.
+legacy_probs_to_width = function(probs, old_name) {
   if (isTRUE(probs)) {
     0.95
   } else if (isFALSE(probs)) {
@@ -176,8 +182,37 @@ legacy_width = function(width, probs, width_missing, what,
   } else if (is.numeric(probs) && length(probs) == 2 && isTRUE(all.equal(sum(probs), 1))) {
     abs(diff(probs))
   } else {
-    stop("Deprecated `probs` can only be translated to a central interval, e.g., `probs = c(0.025, 0.975)`. Use `width` instead, or summarise the draws from `summary = FALSE` for other quantiles.", call. = FALSE)
+    stop("Deprecated `", old_name, "` can only be translated to a central interval, e.g., `", old_name, " = c(0.025, 0.975)`. Use `width` instead, or summarise the draws from `summary = FALSE` for other quantiles.", call. = FALSE)
   }
+}
+
+
+# Resolve deprecated `q_fit` and `q_predict` (from v0.3.4) in plot() to `interval` and `width`.
+# Returns `list(interval, width)`.
+legacy_plot_interval = function(interval, width, q_fit, q_predict, new_missing, what,
+                                env = rlang::caller_env(), user_env = rlang::caller_env(2)) {
+  old = list(fitted = q_fit, predict = q_predict)
+  old = Filter(lifecycle::is_present, old)
+  if (length(old) == 0)
+    return(list(interval = interval, width = width))
+  if (!new_missing)
+    stop("Use only `interval` and `width`, not deprecated `q_fit` or `q_predict`.", call. = FALSE)
+
+  old_names = c(fitted = "q_fit", predict = "q_predict")[names(old)]
+  for (old_name in old_names)
+    lifecycle::deprecate_warn(
+      "0.4.0", paste0(what, "(", old_name, ")"), I(paste0("`", what, "(interval, width)`")),
+      details = "For example, `q_fit = TRUE, q_predict = c(0.1, 0.9)` is now `interval = c(\"fitted\", \"predict\"), width = 0.8` (both intervals share `width`).",
+      env = env, user_env = user_env
+    )
+
+  widths = mapply(legacy_probs_to_width, old, old_names)
+  widths = widths[widths != FALSE]
+  if (length(unique(widths)) > 1)
+    stop("`q_fit` and `q_predict` imply different interval widths, but `width` applies to both intervals. Use one `width`, or add the other interval as a custom ggplot2 layer.", call. = FALSE)
+  if (length(widths) == 0)
+    return(list(interval = "none", width = width))
+  list(interval = names(widths), width = unname(widths[1]))
 }
 
 

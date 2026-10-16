@@ -87,14 +87,14 @@ test_that("geom_cp_density draws a vertical spike for fixed change points", {
 })
 
 
-test_that("plot() supports exact q_predict, deprecates nsamples, and checks dots", {
-  # Exact q_predict quantiles
-  p = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0)
+test_that("plot() supports exact predictive intervals, deprecates nsamples and q_fit/q_predict, and checks dots", {
+  # Exact predictive interval
+  p = plot(demo_fit, interval = c("fitted", "predict"), lines = 0)
   expect_s3_class(p, "ggplot")
 
   # Without lines and using all draws, plot is completely deterministic across consecutive calls
-  p1 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0, ndraws = NULL)
-  p2 = plot(demo_fit, q_fit = TRUE, q_predict = TRUE, lines = 0, ndraws = NULL)
+  p1 = plot(demo_fit, interval = c("fitted", "predict"), lines = 0, ndraws = NULL)
+  p2 = plot(demo_fit, interval = c("fitted", "predict"), lines = 0, ndraws = NULL)
   expect_equal(p1$layers[[2]]$data, p2$layers[[2]]$data)
   expect_equal(p1$layers[[3]]$data, p2$layers[[3]]$data)
 
@@ -104,6 +104,15 @@ test_that("plot() supports exact q_predict, deprecates nsamples, and checks dots
     "deprecated"
   )
   expect_equal(length(unique(p_nsamples$layers[[2]]$data$.draw)), 25)
+
+  # Deprecated q_fit and q_predict (v0.3.4) translate to central intervals
+  lifecycle::expect_deprecated(plot(demo_fit, q_fit = TRUE, lines = 0))
+  p_q = suppressWarnings(plot(demo_fit, q_fit = TRUE, q_predict = c(0.025, 0.975), lines = 0, ndraws = NULL))
+  expect_equal(p_q$layers[[2]]$data, p1$layers[[2]]$data)
+  expect_equal(p_q$layers[[3]]$data, p1$layers[[3]]$data)
+  expect_error(suppressWarnings(plot(demo_fit, q_fit = 0.5)), "central interval")
+  expect_error(suppressWarnings(plot(demo_fit, q_fit = TRUE, q_predict = c(0.1, 0.9))), "different interval widths")
+  expect_error(plot(demo_fit, interval = "fitted", q_fit = TRUE), "Use only")
 
   # scale = "linear" in plot.mcpfit
   p_lin = plot(demo_fit, scale = "linear")
@@ -134,7 +143,7 @@ test_that("GARMA plotting works with categorical predictors", {
   )
 
   expect_s3_class(plot(fit), "ggplot")
-  expect_s3_class(plot(fit, q_fit = TRUE, q_predict = TRUE), "ggplot")
+  expect_s3_class(plot(fit, interval = c("fitted", "predict")), "ggplot")
   expect_s3_class(plot_dpar(fit, "ar1"), "ggplot")
 })
 

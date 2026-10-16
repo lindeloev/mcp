@@ -300,7 +300,7 @@ test_that("helpful deprecation detections work for old code idioms", {
     fixed = TRUE
   )
   expect_warning(
-    p <- plot(demo_fit, which_y = "sigma", q_fit = TRUE),
+    p <- plot(demo_fit, which_y = "sigma", interval = "fitted"),
     "which_y"
   )
   expect_equal(p$labels$y, "sigma")
