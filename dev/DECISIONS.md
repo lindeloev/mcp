@@ -63,3 +63,6 @@ This behavior breaks with brms and some others. But I think it is the correct on
 
 # 2026-10-12: Formula environments will not be included
 Base R allows using variables from the calling environment in formulas. mcp requires formula terms to be present in data. For now, this behavior will be kept. Including the environment in formulas leads to strange situations, e.g., shipping development environments to CRAN; shipping potential sensitive data, etc.
+
+# 2026-10-16: fit$simulate(fit, ...) is preferred over simulate(fit)
+Even though it looks odd to write `fit` twice, `fit$simulate()` gives code completion for model parameters. I will likely not support `simulate(fit, ...)` for this reason.
