@@ -110,6 +110,7 @@ Speaking of alternative visualizations, you can also plot this on the logit scal
 plot_dpar(fit, scale = "linear")
 ```
 
+Data points with zero or all successes (`y = 0` or `y = N`) are at $\pm\infty$ on the logit scale, so they are not shown, as the message says.
 
 These plots work with [group-level effects](../articles/group_effects.html) as well.
 

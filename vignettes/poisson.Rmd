@@ -55,6 +55,7 @@ Let us see the two intercepts (lambda in log-units) and the change point (in yea
 
 ```{r, R.options = list(width = 9999)}
 result = summary(fit)
+result
 ```
 
 We can see that the model ran well with good convergence and large effective sample sizes. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$parameter == "cp_1"])` and `r round(result$upper[result$parameter == "cp_1"])` (95% interval).
@@ -146,13 +147,13 @@ fit_flat_loo = loo(fit_flat)
 fit_decay_loo = loo(fit_decay)
 ```
 
-```{r, results='hold'}
+```{r}
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
 The flat model is clearly worse, with `elpd_diff / se_diff` around 4, so the disaster rate did decrease. The change point model is preferred over the decay model, but the difference is smaller than its standard error. The `diag_elpd` column also flags a few observations with high Pareto $k$ values in the change point model, so its PSIS-LOO estimate is less reliable. Taken together, the data cannot clearly distinguish an abrupt change from a gradual decay. Another approach is to look at the model weights:
 
-```{r, results='hold'}
+```{r}
 loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
 loo::loo_model_weights(loo_list, method="pseudobma")
 ```
