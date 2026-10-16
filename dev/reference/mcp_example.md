@@ -99,8 +99,8 @@ print(fit$example_code) # See how the data was simulated
 #> )
 #> empty = mcp(model, data, sample = FALSE, par_x = 'x')
 #> data$y = empty$simulate(empty, data,
-#>   cp_1 = 69.5,
-#>   cp_2 = 99.5,
+#>   cp_1 = 70,
+#>   cp_2 = 100,
 #> 
 #>   Intercept_1 = 10,
 #>   z_1 = 0.2,
@@ -157,8 +157,8 @@ print(empty$example_code)
 #> )
 #> empty = mcp(model, data, family = binomial(), sample = FALSE)
 #> data$y = empty$simulate(empty, data,
-#>   cp_1 = 29.5,
-#>   cp_2 = 69.5,
+#>   cp_1 = 30,
+#>   cp_2 = 70,
 #>   Intercept_1 = 1.5,
 #>   Intercept_3 = -1,
 #>   x_2 = -0.15,
@@ -171,7 +171,7 @@ print(empty$example_code)
 #> # Illustrative plot
 #> if (plot) {
 #>   set.seed(42)
-#>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, q_fit = TRUE)'))
+#>   print(plot(fit, interval = "fitted") + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, interval = "fitted")'))
 #> }
 
 # Now sample this model

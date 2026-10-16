@@ -134,11 +134,12 @@ fit = mcp(model, demo_fit$data, sample = "both")
 
 The default plot includes data, fitted lines drawn randomly from the
 posterior, and change point(s) posterior density for each chain. Here we
-also add fitted interval (`q_fit`):
+also add the 95% central interval of the fitted values
+(`interval = "fitted"`):
 
 ``` r
 
-plot(fit, q_fit = TRUE) + ggtitle("Regression with two change points")
+plot(fit, interval = "fitted") + ggtitle("Regression with two change points")
 ```
 
 ![](https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot-1.png)
@@ -376,6 +377,21 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 
 - Forecasting with prior knowledge about future change points.
 
+[Plotting](https://lindeloev.github.io/mcp/articles/plotting.html):
+
+- `plot(fit, interval = c("fitted", "predict"))` shows the fit with
+  central intervals. Use `color_by`, `facet_by`, and `at` for models
+  with several predictors.
+
+- [`plot_dpar()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+  [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+  and
+  [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
+  plot distributional parameters, parameters, and posterior predictive
+  checks. All return `ggplot2` objects, and
+  [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
+  helps you make your own plots.
+
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using
@@ -422,7 +438,7 @@ debugging](https://lindeloev.github.io/mcp/articles/tips.html)
   iterations, `mcp(..., warmup = 500)`.
 
 - Help convergence along using
-  `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`.
+  `mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))`.
 
 - Most errors stem from impossible or circularly defined priors.
 

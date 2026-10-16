@@ -39,6 +39,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -106,9 +107,11 @@ be supplied as explicit scalar design values; e.g., <code>at = list(N = 20)</cod
 
 
 <dt id="arg-arma">arma<a class="anchor" aria-label="anchor" href="#arg-arma"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, preserve the observed response history for
-conditional AR/MA evaluation. Defaults to <code>TRUE</code> when the fit includes
-<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code> terms. Set to <code>FALSE</code> to interpolate unconditional trends.</p></dd>
+<dd><p>How AR/MA terms will be evaluated (see <code><a href="execute-mcp-model.html">predict.mcpfit()</a></code>). Defaults to <code>TRUE</code>
+when the fit includes <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code> terms.</p><ul><li><p><code>TRUE</code>: Preserve the observed rows and response history for conditional AR/MA evaluation.</p></li>
+<li><p><code>FALSE</code>: Interpolate unconditional trends.</p></li>
+<li><p><code>"replicate"</code>: Preserve the observed rows, because AR/MA terms depend on the previous rows.</p></li>
+</ul></dd>
 
 
 <dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
@@ -164,16 +167,14 @@ therefore need not be supplied here.</p>
 <span class="r-in"><span><span class="va">prediction</span> <span class="op">=</span> <span class="fu"><a href="execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">demo_fit</span>, <span class="va">newdata</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">prediction</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 13</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 0.619         1      1          1     1  31.9  71.0        8.95  0.584</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 0.619         1      1          2     2  31.7  71.4        9.87  0.566</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 0.619         1      1          3     3  32.1  70.5       11.4   0.526</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 0.619         1      1          4     4  33.3  72.8       10.1   0.561</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 0.619         1      1          5     5  31.7  69.9        9.97  0.466</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 0.619         1      1          6     6  33.3  69.9       10.0   0.536</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: Intercept_3 &lt;dbl&gt;, time_3 &lt;dbl&gt;, sigma_1 &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   .prediction &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    time  .row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .prediction</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 0.619     1      1          1     1  31.9  71.0        8.95  0.584        13.9 -<span style="color: #BB0000;">0.155</span>     3.48       11.0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 0.619     1      1          2     2  31.7  71.4        9.87  0.566        15.8 -<span style="color: #BB0000;">0.335</span>     3.47        6.17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 0.619     1      1          3     3  32.1  70.5       11.4   0.526        12.6 -<span style="color: #BB0000;">0.095</span><span style="color: #BB0000; text-decoration: underline;">6</span>    4.02       15.4 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 0.619     1      1          4     4  33.3  72.8       10.1   0.561        13.7 -<span style="color: #BB0000;">0.174</span>     3.98        1.88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 0.619     1      1          5     5  31.7  69.9        9.97  0.466        13.8 -<span style="color: #BB0000;">0.158</span>     4.65       18.1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 0.619     1      1          6     6  33.3  69.9       10.0   0.536        12.5 -<span style="color: #BB0000;">0.140</span>     3.98        4.23</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom plot</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></span>

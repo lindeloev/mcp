@@ -28,6 +28,7 @@
   comparison](https://lindeloev.github.io/mcp/dev/articles/comparison.md):
 - [Fits and
   predictions](https://lindeloev.github.io/mcp/dev/articles/predict.md):
+- [Plotting](https://lindeloev.github.io/mcp/dev/articles/plotting.md):
 - [Missing
   data](https://lindeloev.github.io/mcp/dev/articles/missing.md):
 

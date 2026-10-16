@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Default priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/default_priors.Rmd" class="external-link"><code>vignettes/default_priors.Rmd</code></a></small>
       <div class="d-none name"><code>default_priors.Rmd</code></div>
@@ -171,10 +172,10 @@ not centered (see <a href="#deviations">deviations</a>).
 <code>Intercept_1</code> is still reported at <span class="math inline">x = 0</span>, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>, so
 <code>fit$prior</code> and <code><a href="../reference/prior_summary.html">prior_summary()</a></code> show its prior
 given the slope, e.g.,
-<code>normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))</code>.
-This matters when <span class="math inline">x</span> is far from zero,
-e.g., calendar years. Likewise, factor levels and contrasts with their
-own x-terms apply at <span class="math inline">\min(x)</span>, e.g.,
+<code>dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))</code>. This matters
+when <span class="math inline">x</span> is far from zero, e.g., calendar
+years. Likewise, factor levels and contrasts with their own x-terms
+apply at <span class="math inline">\min(x)</span>, e.g.,
 <code>stateB_1</code> in <code>y ~ 1 + state * x</code> is the
 difference between states at <span class="math inline">\min(x)</span>.
 Later intercepts are already at their change point. User-specified
@@ -225,10 +226,10 @@ replaced by 0.1, as <code>brms</code> does for zeros (and <span class="math inli
 <td>
 <strong>Mean (<span class="math inline">\mu</span>): Identity
 link</strong> (<code>gaussian</code>, <code>poisson</code>*)</td>
-<td><code>normal(mean(y), 2.5 * sd(y))</code></td>
-<td><code>normal(0, 2.5 * sd(y) / sd(column))</code></td>
+<td><code>dnorm(mean(y), 2.5 * sd(y))</code></td>
+<td><code>dnorm(0, 2.5 * sd(y) / sd(column))</code></td>
 <td>
-<code>student_t(3, 0, S_y) T(0, )</code>†</td>
+<code>dt(0, S_y, 3) T(0, )</code>†</td>
 <td>
 <code>rstanarm</code> (group SD: <code>brms</code>)</td>
 </tr>
@@ -237,10 +238,10 @@ link</strong> (<code>gaussian</code>, <code>poisson</code>*)</td>
 <strong>Mean (<span class="math inline">\mu</span>): Log
 link</strong> (<code>poisson</code>, <code>negbinomial</code>,
 <code>gaussian</code>)</td>
-<td><code>normal(median(y_rate), S_rate)</code></td>
-<td><code>normal(0, 2.5 / sd(column))</code></td>
+<td><code>dnorm(median(y_rate), S_rate)</code></td>
+<td><code>dnorm(0, 2.5 / sd(column))</code></td>
 <td>
-<code>normal(0, 2.5) T(0, )</code>†</td>
+<code>dnorm(0, 2.5) T(0, )</code>†</td>
 <td>
 <code>rstanarm</code> coefficients</td>
 </tr>
@@ -248,10 +249,10 @@ link</strong> (<code>poisson</code>, <code>negbinomial</code>,
 <td>
 <strong>Mean (<span class="math inline">\mu</span>): Logit
 link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
-<td><code>normal(0, 1.5)</code></td>
-<td><code>normal(0, 1.5 / sd(column))</code></td>
+<td><code>dnorm(0, 1.5)</code></td>
+<td><code>dnorm(0, 1.5 / sd(column))</code></td>
 <td>
-<code>student_t(3, 0, 1.5) T(0, )</code>†</td>
+<code>dt(0, 1.5, 3) T(0, )</code>†</td>
 <td>
 <code>rstanarm</code> with <code>mcp</code>-specific scales</td>
 </tr>
@@ -259,10 +260,10 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <td>
 <strong>Mean (<span class="math inline">\mu</span>): Probit
 link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
-<td><code>normal(0, 1)</code></td>
-<td><code>normal(0, 1 / sd(column))</code></td>
+<td><code>dnorm(0, 1)</code></td>
+<td><code>dnorm(0, 1 / sd(column))</code></td>
 <td>
-<code>student_t(3, 0, 1) T(0, )</code>†</td>
+<code>dt(0, 1, 3) T(0, )</code>†</td>
 <td>
 <code>rstanarm</code> with <code>mcp</code>-specific scales</td>
 </tr>
@@ -270,12 +271,12 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <td>
 <strong>Mean (<span class="math inline">\mu</span>): Identity
 link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
-<td><code>uniform(0, 1)</code></td>
-<td>contrasts: <code>uniform(-1, 1)</code><br>slopes:
-<code>normal(0, 1 / sd(column))</code>
+<td><code>dunif(0, 1)</code></td>
+<td>contrasts: <code>dunif(-1, 1)</code><br>slopes:
+<code>dnorm(0, 1 / sd(column))</code>
 </td>
 <td>
-<code>student_t(3, 0, 1) T(0, )</code>†</td>
+<code>dt(0, 1, 3) T(0, )</code>†</td>
 <td></td>
 </tr>
 <tr class="even">
@@ -284,8 +285,8 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <code>shape</code>)</td>
 <td>
 <code>sigma_1</code>:
-<code>student_t(3, 0, S_y) T(0, )</code><br><code>shape_1</code>:
-<code>inv_gamma(0.4, 0.3)</code>
+<code>dt(0, S_y, 3) T(0, )</code><br><code>shape_1</code>:
+<code>dinvgamma(0.4, 0.3)</code>
 </td>
 <td>—</td>
 <td>—</td>
@@ -294,33 +295,33 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <tr class="odd">
 <td>
 <strong>Modeled <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code></strong> (log link)</td>
-<td><code>student_t(3, 0, 2.5)</code></td>
-<td>contrasts: <code>student_t(3, 0, 2.5)</code><br>slopes:
-<code>student_t(3, 0, 2.5 / sd(column))</code>
+<td><code>dt(0, 2.5, 3)</code></td>
+<td>contrasts: <code>dt(0, 2.5, 3)</code><br>slopes:
+<code>dt(0, 2.5 / sd(column), 3)</code>
 </td>
 <td>
-<code>student_t(3, 0, 2.5) T(0, )</code>†</td>
+<code>dt(0, 2.5, 3) T(0, )</code>†</td>
 <td>
 <code>brms</code> intercept</td>
 </tr>
 <tr class="even">
 <td>
 <strong>Modeled <code>shape()</code></strong> (log link)</td>
-<td><code>normal(0, 2.5)</code></td>
-<td>contrasts: <code>normal(0, 2.5)</code><br>slopes:
-<code>normal(0, 2.5 / sd(column))</code>
+<td><code>dnorm(0, 2.5)</code></td>
+<td>contrasts: <code>dnorm(0, 2.5)</code><br>slopes:
+<code>dnorm(0, 2.5 / sd(column))</code>
 </td>
 <td>
-<code>normal(0, 2.5) T(0, )</code>**</td>
+<code>dnorm(0, 2.5) T(0, )</code>**</td>
 <td></td>
 </tr>
 <tr class="odd">
 <td>
 <strong>Autocorrelation</strong> (<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>,
 <code>ma()</code>)</td>
-<td><code>normal(0, 0.5) T(-1, 1)</code></td>
-<td>contrasts: <code>normal(0, 0.25)</code><br>slopes:
-<code>normal(0, 0.25 / sd(column))</code>
+<td><code>dnorm(0, 0.5) T(-1, 1)</code></td>
+<td>contrasts: <code>dnorm(0, 0.25)</code><br>slopes:
+<code>dnorm(0, 0.25 / sd(column))</code>
 </td>
 <td>—</td>
 <td></td>
@@ -329,9 +330,9 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <td>
 <strong>Change points</strong> (<code>cp_i</code>)</td>
 <td>
-<code>uniform(min(x), max(x))</code>***</td>
+<code>dunif(min(x), max(x))</code>***</td>
 <td>—</td>
-<td><code>normal(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )</code></td>
+<td><code>dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )</code></td>
 <td></td>
 </tr>
 </tbody>
@@ -484,8 +485,8 @@ approximation.</p>
 <code><a href="../reference/bernoulli.html">bernoulli()</a></code>):</strong> <code>mcp</code> uses
 <code>rstanarm</code>’s autoscaling, but with scales that make the
 intercept prior (approximately) uniform on the probability scale. For
-probit, <code>normal(0, 1)</code> is exactly uniform on the probability
-scale. For logit, <code>normal(0, 1.5)</code> is approximately so (95%
+probit, <code>dnorm(0, 1)</code> is exactly uniform on the probability
+scale. For logit, <code>dnorm(0, 1.5)</code> is approximately so (95%
 interval from about 0.05 to 0.95; <a href="https://xcelab.net/rm/" class="external-link">McElreath, 2020</a>, section 11.1). Larger
 scales, such as <code>rstanarm</code>’s 2.5, place excess prior mass
 near 0 and 1. This is particularly undesirable in change-point models,
@@ -566,9 +567,9 @@ uniform intercept (<code>uniform(0, 1)</code>), uniform contrasts on the
 possible differences (<code>uniform(-1, 1)</code>), and slopes of
 <code>normal(0, 1 / sd(column))</code>.</p></li>
 <li><p><strong>Autoregressive and moving-average terms:</strong>
-<code>mcp</code> uses zero-centered <code>normal(0, 0.5) T(-1, 1)</code>
+<code>mcp</code> uses zero-centered <code>dnorm(0, 0.5) T(-1, 1)</code>
 priors to favor stationary and invertible dynamics, with modest changes
-across segments and predictors (<code>normal(0, 0.25)</code>).</p></li>
+across segments and predictors (<code>dnorm(0, 0.25)</code>).</p></li>
 <li><p><strong>Change points:</strong> <code>mcp</code>-specific, as
 described <a href="#change-points">above</a>. The SDs of group-level
 change points have an <code>mcp</code>-specific prior, described <a href="#group-level-change-points">above</a>.</p></li>

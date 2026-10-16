@@ -120,13 +120,13 @@ prior = list(
 fit = mcp(model, data = mcp_example_data("demo"), prior = prior, sample = "none")
 prior_summary(fit)
 #> # A tibble: 7 × 5
-#>   parameter   segment dpar  prior                                        bounds 
-#>   <chr>         <int> <chr> <chr>                                        <chr>  
-#> 1 cp_1              2 NA    uniform(min = 20, max = 50)                  [20, 5…
-#> 2 cp_2              3 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
-#> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
-#> 4 time_2            2 mu    normal(mean = 0, sd = 2)                     [0, In…
-#> 5 Intercept_3       3 mu    15                                           none   
-#> 6 time_3            3 mu    time_2                                       none   
-#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…
+#>   parameter   segment dpar  prior                  bounds                    
+#>   <chr>         <int> <chr> <chr>                  <chr>                     
+#> 1 cp_1              2 NA    dunif(20, 50)          [20, 50], ordered         
+#> 2 cp_2              3 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered
+#> 3 Intercept_1       1 mu    dnorm(13.825, 17.383)  none                      
+#> 4 time_2            2 mu    dnorm(0, 2) T(0, )     [0, Inf]                  
+#> 5 Intercept_3       3 mu    15                     none                      
+#> 6 time_3            3 mu    time_2                 none                      
+#> 7 sigma_1           1 sigma dt(0, 5.7, 3) T(0, )   [0, Inf]                  
 ```

@@ -16,7 +16,9 @@ This article in brief:
 - How to simulate group-level change-point deviations
 - Get posteriors using `ranef(fit)`
 - Plot using `plot(fit, facet_by="my_group")` and
-  `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
+  `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`
+  ([more on
+  plotting](https://lindeloev.github.io/mcp/dev/articles/plotting.md)).
 - How group-specific change points are bounded and ordered.
 - The article on modeling standard deviation via
   [`sigma()`](https://rdrr.io/r/stats/sigma.html) contains [another
@@ -344,14 +346,14 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                                        bounds                         
-    ##   <chr>         <int> <chr> <chr>                                        <chr>                          
-    ## 1 cp_1              2 NA    uniform(min = 0.02389, max = 98.889)         [0.02389, 98.889], ordered     
-    ## 2 cp_1_id_sd        2 NA    normal(mean = 0, sd = 24.716)                [0, Inf]                       
-    ## 3 cp_1_id           2 NA    normal(mean = 0, sd = cp_1_id_sd)            [0.02389 - cp_1, 98.889 - cp_1]
-    ## 4 Intercept_1       1 mu    normal(mean = 25.186, sd = 18.621)           none                           
-    ## 5 x_2               2 mu    normal(mean = 0, sd = 0.64588)               none                           
-    ## 6 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0, Inf]
+    ##   parameter   segment dpar  prior                                                 bounds                         
+    ##   <chr>         <int> <chr> <chr>                                                 <chr>                          
+    ## 1 cp_1              2 NA    dunif(0.02389, 98.889)                                [0.02389, 98.889], ordered     
+    ## 2 cp_1_id_sd        2 NA    dnorm(0, 24.716) T(0, )                               [0, Inf]                       
+    ## 3 cp_1_id           2 NA    dnorm(0, cp_1_id_sd) T(0.02389 - cp_1, 98.889 - cp_1) [0.02389 - cp_1, 98.889 - cp_1]
+    ## 4 Intercept_1       1 mu    dnorm(25.186, 18.621)                                 none                           
+    ## 5 x_2               2 mu    dnorm(0, 0.64588)                                     none                           
+    ## 6 sigma_1           1 sigma dt(0, 5.3, 3) T(0, )                                  [0, Inf]
 
 `cp_1_id_sd` is the SD of the normal distribution, before truncation,
 governing the `cp_1_id` deviations. Unlike predictor group-level
@@ -380,7 +382,7 @@ fit$jags_code
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation
     ##   for (id_ in 1:n_unique_id) {
-    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Ordered group-level change-point deviations from the population location
+    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighbouring change points
     ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point
     ##   }
     ##   cp_2 = max(x)
@@ -392,7 +394,7 @@ fit$jags_code
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
+    ##     # x measured from each segment's change point
     ##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id_index_[i_]]))
     ##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id_index_[i_]])
     ##     

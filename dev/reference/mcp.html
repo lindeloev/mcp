@@ -43,6 +43,7 @@ between segments. See details or the mcp website."><meta property="og:image" con
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -119,6 +120,7 @@ with syntactic column names. The response variable can contain missing values, w
 List names are parameter names (<code>cp_1</code>, <code>Intercept_1</code>, <code>x_2</code>,
 <code>sigma_1</code>, etc.) and values are a distribution string (e.g., <code>"dnorm(0, 1) T(0, )"</code>),
 a fixed value (e.g., <code>-2.1</code>), or the name of another parameter to share its value.
+<em>OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so <code>dnorm(0, 0.001)</code> is a very narrow prior.</em>
 Weakly informative defaults are used where priors are not specified;
 see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See <a href="mcp-priors.html">mcp-priors</a> for the full syntax.
 <a href="https://lindeloev.github.io/mcp/articles/priors.html">Read more</a>.</p></dd>
@@ -169,19 +171,21 @@ use diagnostics to assess convergence.</p></dd>
 <dd><p>A named list of initial values for the parameters, e.g., <code>list(Intercept_1 = 10)</code>,
 or a list of such lists with one per chain. This can be useful if a model fails to converge
 (<a href="https://lindeloev.github.io/mcp/articles/tips.html">read more</a>).
-Names must be stochastic nodes in <code>fit$jags_code</code> (lines with <code>~</code>). Fixed parameters
-and parameters that <code>mcp</code> samples via reparameterization (e.g., <code>Intercept_3</code> is sampled as
-<code>Intercept_3_end_</code>) cannot be initialized directly. See <code>mcp_reparam</code> in <a href="mcp-package.html">mcp-package</a>.
+Names must be parameters in <code><a href="mcp_pars.html">mcp_pars()</a></code>. Fixed parameters and parameters that are
+reparameterized for faster sampling cannot be initialized (see <code>mcp_reparam</code> in <a href="mcp-package.html">mcp-package</a>).
 Initial values for change points must be ordered.
 Defaults to <code>NULL</code> where all chains start at equispaced change points and the prior medians.
 User-provided <code>inits</code> take precedence.</p></dd>
 
 
 <dt id="arg-jags-code">jags_code<a class="anchor" aria-label="anchor" href="#arg-jags-code"></a></dt>
-<dd><p>String. Pass JAGS code to <code>mcp</code> to use directly. This is useful if
-you want to tweak the code in <code>fit$jags_code</code> and run it within the <code>mcp</code>
-framework. R-side simulation and prediction methods continue to use the
-mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+<dd><p>String. JAGS code to sample instead of the code that <code>mcp</code> writes.
+This is an expert option for edits to <code>fit$jags_code</code> that keep the parameters in
+<code><a href="mcp_pars.html">mcp_pars()</a></code>, the data, and the likelihood.
+Only the parameters in <code><a href="mcp_pars.html">mcp_pars()</a></code> are monitored. R-side simulation and prediction
+methods continue to use the <code>mcp</code> formulas (with warning), so <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>,
+<code><a href="plot.mcpfit.html">plot()</a></code>, <code><a href="loo.mcpfit.html">loo()</a></code>, etc. are wrong if the custom code changes the formula or likelihood.
+The written JAGS code is not a stable interface and may change between <code>mcp</code> versions.
 <a href="https://lindeloev.github.io/mcp/articles/implementation.html">Read more</a> about how <code>mcp</code> writes JAGS code.</p></dd>
 
 
@@ -377,15 +381,15 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-in"><span><span class="co"># Show all priors. Default priors are added where you don't provide any</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 7 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                                        bounds </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 0.61863, max = 99.741)         [0.618…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    uniform(min = 0.61863, max = 99.741)         [0.618…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> time_3            3 mu    normal(mean = 0, sd = 0.62124)               none   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   segment dpar  prior                  bounds                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dunif(0.61863, 99.741) [0.61863, 99.741], ordered</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    dunif(0.61863, 99.741) [0.61863, 99.741], ordered</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    dnorm(13.825, 17.383)  none                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> time_2            2 mu    dnorm(0, 0.62124)      none                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    dnorm(13.825, 17.383)  none                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> time_3            3 mu    dnorm(0, 0.62124)      none                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">7</span> sigma_1           1 sigma dt(0, 5.7, 3) T(0, )   [0, Inf]                  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Set priors and re-run</span></span></span>
 <span class="r-in"><span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
@@ -425,7 +429,7 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   # Model and likelihood</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   for (i_ in 1:length(time)) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     # par_x local to each segment</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     # time measured from each segment's change point</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     x_local_1_[i_] = min(time[i_], cp_1)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     x_local_2_[i_] = min(time[i_], cp_2) - cp_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     x_local_3_[i_] = min(time[i_], cp_3) - cp_2</span>

@@ -47,6 +47,7 @@ mcp exports these generics, so they work without {rstantools}. If {rstantools} o
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -108,7 +109,7 @@ mcp exports these generics, so they work without <code>{rstantools}</code>. If <
 <span>  re_formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  conditional <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -150,7 +151,7 @@ and <code><a href="execute-mcp-model.html">predict()</a></code> condition on the
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
 <code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
 fitted data, using retained posterior imputations as histories. Predictions
-are fresh response draws, including at missing rows. With <code>conditional = FALSE</code>,
+are fresh response draws, including at missing rows. With <code>arma = "replicate"</code>,
 <code><a href="execute-mcp-model.html">predict()</a></code> and <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate
 fresh response series recursively, so their <code>newdata</code> need only contain
 predictors and required response auxiliaries. <code><a href="execute-mcp-model.html">log_lik()</a></code>
@@ -183,18 +184,24 @@ effects and <code>NA</code> excludes them.</p></dd>
 the observed or expected success proportion (<code>rate = TRUE</code>). Predictions and
 count-scale fitted values require a trials column in <code>newdata</code>.
 Distributional parameters such as <code>dpar = "mu"</code> evaluate the parameter itself (e.g., success probability)
-and are unaffected by <code>rate</code>.</p></dd>
+and are unaffected by <code>rate</code>. Other families do not support <code>rate = TRUE</code>. For rates per unit of exposure in models with
+<code>offset(log(exposure))</code>, set <code>exposure = 1</code> in <code>newdata</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Must be empty. Reserved for future use.</p></dd>
 
 
-<dt id="arg-conditional">conditional<a class="anchor" aria-label="anchor" href="#arg-conditional"></a></dt>
-<dd><p>Logical. For AR/MA models, condition on observed response
-histories (<code>TRUE</code>, default) or generate fresh histories recursively (<code>FALSE</code>).
-Applies equally to prior and posterior draws. Predictive checks
-with <code><a href="pp_check.html">pp_check()</a></code> generate fresh histories.</p></dd>
+<dt id="arg-arma">arma<a class="anchor" aria-label="anchor" href="#arg-arma"></a></dt>
+<dd><p>How to include AR and MA effects.</p><ul><li><p><code>TRUE</code>: Condition on the observed response history, i.e., one-step-ahead evaluation of
+the GARMA residual recurrence. Requires the response variable in <code>newdata</code>.</p></li>
+<li><p><code>FALSE</code>: Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.</p></li>
+<li><p><code>"replicate"</code>: Generate fresh response series recursively instead of conditioning on
+the observed responses. Only for predictions: <code><a href="execute-mcp-model.html">predict()</a></code>, <code>posterior_predict()</code>, and
+<code><a href="pp_check.html">pp_check()</a></code> (where it is the default). Applies equally to prior and posterior draws.</p></li>
+</ul><p>For posterior evaluation of the original data, retained JAGS imputations
+supply missing GARMA histories. In models with group-level effects, this
+currently requires all such effects (<code>group_effects = TRUE</code>).</p></dd>
 
 
 <dt id="arg-transform">transform<a class="anchor" aria-label="anchor" href="#arg-transform"></a></dt>
@@ -211,13 +218,13 @@ counts.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>For GARMA models, <code>posterior_predict()</code> conditions on the observed
-response history, just like <code><a href="execute-mcp-model.html">predict()</a></code>. Use <code>conditional = FALSE</code> in either
+response history, just like <code><a href="execute-mcp-model.html">predict()</a></code>. Use <code>arma = "replicate"</code> in either
 method to generate fresh response histories recursively. Missing responses
 in the original data are filled with retained imputations only to supply
-histories. Conditional <code>posterior_predict()</code> draws from the response
+histories. With <code>arma = TRUE</code>, <code>posterior_predict()</code> draws from the response
 distributions whose means <code>posterior_epred()</code> returns, including at missing
 rows. These methods require posterior draws. For prior prediction, use
-<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>; <code>conditional</code> selects the same behavior.</p>
+<code><a href="execute-mcp-model.html">predict()</a></code> with <code>prior = TRUE</code>; <code>arma</code> selects the same behavior.</p>
 <p>For binomial models, <code>posterior_epred()</code> and <code>posterior_predict()</code> (and
 corresponding <code>{tidybayes}</code> workflows such as <code>add_epred_draws()</code>) follow
 <code>{brms}</code> and <code>{rstantools}</code> conventions by returning values on the outcome

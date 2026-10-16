@@ -43,6 +43,7 @@ prior predictive checks for an example."><meta property="og:image" content="http
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -86,7 +87,7 @@ around the <code>bayesplot::ppc_*()</code> methods. See
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  group_effects <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  arma <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  arma <span class="op">=</span> <span class="st">"replicate"</span>,</span>
 <span>  ndraws <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  varying <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -121,7 +122,7 @@ and <code><a href="execute-mcp-model.html">predict()</a></code> condition on the
 so <code>newdata</code> must include the response. For <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>, and
 <code><a href="execute-mcp-model.html">residuals()</a></code>, missing response histories are supported only in the original
 fitted data, using retained posterior imputations as histories. Predictions
-are fresh response draws, including at missing rows. With <code>conditional = FALSE</code>,
+are fresh response draws, including at missing rows. With <code>arma = "replicate"</code>,
 <code><a href="execute-mcp-model.html">predict()</a></code> and <code><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict()</a></code> generate
 fresh response series recursively, so their <code>newdata</code> need only contain
 predictors and required response auxiliaries. <code><a href="execute-mcp-model.html">log_lik()</a></code>
@@ -149,12 +150,15 @@ Can be combined, e.g., <code>c("cp", "sigma_*")</code>.</p></li>
 
 
 <dt id="arg-arma">arma<a class="anchor" aria-label="anchor" href="#arg-arma"></a></dt>
-<dd><p>Whether to include AR and MA effects.</p><ul><li><p><code>TRUE</code> Compute the GARMA residual recurrence. Requires the response variable in <code>newdata</code>.</p></li>
-<li><p><code>FALSE</code> Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.
-For posterior evaluation of the original data, retained JAGS imputations
+<dd><p>How to include AR and MA effects.</p><ul><li><p><code>TRUE</code>: Condition on the observed response history, i.e., one-step-ahead evaluation of
+the GARMA residual recurrence. Requires the response variable in <code>newdata</code>.</p></li>
+<li><p><code>FALSE</code>: Disregard AR and MA effects. For <code>family = gaussian()</code>, <code><a href="execute-mcp-model.html">predict()</a></code> uses only <code>sigma</code> for residuals.</p></li>
+<li><p><code>"replicate"</code>: Generate fresh response series recursively instead of conditioning on
+the observed responses. Only for predictions: <code><a href="execute-mcp-model.html">predict()</a></code>, <code><a href="posterior_epred.mcpfit.html">posterior_predict()</a></code>, and
+<code>pp_check()</code> (where it is the default). Applies equally to prior and posterior draws.</p></li>
+</ul><p>For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
-currently requires all such effects (<code>group_effects = TRUE</code>).</p></li>
-</ul></dd>
+currently requires all such effects (<code>group_effects = TRUE</code>).</p></dd>
 
 
 <dt id="arg-ndraws">ndraws<a class="anchor" aria-label="anchor" href="#arg-ndraws"></a></dt>
@@ -180,11 +184,10 @@ currently requires all such effects (<code>group_effects = TRUE</code>).</p></li
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Missing responses are omitted from the observed-data check. For
-GARMA models, each replicated response series is generated recursively
-rather than conditioning on the observed response history. LOO predictive
+    <p>Missing responses are omitted from the observed-data check. LOO predictive
 checks use posterior draws and the original fitted data, so they do not
-support <code>prior = TRUE</code> or <code>newdata</code>.</p>
+support <code>prior = TRUE</code> or <code>newdata</code>. For GARMA models, they default to <code>arma = TRUE</code>
+to match the one-step-ahead log-likelihood used for the LOO weights.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

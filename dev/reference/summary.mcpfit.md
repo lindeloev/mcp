@@ -205,26 +205,17 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
-#>  cp_1        31.6369 1.69122 29.4401 33.7774 1.0028     1012      945 30.0
-#>  cp_2        71.0983 0.99102 69.7097 72.4884 1.0065      869      676 70.0
-#>  match
-#>     OK
-#>     OK
+#>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim match
+#>  cp_1        31.6369 1.69122 29.4401 33.7774 1.0028     1012      945 30.0    OK
+#>  cp_2        71.0983 0.99102 69.7097 72.4884 1.0065      869      676 70.0    OK
 #> 
 #> Population-level parameters:
-#>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim
-#>  Intercept_1  9.9675 0.66463  9.1113 10.8454 1.0003     1032      747 10.0
-#>  time_2       0.5436 0.04754  0.4826  0.6026 1.0032     1087      970  0.5
-#>  Intercept_3 13.9661 1.38591 12.2422 15.7274 0.9994      993      823 15.0
-#>  time_3      -0.2062 0.08367 -0.3078 -0.1008 1.0003      900      740 -0.3
-#>  sigma_1      3.8615 0.29314  3.5054  4.2163 1.0027      931      921  3.5
-#>  match
-#>     OK
-#>     OK
-#>     OK
-#>     OK
-#>       
+#>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim match
+#>  Intercept_1  9.9675 0.66463  9.1113 10.8454 1.0003     1032      747 10.0    OK
+#>  time_2       0.5436 0.04754  0.4826  0.6026 1.0032     1087      970  0.5    OK
+#>  Intercept_3 13.9661 1.38591 12.2422 15.7274 0.9994      993      823 15.0    OK
+#>  time_3      -0.2062 0.08367 -0.3078 -0.1008 1.0003      900      740 -0.3    OK
+#>  sigma_1      3.8615 0.29314  3.5054  4.2163 1.0027      931      921  3.5      
 
 # Get the results as a tibble
 results = summary(demo_fit)

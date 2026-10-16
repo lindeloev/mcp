@@ -63,7 +63,7 @@ fit$jags_code
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
+    ##     # x measured from each segment's change point
     ##     x_local_1_[i_] = min(x[i_], cp_1)
     ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
     ##     
@@ -189,7 +189,7 @@ fit$jags_code
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
+    ##     # x measured from each segment's change point
     ##     x_local_1_[i_] = min(x[i_], cp_1)
     ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
     ##     
@@ -213,11 +213,12 @@ We used `options(mcp_reparam = FALSE)` to see the plain model. By
 default, `mcp` samples some parameters on other scales, which we will
 return to [below](#reparameterizations).
 
-Look at the JAGS code under `# par_x local to each segment` and
-`# Formula for mu` to see this exact indicator formulation in action:
-`x_local_1_[i_]` and `x_local_2_[i_]` correspond to X\_{1,i} and
-X\_{2,i}, and each segment’s slope is multiplied by its activation
-indicator (e.g., `(x[i_] >= cp_1)`).
+Look at the JAGS code under
+`# x measured from each segment's change point` and `# Formula for mu`
+to see this exact indicator formulation in action: `x_local_1_[i_]` and
+`x_local_2_[i_]` correspond to X\_{1,i} and X\_{2,i}, and each segment’s
+slope is multiplied by its activation indicator (e.g.,
+`(x[i_] >= cp_1)`).
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -482,7 +483,7 @@ mcp:::get_formula_r(fit$.internal$formula_jags)
 ```
 
     ## 
-    ## # par_x local to each segment
+    ## # x measured from each segment's change point
     ## x_local_1_ = pmin(x, cp_1)
     ## x_local_2_ = pmin(x, cp_2) - cp_1
     ## 

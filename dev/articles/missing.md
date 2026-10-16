@@ -129,16 +129,16 @@ imputed
     ## # A tibble: 10 × 7
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.4  4.39  29.7    41.0
-    ##  2    NA    19 A      15.4  4.39   9.93   21.1
-    ##  3    NA    27 A      17.1  4.30  11.5    22.6
-    ##  4    NA    28 B      39.3  4.33  33.8    44.9
-    ##  5    NA    29 A      17.5  4.35  11.9    23.0
-    ##  6    NA    30 B      39.9  4.30  34.2    45.3
-    ##  7    NA    31 A      17.8  4.35  12.3    23.4
-    ##  8    NA    68 B      40.9  4.42  35.2    46.6
-    ##  9    NA    84 B      34.2  4.32  28.7    39.8
-    ## 10    NA    96 B      29.2  4.49  23.5    34.9
+    ##  1    NA     8 B      35.5  4.37  29.8    41.0
+    ##  2    NA    19 A      15.4  4.39   9.95   21.1
+    ##  3    NA    27 A      17.1  4.29  11.6    22.6
+    ##  4    NA    28 B      39.3  4.34  33.8    44.9
+    ##  5    NA    29 A      17.5  4.33  12.0    23.0
+    ##  6    NA    30 B      39.9  4.32  34.2    45.3
+    ##  7    NA    31 A      17.8  4.35  12.4    23.4
+    ##  8    NA    68 B      41.3  4.44  35.6    46.9
+    ##  9    NA    84 B      34.6  4.31  29.0    40.1
+    ## 10    NA    96 B      29.5  4.45  23.9    35.2
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 has the same syntax as
@@ -156,16 +156,16 @@ fitted(fit, width = 0.8) |>
     ## # A tibble: 10 × 7
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.4 1.09    34.0   36.8
-    ##  2    NA    19 A      15.5 0.833   14.4   16.5
-    ##  3    NA    27 A      17.1 0.759   16.1   18.0
-    ##  4    NA    28 B      39.4 0.758   38.4   40.3
-    ##  5    NA    29 A      17.5 0.759   16.5   18.4
-    ##  6    NA    30 B      39.8 0.760   38.8   40.7
-    ##  7    NA    31 A      17.9 0.767   16.9   18.9
-    ##  8    NA    68 B      40.9 1.16    39.5   42.5
-    ##  9    NA    84 B      34.2 0.893   33.1   35.4
-    ## 10    NA    96 B      29.2 1.28    27.6   30.9
+    ##  1    NA     8 B      35.4 1.08    34.0   36.8
+    ##  2    NA    19 A      15.5 0.832   14.4   16.6
+    ##  3    NA    27 A      17.1 0.761   16.1   18.1
+    ##  4    NA    28 B      39.4 0.760   38.4   40.3
+    ##  5    NA    29 A      17.5 0.761   16.5   18.5
+    ##  6    NA    30 B      39.8 0.762   38.8   40.7
+    ##  7    NA    31 A      17.9 0.768   16.9   18.9
+    ##  8    NA    68 B      41.3 1.20    39.8   42.9
+    ##  9    NA    84 B      34.6 0.890   33.4   35.7
+    ## 10    NA    96 B      29.5 1.28    27.9   31.2
 
 ### Visualizing imputations
 
@@ -179,7 +179,7 @@ mean and a vertical line shows the central 80% imputation interval:
 ``` r
 
 # Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
-plot(fit, color_by = "state", q_predict = c(0.1, 0.9)) +
+plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add imputation interval
   geom_linerange(
@@ -233,7 +233,7 @@ calculate probabilities of various statements. For example:
 ``` r
 
 missing_draws |>
-  filter(.data_row == 19) |>
+  filter(.row == 19) |>  # Row number 19 in original data
   summarise(
     p_greater = mean(.prediction > 20),
     p_lower = mean(.prediction < 10),
@@ -244,7 +244,7 @@ missing_draws |>
     ## # A tibble: 1 × 3
     ##   p_greater p_lower p_between
     ##       <dbl>   <dbl>     <dbl>
-    ## 1     0.146   0.106     0.747
+    ## 1     0.146   0.105     0.749
 
 ### Imputations and other continuous predictors
 
@@ -259,7 +259,11 @@ are evaluated on data made by
 which keeps additional continuous predictors (i.e., predictors not
 assigned an aesthetic) at their observed means by default, or at values
 supplied through the `at`-argument. The plot caption reports these fixed
-values.
+values. See the [plotting
+article](https://lindeloev.github.io/mcp/dev/articles/plotting.md) for
+using
+[`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
+to make your own plots.
 
 The imputation markers above are different: `predict(fit)` evaluates the
 original data, so every missing row uses its own predictor values. If
@@ -324,8 +328,8 @@ are unavailable when a missing response precedes some observed data.
 
 The [time-series
 article](https://lindeloev.github.io/mcp/dev/articles/arma.md) discusses
-this. Use `predict(fit, conditional = FALSE)` or
-`posterior_predict(fit, conditional = FALSE)` to generate fresh
+this. Use `predict(fit, arma = "replicate")` or
+`posterior_predict(fit, arma = "replicate")` to generate fresh
 replicated series recursively. Their histories are generated rather than
 taken from the observed responses. The default predictions condition on
 observed responses and retained imputations as histories, but still
@@ -352,5 +356,5 @@ predict(fit, newdata = newdata, width = 0.8)
     ## # A tibble: 2 × 6
     ##       x state .mean   .sd .lower .upper
     ##   <dbl> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    20 A      15.8  4.40   10.1   21.2
-    ## 2    80 B      35.9  4.41   30.3   41.5
+    ## 1    20 A      15.8  4.38   10.2   21.3
+    ## 2    80 B      36.3  4.38   30.7   41.8

@@ -45,6 +45,7 @@ the fit (prior and/or posterior MCMC draws)."><meta property="og:image" content=
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -94,6 +95,9 @@ use as_draws(fit) or similar.</p></li>
 <li><p><code>jags_code</code>: A string with JAGS code; use <code>cat(fit$jags_code)</code> to show it.
 <a href="https://lindeloev.github.io/mcp/articles/implementation.html">Read more</a>.</p></li>
 <li><p><code>simulate</code>: A function to simulate data from supplied parameter values.</p></li>
+<li><p><code>version</code>: A named list of <a href="https://rdrr.io/r/base/numeric_version.html" class="external-link">package_version</a>s for <code>mcp</code>, <code>R</code>, <code>rjags</code>,
+and <code>jags</code>, e.g., <code>fit$version$mcp &gt;= "0.4.0"</code>. <code>rjags</code> and <code>jags</code> are
+<code>NULL</code> for fits with <code>sample = "none"</code>. <code>NULL</code> for fits made with mcp &lt; 0.4.0.</p></li>
 <li><p><code>.internal</code>: Information used internally by mcp.</p></li>
 </ul></div>
 

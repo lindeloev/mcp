@@ -66,14 +66,14 @@ The default priors follow three principles:
     so `fit$prior` and
     [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
     show its prior given the slope, e.g.,
-    `normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))`. This
-    matters when x is far from zero, e.g., calendar years. Likewise,
-    factor levels and contrasts with their own x-terms apply at \min(x),
-    e.g., `stateB_1` in `y ~ 1 + state * x` is the difference between
-    states at \min(x). Later intercepts are already at their change
-    point. User-specified priors on `Intercept_1` apply directly at x =
-    0. For a factor without an intercept, e.g., `y ~ 0 + state`, each
-    factor level has its own intercept, so each gets this prior (see
+    `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))`. This matters when x is
+    far from zero, e.g., calendar years. Likewise, factor levels and
+    contrasts with their own x-terms apply at \min(x), e.g., `stateB_1`
+    in `y ~ 1 + state * x` is the difference between states at \min(x).
+    Later intercepts are already at their change point. User-specified
+    priors on `Intercept_1` apply directly at x = 0. For a factor
+    without an intercept, e.g., `y ~ 0 + state`, each factor level has
+    its own intercept, so each gets this prior (see
     [deviations](#deviations)).
 
 3.  **Scale parameters follow
@@ -261,9 +261,9 @@ group-level change points, so W is an approximation.
   [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)):**
   `mcp` uses `rstanarm`’s autoscaling, but with scales that make the
   intercept prior (approximately) uniform on the probability scale. For
-  probit, `normal(0, 1)` is exactly uniform on the probability scale.
-  For logit, `normal(0, 1.5)` is approximately so (95% interval from
-  about 0.05 to 0.95; [McElreath, 2020](https://xcelab.net/rm/), section
+  probit, `dnorm(0, 1)` is exactly uniform on the probability scale. For
+  logit, `dnorm(0, 1.5)` is approximately so (95% interval from about
+  0.05 to 0.95; [McElreath, 2020](https://xcelab.net/rm/), section
   11.1). Larger scales, such as `rstanarm`’s 2.5, place excess prior
   mass near 0 and 1. This is particularly undesirable in change-point
   models, where several segments each contribute their own intercept.
@@ -345,9 +345,9 @@ group-level change points, so W is an approximation.
   (`uniform(-1, 1)`), and slopes of `normal(0, 1 / sd(column))`.
 
 - **Autoregressive and moving-average terms:** `mcp` uses zero-centered
-  `normal(0, 0.5) T(-1, 1)` priors to favor stationary and invertible
+  `dnorm(0, 0.5) T(-1, 1)` priors to favor stationary and invertible
   dynamics, with modest changes across segments and predictors
-  (`normal(0, 0.25)`).
+  (`dnorm(0, 0.25)`).
 
 - **Change points:** `mcp`-specific, as described
   [above](#change-points). The SDs of group-level change points have an

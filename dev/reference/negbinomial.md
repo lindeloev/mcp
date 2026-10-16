@@ -31,8 +31,8 @@ example, `y ~ 1 + x + shape(1 + x)` models both the mean and shape.
 Regression coefficients for both dpars are on their link scales, e.g.,
 `shape_Intercept_1` and `shape_x_1`.
 
-Without `shape()`, `shape_1` is the shape itself with an
-`inv_gamma(0.4, 0.3)` prior, as in `brms`, much like the implicit
+Without `shape()`, `shape_1` is the shape itself with a
+`dinvgamma(0.4, 0.3)` prior, as in `brms`, much like the implicit
 `sigma_1` in [`gaussian()`](https://rdrr.io/r/stats/family.html).
 
 ## Examples
@@ -43,8 +43,8 @@ data = data.frame(time = 1:6, count = c(1, 2, 8, 3, 12, 5))
 fit = mcp(list(count ~ 1), data, family = negbinomial(), par_x = "time", sample = FALSE)
 mcp_pars(fit)  # Show the mean and shape parameters
 #> # A tibble: 2 × 8
-#>   parameter   part      scope role  segment dpar  group_col population_parameter
-#>   <chr>       <chr>     <chr> <chr>   <int> <chr> <chr>     <chr>               
-#> 1 Intercept_1 predictor popu… coef…       1 mu    NA        NA                  
-#> 2 shape_1     predictor popu… coef…       1 shape NA        NA                  
+#>   parameter   part      scope      role        segment dpar  group_col population_parameter
+#>   <chr>       <chr>     <chr>      <chr>         <int> <chr> <chr>     <chr>               
+#> 1 Intercept_1 predictor population coefficient       1 mu    NA        NA                  
+#> 2 shape_1     predictor population coefficient       1 shape NA        NA                  
 ```

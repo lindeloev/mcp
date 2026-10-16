@@ -360,7 +360,9 @@ Key features of multiple regression models in `mcp`:
   automatically by
   [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md),
   or can be set explicitly via
-  `plot(fit, color_by = "state", at = list(z = 0))`.
+  `plot(fit, color_by = "state", at = list(z = 0))`. See the [plotting
+  article](https://lindeloev.github.io/mcp/dev/articles/plotting.md) for
+  more.
 
 ## Relative changes between segments
 

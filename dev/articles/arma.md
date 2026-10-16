@@ -350,7 +350,7 @@ summary(fit)
 # Plot fit and ar(1) parameter
 library(patchwork)
 gg_trend = plot(fit, color_by = "id")
-gg_dpar  = plot_dpar(fit, "ar1", q_fit = TRUE)
+gg_dpar  = plot_dpar(fit, "ar1", interval = "fitted")
 gg_trend / gg_dpar
 ```
 
@@ -619,14 +619,14 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                                         bounds           
-    ##   <chr>         <int> <chr> <chr>                                         <chr>            
-    ## 1 cp_1              2 NA    uniform(min = 0, max = 100)                   [0, 100], ordered
-    ## 2 Intercept_1       1 mu    normal(mean = 70.055, sd = 74.062)            none             
-    ## 3 x_1               1 mu    normal(mean = 0, sd = 2.5464)                 none             
-    ## 4 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 35.6) [0, Inf]         
-    ## 5 ar1_1             1 ar1   normal(mean = 0, sd = 0.5)                    [-1, 1]          
-    ## 6 ar1_2             2 ar1   normal(mean = 0, sd = 0.5)                    [-1, 1]
+    ##   parameter   segment dpar  prior                  bounds           
+    ##   <chr>         <int> <chr> <chr>                  <chr>            
+    ## 1 cp_1              2 NA    dunif(0, 100)          [0, 100], ordered
+    ## 2 Intercept_1       1 mu    dnorm(70.055, 74.062)  none             
+    ## 3 x_1               1 mu    dnorm(0, 2.5464)       none             
+    ## 4 sigma_1           1 sigma dt(0, 35.6, 3) T(0, )  [0, Inf]         
+    ## 5 ar1_1             1 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]          
+    ## 6 ar1_2             2 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]
 
 We can also visualize the priors because we sampled the prior.
 `prior = TRUE` works in most `mcp` functions, including
@@ -658,17 +658,17 @@ prior_summary(empty)
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                        bounds          
-    ##   <chr>         <int> <chr> <chr>                                        <chr>           
-    ## 1 cp_1              2 NA    uniform(min = 1, max = 10)                   [1, 10], ordered
-    ## 2 Intercept_1       1 mu    normal(mean = 5.5, sd = 7.5691)              none            
-    ## 3 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 3.7) [0, Inf]        
-    ## 4 ar1_1             1 ar1   normal(mean = 0, sd = 0.5)                   [-1, 1]         
-    ## 5 ar1_x_1           1 ar1   normal(mean = 0, sd = 0.082572)              none            
-    ## 6 ar1_2             2 ar1   normal(mean = 0, sd = 0.5)                   [-1, 1]         
-    ## 7 ar1_xE2_2         2 ar1   normal(mean = 0, sd = 0.0088324)             none            
-    ## 8 ar2_1             1 ar2   normal(mean = 0, sd = 0.5)                   [-1, 1]         
-    ## 9 ar2_x_1           1 ar2   normal(mean = 0, sd = 0.082572)              none
+    ##   parameter   segment dpar  prior                  bounds          
+    ##   <chr>         <int> <chr> <chr>                  <chr>           
+    ## 1 cp_1              2 NA    dunif(1, 10)           [1, 10], ordered
+    ## 2 Intercept_1       1 mu    dnorm(5.5, 7.5691)     none            
+    ## 3 sigma_1           1 sigma dt(0, 3.7, 3) T(0, )   [0, Inf]        
+    ## 4 ar1_1             1 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]         
+    ## 5 ar1_x_1           1 ar1   dnorm(0, 0.082572)     none            
+    ## 6 ar1_2             2 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]         
+    ## 7 ar1_xE2_2         2 ar1   dnorm(0, 0.0088324)    none            
+    ## 8 ar2_1             1 ar2   dnorm(0, 0.5) T(-1, 1) [-1, 1]         
+    ## 9 ar2_x_1           1 ar2   dnorm(0, 0.082572)     none
 
 AR and MA coefficient regressions use an identity link, while their
 residual inputs use the supported response-family link described above.
@@ -718,13 +718,15 @@ series are set to zero.
   was missing.
 - [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   is unavailable if the data has missingness before some observed data.
-- `predict(..., conditional = FALSE)`,
-  `posterior_predict(..., conditional = FALSE)`, and
+- `predict(..., arma = "replicate")`,
+  `posterior_predict(..., arma = "replicate")`, and
   [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
-  generate each series recursively from the model posteriors without
-  conditioning on the original response history. This makes serial
-  summaries of posterior replications, such as their autocorrelation and
-  run lengths, meaningful.
+  (where it is the default) generate each series recursively from the
+  model posteriors without conditioning on the original response
+  history. This makes serial summaries of posterior replications, such
+  as their autocorrelation and run lengths, meaningful. Use
+  `pp_check(fit, arma = TRUE)` to check the one-step-ahead predictions
+  instead.
 
 ## JAGS code
 
@@ -761,7 +763,7 @@ fit$jags_code
     ##   }
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
+    ##     # x measured from each segment's change point
     ##     x_local_1_[i_] = min(x[i_], cp_1)
     ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
     ##     

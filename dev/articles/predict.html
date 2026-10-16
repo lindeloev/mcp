@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -144,18 +145,18 @@ dataset:</p>
 <span></span>
 <span><span class="co"># Fit it</span></span>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span></code></pre></div>
-<p>This is what the data and inferred fit look like with a 95% central
-posterior interval for the expected response and an 80% posterior
-predictive interval:</p>
+<p>This is what the data and inferred fit look like with 80% central
+intervals for the expected response and for the posterior
+predictive:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span>, q_predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fitted"</span>, <span class="st">"predict"</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 <p><img src="predict_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <p>To review what we see here:</p>
 <ul>
 <li>The black dots are the data from <code>data</code>.</li>
 <li>The gray lines are 25 posterior draws (control using
 <code>plot(fit, lines = 100)</code>).</li>
-<li>The dashed red lines are the 2.5% and 97.5% quantiles of the fitted
+<li>The dashed red lines are the 10% and 90% quantiles of the fitted
 (expected) values.</li>
 <li>The green lines are the 10% and 90% quantiles of the predicted
 values.</li>
@@ -298,18 +299,20 @@ quantiles are computed from simulated responses, so they are subject to
 the call-to-call variation described above:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.data_row</span>, <span class="va">time</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.row</span>, <span class="va">time</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="co"># Group by original data row. Keep time as column in reframe().</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/reframe.html" class="external-link">reframe</a></span><span class="op">(</span>quantile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span>, .prediction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">.prediction</span>, <span class="va">quantile</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 4</span></span></span>
-<span><span class="co">##   .data_row  time quantile .prediction</span></span>
-<span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>         1  76.3      0.1        7.80</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>         1  76.3      0.5       12.9 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span>         1  76.3      0.9       18.0 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>         2  83.5      0.1        6.47</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>         2  83.5      0.5       11.4 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>         2  83.5      0.9       16.5</span></span></code></pre>
+<span><span class="co">##    .row  time quantile .prediction</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>     1  76.3      0.1        7.80</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     1  76.3      0.5       12.9 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>     1  76.3      0.9       18.0 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>     2  83.5      0.1        6.47</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>     2  83.5      0.5       11.4 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>     2  83.5      0.9       16.5</span></span></code></pre>
+<p>See the <a href="../articles/plotting.html">plotting article</a> for
+adding custom quantiles to <code><a href="../reference/plot.mcpfit.html">plot()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="residuals">Residuals<a class="anchor" aria-label="anchor" href="#residuals"></a>
@@ -318,7 +321,7 @@ the call-to-call variation described above:</p>
 <code>data$response - fitted()</code>. It may be useful for model
 checking, but the typical needs are covered using posterior predictive
 checking (<code>pp_check(fit)</code>) and visual inspection of
-<code>plot(fit, q_fit = TRUE, q_predict = TRUE)</code>.</p>
+<code>plot(fit, interval = c("fitted", "predict"))</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="forecasting-with-future-change-points">Forecasting with future change points<a class="anchor" aria-label="anchor" href="#forecasting-with-future-change-points"></a>
@@ -380,22 +383,25 @@ outcome. It may be helpful to review <a href="../articles/priors.html">the artic
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data_forecast</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.</span></span></code></pre>
+<pre><code><span><span class="co">## Warning: Some parameters may not have converged well:</span></span>
+<span><span class="co">##   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_3 and Intercept_3 and time_3</span></span>
+<span><span class="co">## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="step-3-predict">Step 3: predict!<a class="anchor" aria-label="anchor" href="#step-3-predict"></a>
 </h3>
 <p>We can now compute the 80% posterior predictive interval at
 <code>time = 125</code>:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
 <span><span class="co">##    time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.64  5.48 0.089<span style="text-decoration: underline;">0</span>   14.2</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.33  5.62 -<span style="color: #BB0000;">0.455</span>   14.0</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
 manually doing our plot:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get expected-response and posterior predictive draws</span></span>
 <span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">170</span><span class="op">)</span></span>
 <span><span class="va">fitted_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, summary <span class="op">=</span> <span class="cn">FALSE</span>, ndraws <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
@@ -436,7 +442,7 @@ data point (<code>max(time)</code>), so that it occurs <em>after</em>
 it, i.e., at <code>time &gt; 100</code>. This is knowledge that the
 third change point had not yet been observed at <code>time = 100</code>,
 and this pushes the distribution further into the future (actually
-around 120; see <code>summary(fit_forecast)</code>).</p>
+around 122; see <code>summary(fit_forecast)</code>).</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

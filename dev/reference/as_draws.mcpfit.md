@@ -144,13 +144,12 @@ head(coda::as.mcmc(demo_fit)[[1]])  # First chain as a coda mcmc object
 if (requireNamespace("tidybayes", quietly = TRUE))
   head(tidybayes::tidy_draws(demo_fit))
 #> # A tibble: 6 × 10
-#>    cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .chain .iteration
-#>   <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>   <dbl>  <int>      <int>
-#> 1  31.9  71.0        8.95  0.584        13.9 -0.155     3.48      1          1
-#> 2  31.7  71.4        9.87  0.566        15.8 -0.335     3.47      1          2
-#> 3  32.1  70.5       11.4   0.526        12.6 -0.0956    4.02      1          3
-#> 4  33.3  72.8       10.1   0.561        13.7 -0.174     3.98      1          4
-#> 5  31.7  69.9        9.97  0.466        13.8 -0.158     4.65      1          5
-#> 6  33.3  69.9       10.0   0.536        12.5 -0.140     3.98      1          6
-#> # ℹ 1 more variable: .draw <int>
+#>    cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .chain .iteration .draw
+#>   <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>   <dbl>  <int>      <int> <int>
+#> 1  31.9  71.0        8.95  0.584        13.9 -0.155     3.48      1          1     1
+#> 2  31.7  71.4        9.87  0.566        15.8 -0.335     3.47      1          2     2
+#> 3  32.1  70.5       11.4   0.526        12.6 -0.0956    4.02      1          3     3
+#> 4  33.3  72.8       10.1   0.561        13.7 -0.174     3.98      1          4     4
+#> 5  31.7  69.9        9.97  0.466        13.8 -0.158     4.65      1          5     5
+#> 6  33.3  69.9       10.0   0.536        12.5 -0.140     3.98      1          6     6
 ```

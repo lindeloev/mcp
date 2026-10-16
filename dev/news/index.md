@@ -116,14 +116,10 @@
 
 - **Improved speed and robustness:** ESS/s has improved more than
   10-fold and convergence is more likely. This is due to
-  reparameterizations that keep intercepts and slopes relatively
-  independent of earlier segments during sampling and due to
-  (selectively) using the JAGS glm module. The reparameterizations do
-  not change the model or its priors. Compare `fit$jags_code` with
-  `options(mcp_reparam = FALSE)` (plain model) and
-  `options(mcp_reparam = TRUE)` (default). Read more in [From formulas
-  to sampler
-  code](https://lindeloev.github.io/mcp/articles/implementation.html).
+  [reparameterizations](https://lindeloev.github.io/mcp/articles/implementation.html)
+  that keep intercepts and slopes relatively independent of earlier
+  segments during sampling and due to (selectively) using the JAGS glm
+  module. The reparameterizations do not change the model or its priors.
 
 ### Major breaking changes
 
@@ -167,8 +163,18 @@ been added until we reach 1.0.
     prevents collisions with data columns, as in `broom::augment()`.
     Consequently, data columns named `sd`, `fitted`, `predict`, etc. are
     no longer rejected. For other quantiles, summarise the draws from
-    `summary = FALSE`. The evaluation-row key `data_row` is now
-    `.data_row`.
+    `summary = FALSE`. The evaluation-row key `data_row` is now `.row`,
+    matching [tidybayes](https://mjskay.github.io/tidybayes/).
+
+  - `plot(fit, q_fit, q_predict)` is deprecated in favor of
+    `plot(fit, interval = c("fitted", "predict"), width = 0.95)`. This
+    matches the new `width` in
+    [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
+    Add other quantiles as a ggplot2 layer from
+    `fitted(..., summary = FALSE)` instead.
 
   - `Rhat` was renamed to `rhat` in
     [`summary()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
@@ -461,12 +467,16 @@ been added until we reach 1.0.
     `family = binomial()`, preventing thresholds from erasing the binary
     response history.
 
-  - Explicit AR/MA prediction history control: predict() and the new
-    posterior_predict() support conditional = TRUE (default) to
-    condition on observed response histories, or conditional = FALSE to
-    generate histories recursively. This applies to both prior and
-    posterior prediction. Previously, AR history handling depended on
-    whether response values were supplied.
+  - Explicit AR/MA prediction history control:
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    and the new
+    [`posterior_predict()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
+    support `arma = "replicate"` to generate fresh response series
+    recursively, in addition to `arma = TRUE` (default) to condition on
+    observed response histories and `arma = FALSE` to omit AR/MA
+    effects. This applies to both prior and posterior prediction.
+    Previously, AR history handling depended on whether response values
+    were supplied.
 
   - Added AR/MA warnings: (1) for AR/MA models to
     [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
@@ -499,6 +509,9 @@ been added until we reach 1.0.
     `options(mcp_quiet = TRUE)` to make this the default for the
     session. The JAGS model-compilation text is no longer printed by
     default.
+
+  - `fit$version` records the versions of mcp, R, rjags, and JAGS used
+    to make the fit, e.g., `fit$version$mcp >= "0.4.0"`.
 
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before
     because the log-likelihood is not stored. Use `log_lik(fit)` to
@@ -611,11 +624,11 @@ been added until we reach 1.0.
     in [`lm()`](https://rdrr.io/r/stats/lm.html), so `fit$prior` and
     [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
     show its prior given the x-terms, e.g.,
-    `normal(mean = mean(y) - x_1 * min(x), sd = 2.5 * sd(y))`. This
-    greatly improves sampling when `x` is far from zero, e.g., calendar
-    years. Likewise for factor levels and contrasts with their own
-    x-terms, e.g., `stateb_1` in `y ~ 1 + state * x`. `sigma` and
-    group-level SDs follow `brms`. See priors using
+    `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))`. This greatly improves
+    sampling when `x` is far from zero, e.g., calendar years. Likewise
+    for factor levels and contrasts with their own x-terms, e.g.,
+    `stateb_1` in `y ~ 1 + state * x`. `sigma` and group-level SDs
+    follow `brms`. See priors using
     `prior_summary(fit, verbose = TRUE)`. The implicit Gaussian
     `sigma_1` prior is now the same response-calibrated half-Student-t
     used by `brms`, `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`.
@@ -628,6 +641,10 @@ been added until we reach 1.0.
     now replaced with readable expressions such as `min(time)`,
     `max(time) - min(time)`, `mad(response)`, `n_segments()`, and
     `n_cp()`.
+
+  - Priors can no longer refer to the internal JAGS nodes `cp_0` and
+    `cp_K` (e.g., `cp_3` with two change points). Use `min(x)` and
+    `max(x)` instead, as also shown in `fit$prior`.
 
   - Binomial and Bernoulli models with logit or probit links now use
     narrower, weakly regularizing scales than `rstanarm`’s 2.5:
@@ -680,10 +697,10 @@ been added until we reach 1.0.
     Deprecated `which_y = "ct"` is translated to `dpar = "epred"` with a
     warning.
 
-  - `mcp(..., inits)` can only set stochastic nodes in `fit$jags_code`.
-    Parameters reparameterized for faster sampling can no longer be
-    initialized directly. Initial values for change points must be
-    ordered.
+  - `mcp(..., inits)` can only set parameters in `mcp_pars(fit)` and
+    errors on other names. Parameters reparameterized for faster
+    sampling can no longer be initialized. Initial values for change
+    points must be ordered.
 
   - `fit$data` now only contains the data columns that are used in the
     model.
@@ -701,6 +718,16 @@ been added until we reach 1.0.
 
   - Removed `which_y` argument from
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
+
+  - `rate = TRUE` in
+    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    and
+    [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
+    now errors for families other than binomial and Bernoulli. In
+    v0.3.4, it was silently ignored. For rates per unit of exposure in
+    models with `offset(log(exposure))`, set exposure to 1, e.g.,
+    `fitted(fit, newdata = transform(df, exposure = 1))`.
 
   - [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
     and
@@ -780,9 +807,12 @@ been added until we reach 1.0.
 
   - For AR/MA models,
     [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
-    conditioned every prediction on the observed response history. They
-    now generate each posterior replication recursively as a fresh time
-    series.
+    conditioned every prediction on the observed response history. It
+    now defaults to `arma = "replicate"`, generating each posterior
+    replication recursively as a fresh time series. Use `arma = TRUE`
+    for the previous one-step-ahead check. LOO predictive checks keep
+    `arma = TRUE` to match the one-step-ahead log-likelihood behind
+    their weights.
 
   - LOO checks with `prior = TRUE` incorrectly combined prior
     predictions with posterior LOO weights. A rare use case.

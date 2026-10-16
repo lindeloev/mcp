@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -423,7 +424,7 @@ series start and end:</p>
 <code class="sourceCode R"><span><span class="co"># Plot fit and ar(1) parameter</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span><span class="va">gg_trend</span> <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, color_by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span>
-<span><span class="va">gg_dpar</span>  <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"ar1"</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">gg_dpar</span>  <span class="op">=</span> <span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"ar1"</span>, interval <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span></span>
 <span><span class="va">gg_trend</span> <span class="op">/</span> <span class="va">gg_dpar</span></span></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 <p>Within each series, AR/MA memory flows continuously across change
@@ -633,14 +634,14 @@ above:</p>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                         bounds           </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 0, max = 100)                   [0, 100], ordered</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    normal(mean = 70.055, sd = 74.062)            none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> x_1               1 mu    normal(mean = 0, sd = 2.5464)                 none             </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 35.6) [0, Inf]         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> ar1_1             1 ar1   normal(mean = 0, sd = 0.5)                    [-1, 1]          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_2             2 ar1   normal(mean = 0, sd = 0.5)                    [-1, 1]</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                  bounds           </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dunif(0, 100)          [0, 100], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    dnorm(70.055, 74.062)  none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> x_1               1 mu    dnorm(0, 2.5464)       none             </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> sigma_1           1 sigma dt(0, 35.6, 3) T(0, )  [0, Inf]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> ar1_1             1 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_2             2 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]</span></span></code></pre>
 <p>We can also visualize the priors because we sampled the prior.
 <code>prior = TRUE</code> works in most <code>mcp</code> functions,
 including <code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/summary.mcpfit.html">summary()</a></code>.</p>
@@ -659,17 +660,17 @@ would often have to inform these:</p>
 <span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">empty</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 9 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                        bounds          </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 1, max = 10)                   [1, 10], ordered</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    normal(mean = 5.5, sd = 7.5691)              none            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 3.7) [0, Inf]        </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> ar1_1             1 ar1   normal(mean = 0, sd = 0.5)                   [-1, 1]         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> ar1_x_1           1 ar1   normal(mean = 0, sd = 0.082572)              none            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_2             2 ar1   normal(mean = 0, sd = 0.5)                   [-1, 1]         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">7</span> ar1_xE2_2         2 ar1   normal(mean = 0, sd = 0.0088324)             none            </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">8</span> ar2_1             1 ar2   normal(mean = 0, sd = 0.5)                   [-1, 1]         </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">9</span> ar2_x_1           1 ar2   normal(mean = 0, sd = 0.082572)              none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                  bounds          </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dunif(1, 10)           [1, 10], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> Intercept_1       1 mu    dnorm(5.5, 7.5691)     none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> sigma_1           1 sigma dt(0, 3.7, 3) T(0, )   [0, Inf]        </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> ar1_1             1 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> ar1_x_1           1 ar1   dnorm(0, 0.082572)     none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> ar1_2             2 ar1   dnorm(0, 0.5) T(-1, 1) [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">7</span> ar1_xE2_2         2 ar1   dnorm(0, 0.0088324)    none            </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">8</span> ar2_1             1 ar2   dnorm(0, 0.5) T(-1, 1) [-1, 1]         </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">9</span> ar2_x_1           1 ar2   dnorm(0, 0.082572)     none</span></span></code></pre>
 <p>AR and MA coefficient regressions use an identity link, while their
 residual inputs use the supported response-family link described above.
 Careful priors become especially important with higher orders or
@@ -715,12 +716,14 @@ the original response was missing.</li>
 <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code> is unavailable if the data has missingness
 before some observed data.</li>
 <li>
-<code>predict(..., conditional = FALSE)</code>,
-<code>posterior_predict(..., conditional = FALSE)</code>, and
-<code><a href="../reference/pp_check.html">pp_check()</a></code> generate each series recursively from the model
-posteriors without conditioning on the original response history. This
-makes serial summaries of posterior replications, such as their
-autocorrelation and run lengths, meaningful.</li>
+<code>predict(..., arma = "replicate")</code>,
+<code>posterior_predict(..., arma = "replicate")</code>, and
+<code><a href="../reference/pp_check.html">pp_check()</a></code> (where it is the default) generate each series
+recursively from the model posteriors without conditioning on the
+original response history. This makes serial summaries of posterior
+replications, such as their autocorrelation and run lengths, meaningful.
+Use <code>pp_check(fit, arma = TRUE)</code> to check the one-step-ahead
+predictions instead.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -754,7 +757,7 @@ R</a>.</p>
 <span><span class="co">##   }</span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
-<span><span class="co">##     # par_x local to each segment</span></span>
+<span><span class="co">##     # x measured from each segment's change point</span></span>
 <span><span class="co">##     x_local_1_[i_] = min(x[i_], cp_1)</span></span>
 <span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1</span></span>
 <span><span class="co">##     </span></span>

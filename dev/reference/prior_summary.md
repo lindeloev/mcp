@@ -35,10 +35,12 @@ parameters, then AR/MA lags - each with `segment` and `dpar` columns.
 
 ## Details
 
-Shows the specified prior distributions, resolved to numbers and on the
-familiar SD/scale parameterization rather than JAGS precision. `bounds`
-are the lower and upper bounds of each prior, i.e., the arguments of
-[`dunif()`](https://rdrr.io/r/stats/Uniform.html) or
+Shows the specified priors in the syntax of `mcp(..., prior)`, resolved
+to numbers. As in `prior`, scales are SD/scale rather than JAGS
+precision (see
+[mcp-priors](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)).
+`bounds` are the lower and upper bounds of each prior, i.e., the
+arguments of [`dunif()`](https://rdrr.io/r/stats/Uniform.html) or
 [`T()`](https://rdrr.io/r/base/logical.html), or the support of the
 distribution. Change points are also "ordered": their specified priors
 are restricted to ordered change points. Use
@@ -65,24 +67,24 @@ for the rules behind them.
 ``` r
 prior_summary(demo_fit)  # Show the resolved priors and their bounds
 #> # A tibble: 7 × 5
-#>   parameter   segment dpar  prior                                        bounds 
-#>   <chr>         <int> <chr> <chr>                                        <chr>  
-#> 1 cp_1              2 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
-#> 2 cp_2              3 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
-#> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
-#> 4 time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   
-#> 5 Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   
-#> 6 time_3            3 mu    normal(mean = 0, sd = 0.62124)               none   
-#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…
+#>   parameter   segment dpar  prior                  bounds                    
+#>   <chr>         <int> <chr> <chr>                  <chr>                     
+#> 1 cp_1              2 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered
+#> 2 cp_2              3 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered
+#> 3 Intercept_1       1 mu    dnorm(13.825, 17.383)  none                      
+#> 4 time_2            2 mu    dnorm(0, 0.62124)      none                      
+#> 5 Intercept_3       3 mu    dnorm(13.825, 17.383)  none                      
+#> 6 time_3            3 mu    dnorm(0, 0.62124)      none                      
+#> 7 sigma_1           1 sigma dt(0, 5.7, 3) T(0, )   [0, Inf]                  
 prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 #> # A tibble: 7 × 9
-#>   parameter   segment dpar  prior          bounds rule  description source kind 
-#>   <chr>         <int> <chr> <chr>          <chr>  <chr> <chr>       <chr>  <chr>
-#> 1 cp_1              2 NA    uniform(min =… [0.61… unif… Flat Diric… defau… dist…
-#> 2 cp_2              3 NA    uniform(min =… [0.61… unif… Flat Diric… defau… dist…
-#> 3 Intercept_1       1 mu    normal(mean =… none   norm… Mean inter… defau… dist…
-#> 4 time_2            2 mu    normal(mean =… none   norm… Autoscaled… defau… dist…
-#> 5 Intercept_3       3 mu    normal(mean =… none   norm… Mean inter… defau… dist…
-#> 6 time_3            3 mu    normal(mean =… none   norm… Autoscaled… defau… dist…
-#> 7 sigma_1           1 sigma student_t(df … [0, I… stud… Positive r… defau… dist…
+#>   parameter   segment dpar  prior                  bounds                     rule                                               description                                           source  kind        
+#>   <chr>         <int> <chr> <chr>                  <chr>                      <chr>                                              <chr>                                                 <chr>   <chr>       
+#> 1 cp_1              2 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered dunif(min(time), max(time))                        Flat Dirichlet on the segment lengths                 default distribution
+#> 2 cp_2              3 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered dunif(min(time), max(time))                        Flat Dirichlet on the segment lengths                 default distribution
+#> 3 Intercept_1       1 mu    dnorm(13.825, 17.383)  none                       dnorm(mean(response), 2.5 * sd(response))          Mean intercept (rstanarm default)                     default distribution
+#> 4 time_2            2 mu    dnorm(0, 0.62124)      none                       dnorm(0, 2.5 * sd(response) / (sd(time)))          Autoscaled mean coefficient (rstanarm default)        default distribution
+#> 5 Intercept_3       3 mu    dnorm(13.825, 17.383)  none                       dnorm(mean(response), 2.5 * sd(response))          Mean intercept (rstanarm default)                     default distribution
+#> 6 time_3            3 mu    dnorm(0, 0.62124)      none                       dnorm(0, 2.5 * sd(response) / (sd(time)))          Autoscaled mean coefficient (rstanarm default)        default distribution
+#> 7 sigma_1           1 sigma dt(0, 5.7, 3) T(0, )   [0, Inf]                   dt(0, max(2.5, round(mad(response), 1)), 3) T(0, ) Positive residual SD calibrated on the response scale default distribution
 ```

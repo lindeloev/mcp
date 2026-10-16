@@ -51,24 +51,24 @@ parameters.
 # Show every parameter in the model
 mcp_pars(demo_fit)
 #> # A tibble: 7 × 8
-#>   parameter   part      scope role  segment dpar  group_col population_parameter
-#>   <chr>       <chr>     <chr> <chr>   <int> <chr> <chr>     <chr>               
-#> 1 cp_1        cp        popu… chan…       2 NA    NA        NA                  
-#> 2 cp_2        cp        popu… chan…       3 NA    NA        NA                  
-#> 3 Intercept_1 predictor popu… coef…       1 mu    NA        NA                  
-#> 4 time_2      predictor popu… coef…       2 mu    NA        NA                  
-#> 5 Intercept_3 predictor popu… coef…       3 mu    NA        NA                  
-#> 6 time_3      predictor popu… coef…       3 mu    NA        NA                  
-#> 7 sigma_1     predictor popu… coef…       1 sigma NA        NA                  
+#>   parameter   part      scope      role         segment dpar  group_col population_parameter
+#>   <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
+#> 1 cp_1        cp        population change_point       2 NA    NA        NA                  
+#> 2 cp_2        cp        population change_point       3 NA    NA        NA                  
+#> 3 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
+#> 4 time_2      predictor population coefficient        2 mu    NA        NA                  
+#> 5 Intercept_3 predictor population coefficient        3 mu    NA        NA                  
+#> 6 time_3      predictor population coefficient        3 mu    NA        NA                  
+#> 7 sigma_1     predictor population coefficient        1 sigma NA        NA                  
 
 # Select population-level coefficients
 mcp_pars(demo_fit, scope = "population", role = "coefficient")
 #> # A tibble: 5 × 8
-#>   parameter   part      scope role  segment dpar  group_col population_parameter
-#>   <chr>       <chr>     <chr> <chr>   <int> <chr> <chr>     <chr>               
-#> 1 Intercept_1 predictor popu… coef…       1 mu    NA        NA                  
-#> 2 time_2      predictor popu… coef…       2 mu    NA        NA                  
-#> 3 Intercept_3 predictor popu… coef…       3 mu    NA        NA                  
-#> 4 time_3      predictor popu… coef…       3 mu    NA        NA                  
-#> 5 sigma_1     predictor popu… coef…       1 sigma NA        NA                  
+#>   parameter   part      scope      role        segment dpar  group_col population_parameter
+#>   <chr>       <chr>     <chr>      <chr>         <int> <chr> <chr>     <chr>               
+#> 1 Intercept_1 predictor population coefficient       1 mu    NA        NA                  
+#> 2 time_2      predictor population coefficient       2 mu    NA        NA                  
+#> 3 Intercept_3 predictor population coefficient       3 mu    NA        NA                  
+#> 4 time_3      predictor population coefficient       3 mu    NA        NA                  
+#> 5 sigma_1     predictor population coefficient       1 sigma NA        NA                  
 ```

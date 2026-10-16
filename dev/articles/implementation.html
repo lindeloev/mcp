@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>From formulas to sampler code</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/implementation.Rmd" class="external-link"><code>vignettes/implementation.Rmd</code></a></small>
       <div class="d-none name"><code>implementation.Rmd</code></div>
@@ -163,7 +164,7 @@ uses the indicator formulation of change points:</p>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
-<span><span class="co">##     # par_x local to each segment</span></span>
+<span><span class="co">##     # x measured from each segment's change point</span></span>
 <span><span class="co">##     x_local_1_[i_] = min(x[i_], cp_1)</span></span>
 <span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1</span></span>
 <span><span class="co">##     </span></span>
@@ -273,7 +274,7 @@ there.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
-<span><span class="co">##     # par_x local to each segment</span></span>
+<span><span class="co">##     # x measured from each segment's change point</span></span>
 <span><span class="co">##     x_local_1_[i_] = min(x[i_], cp_1)</span></span>
 <span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1</span></span>
 <span><span class="co">##     </span></span>
@@ -296,7 +297,7 @@ there.</p>
 model. By default, <code>mcp</code> samples some parameters on other
 scales, which we will return to <a href="#reparameterizations">below</a>.</p>
 <p>Look at the JAGS code under
-<code># par_x local to each segment</code> and
+<code># x measured from each segment's change point</code> and
 <code># Formula for mu</code> to see this exact indicator formulation in
 action: <code>x_local_1_[i_]</code> and <code>x_local_2_[i_]</code>
 correspond to <span class="math inline">X_{1,i}</span> and <span class="math inline">X_{2,i}</span>, and each segment’s slope is
@@ -592,7 +593,7 @@ because R evaluates all rows at once:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">mcp</span><span class="fu">:::</span><span class="fu">get_formula_r</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">.internal</span><span class="op">$</span><span class="va">formula_jags</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
-<span><span class="co">## # par_x local to each segment</span></span>
+<span><span class="co">## # x measured from each segment's change point</span></span>
 <span><span class="co">## x_local_1_ = pmin(x, cp_1)</span></span>
 <span><span class="co">## x_local_2_ = pmin(x, cp_2) - cp_1</span></span>
 <span><span class="co">## </span></span>

@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Diagnosing and fixing problems</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/tips.Rmd" class="external-link"><code>vignettes/tips.Rmd</code></a></small>
       <div class="d-none name"><code>tips.Rmd</code></div>
@@ -131,11 +132,10 @@ any pair of implicated parameters:
 This may give you ideas how to change the model.</p></li>
 <li>
 <p>You can set the initial values for the JAGS sampler using, e.g.,
-<code>mcp(..., inits = list(cp_1 = 30, Intercept_1 = 10, sigma_1 = 2))</code>.
-Names must be stochastic nodes in <code>fit$jags_code</code> (lines with
-<code>~</code>), so parameters reparameterized for faster sampling
-cannot be initialized directly. Initial values for change points must be
-ordered.</p>
+<code>mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))</code>. Names must
+be parameters in <code>mcp_pars(fit)</code>. Fixed parameters and
+parameters reparameterized for faster sampling cannot be initialized.
+Initial values for change points must be ordered.</p>
 <ul>
 <li>By default, all chains start at the same change points. Change
 points cannot pass each other, so a chain that starts with change points

@@ -20,10 +20,10 @@ warn when `rhat > 1.01` or ESS \< 400.
   This may give you ideas how to change the model.
 
 - You can set the initial values for the JAGS sampler using, e.g.,
-  `mcp(..., inits = list(cp_1 = 30, Intercept_1 = 10, sigma_1 = 2))`.
-  Names must be stochastic nodes in `fit$jags_code` (lines with `~`), so
-  parameters reparameterized for faster sampling cannot be initialized
-  directly. Initial values for change points must be ordered.
+  `mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))`. Names must be
+  parameters in `mcp_pars(fit)`. Fixed parameters and parameters
+  reparameterized for faster sampling cannot be initialized. Initial
+  values for change points must be ordered.
 
   - By default, all chains start at the same change points. Change
     points cannot pass each other, so a chain that starts with change

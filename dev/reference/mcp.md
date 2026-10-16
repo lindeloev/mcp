@@ -53,8 +53,10 @@ mcp(
   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
   `sigma_1`, etc.) and values are a distribution string (e.g.,
   `"dnorm(0, 1) T(0, )"`), a fixed value (e.g., `-2.1`), or the name of
-  another parameter to share its value. Weakly informative defaults are
-  used where priors are not specified; see them with
+  another parameter to share its value. *OBS: Distributions use JAGS
+  names but SD/scale instead of JAGS precision, so `dnorm(0, 0.001)` is
+  a very narrow prior.* Weakly informative defaults are used where
+  priors are not specified; see them with
   [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md).
   See
   [mcp-priors](https://lindeloev.github.io/mcp/dev/reference/mcp-priors.md)
@@ -121,22 +123,32 @@ mcp(
   `list(Intercept_1 = 10)`, or a list of such lists with one per chain.
   This can be useful if a model fails to converge ([read
   more](https://lindeloev.github.io/mcp/articles/tips.html)). Names must
-  be stochastic nodes in `fit$jags_code` (lines with `~`). Fixed
-  parameters and parameters that `mcp` samples via reparameterization
-  (e.g., `Intercept_3` is sampled as `Intercept_3_end_`) cannot be
-  initialized directly. See `mcp_reparam` in
-  [mcp-package](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md).
+  be parameters in
+  [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md).
+  Fixed parameters and parameters that are reparameterized for faster
+  sampling cannot be initialized (see `mcp_reparam` in
+  [mcp-package](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md)).
   Initial values for change points must be ordered. Defaults to `NULL`
   where all chains start at equispaced change points and the prior
   medians. User-provided `inits` take precedence.
 
 - jags_code:
 
-  String. Pass JAGS code to `mcp` to use directly. This is useful if you
-  want to tweak the code in `fit$jags_code` and run it within the `mcp`
-  framework. R-side simulation and prediction methods continue to use
-  the mcp-default formulas (with warning), so they may no longer match
-  custom JAGS code. [Read
+  String. JAGS code to sample instead of the code that `mcp` writes.
+  This is an expert option for edits to `fit$jags_code` that keep the
+  parameters in
+  [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md),
+  the data, and the likelihood. Only the parameters in
+  [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
+  are monitored. R-side simulation and prediction methods continue to
+  use the `mcp` formulas (with warning), so
+  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+  [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
+  etc. are wrong if the custom code changes the formula or likelihood.
+  The written JAGS code is not a stable interface and may change between
+  `mcp` versions. [Read
   more](https://lindeloev.github.io/mcp/articles/implementation.html)
   about how `mcp` writes JAGS code.
 
@@ -352,15 +364,15 @@ plot(demo_fit, prior = TRUE)
 # Show all priors. Default priors are added where you don't provide any
 prior_summary(demo_fit)
 #> # A tibble: 7 × 5
-#>   parameter   segment dpar  prior                                        bounds 
-#>   <chr>         <int> <chr> <chr>                                        <chr>  
-#> 1 cp_1              2 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
-#> 2 cp_2              3 NA    uniform(min = 0.61863, max = 99.741)         [0.618…
-#> 3 Intercept_1       1 mu    normal(mean = 13.825, sd = 17.383)           none   
-#> 4 time_2            2 mu    normal(mean = 0, sd = 0.62124)               none   
-#> 5 Intercept_3       3 mu    normal(mean = 13.825, sd = 17.383)           none   
-#> 6 time_3            3 mu    normal(mean = 0, sd = 0.62124)               none   
-#> 7 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.7) [0, In…
+#>   parameter   segment dpar  prior                  bounds                    
+#>   <chr>         <int> <chr> <chr>                  <chr>                     
+#> 1 cp_1              2 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered
+#> 2 cp_2              3 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered
+#> 3 Intercept_1       1 mu    dnorm(13.825, 17.383)  none                      
+#> 4 time_2            2 mu    dnorm(0, 0.62124)      none                      
+#> 5 Intercept_3       3 mu    dnorm(13.825, 17.383)  none                      
+#> 6 time_3            3 mu    dnorm(0, 0.62124)      none                      
+#> 7 sigma_1           1 sigma dt(0, 5.7, 3) T(0, )   [0, Inf]                  
 
 # Set priors and re-run
 prior = list(
@@ -400,7 +412,7 @@ demo_fit$jags_code
 #> 
 #>   # Model and likelihood
 #>   for (i_ in 1:length(time)) {
-#>     # par_x local to each segment
+#>     # time measured from each segment's change point
 #>     x_local_1_[i_] = min(time[i_], cp_1)
 #>     x_local_2_[i_] = min(time[i_], cp_2) - cp_1
 #>     x_local_3_[i_] = min(time[i_], cp_3) - cp_2

@@ -17,7 +17,7 @@ pp_check(
   newdata = NULL,
   prior = FALSE,
   group_effects = TRUE,
-  arma = TRUE,
+  arma = "replicate",
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
@@ -67,7 +67,7 @@ pp_check(
     missing response histories are supported only in the original fitted
     data, using retained posterior imputations as histories. Predictions
     are fresh response draws, including at missing rows. With
-    `conditional = FALSE`,
+    `arma = "replicate"`,
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     and
     [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
@@ -109,17 +109,27 @@ pp_check(
 
 - arma:
 
-  Whether to include AR and MA effects.
+  How to include AR and MA effects.
 
-  - `TRUE` Compute the GARMA residual recurrence. Requires the response
-    variable in `newdata`.
+  - `TRUE`: Condition on the observed response history, i.e.,
+    one-step-ahead evaluation of the GARMA residual recurrence. Requires
+    the response variable in `newdata`.
 
-  - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
+  - `FALSE`: Disregard AR and MA effects. For `family = gaussian()`,
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    uses only `sigma` for residuals. For posterior evaluation of the
-    original data, retained JAGS imputations supply missing GARMA
-    histories. In models with group-level effects, this currently
-    requires all such effects (`group_effects = TRUE`).
+    uses only `sigma` for residuals.
+
+  - `"replicate"`: Generate fresh response series recursively instead of
+    conditioning on the observed responses. Only for predictions:
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    [`posterior_predict()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md),
+    and `pp_check()` (where it is the default). Applies equally to prior
+    and posterior draws.
+
+  For posterior evaluation of the original data, retained JAGS
+  imputations supply missing GARMA histories. In models with group-level
+  effects, this currently requires all such effects
+  (`group_effects = TRUE`).
 
 - ndraws:
 
@@ -145,11 +155,11 @@ plots.
 
 ## Details
 
-Missing responses are omitted from the observed-data check. For GARMA
-models, each replicated response series is generated recursively rather
-than conditioning on the observed response history. LOO predictive
-checks use posterior draws and the original fitted data, so they do not
-support `prior = TRUE` or `newdata`.
+Missing responses are omitted from the observed-data check. LOO
+predictive checks use posterior draws and the original fitted data, so
+they do not support `prior = TRUE` or `newdata`. For GARMA models, they
+default to `arma = TRUE` to match the one-step-ahead log-likelihood used
+for the LOO weights.
 
 ## See also
 

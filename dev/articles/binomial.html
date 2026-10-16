@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -237,6 +238,9 @@ logit scale, where the linear trends are modeled:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot_dpar</a></span><span class="op">(</span><span class="va">fit</span>, scale <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Not showing 17 data point(s) with infinite values on the linear scale.</span></span></code></pre>
 <p><img src="binomial_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
+<p>Data points with zero or all successes (<code>y = 0</code> or
+<code>y = N</code>) are at <span class="math inline">\pm\infty</span> on
+the logit scale, so they are not shown, as the message says.</p>
 <p>These plots work with <a href="../articles/group_effects.html">group-level effects</a> as
 well.</p>
 </div>
@@ -255,7 +259,8 @@ Notice that the posterior distribution of change points can be quite
 non-normal and sometimes even bimodal. Therefore, one should be careful
 not to interpret the interval as if it was normal.</p>
 <p><code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <code><a href="../reference/plot_pars.html">plot_pars()</a></code> can do a lot more
-than this, so check out their documentation.</p>
+than this, so check out the <a href="../articles/plotting.html">plotting
+article</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="priors-for-binomial-models">Priors for binomial models<a class="anchor" aria-label="anchor" href="#priors-for-binomial-models"></a>
@@ -277,21 +282,21 @@ so it ran with default priors:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span>  <span class="co"># Raw view</span></span>
 <span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># Richer view. Try adding verbose = TRUE</span></span></code></pre></div>
 <pre><code><span><span class="co">##             [,1]                            </span></span>
-<span><span class="co">## cp_1        "dunif(cp_0, cp_3)"             </span></span>
-<span><span class="co">## cp_2        "dunif(cp_0, cp_3)"             </span></span>
+<span><span class="co">## cp_1        "dunif(min(year), max(year))"   </span></span>
+<span><span class="co">## cp_2        "dunif(min(year), max(year))"   </span></span>
 <span><span class="co">## Intercept_1 "dnorm(0, 1.5)"                 </span></span>
 <span><span class="co">## year_2      "dnorm(0, 0.043121968093205169)"</span></span>
 <span><span class="co">## Intercept_3 "dnorm(0, 1.5)"                 </span></span>
 <span><span class="co">## year_3      "dnorm(0, 0.043121968093205169)"</span></span>
 <span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                           bounds               </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 1901, max = 2020) [1901, 2020], ordered</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    uniform(min = 1901, max = 2020) [1901, 2020], ordered</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none                 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    normal(mean = 0, sd = 0.043122) none                 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none                 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    normal(mean = 0, sd = 0.043122) none</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior              bounds               </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dunif(1901, 2020)  [1901, 2020], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_2              3 <span style="color: #BB0000;">NA</span>    dunif(1901, 2020)  [1901, 2020], ordered</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> Intercept_1       1 mu    dnorm(0, 1.5)      none                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> year_2            2 mu    dnorm(0, 0.043122) none                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> Intercept_3       3 mu    dnorm(0, 1.5)      none                 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> year_3            3 mu    dnorm(0, 0.043122) none</span></span></code></pre>
 <p>The priors on change points are discussed extensively in the <a href="../articles/priors.html#cp_prior">prior article</a>. With the
 default logit link, intercepts use <code>dnorm(0, 1.5)</code>, which is
 approximately uniform on the probability scale: its central 95% interval
@@ -354,7 +359,7 @@ links.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(year)) {</span></span>
-<span><span class="co">##     # par_x local to each segment</span></span>
+<span><span class="co">##     # year measured from each segment's change point</span></span>
 <span><span class="co">##     x_local_1_[i_] = min(year[i_], cp_1)</span></span>
 <span><span class="co">##     x_local_2_[i_] = min(year[i_], cp_2) - cp_1</span></span>
 <span><span class="co">##     x_local_3_[i_] = min(year[i_], cp_3) - cp_2</span></span>

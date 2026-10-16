@@ -40,10 +40,18 @@ interpolate_newdata(
 
 - arma:
 
-  Logical. If `TRUE`, preserve the observed response history for
-  conditional AR/MA evaluation. Defaults to `TRUE` when the fit includes
-  [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` terms. Set to
-  `FALSE` to interpolate unconditional trends.
+  How AR/MA terms will be evaluated (see
+  [`predict.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)).
+  Defaults to `TRUE` when the fit includes
+  [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` terms.
+
+  - `TRUE`: Preserve the observed rows and response history for
+    conditional AR/MA evaluation.
+
+  - `FALSE`: Interpolate unconditional trends.
+
+  - `"replicate"`: Preserve the observed rows, because AR/MA terms
+    depend on the previous rows.
 
 - prior:
 
@@ -109,16 +117,14 @@ head(fitted(demo_fit, newdata))
 prediction = predict(demo_fit, newdata, summary = FALSE)
 head(prediction)
 #> # A tibble: 6 × 13
-#>    time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2
-#>   <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>
-#> 1 0.619         1      1          1     1  31.9  71.0        8.95  0.584
-#> 2 0.619         1      1          2     2  31.7  71.4        9.87  0.566
-#> 3 0.619         1      1          3     3  32.1  70.5       11.4   0.526
-#> 4 0.619         1      1          4     4  33.3  72.8       10.1   0.561
-#> 5 0.619         1      1          5     5  31.7  69.9        9.97  0.466
-#> 6 0.619         1      1          6     6  33.3  69.9       10.0   0.536
-#> # ℹ 4 more variables: Intercept_3 <dbl>, time_3 <dbl>, sigma_1 <dbl>,
-#> #   .prediction <dbl>
+#>    time  .row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .prediction
+#>   <dbl> <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>   <dbl>       <dbl>
+#> 1 0.619     1      1          1     1  31.9  71.0        8.95  0.584        13.9 -0.155     3.48       11.0 
+#> 2 0.619     1      1          2     2  31.7  71.4        9.87  0.566        15.8 -0.335     3.47        6.17
+#> 3 0.619     1      1          3     3  32.1  70.5       11.4   0.526        12.6 -0.0956    4.02       15.4 
+#> 4 0.619     1      1          4     4  33.3  72.8       10.1   0.561        13.7 -0.174     3.98        1.88
+#> 5 0.619     1      1          5     5  31.7  69.9        9.97  0.466        13.8 -0.158     4.65       18.1 
+#> 6 0.619     1      1          6     6  33.3  69.9       10.0   0.536        12.5 -0.140     3.98        4.23
 
 # Custom plot
 library(ggplot2)

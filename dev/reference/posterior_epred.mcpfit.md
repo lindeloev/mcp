@@ -34,7 +34,7 @@ posterior_predict(
   re_formula = NULL,
   seed = NULL,
   rate = FALSE,
-  conditional = TRUE,
+  arma = TRUE,
   ...
 )
 
@@ -90,7 +90,7 @@ posterior_linpred(object, ...)
     missing response histories are supported only in the original fitted
     data, using retained posterior imputations as histories. Predictions
     are fresh response draws, including at missing rows. With
-    `conditional = FALSE`,
+    `arma = "replicate"`,
     [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
     and
     [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
@@ -137,19 +137,38 @@ posterior_linpred(object, ...)
   Predictions and count-scale fitted values require a trials column in
   `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
   the parameter itself (e.g., success probability) and are unaffected by
-  `rate`.
+  `rate`. Other families do not support `rate = TRUE`. For rates per
+  unit of exposure in models with `offset(log(exposure))`, set
+  `exposure = 1` in `newdata`.
 
 - ...:
 
   Must be empty. Reserved for future use.
 
-- conditional:
+- arma:
 
-  Logical. For AR/MA models, condition on observed response histories
-  (`TRUE`, default) or generate fresh histories recursively (`FALSE`).
-  Applies equally to prior and posterior draws. Predictive checks with
-  [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
-  generate fresh histories.
+  How to include AR and MA effects.
+
+  - `TRUE`: Condition on the observed response history, i.e.,
+    one-step-ahead evaluation of the GARMA residual recurrence. Requires
+    the response variable in `newdata`.
+
+  - `FALSE`: Disregard AR and MA effects. For `family = gaussian()`,
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+    uses only `sigma` for residuals.
+
+  - `"replicate"`: Generate fresh response series recursively instead of
+    conditioning on the observed responses. Only for predictions:
+    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+    `posterior_predict()`, and
+    [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
+    (where it is the default). Applies equally to prior and posterior
+    draws.
+
+  For posterior evaluation of the original data, retained JAGS
+  imputations supply missing GARMA histories. In models with group-level
+  effects, this currently requires all such effects
+  (`group_effects = TRUE`).
 
 - transform:
 
@@ -166,14 +185,14 @@ A numeric `N_draws` by `nrow(newdata)` matrix.
 For GARMA models, `posterior_predict()` conditions on the observed
 response history, just like
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
-Use `conditional = FALSE` in either method to generate fresh response
+Use `arma = "replicate"` in either method to generate fresh response
 histories recursively. Missing responses in the original data are filled
-with retained imputations only to supply histories. Conditional
+with retained imputations only to supply histories. With `arma = TRUE`,
 `posterior_predict()` draws from the response distributions whose means
 `posterior_epred()` returns, including at missing rows. These methods
 require posterior draws. For prior prediction, use
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-with `prior = TRUE`; `conditional` selects the same behavior.
+with `prior = TRUE`; `arma` selects the same behavior.
 
 For binomial models, `posterior_epred()` and `posterior_predict()` (and
 corresponding `{tidybayes}` workflows such as `add_epred_draws()`)

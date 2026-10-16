@@ -102,17 +102,17 @@ prior_summary(empty_manual)  # For more details: add verbose = TRUE
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                         bounds           
-    ##   <chr>         <int> <chr> <chr>                                         <chr>            
-    ## 1 cp_1              2 NA    normal(mean = 30, sd = 10)                    [1, 100], ordered
-    ## 2 cp_2              3 NA    80                                            none             
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                      [-Inf, 10]       
-    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                  [0, 1]           
-    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.529)              none             
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)    [x_1, Inf]       
-    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.529)              none             
-    ## 8 x_3               3 mu    x_2                                           none             
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, Inf]
+    ##   parameter   segment dpar  prior                   bounds           
+    ##   <chr>         <int> <chr> <chr>                   <chr>            
+    ## 1 cp_1              2 NA    dnorm(30, 10) T(1, 100) [1, 100], ordered
+    ## 2 cp_2              3 NA    80                      none             
+    ## 3 Intercept_1       1 mu    dnorm(0, 5) T(, 10)     [-Inf, 10]       
+    ## 4 x_1               1 mu    dbeta(2, 5)             [0, 1]           
+    ## 5 Intercept_2       2 mu    dnorm(50.5, 72.529)     none             
+    ## 6 x_2               2 mu    dt(0, 1, 3) T(x_1, )    [x_1, Inf]       
+    ## 7 Intercept_3       3 mu    dnorm(50.5, 72.529)     none             
+    ## 8 x_3               3 mu    x_2                     none             
+    ## 9 sigma_1           1 sigma dt(0, 37.1, 3) T(0, )   [0, Inf]
 
 ``` r
 
@@ -120,17 +120,17 @@ prior_summary(empty_default)  # For more details: add verbose = TRUE
 ```
 
     ## # A tibble: 9 × 5
-    ##   parameter   segment dpar  prior                                         bounds           
-    ##   <chr>         <int> <chr> <chr>                                         <chr>            
-    ## 1 cp_1              2 NA    uniform(min = 1, max = 100)                   [1, 100], ordered
-    ## 2 cp_2              3 NA    uniform(min = 1, max = 100)                   [1, 100], ordered
-    ## 3 Intercept_1       1 mu    normal(mean = 50.5 - x_1 * 1, sd = 72.529)    none             
-    ## 4 x_1               1 mu    normal(mean = 0, sd = 2.5)                    none             
-    ## 5 Intercept_2       2 mu    normal(mean = 50.5, sd = 72.529)              none             
-    ## 6 x_2               2 mu    normal(mean = 0, sd = 2.5)                    none             
-    ## 7 Intercept_3       3 mu    normal(mean = 50.5, sd = 72.529)              none             
-    ## 8 x_3               3 mu    normal(mean = 0, sd = 2.5)                    none             
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 37.1) [0, Inf]
+    ##   parameter   segment dpar  prior                         bounds           
+    ##   <chr>         <int> <chr> <chr>                         <chr>            
+    ## 1 cp_1              2 NA    dunif(1, 100)                 [1, 100], ordered
+    ## 2 cp_2              3 NA    dunif(1, 100)                 [1, 100], ordered
+    ## 3 Intercept_1       1 mu    dnorm(50.5 - x_1 * 1, 72.529) none             
+    ## 4 x_1               1 mu    dnorm(0, 2.5)                 none             
+    ## 5 Intercept_2       2 mu    dnorm(50.5, 72.529)           none             
+    ## 6 x_2               2 mu    dnorm(0, 2.5)                 none             
+    ## 7 Intercept_3       3 mu    dnorm(50.5, 72.529)           none             
+    ## 8 x_3               3 mu    dnorm(0, 2.5)                 none             
+    ## 9 sigma_1           1 sigma dt(0, 37.1, 3) T(0, )         [0, Inf]
 
 Now, let’s simulate some data from `model`. The following priors are “at
 odds” with the actual data so as to show their effect.
@@ -219,17 +219,17 @@ prior_summary(fit_manual, verbose = TRUE)
 ```
 
     ## # A tibble: 9 × 9
-    ##   parameter   segment dpar  prior                                        bounds                     rule                                                                description                                                                                     source  kind        
-    ##   <chr>         <int> <chr> <chr>                                        <chr>                      <chr>                                                               <chr>                                                                                           <chr>   <chr>       
-    ## 1 cp_1              2 NA    normal(mean = 30, sd = 10)                   [0.02389, 98.889], ordered normal(mean = 30, sd = 10)                                          User-specified prior, truncated to the observed range of x, restricted to ordered change points user    distribution
-    ## 2 cp_2              3 NA    80                                           none                       80                                                                  Fixed at 80                                                                                     user    constant    
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 5)                     [-Inf, 10]                 normal(mean = 0, sd = 5)                                            User-specified prior                                                                            user    distribution
-    ## 4 x_1               1 mu    beta(shape1 = 2, shape2 = 5)                 [0, 1]                     beta(shape1 = 2, shape2 = 5)                                        User-specified prior                                                                            user    distribution
-    ## 5 Intercept_2       2 mu    normal(mean = 24.322, sd = 26.856)           none                       normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                                                               default distribution
-    ## 6 x_2               2 mu    student_t(df = 3, location = 0, scale = 1)   [x_1, Inf]                 student_t(df = 3, location = 0, scale = 1)                          User-specified prior                                                                            user    distribution
-    ## 7 Intercept_3       3 mu    normal(mean = 24.322, sd = 26.856)           none                       normal(mean = mean(y), sd = 2.5 * sd(y))                            Mean intercept (rstanarm default)                                                               default distribution
-    ## 8 x_3               3 mu    x_2                                          none                       x_2                                                                 Same value as x_2                                                                               user    alias       
-    ## 9 sigma_1           1 sigma student_t(df = 3, location = 0, scale = 9.9) [0, Inf]                   student_t(df = 3, location = 0, scale = max(2.5, round(mad(y), 1))) Positive residual SD calibrated on the response scale                                           default distribution
+    ##   parameter   segment dpar  prior                            bounds                     rule                                        description                                                                                     source  kind        
+    ##   <chr>         <int> <chr> <chr>                            <chr>                      <chr>                                       <chr>                                                                                           <chr>   <chr>       
+    ## 1 cp_1              2 NA    dnorm(30, 10) T(0.02389, 98.889) [0.02389, 98.889], ordered dnorm(30, 10) T(min(x), max(x))             User-specified prior, truncated to the observed range of x, restricted to ordered change points user    distribution
+    ## 2 cp_2              3 NA    80                               none                       80                                          Fixed at 80                                                                                     user    constant    
+    ## 3 Intercept_1       1 mu    dnorm(0, 5) T(, 10)              [-Inf, 10]                 dnorm(0, 5) T(, 10)                         User-specified prior                                                                            user    distribution
+    ## 4 x_1               1 mu    dbeta(2, 5)                      [0, 1]                     dbeta(2, 5)                                 User-specified prior                                                                            user    distribution
+    ## 5 Intercept_2       2 mu    dnorm(24.322, 26.856)            none                       dnorm(mean(y), 2.5 * sd(y))                 Mean intercept (rstanarm default)                                                               default distribution
+    ## 6 x_2               2 mu    dt(0, 1, 3) T(x_1, )             [x_1, Inf]                 dt(0, 1, 3) T(x_1, )                        User-specified prior                                                                            user    distribution
+    ## 7 Intercept_3       3 mu    dnorm(24.322, 26.856)            none                       dnorm(mean(y), 2.5 * sd(y))                 Mean intercept (rstanarm default)                                                               default distribution
+    ## 8 x_3               3 mu    x_2                              none                       x_2                                         Same value as x_2                                                                               user    alias       
+    ## 9 sigma_1           1 sigma dt(0, 9.9, 3) T(0, )             [0, Inf]                   dt(0, max(2.5, round(mad(y), 1)), 3) T(0, ) Positive residual SD calibrated on the response scale                                           default distribution
 
 This is a contrived example. Usually setting priors manually aims to
 sample the “correct” posterior.
@@ -268,91 +268,89 @@ Change points are always ordered, `cp_1 < cp_2 < ... < cp_n`. Without
 this, the segments could swap places between draws (“label switching”),
 and the change points would not be identifiable. In `mcp`, **each change
 point keeps its specified prior, restricted to ordered change points.**
-`cp_1` always has the prior specified for `cp_1`. When change points
-have group-level deviations, their locations are additionally ordered
-within every group.
+When change points have group-level deviations, their locations are
+additionally ordered within every group.
 
-The default prior on change points is a flat Dirichlet prior on the
-segment lengths, also known as “uniform order statistics”. The article
-on default priors [describes it and its
-math](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#change-points).
+You saw the consequences above. The default priors specify
+`dunif(min(x), max(x))` for every change point, but in the [prior
+plot](#setting-a-prior), the marginal priors of `cp_1` and `cp_2` are
+triangular rather than flat, because `cp_1` must be before `cp_2`.
+Together, this is a flat Dirichlet prior on the segment lengths (see
+[the math and more
+visualizations](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#change-points)).
 
-### Inspecting priors on change points
+To exemplify how mcp handles user-specified priors for change points:
 
-- **`fit$prior` and `prior_summary(fit)`** show the prior specified for
-  each change point. The default is `dunif(min(x), max(x))` on each
-  change point, i.e., a uniform distribution on the observed range of
-  `par_x`. In `fit$prior`, `min(x)` and `max(x)` are written as `cp_0`
-  and `cp_K`, e.g., `cp_3` with two change points. `prior_summary(fit)`
-  shows them as numbers, and its `bounds` column marks change points as
-  “ordered”. `prior_summary(fit, verbose = TRUE)` describes which
-  restrictions `mcp` applied.
-- **`plot_pars(fit, prior = TRUE)`** shows the marginal priors, i.e.,
-  after the ordering. Where the specified priors overlap, the marginal
-  priors differ from them. For example, the default priors on `cp_1` and
-  `cp_2` in the plot [above](#setting-a-prior) are not flat but
-  triangular, because `cp_1` must be before `cp_2`. Use
-  `mcp(..., sample = "prior")` or `sample = "both"` to get prior draws.
-- **`fit$jags_code`** shows how JAGS samples them. See [From formulas to
-  sampler
-  code](https://lindeloev.github.io/mcp/dev/articles/implementation.html#change-point-priors).
+``` r
 
-### Setting priors on change points
+# Overwrite the default priors
+prior_cp = list(
+  cp_1 = "dnorm(30, 10)",  # Truncated to the observed range of x
+  cp_2 = "dnorm(cp_1 + 30, 10) T(cp_1 + 20, )"  # Around 30 after cp_1, but at least 20
+)
 
-You can set priors on change points as shown in the initial example.
-Here are the rules:
+# Show mcp's "understanding" of these
+empty_cp = mcp(model, data = df_dummy, prior = prior_cp, sample = FALSE)
+prior_summary(empty_cp)
+```
+
+    ## # A tibble: 9 × 5
+    ##   parameter   segment dpar  prior                                  bounds                   
+    ##   <chr>         <int> <chr> <chr>                                  <chr>                    
+    ## 1 cp_1              2 NA    dnorm(30, 10) T(1, 100)                [1, 100], ordered        
+    ## 2 cp_2              3 NA    dnorm(cp_1 + 30, 10) T(cp_1 + 20, 100) [cp_1 + 20, 100], ordered
+    ## 3 Intercept_1       1 mu    dnorm(50.5 - x_1 * 1, 72.529)          none                     
+    ## 4 x_1               1 mu    dnorm(0, 2.5)                          none                     
+    ## 5 Intercept_2       2 mu    dnorm(50.5, 72.529)                    none                     
+    ## 6 x_2               2 mu    dnorm(0, 2.5)                          none                     
+    ## 7 Intercept_3       3 mu    dnorm(50.5, 72.529)                    none                     
+    ## 8 x_3               3 mu    dnorm(0, 2.5)                          none                     
+    ## 9 sigma_1           1 sigma dt(0, 37.1, 3) T(0, )                  [0, Inf]
+
+The `bounds` column shows how `mcp` resolved the bounds of `cp_1` and
+`cp_2`. The rules are:
 
 - **Lower and upper bounds.** Priors without
   [`dunif()`](https://rdrr.io/r/stats/Uniform.html) or
   [`T()`](https://rdrr.io/r/base/logical.html) are truncated to the
-  observed range of x, e.g., `dnorm(30, 10)` becomes
-  `dnorm(30, 10) T(min(x), max(x))`. The lower and upper bounds that you
-  set in [`dunif()`](https://rdrr.io/r/stats/Uniform.html) or
-  [`T()`](https://rdrr.io/r/base/logical.html) are used unchanged, also
-  beyond the data, e.g., to place a change point in the future as in
-  [this forecasting
+  observed range of x, as for `cp_1` above. Bounds that you set are used
+  unchanged, also beyond the data, e.g., `cp_2 = "dunif(90, 150)"` to
+  place a change point in the future as in [this forecasting
   example](https://lindeloev.github.io/mcp/dev/articles/predict.html#forecasting-with-future-change-points).
   JAGS cannot truncate
   [`dunif()`](https://rdrr.io/r/stats/Uniform.html), so set its bounds
   as its arguments instead of using
   [`T()`](https://rdrr.io/r/base/logical.html).
-- **Minimum segment lengths.** To make the segment between `cp_1` and
-  `cp_2` at least 20 long, write the previous change point plus the
-  length as the lower bound: `cp_2 = "dunif(cp_1 + 20, max(x))"` or
-  `cp_2 = "dnorm(70, 10) T(cp_1 + 20, )"`. An empty upper bound defaults
-  to `max(x)`. Like the ordering, the minimum segment length is a
-  restriction, not JAGS’s renormalizing truncation `T(cp_1 + 20, )`.
-  Other references to change points in the lower and upper bounds are
-  errors, because change points are already ordered. A lower bound of
-  just the previous change point, e.g., `dunif(cp_1, max(x))` as in
-  `mcp` v0.3, is not needed and gives a warning.
-- **Fixed change points** such as `cp_2 = 80` are also ordered, i.e.,
-  `cp_1` stays below 80.
-- **Conditional priors.** Priors can refer to other change points in
-  their distribution parameters, e.g., `cp_3 = "dnorm(cp_2 + 30, 10)"`.
-  Each change point then has its prior given the change points it refers
-  to, still restricted to ordered change points. If JAGS stops with
-  “Slicer stuck at value with infinite density”, the conditional prior
-  has (practically) no probability within its lower and upper bounds for
-  some values of the change points it refers to. Widen the prior or its
-  bounds.
-- **Regular spacing.** `cp_1 = "dirichlet(2)"` sets a Dirichlet prior
-  with \alpha = 2 on all change points, which makes short segments less
-  likely and so favors evenly spaced change points away from the ends of
-  the observed range. \alpha = 1 is the default prior. All change points
-  share the same \alpha, so it cannot be combined with other priors on
-  change points. See [the
+- **Minimum segment lengths.** Set the previous change point plus the
+  length as the lower bound, as `T(cp_1 + 20, )` above or
+  `dunif(cp_1 + 20, max(x))`. An empty upper bound defaults to `max(x)`.
+  Like the ordering, this is a restriction, not JAGS’s renormalizing
+  truncation. Other references to change points in the bounds are
+  errors. A lower bound of just the previous change point, e.g.,
+  `dunif(cp_1, max(x))` as in `mcp` v0.3, is not needed and gives a
+  warning.
+- **Conditional priors.** Distribution parameters can refer to other
+  change points, as `cp_1 + 30` above. If JAGS stops with “Slicer stuck
+  at value with infinite density”, the conditional prior has
+  (practically) no probability within its bounds for some values of the
+  change points it refers to. Widen the prior or its bounds.
+- **Regular spacing.** `prior = list(cp_1 = "dirichlet(2)")` makes short
+  segments less likely and so favors evenly spaced change points away
+  from the ends of the observed range. `dirichlet(1)` is the default
+  prior. It applies to all change points, so it cannot be combined with
+  other priors on change points. See [the
   math](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#dirichlet).
-- **Initial values.** All chains start at the same, equally spaced
-  change points, moved inside the bounds of their priors if needed. Set
-  other initial values using, e.g., `mcp(..., inits = list(cp_1 = 30))`,
-  as long as they are ordered. More details on initialization in [the
-  implementation
-  article](https://lindeloev.github.io/mcp/dev/articles/implementation.html#initial-values).
+- **Initial values.** All chains start at equally spaced change points,
+  moved inside their bounds if needed. Set others using, e.g.,
+  `mcp(..., inits = list(cp_1 = 30))`, as long as they are ordered. See
+  [initial
+  values](https://lindeloev.github.io/mcp/dev/articles/implementation.html#initial-values).
 
 ## JAGS code
 
-Here is the JAGS code for `fit_manual`:
+Here is the JAGS code for `fit_manual`. See [From formulas to sampler
+code](https://lindeloev.github.io/mcp/dev/articles/implementation.html#change-point-priors)
+for how it implements the priors on change points.
 
 ``` r
 
@@ -380,7 +378,7 @@ fit_manual$jags_code
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
-    ##     # par_x local to each segment
+    ##     # x measured from each segment's change point
     ##     x_local_1_[i_] = min(x[i_], cp_1)
     ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1
     ##     x_local_3_[i_] = min(x[i_], cp_3) - cp_2

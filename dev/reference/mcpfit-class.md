@@ -35,4 +35,10 @@ Components:
 - `simulate`: A function to simulate data from supplied parameter
   values.
 
+- `version`: A named list of
+  [package_version](https://rdrr.io/r/base/numeric_version.html)s for
+  `mcp`, `R`, `rjags`, and `jags`, e.g., `fit$version$mcp >= "0.4.0"`.
+  `rjags` and `jags` are `NULL` for fits with `sample = "none"`. `NULL`
+  for fits made with mcp \< 0.4.0.
+
 - `.internal`: Information used internally by mcp.

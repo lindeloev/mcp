@@ -60,7 +60,24 @@ Let us see the two intercepts (lambda in log-units) and the change point
 ``` r
 
 result = summary(fit)
+result
 ```
+
+    ## Family: poisson
+    ## Links: mu = log
+    ## Draws: 9000 (3 chains with iter = 3000)
+    ## Segments:
+    ##   1: n ~ 1
+    ##   2: ~ 1
+    ## 
+    ## Change point parameters:
+    ##    parameter    mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##  cp_1        1890.48 2.513 1886.15 1896.53 1.00     1944      990
+    ## 
+    ## Population-level parameters:
+    ##    parameter    mean    sd   lower   upper rhat ess_bulk ess_tail
+    ##  Intercept_1    1.13 0.094    0.94    1.31 1.00     4302     4741
+    ##  Intercept_2   -0.09 0.129   -0.35    0.15 1.00     4472     5006
 
 We can see that the model ran well with good convergence and large
 effective sample sizes. At a first glance, the change point is estimated
@@ -123,11 +140,11 @@ prior_summary(fit)
 ```
 
     ## # A tibble: 3 × 5
-    ##   parameter   segment dpar  prior                           bounds               
-    ##   <chr>         <int> <chr> <chr>                           <chr>                
-    ## 1 cp_1              2 NA    uniform(min = 1851, max = 1962) [1851, 1962], ordered
-    ## 2 Intercept_1       1 mu    normal(mean = 0, sd = 2.5)      none                 
-    ## 3 Intercept_2       2 mu    normal(mean = 0, sd = 2.5)      none
+    ##   parameter   segment dpar  prior             bounds               
+    ##   <chr>         <int> <chr> <chr>             <chr>                
+    ## 1 cp_1              2 NA    dunif(1851, 1962) [1851, 1962], ordered
+    ## 2 Intercept_1       1 mu    dnorm(0, 2.5)     none                 
+    ## 3 Intercept_2       2 mu    dnorm(0, 2.5)     none
 
 As always, the prior on the change point forces it to occur in the
 observed range. The coefficient priors are deliberately broad defaults,
@@ -181,6 +198,22 @@ model = list(
 fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
 ```
 
+[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+returns expected counts given each row’s exposure. To get expected rates
+per unit of exposure, set the exposure to 1 in `newdata`, so that the
+offset is \log(1) = 0:
+
+``` r
+
+fitted(fit, newdata = transform(df, exposure = 1))
+```
+
+This works the same way for
+[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+which then returns predicted counts at unit exposure. The
+`fitted(..., rate = TRUE)` argument does not apply for NB; it is only
+for binomial models, where it converts counts to proportions of trials.
+
 Adding a categorical predictor to the model, you can also model rate
 ratios. When an offset is present, `mcp` automatically shifts the
 default intercept prior from centering on observed log-counts to
@@ -219,7 +252,7 @@ fit_decay = mcp(list(n ~ 1 + I(date - 1851)), data = df, family = poisson(), par
 plot(fit_flat) + plot(fit_decay)
 ```
 
-![](poisson_files/figure-html/unnamed-chunk-11-1.png)
+![](poisson_files/figure-html/unnamed-chunk-12-1.png)
 
 Now we compute and compare the LOO ELPDs:
 
@@ -241,15 +274,15 @@ fit_decay_loo = loo(fit_decay)
 loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
 ```
 
-    ## 
-    ## Diagnostic flags present.
-    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
-
     ##   model elpd_diff se_diff p_worse       diag_diff      diag_elpd
     ##  model1       0.0     0.0      NA                 4 k_psis > 0.7
     ##  model3      -3.2     3.6    0.82 |elpd_diff| < 4               
     ##  model2     -32.9     8.3    1.00
+
+    ## 
+    ## Diagnostic flags present.
+    ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+    ## or https://mc-stan.org/loo/reference/loo-glossary.html.
 
 The flat model is clearly worse, with `elpd_diff / se_diff` around 4, so
 the disaster rate did decrease. The change point model is preferred over
@@ -298,7 +331,7 @@ fit$jags_code
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(date)) {
-    ##     # par_x local to each segment
+    ##     # date measured from each segment's change point
     ##     x_local_1_[i_] = min(date[i_], cp_1)
     ##     x_local_2_[i_] = min(date[i_], cp_2) - cp_1
     ##     

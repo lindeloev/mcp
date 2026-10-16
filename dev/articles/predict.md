@@ -44,13 +44,12 @@ model = list(
 fit = mcp(model, data = data)
 ```
 
-This is what the data and inferred fit look like with a 95% central
-posterior interval for the expected response and an 80% posterior
-predictive interval:
+This is what the data and inferred fit look like with 80% central
+intervals for the expected response and for the posterior predictive:
 
 ``` r
 
-plot(fit, q_fit = TRUE, q_predict = c(0.1, 0.9))
+plot(fit, interval = c("fitted", "predict"), width = 0.8)
 ```
 
 ![](predict_files/figure-html/unnamed-chunk-4-1.png)
@@ -60,7 +59,7 @@ To review what we see here:
 - The black dots are the data from `data`.
 - The gray lines are 25 posterior draws (control using
   `plot(fit, lines = 100)`).
-- The dashed red lines are the 2.5% and 97.5% quantiles of the fitted
+- The dashed red lines are the 10% and 90% quantiles of the fitted
   (expected) values.
 - The green lines are the 10% and 90% quantiles of the predicted values.
 - The blue curves on the x-axis are the posterior distributions of the
@@ -230,20 +229,25 @@ above:
 ``` r
 
 predict(fit, summary = FALSE) |>
-  dplyr::group_by(.data_row, time) |>
+  dplyr::group_by(.row, time) |>  # Group by original data row. Keep time as column in reframe().
   dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .prediction = quantile(.prediction, quantile)) |>
   head()
 ```
 
     ## # A tibble: 6 × 4
-    ##   .data_row  time quantile .prediction
-    ##       <int> <dbl>    <dbl>       <dbl>
-    ## 1         1  76.3      0.1        7.80
-    ## 2         1  76.3      0.5       12.9 
-    ## 3         1  76.3      0.9       18.0 
-    ## 4         2  83.5      0.1        6.47
-    ## 5         2  83.5      0.5       11.4 
-    ## 6         2  83.5      0.9       16.5
+    ##    .row  time quantile .prediction
+    ##   <int> <dbl>    <dbl>       <dbl>
+    ## 1     1  76.3      0.1        7.80
+    ## 2     1  76.3      0.5       12.9 
+    ## 3     1  76.3      0.9       18.0 
+    ## 4     2  83.5      0.1        6.47
+    ## 5     2  83.5      0.5       11.4 
+    ## 6     2  83.5      0.9       16.5
+
+See the [plotting
+article](https://lindeloev.github.io/mcp/dev/articles/plotting.md) for
+adding custom quantiles to
+[`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md).
 
 ## Residuals
 
@@ -251,7 +255,7 @@ predict(fit, summary = FALSE) |>
 is simply `data$response - fitted()`. It may be useful for model
 checking, but the typical needs are covered using posterior predictive
 checking (`pp_check(fit)`) and visual inspection of
-`plot(fit, q_fit = TRUE, q_predict = TRUE)`.
+`plot(fit, interval = c("fitted", "predict"))`.
 
 ## Forecasting with future change points
 
@@ -324,6 +328,10 @@ fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
 
     ## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.
 
+    ## Warning: Some parameters may not have converged well:
+    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_3 and Intercept_3 and time_3
+    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
+
 ### Step 3: predict!
 
 We can now compute the 80% posterior predictive interval at
@@ -337,7 +345,7 @@ predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
     ## # A tibble: 1 × 5
     ##    time .mean   .sd .lower .upper
     ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1   125  7.64  5.48 0.0890   14.2
+    ## 1   125  7.33  5.62 -0.455   14.0
 
 To really understand what’s going on here, it may be helpful to
 visualize the model. For now, we will have to hack this a bit too,
@@ -387,4 +395,4 @@ lower bound of the prior on the future change point (`cp_3`) to the last
 data point (`max(time)`), so that it occurs *after* it, i.e., at
 `time > 100`. This is knowledge that the third change point had not yet
 been observed at `time = 100`, and this pushes the distribution further
-into the future (actually around 120; see `summary(fit_forecast)`).
+into the future (actually around 122; see `summary(fit_forecast)`).

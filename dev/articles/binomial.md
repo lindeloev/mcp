@@ -167,6 +167,10 @@ plot_dpar(fit, scale = "linear")
 
 ![](binomial_files/figure-html/unnamed-chunk-10-1.png)
 
+Data points with zero or all successes (`y = 0` or `y = N`) are at
+\pm\infty on the logit scale, so they are not shown, as the message
+says.
+
 These plots work with [group-level
 effects](https://lindeloev.github.io/mcp/dev/articles/group_effects.md)
 as well.
@@ -193,7 +197,8 @@ not to interpret the interval as if it was normal.
 [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
 and
 [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md)
-can do a lot more than this, so check out their documentation.
+can do a lot more than this, so check out the [plotting
+article](https://lindeloev.github.io/mcp/dev/articles/plotting.md).
 
 ## Priors for binomial models
 
@@ -219,21 +224,21 @@ prior_summary(fit)  # Richer view. Try adding verbose = TRUE
 ```
 
     ##             [,1]                            
-    ## cp_1        "dunif(cp_0, cp_3)"             
-    ## cp_2        "dunif(cp_0, cp_3)"             
+    ## cp_1        "dunif(min(year), max(year))"   
+    ## cp_2        "dunif(min(year), max(year))"   
     ## Intercept_1 "dnorm(0, 1.5)"                 
     ## year_2      "dnorm(0, 0.043121968093205169)"
     ## Intercept_3 "dnorm(0, 1.5)"                 
     ## year_3      "dnorm(0, 0.043121968093205169)"
     ## # A tibble: 6 × 5
-    ##   parameter   segment dpar  prior                           bounds               
-    ##   <chr>         <int> <chr> <chr>                           <chr>                
-    ## 1 cp_1              2 NA    uniform(min = 1901, max = 2020) [1901, 2020], ordered
-    ## 2 cp_2              3 NA    uniform(min = 1901, max = 2020) [1901, 2020], ordered
-    ## 3 Intercept_1       1 mu    normal(mean = 0, sd = 1.5)      none                 
-    ## 4 year_2            2 mu    normal(mean = 0, sd = 0.043122) none                 
-    ## 5 Intercept_3       3 mu    normal(mean = 0, sd = 1.5)      none                 
-    ## 6 year_3            3 mu    normal(mean = 0, sd = 0.043122) none
+    ##   parameter   segment dpar  prior              bounds               
+    ##   <chr>         <int> <chr> <chr>              <chr>                
+    ## 1 cp_1              2 NA    dunif(1901, 2020)  [1901, 2020], ordered
+    ## 2 cp_2              3 NA    dunif(1901, 2020)  [1901, 2020], ordered
+    ## 3 Intercept_1       1 mu    dnorm(0, 1.5)      none                 
+    ## 4 year_2            2 mu    dnorm(0, 0.043122) none                 
+    ## 5 Intercept_3       3 mu    dnorm(0, 1.5)      none                 
+    ## 6 year_3            3 mu    dnorm(0, 0.043122) none
 
 The priors on change points are discussed extensively in the [prior
 article](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior).
@@ -307,7 +312,7 @@ fit$jags_code
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(year)) {
-    ##     # par_x local to each segment
+    ##     # year measured from each segment's change point
     ##     x_local_1_[i_] = min(year[i_], cp_1)
     ##     x_local_2_[i_] = min(year[i_], cp_2) - cp_1
     ##     x_local_3_[i_] = min(year[i_], cp_3) - cp_2

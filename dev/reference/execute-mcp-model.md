@@ -26,7 +26,6 @@ predict(
   samples_format = lifecycle::deprecated(),
   varying = lifecycle::deprecated(),
   probs = lifecycle::deprecated(),
-  conditional = TRUE,
   ...
 )
 
@@ -112,7 +111,7 @@ residuals(
     response histories are supported only in the original fitted data,
     using retained posterior imputations as histories. Predictions are
     fresh response draws, including at missing rows. With
-    `conditional = FALSE`, `predict()` and
+    `arma = "replicate"`, `predict()` and
     [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
     generate fresh response series recursively, so their `newdata` need
     only contain predictors and required response auxiliaries.
@@ -143,7 +142,10 @@ residuals(
   expected success proportion (`rate = TRUE`). Predictions and
   count-scale fitted values require a trials column in `newdata`.
   Distributional parameters such as `dpar = "mu"` evaluate the parameter
-  itself (e.g., success probability) and are unaffected by `rate`.
+  itself (e.g., success probability) and are unaffected by `rate`. Other
+  families do not support `rate = TRUE`. For rates per unit of exposure
+  in models with `offset(log(exposure))`, set `exposure = 1` in
+  `newdata`.
 
 - prior:
 
@@ -171,16 +173,28 @@ residuals(
 
 - arma:
 
-  Whether to include AR and MA effects.
+  How to include AR and MA effects.
 
-  - `TRUE` Compute the GARMA residual recurrence. Requires the response
-    variable in `newdata`.
+  - `TRUE`: Condition on the observed response history, i.e.,
+    one-step-ahead evaluation of the GARMA residual recurrence. Requires
+    the response variable in `newdata`.
 
-  - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
-    `predict()` uses only `sigma` for residuals. For posterior
-    evaluation of the original data, retained JAGS imputations supply
-    missing GARMA histories. In models with group-level effects, this
-    currently requires all such effects (`group_effects = TRUE`).
+  - `FALSE`: Disregard AR and MA effects. For `family = gaussian()`,
+    `predict()` uses only `sigma` for residuals.
+
+  - `"replicate"`: Generate fresh response series recursively instead of
+    conditioning on the observed responses. Only for predictions:
+    `predict()`,
+    [`posterior_predict()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md),
+    and
+    [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
+    (where it is the default). Applies equally to prior and posterior
+    draws.
+
+  For posterior evaluation of the original data, retained JAGS
+  imputations supply missing GARMA histories. In models with group-level
+  effects, this currently requires all such effects
+  (`group_effects = TRUE`).
 
 - ndraws:
 
@@ -207,14 +221,6 @@ residuals(
 - probs:
 
   Deprecated. Use `width` instead.
-
-- conditional:
-
-  Logical. For AR/MA models, condition on observed response histories
-  (`TRUE`, default) or generate fresh histories recursively (`FALSE`).
-  Applies equally to prior and posterior draws. Predictive checks with
-  [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
-  generate fresh histories.
 
 - ...:
 
@@ -265,17 +271,17 @@ residuals(
 
 - If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes`
   `tibble` with all the posterior draws (`Nd`) evaluated at each row in
-  `newdata` (`Nn`), i.e., with `Nd x Nn` rows, ordered by `.data_row`
-  and then `.draw`. If there are group-level effects, the returned data
-  is expanded with the relevant levels for each row.
+  `newdata` (`Nn`), i.e., with `Nd x Nn` rows, ordered by `.row` and
+  then `.draw`. If there are group-level effects, the returned data is
+  expanded with the relevant levels for each row.
 
   The return columns are:
 
   - Predictors from `newdata`, plus its response column when supplied.
 
   - Draw descriptors: ".chain", ".iteration", ".draw" (see the
-    `posterior` and `tidybayes` packages), and `.data_row`, the row
-    number in the evaluated `newdata`.
+    `posterior` and `tidybayes` packages), and `.row`, the row number in
+    the evaluated `newdata`.
 
   - Draw values: one column for each parameter in the model.
 
@@ -407,16 +413,14 @@ head(predict(demo_fit, prior = TRUE))  # Prior predictive
 #> 6    22.3   40.1  14.2  23.5  -31.2   55.4
 head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 #> # A tibble: 6 × 14
-#>   response  time .data_row .chain .iteration .draw  cp_1  cp_2 Intercept_1
-#>      <dbl> <dbl>     <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>
-#> 1     12.2  76.3         1      1          1     1  31.9  71.0        8.95
-#> 2     12.2  76.3         1      1          2     2  31.7  71.4        9.87
-#> 3     12.2  76.3         1      1          3     3  32.1  70.5       11.4 
-#> 4     12.2  76.3         1      1          4     4  33.3  72.8       10.1 
-#> 5     12.2  76.3         1      1          5     5  31.7  69.9        9.97
-#> 6     12.2  76.3         1      1          6     6  33.3  69.9       10.0 
-#> # ℹ 5 more variables: time_2 <dbl>, Intercept_3 <dbl>, time_3 <dbl>,
-#> #   sigma_1 <dbl>, .epred <dbl>
+#>   response  time  .row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .epred
+#>      <dbl> <dbl> <int>  <int>      <int> <int> <dbl> <dbl>       <dbl>  <dbl>       <dbl>   <dbl>   <dbl>  <dbl>
+#> 1     12.2  76.3     1      1          1     1  31.9  71.0        8.95  0.584        13.9 -0.155     3.48   13.0
+#> 2     12.2  76.3     1      1          2     2  31.7  71.4        9.87  0.566        15.8 -0.335     3.47   14.2
+#> 3     12.2  76.3     1      1          3     3  32.1  70.5       11.4   0.526        12.6 -0.0956    4.02   12.1
+#> 4     12.2  76.3     1      1          4     4  33.3  72.8       10.1   0.561        13.7 -0.174     3.98   13.1
+#> 5     12.2  76.3     1      1          5     5  31.7  69.9        9.97  0.466        13.8 -0.158     4.65   12.8
+#> 6     12.2  76.3     1      1          6     6  33.3  69.9       10.0   0.536        12.5 -0.140     3.98   11.6
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
@@ -431,18 +435,18 @@ head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
 # Custom quantiles from the draws, here for fitted().
 # Note that for predict(), this adds more Monte Carlo error than `width`.
 fitted(demo_fit, summary = FALSE) |>
-  dplyr::group_by(.data_row, time) |>
+  dplyr::group_by(.row, time) |>
   dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .epred = quantile(.epred, quantile)) |>
   head()
 #> # A tibble: 6 × 4
-#>   .data_row  time quantile .epred
-#>       <int> <dbl>    <dbl>  <dbl>
-#> 1         1  76.3      0.1   11.6
-#> 2         1  76.3      0.5   12.8
-#> 3         1  76.3      0.9   14.2
-#> 4         2  83.5      0.1   10.5
-#> 5         2  83.5      0.5   11.4
-#> 6         2  83.5      0.9   12.3
+#>    .row  time quantile .epred
+#>   <int> <dbl>    <dbl>  <dbl>
+#> 1     1  76.3      0.1   11.6
+#> 2     1  76.3      0.5   12.8
+#> 3     1  76.3      0.9   14.2
+#> 4     2  83.5      0.1   10.5
+#> 5     2  83.5      0.5   11.4
+#> 6     2  83.5      0.9   12.3
 
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
@@ -461,32 +465,31 @@ fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses f
 #> # A tibble: 6 × 7
 #>       y     x state .mean   .sd .lower .upper
 #>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    NA     8 B      35.4 1.09    33.2   37.5
-#> 2    NA    19 A      15.5 0.833   13.8   17.1
-#> 3    NA    27 A      17.1 0.759   15.6   18.6
-#> 4    NA    28 B      39.4 0.758   37.9   40.9
-#> 5    NA    29 A      17.5 0.759   16.0   19.0
-#> 6    NA    30 B      39.8 0.760   38.3   41.3
+#> 1    NA     8 B      35.4 1.08    33.2   37.5
+#> 2    NA    19 A      15.5 0.832   13.9   17.1
+#> 3    NA    27 A      17.1 0.761   15.6   18.6
+#> 4    NA    28 B      39.4 0.760   37.9   40.9
+#> 5    NA    29 A      17.5 0.761   16.0   19.0
+#> 6    NA    30 B      39.8 0.762   38.3   41.3
 fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
 #> # A tibble: 6 × 14
-#>       y     x state .data_row .chain .iteration .draw  cp_1 Intercept_1   x_1
-#>   <dbl> <int> <fct>     <int>  <int>      <int> <int> <dbl>       <dbl> <dbl>
-#> 1    NA     8 B             8      1          1     1  54.1        12.9 0.202
-#> 2    NA     8 B             8      1          2     2  54.1        11.8 0.204
-#> 3    NA     8 B             8      1          3     3  57.7        11.7 0.183
-#> 4    NA     8 B             8      1          4     4  61.1        13.0 0.177
-#> 5    NA     8 B             8      1          5     5  57.9        13.7 0.160
-#> 6    NA     8 B             8      1          6     6  58.0        11.0 0.242
-#> # ℹ 4 more variables: stateB_1 <dbl>, x_2 <dbl>, sigma_1 <dbl>, .epred <dbl>
+#>       y     x state  .row .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1 .epred
+#>   <dbl> <int> <fct> <int>  <int>      <int> <int> <dbl>       <dbl> <dbl>    <dbl>  <dbl>   <dbl>  <dbl>
+#> 1    NA     8 B         8      1          1     1  63.6        11.6 0.188     21.9 -0.544    4.32   34.9
+#> 2    NA     8 B         8      1          2     2  62.7        12.4 0.150     24.0 -0.449    5.17   37.6
+#> 3    NA     8 B         8      1          3     3  61.1        12.1 0.162     22.7 -0.393    4.62   36.2
+#> 4    NA     8 B         8      1          4     4  59.5        12.8 0.190     21.8 -0.476    4.48   36.2
+#> 5    NA     8 B         8      1          5     5  55.9        12.0 0.204     22.5 -0.399    4.30   36.2
+#> 6    NA     8 B         8      1          6     6  58.5        11.9 0.183     21.8 -0.424    4.29   35.2
 predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
 #> # A tibble: 6 × 7
 #>       y     x state .mean   .sd .lower .upper
 #>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
 #> 1    NA     8 B      35.4  4.40  26.7    44.1
-#> 2    NA    19 A      15.5  4.36   6.93   24.1
-#> 3    NA    27 A      17.0  4.38   8.55   25.6
-#> 4    NA    28 B      39.4  4.31  30.8    47.9
-#> 5    NA    29 A      17.5  4.34   8.95   26.0
-#> 6    NA    30 B      39.7  4.38  31.2    48.3
+#> 2    NA    19 A      15.5  4.37   6.96   24.1
+#> 3    NA    27 A      17.0  4.38   8.57   25.6
+#> 4    NA    28 B      39.4  4.30  30.9    47.9
+#> 5    NA    29 A      17.5  4.32   8.97   26.0
+#> 6    NA    30 B      39.7  4.36  31.2    48.3
 # }
 ```

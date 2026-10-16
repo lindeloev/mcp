@@ -73,6 +73,7 @@
 <li><a class="dropdown-item" href="articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -167,9 +168,9 @@
 <div class="section level2">
 <h2 id="plot-and-summary">Plot and summary<a class="anchor" aria-label="anchor" href="#plot-and-summary"></a>
 </h2>
-<p>The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add fitted interval (<code>q_fit</code>):</p>
+<p>The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add the 95% central interval of the fitted values (<code>interval = "fitted"</code>):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, q_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Regression with two change points"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, interval <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Regression with two change points"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot-1.png" alt="" width="100%"></p>
 <p>Use <code><a href="reference/summary.mcpfit.html">summary()</a></code> to summarise the posterior distribution as well as sampling diagnostics:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -281,6 +282,11 @@
 <li><p><code>fitted(fit)</code> and <code>predict(fit)</code> take many arguments to predict in-sample and out-of-sample values and intervals.</p></li>
 <li><p>Forecasting with prior knowledge about future change points.</p></li>
 </ul>
+<p><a href="https://lindeloev.github.io/mcp/articles/plotting.html">Plotting</a>:</p>
+<ul>
+<li><p><code>plot(fit, interval = c("fitted", "predict"))</code> shows the fit with central intervals. Use <code>color_by</code>, <code>facet_by</code>, and <code>at</code> for models with several predictors.</p></li>
+<li><p><code><a href="reference/plot.mcpfit.html">plot_dpar()</a></code>, <code><a href="reference/plot_pars.html">plot_pars()</a></code>, and <code><a href="reference/pp_check.html">pp_check()</a></code> plot distributional parameters, parameters, and posterior predictive checks. All return <code>ggplot2</code> objects, and <code><a href="reference/interpolate_newdata.html">interpolate_newdata()</a></code> helps you make your own plots.</p></li>
+</ul>
 <p><a href="https://lindeloev.github.io/mcp/articles/priors.html">Using priors</a>:</p>
 <ul>
 <li><p>See priors in <code>fit$prior</code> or <code>prior_summary(fit)</code> and set priors using <code>mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))</code>.</p></li>
@@ -299,7 +305,7 @@
 <p><a href="https://lindeloev.github.io/mcp/articles/tips.html">Tips, tricks, and debugging</a></p>
 <ul>
 <li><p>Speed up fitting using <code>future::plan(future::multisession, workers = 3)</code>, and/or fewer iterations, <code>mcp(..., warmup = 500)</code>.</p></li>
-<li><p>Help convergence along using <code>mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))</code>.</p></li>
+<li><p>Help convergence along using <code>mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))</code>.</p></li>
 <li><p>Most errors stem from impossible or circularly defined priors.</p></li>
 </ul>
 </div>

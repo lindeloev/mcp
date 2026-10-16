@@ -45,6 +45,7 @@ Read more."><meta property="og:image" content="https://github.com/lindeloev/mcp/
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -102,7 +103,7 @@ the Poisson variance as <code>shape</code> approaches infinity.
 Later segments that do not include <code>shape()</code> are joined. For example, <code>y ~ 1 + x + shape(1 + x)</code>
 models both the mean and shape. Regression coefficients for both dpars are
 on their link scales, e.g., <code>shape_Intercept_1</code> and <code>shape_x_1</code>.</p>
-<p>Without <code>shape()</code>, <code>shape_1</code> is the shape itself with an <code>inv_gamma(0.4, 0.3)</code> prior,
+<p>Without <code>shape()</code>, <code>shape_1</code> is the shape itself with a <code>dinvgamma(0.4, 0.3)</code> prior,
 as in <code>brms</code>, much like the implicit <code>sigma_1</code> in <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">gaussian()</a></code>.</p>
     </div>
 
@@ -113,10 +114,10 @@ as in <code>brms</code>, much like the implicit <code>sigma_1</code> in <code><a
 <span class="r-in"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="mcp.html">mcp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">count</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>, <span class="va">data</span>, family <span class="op">=</span> <span class="fu">negbinomial</span><span class="op">(</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"time"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>  <span class="co"># Show the mean and shape parameters</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 8</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   part      scope role  segment dpar  group_col population_parameter</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Intercept_1 predictor popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> shape_1     predictor popu… coef…       1 shape <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   parameter   part      scope      role        segment dpar  group_col population_parameter</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Intercept_1 predictor population coefficient       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> shape_1     predictor population coefficient       1 shape <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

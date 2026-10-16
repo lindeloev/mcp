@@ -67,6 +67,7 @@
 <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul>
 </li>
@@ -102,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-10-15</h4>
+            <h4 data-toc-skip class="date">2026-10-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -125,7 +126,8 @@ syntax follows <code>lme4</code> and <code>brms</code>:
 <li>Get posteriors using <code>ranef(fit)</code>
 </li>
 <li>Plot using <code>plot(fit, facet_by="my_group")</code> and
-<code>plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)</code>.</li>
+<code>plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)</code>
+(<a href="../articles/plotting.html">more on plotting</a>).</li>
 <li>How group-specific change points are bounded and ordered.</li>
 <li>The article on modeling standard deviation via <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>
 contains <a href="../articles/dpar.html">another group-level
@@ -386,14 +388,14 @@ overview of all default priors</a></em></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/prior_summary.html">prior_summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
-<span><span class="co">##   parameter   segment dpar  prior                                        bounds                         </span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                          </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    uniform(min = 0.02389, max = 98.889)         [0.02389, 98.889], ordered     </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_id_sd        2 <span style="color: #BB0000;">NA</span>    normal(mean = 0, sd = 24.716)                [0, Inf]                       </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 <span style="color: #BB0000;">NA</span>    normal(mean = 0, sd = cp_1_id_sd)            [0.02389 - cp_1, 98.889 - cp_1]</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    normal(mean = 25.186, sd = 18.621)           none                           </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    normal(mean = 0, sd = 0.64588)               none                           </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma student_t(df = 3, location = 0, scale = 5.3) [0, Inf]</span></span></code></pre>
+<span><span class="co">##   parameter   segment dpar  prior                                                 bounds                         </span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                          </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> cp_1              2 <span style="color: #BB0000;">NA</span>    dunif(0.02389, 98.889)                                [0.02389, 98.889], ordered     </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span> cp_1_id_sd        2 <span style="color: #BB0000;">NA</span>    dnorm(0, 24.716) T(0, )                               [0, Inf]                       </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> cp_1_id           2 <span style="color: #BB0000;">NA</span>    dnorm(0, cp_1_id_sd) T(0.02389 - cp_1, 98.889 - cp_1) [0.02389 - cp_1, 98.889 - cp_1]</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> Intercept_1       1 mu    dnorm(25.186, 18.621)                                 none                           </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span> x_2               2 mu    dnorm(0, 0.64588)                                     none                           </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span> sigma_1           1 sigma dt(0, 5.3, 3) T(0, )                                  [0, Inf]</span></span></code></pre>
 <p><code>cp_1_id_sd</code> is the SD of the normal distribution, before
 truncation, governing the <code>cp_1_id</code> deviations. Unlike
 predictor group-level effects, change-point locations are also bounded
@@ -418,7 +420,7 @@ priors on group-level effects</a>.</p>
 <span><span class="co">##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x</span></span>
 <span><span class="co">##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation</span></span>
 <span><span class="co">##   for (id_ in 1:n_unique_id) {</span></span>
-<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Ordered group-level change-point deviations from the population location</span></span>
+<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighbouring change points</span></span>
 <span><span class="co">##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point</span></span>
 <span><span class="co">##   }</span></span>
 <span><span class="co">##   cp_2 = max(x)</span></span>
@@ -430,7 +432,7 @@ priors on group-level effects</a>.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
-<span><span class="co">##     # par_x local to each segment</span></span>
+<span><span class="co">##     # x measured from each segment's change point</span></span>
 <span><span class="co">##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id_index_[i_]]))</span></span>
 <span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id_index_[i_]])</span></span>
 <span><span class="co">##     </span></span>

@@ -39,6 +39,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -149,8 +150,8 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> empty = mcp(model, data, sample = FALSE, par_x = 'x')</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data$y = empty$simulate(empty, data,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = 69.5,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = 99.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = 70,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = 100,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 = 10,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   z_1 = 0.2,</span>
@@ -207,8 +208,8 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> )</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> empty = mcp(model, data, family = binomial(), sample = FALSE)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> data$y = empty$simulate(empty, data,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = 29.5,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = 69.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_1 = 30,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cp_2 = 70,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_1 = 1.5,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Intercept_3 = -1,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   x_2 = -0.15,</span>
@@ -221,7 +222,7 @@ reproduce the data and the fit.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Illustrative plot</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> if (plot) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   set.seed(42)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, q_fit = TRUE)'))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   print(plot(fit, interval = "fitted") + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, interval = "fitted")'))</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Now sample this model</span></span></span>

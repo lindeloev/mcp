@@ -39,6 +39,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -238,26 +239,17 @@ or the prior summary with <code>prior = TRUE</code>. Without the requested draws
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.6369 1.69122 29.4401 33.7774 1.0028     1012      945 30.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.0983 0.99102 69.7097 72.4884 1.0065      869      676 70.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.6369 1.69122 29.4401 33.7774 1.0028     1012      945 30.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.0983 0.99102 69.7097 72.4884 1.0065      869      676 70.0    OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.9675 0.66463  9.1113 10.8454 1.0003     1032      747 10.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.5436 0.04754  0.4826  0.6026 1.0032     1087      970  0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.9661 1.38591 12.2422 15.7274 0.9994      993      823 15.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.2062 0.08367 -0.3078 -0.1008 1.0003      900      740 -0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.8615 0.29314  3.5054  4.2163 1.0027      931      921  3.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean      sd   lower   upper   rhat ess_bulk ess_tail  sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.9675 0.66463  9.1113 10.8454 1.0003     1032      747 10.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.5436 0.04754  0.4826  0.6026 1.0032     1087      970  0.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.9661 1.38591 12.2422 15.7274 0.9994      993      823 15.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.2062 0.08367 -0.3078 -0.1008 1.0003      900      740 -0.3    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.8615 0.29314  3.5054  4.2163 1.0027      931      921  3.5      </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get the results as a tibble</span></span></span>
 <span class="r-in"><span><span class="va">results</span> <span class="op">=</span> <span class="fu">summary</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
