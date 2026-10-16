@@ -441,6 +441,14 @@ mcp = function(
     jags_code = jags_code,
     simulate = get_fitsimulate(parameters),
 
+    # For reproducibility and for detecting fits from older mcp versions. JAGS only when sampled.
+    version = list(
+      mcp = utils::packageVersion("mcp"),
+      R = getRversion(),
+      rjags = if (sample %in% c("post", "prior", "both")) utils::packageVersion("rjags"),
+      jags = if (sample %in% c("post", "prior", "both")) rjags::jags.version()
+    ),
+
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
     .internal = list(

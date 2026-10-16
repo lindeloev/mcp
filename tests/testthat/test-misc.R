@@ -254,18 +254,10 @@ test_that("legacy fit detection blocks pre-0.4.0 mcpfit objects", {
   )
   fit = mcp(list(y ~ 1, ~ cp((1 | id)) + 1), data, par_x = "x", sample = FALSE)
   legacy = fit
-  legacy$family = gaussian()
+  legacy$version = NULL
 
   expect_error(
     get_fit_model_tables(legacy),
-    "install_github",
-    fixed = TRUE
-  )
-
-  missing_role = fit
-  missing_role$.internal$model_tables$parameters$role = NULL
-  expect_error(
-    get_fit_model_tables(missing_role),
     "install_github",
     fixed = TRUE
   )
@@ -637,7 +629,7 @@ test_that("loo relative_eff avoids underflow on large negative log likelihoods",
 
 test_that("legacy mcpfits explain how to reproduce v0.3.4", {
   legacy_fit = demo_fit
-  legacy_fit$.internal$model_tables = NULL
+  legacy_fit$version = NULL
 
   expect_true(legacy_is_mcpfit(legacy_fit))
   expect_error(mcp_pars(legacy_fit), "install_github", fixed = TRUE)

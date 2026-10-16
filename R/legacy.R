@@ -2,11 +2,9 @@
 # Functions are prefixed `legacy_` so that call sites show what to remove in mcp 1.0.
 # The S3 methods `$.mcpfit` and `[[.mcpfit` and the defunct `tidy_samples()` keep their names.
 
-# Check if an mcpfit object was created with mcp < 0.4.0
+# Check if an mcpfit object was created with mcp < 0.4.0, which did not record `fit$version`
 legacy_is_mcpfit = function(fit) {
-  tables = fit$.internal$model_tables
-  !is_mcpfamily(fit$family) || is.null(tables) || is.null(tables$parameters) ||
-    !"role" %in% names(tables$parameters)
+  is.null(fit$version)
 }
 
 

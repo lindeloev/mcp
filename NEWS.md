@@ -24,7 +24,7 @@
 
 - **Missing response imputation:** Missing responses are now retained as posterior JAGS imputations and used to complete response histories in AR/MA models. Predictions generate fresh replicated outcomes at every row; `predict(fit) |> filter(is.na(y))` can be used to see predictive intervals and draws at missing points, and similarly `fitted()` for expected responses. Missing AR/MA histories remain unsupported in `log_lik()`, `loo()`, and `waic()`.
 
-- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This is due to reparameterizations that keep intercepts and slopes relatively independent of earlier segments during sampling and due to (selectively) using the JAGS glm module. The reparameterizations do not change the model or its priors. Compare `fit$jags_code` with `options(mcp_reparam = FALSE)` (plain model) and `options(mcp_reparam = TRUE)` (default). Read more in [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html).
+- **Improved speed and robustness:** ESS/s has improved more than 10-fold and convergence is more likely. This is due to [reparameterizations](https://lindeloev.github.io/mcp/articles/implementation.html) that keep intercepts and slopes relatively independent of earlier segments during sampling and due to (selectively) using the JAGS glm module. The reparameterizations do not change the model or its priors.
 
 ## Major breaking changes
 
@@ -126,6 +126,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
   - Use `mcp(..., seed = 42)` or `set.seed(42)` before `mcp()` for reproducible JAGS sampling, whether chains run sequentially or in parallel. See `mcp_example("demo")$example_code` how to ensure reproducibility across simulation, fit, and plotting.
 
   - `mcp(..., quiet = TRUE)` suppresses routine JAGS output and mcp sampling-status messages while preserving warnings and errors. Use `options(mcp_quiet = TRUE)` to make this the default for the session. The JAGS model-compilation text is no longer printed by default.
+
+  - `fit$version` records the versions of mcp, R, rjags, and JAGS used to make the fit, e.g., `fit$version$mcp >= "0.4.0"`.
 
   - Memory improvement: The `mcpfit` is now \< 10% of the size as before because the log-likelihood is not stored. Use `log_lik(fit)` to compute it, or call `loo(fit)` or `waic(fit)` directly.
 

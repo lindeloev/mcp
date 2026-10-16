@@ -27,6 +27,9 @@
 #' * `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show it.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html).
 #' * `simulate`: A function to simulate data from supplied parameter values.
+#' * `version`: A named list of [package_version]s for `mcp`, `R`, `rjags`,
+#'   and `jags`, e.g., `fit$version$mcp >= "0.4.0"`. `rjags` and `jags` are
+#'   `NULL` for fits with `sample = "none"`. `NULL` for fits made with mcp < 0.4.0.
 #' * `.internal`: Information used internally by mcp.
 NULL
 
