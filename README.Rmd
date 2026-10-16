@@ -263,7 +263,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - Speed up fitting using `future::plan(future::multisession, workers = 3)`, and/or fewer iterations, `mcp(..., warmup = 500)`.
 
-- Help convergence along using `mcp(..., inits = list(Intercept_1 = 10, sigma_1 = 2))`.
+- Help convergence along using `mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))`.
 
 - Most errors stem from impossible or circularly defined priors.
 

@@ -185,7 +185,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - The term "ct" (for "central tendency") has been replaced with `dpar = "epred"` (the default), e.g., in `plot_dpar(fit, dpar = "epred")` and `fitted(fit, dpar = "epred")`. Deprecated `which_y = "ct"` is translated to `dpar = "epred"` with a warning.
 
-  - `mcp(..., inits)` can only set stochastic nodes in `fit$jags_code`. Parameters reparameterized for faster sampling can no longer be initialized directly. Initial values for change points must be ordered.
+  - `mcp(..., inits)` can only set parameters in `mcp_pars(fit)` and errors on other names. Parameters reparameterized for faster sampling can no longer be initialized. Initial values for change points must be ordered.
 
   - `fit$data` now only contains the data columns that are used in the model.
 

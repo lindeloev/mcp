@@ -61,6 +61,12 @@ test_runs = function(model,
   testthat::expect_identical(plain$prior, empty$prior, label = model)
   testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)
 
+  # Passing fit$prior back gives the same model, including reparameterizations of default priors
+  refit = mcp(model = model, data = data, prior = empty$prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE)
+  strip_comments = function(code) gsub("  #[^\n]*", "", code)
+  testthat::expect_identical(strip_comments(refit$jags_code), strip_comments(empty$jags_code), label = model)
+  testthat::expect_identical(refit$.internal$prior_table$source, empty$.internal$prior_table$source, label = model)
+
   level = get_mcp_test_level()
 
   if (sample) {

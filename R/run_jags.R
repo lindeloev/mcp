@@ -180,6 +180,16 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
 }
 
 
+# Check that `inits` only set parameters that are sampled directly
+assert_inits = function(inits, pars, jags_code) {
+  is_sampled = vapply(pars, function(name) grepl(paste0("\\n\\s*", name, "(\\[[^]]*\\])? ~"), jags_code), logical(1))
+  invalid = setdiff(unlist(lapply(if (is.list(inits[[1]])) inits else list(inits), names)), pars[is_sampled])
+  if (length(invalid) > 0)
+    stop("`inits` can only set these parameters of this model: `", paste0(pars[is_sampled], collapse = "`, `"), "`. Got `", paste0(unique(invalid), collapse = "`, `"),
+         "`. Fixed parameters and parameters that are reparameterized for faster sampling (see `mcp_reparam` in ?mcp-package) cannot be initialized.", call. = FALSE)
+}
+
+
 #' Initial values at the prior medians
 #'
 #' Covers scalar stochastic nodes in JAGS code whose prior arguments and

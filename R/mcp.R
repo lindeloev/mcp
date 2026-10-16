@@ -52,9 +52,8 @@
 #' @param inits A named list of initial values for the parameters, e.g., `list(Intercept_1 = 10)`,
 #'   or a list of such lists with one per chain. This can be useful if a model fails to converge
 #'   ([read more](https://lindeloev.github.io/mcp/articles/tips.html)).
-#'   Names must be stochastic nodes in `fit$jags_code` (lines with `~`). Fixed parameters
-#'   and parameters that `mcp` samples via reparameterization (e.g., `Intercept_3` is sampled as
-#'   `Intercept_3_end_`) cannot be initialized directly. See `mcp_reparam` in [mcp-package].
+#'   Names must be parameters in [mcp_pars()]. Fixed parameters and parameters that are
+#'   reparameterized for faster sampling cannot be initialized (see `mcp_reparam` in [mcp-package]).
 #'   Initial values for change points must be ordered.
 #'   Defaults to `NULL` where all chains start at equispaced change points and the prior medians.
 #'   User-provided `inits` take precedence.
@@ -343,6 +342,7 @@ mcp = function(
       prior, segments, group_definitions, formula_jags, ar_order, ma_order, family, par_x,
       prior_table, series = !is.null(series)
     )
+    assert_inits(inits, parameters$parameter, jags_code)
   }
 
 

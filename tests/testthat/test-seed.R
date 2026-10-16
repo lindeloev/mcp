@@ -207,3 +207,14 @@ test_that("chain-specific inits succeed when sequential change points are presen
     )
   )
 })
+
+
+test_that("inits only accept directly sampled parameters", {
+  model = list(y ~ 1 + x, ~ cp(1 + (1 | id)) + 0 + x, ~ 1)
+  data = data.frame(x = 1:40, y = rnorm(40), id = rep(1:4, 10))
+  expect_no_error(mcp(model, data, inits = list(x_1 = 0, cp_1_id_sd = 1, Intercept_3 = 0), sample = FALSE))
+  expect_no_error(mcp(model, data, inits = list(list(cp_2 = 30), list(cp_2 = 35)), chains = 2, sample = FALSE))
+  expect_error(mcp(model, data, inits = list(Intercept_1 = 0), sample = FALSE), "Got `Intercept_1`")  # Reparameterized
+  expect_error(mcp(model, data, inits = list(cp_1_id = 0), sample = FALSE), "Got `cp_1_id`")  # Deterministic
+  expect_error(mcp(model, data, inits = list(list(cp_2 = 30), list(Intercept_1_mid_ = 0)), chains = 2, sample = FALSE), "Got `Intercept_1_mid_`")  # Sampler node
+})

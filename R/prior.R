@@ -50,16 +50,30 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
       call. = FALSE
     )
 
+  # Begin building actual prior
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
     default_predictor_specs(predictors, family, context),
     default_group_specs(group_effects, family)
   )
-  specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)
-  specs = add_intercept_references(specs, predictors, context)
 
-  all_names = specs$parameter
-  table = compile_prior_specs(specs, all_names, context)
+  compile = function(prior) {
+    specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)
+    specs = add_intercept_references(specs, predictors, context)
+    compile_prior_specs(specs, specs$parameter, context)
+  }
+  table = compile(prior)
+
+  # Specified priors that resolve to the default, e.g., from `mcp(..., prior = fit$prior)`, 
+  # are treated as defaults (not specified). This ensures default optimizations remain active.
+  if (length(prior) > 0) {
+    defaults = compile(list())
+    is_default = table$value[match(names(prior), table$parameter)] == defaults$value[match(names(prior), defaults$parameter)]
+    if (any(is_default))
+      table = compile(prior[!is_default])
+  }
+
+  # Reparam and return
   table = add_reparams(table, predictors, cps, context, reparam)
   resolved = stats::setNames(as.list(table$value), table$parameter)
   attr(resolved, "prior_table") = table

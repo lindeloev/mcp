@@ -99,7 +99,7 @@ test_that("simulation rejects user-specified priors on change-point deviations",
 
   expect_error(simulate_with(list(cp_1_id = 2)), "user-specified prior")
   expect_error(simulate_with(list(cp_1_id = "dnorm(2, 0.1)")), "user-specified prior")
-  expect_error(simulate_with(list(cp_1_id = "dnorm(0, cp_1_id_sd)")), "Remove 'cp_1_id'")
+  expect_no_error(simulate_with(list(cp_1_id = "dnorm(0, cp_1_id_sd)")))  # Identical to the default
 
   # Priors on the population change point and the SD are replaced by the arguments
   expect_no_error(simulate_with(list(cp_1 = "dnorm(5, 1)", cp_1_id_sd = "dnorm(0, 2) T(0, )")))
