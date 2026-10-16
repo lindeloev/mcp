@@ -191,6 +191,8 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Removed `which_y` argument from `predict()`.
 
+  - `rate = TRUE` in `fitted()`, `predict()`, and `plot()` now errors for families other than binomial and Bernoulli. In v0.3.4, it was silently ignored. For rates per unit of exposure in models with `offset(log(exposure))`, set exposure to 1, e.g., `fitted(fit, newdata = transform(df, exposure = 1))`.
+
   - `loo()` and `waic()` always evaluate the fitted model, including all group-level effects and AR/MA terms. Use `log_lik(fit, group_effects = FALSE)` or `log_lik(fit, arma = FALSE)` for conditional log-likelihoods. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.

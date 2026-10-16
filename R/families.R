@@ -99,6 +99,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
     validate = function(y, data, response_columns) invisible(TRUE),  # Default to no validation
     observed = function(y, data, rate) y,
     probability = function(rate) FALSE,
+    has_rate = FALSE,  # Does `rate = TRUE` apply, i.e., response per trial?
     is_discrete = FALSE  # Integer-valued responses? Used for predictive quantiles and weights
   )
 
@@ -338,6 +339,7 @@ mcpfamily_binomial = function(family) {
     },
     observed = function(y, data, rate) if (rate) y / data$trials else y,
     probability = function(rate) isTRUE(rate),
+    has_rate = TRUE,
     is_discrete = TRUE
   )
   r = list(
@@ -416,6 +418,7 @@ mcpfamily_bernoulli = function(family) {
       invisible(TRUE)
     },
     probability = function(rate) TRUE,
+    has_rate = TRUE,
     is_discrete = TRUE
   )
   r = list(

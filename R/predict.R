@@ -383,7 +383,8 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
 #'   Distributional parameters such as `dpar = "mu"` evaluate the parameter itself (e.g., success probability)
-#'   and are unaffected by `rate`.
+#'   and are unaffected by `rate`. Other families do not support `rate = TRUE`. For rates per unit of exposure in models with
+#'   `offset(log(exposure))`, set `exposure = 1` in `newdata`.
 #' @param prior Logical. Evaluate prior draws (`TRUE`) instead of posterior draws (`FALSE`, default).
 #'   The selected draws must be available; prior-only fits require `prior = TRUE`.
 #' @param dpar What distributional parameter to evaluate. E.g.,
@@ -712,7 +713,7 @@ posterior_linpred.mcpfit = function(
     re_formula = re_formula,
     dpar = dpar,
     scale = if (transform) "response" else "linear",
-    rate = TRUE,
+    rate = object$family$response$has_rate,  # Binomial: transformed linpred is mu, not counts
     seed = seed,
     ...
   )

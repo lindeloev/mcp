@@ -119,6 +119,14 @@ model = list(
 fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
 ```
 
+`fitted()` returns expected counts given each row's exposure. To get expected rates per unit of exposure, set the exposure to 1 in `newdata`, so that the offset is $\log(1) = 0$:
+
+```{r, eval=FALSE}
+fitted(fit, newdata = transform(df, exposure = 1))
+```
+
+This works the same way for `predict()`, which then returns predicted counts at unit exposure. The `fitted(..., rate = TRUE)` argument does not apply for NB; it is only for binomial models, where it converts counts to proportions of trials.
+
 Adding a categorical predictor to the model, you can also model rate ratios. When an offset is present, `mcp` automatically shifts the default intercept prior from centering on observed log-counts to observed log-rates ($\log(y) - \text{offset}$), keeping the minimum scale at 2.5.
 
 > **Note on `par_x` vs. cumulative exposure:**  

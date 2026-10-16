@@ -477,6 +477,12 @@ test_pp_eval = function(fit, prior = FALSE) {
   test_pp_eval_func(fit, log_lik, "loglik", prior = prior)
   test_pp_eval_weights(fit, prior = prior)
 
+  # rate = TRUE only applies to families with trials
+  if (!fit$family$response$has_rate) {
+    testthat::expect_error(fitted(fit, rate = TRUE, prior = prior), "`rate = TRUE` is not supported", fixed = TRUE)
+    testthat::expect_error(plot(fit, rate = TRUE, prior = prior), "`rate = TRUE` is not supported", fixed = TRUE)
+  }
+
   # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
   result_more = try(fitted(
     fit,

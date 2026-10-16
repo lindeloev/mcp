@@ -211,6 +211,12 @@ simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar
 
   assert_typescale(.type, .scale)
   checkmate::assert_flag(.rate)
+  if (.rate && !fit$family$response$has_rate)
+    stop(
+      "`rate = TRUE` is not supported for family = ", fit$family$family, "(). It only applies to families with trials, such as binomial(). ",
+      "For rates per unit of exposure in models with `offset(log(exposure))`, set `exposure = 1` in `newdata`.",
+      call. = FALSE
+    )
 
   .dpar = assert_dpar(.dpar, fit = fit, type = .type)
   checkmate::assert_flag(.arma)

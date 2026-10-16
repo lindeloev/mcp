@@ -404,7 +404,8 @@ get_plot = function(x,
 #'   This default is the opposite of `fitted()` and `predict()`, which return
 #'   counts by default; plotting proportions keeps curves comparable across
 #'   varying trial counts. Predictions and count-scale fitted values require a
-#'   trials column in `newdata`/`at`.
+#'   trials column in `newdata`/`at`. Other families do not support `rate = TRUE`,
+#'   so the default only applies to binomial and Bernoulli models.
 #' @inheritParams fitted.mcpfit
 #' @param nsamples Deprecated. Use `ndraws` instead.
 #' @param ... Must be empty. Reserved for future use.
@@ -452,6 +453,8 @@ plot.mcpfit = function(x,
                     ...) {
   ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "plot.mcpfit", "ndraws", "nsamples")
   which_y = legacy_which_y(list(...), "plot")
+  if (missing(rate))
+    rate = x$family$response$has_rate
 
   get_plot(
     x,
@@ -501,7 +504,7 @@ plot_dpar = function(x,
     lines = lines,
     geom_data = FALSE,
     cp_dens = cp_dens,
-    rate = TRUE,
+    rate = x$family$response$has_rate,
     prior = prior,
     dpar = dpar,
     arma = arma,
