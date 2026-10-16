@@ -116,6 +116,7 @@ articles:
       - priors
       - comparison
       - predict
+      - plotting
       - missing
   - title: Implementation
     contents:
@@ -155,6 +156,8 @@ navbar:
         href: articles/comparison.html
       - text: Fits and predictions
         href: articles/predict.html
+      - text: Plotting
+        href: articles/plotting.html
       - text: Missing responses and imputation
         href: articles/missing.html
     - text: Implementation

@@ -1,7 +1,7 @@
 # ABOUT: Reparameterizations that make JAGS sample faster. Each one samples a
 # default prior on a better-mixing scale and derives the parameter from it. The
 # model, the priors, and hence the posterior are unchanged. options(mcp_reparam = FALSE)
-# writes the plain model. See vignette("implementation").
+# writes the plain model. See https://lindeloev.github.io/mcp/articles/implementation.html
 # -----------------
 
 # Sampling scales for population-level coefficients

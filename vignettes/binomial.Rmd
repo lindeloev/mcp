@@ -124,7 +124,7 @@ plot_pars(fit, npars = NULL)
 
 Convergence looks good here as evidenced by the overlapping trace plots that look like fat caterpillars (Bayesians love fat caterpillars). Notice that the posterior distribution of change points can be quite non-normal and sometimes even bimodal. Therefore, one should be careful not to interpret the interval as if it was normal.
 
-`plot()` and `plot_pars()` can do a lot more than this, so check out their documentation.
+`plot()` and `plot_pars()` can do a lot more than this, so check out the [plotting article](../articles/plotting.html).
 
 
 # Priors for binomial models

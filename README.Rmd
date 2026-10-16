@@ -237,6 +237,12 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - Forecasting with prior knowledge about future change points.
 
+[Plotting](https://lindeloev.github.io/mcp/articles/plotting.html):
+
+- `plot(fit, interval = c("fitted", "predict"))` shows the fit with central intervals. Use `color_by`, `facet_by`, and `at` for models with several predictors.
+
+- `plot_dpar()`, `plot_pars()`, and `pp_check()` plot distributional parameters, parameters, and posterior predictive checks. All return `ggplot2` objects, and `interpolate_newdata()` helps you make your own plots.
+
 [Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
 
 - See priors in `fit$prior` or `prior_summary(fit)` and set priors using `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.

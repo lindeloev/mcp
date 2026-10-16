@@ -368,7 +368,7 @@ get_plot = function(x,
 #'   * `"predict"`: Posterior predictive interval, as in `predict()`. Green lines.
 #'   * `c("fitted", "predict")`: Both. `plot_dpar()` supports only `"none"` and `"fitted"`.
 #'
-#'   For other quantiles, see `vignette("predict")` for computing them from
+#'   For other quantiles, see [the plotting article](https://lindeloev.github.io/mcp/articles/plotting.html#other-quantiles) for computing them from
 #'   `fitted(..., summary = FALSE)` or `predict(..., summary = FALSE)` and adding them as a ggplot2 layer.
 #' @param width Width of the central interval(s) given in `interval` (strictly between 0 and 1).
 #'   For example, `width = 0.8` plots the 10% and 90% quantiles.

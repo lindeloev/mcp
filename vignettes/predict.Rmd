@@ -126,6 +126,8 @@ predict(fit, summary = FALSE) |>
   head()
 ```
 
+See the [plotting article](../articles/plotting.html) for adding custom quantiles to `plot()`.
+
 
 # Residuals
 `residuals()` is simply `data$response - fitted()`. It may be useful for model checking, but the typical needs are covered using posterior predictive checking (`pp_check(fit)`) and visual inspection of `plot(fit, interval = c("fitted", "predict"))`.

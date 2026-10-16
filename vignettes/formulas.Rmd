@@ -223,7 +223,7 @@ Key features of multiple regression models in `mcp`:
 
 - **Common change points across categories**: The change points `cp_1` and `cp_2` are estimated as single locations shared across all levels of `state`. (If you instead want category-specific change-point locations that deviate per group, use group-level effects like `cp((1|group))`; see [group-level effects](../articles/group_effects.html)).
 - **Parameter names across segments**: In segment 1, `x.stateA_1` through `x.stateD_1` represent separate slopes for each level of `state`. In segment 2, `stateB_2`, `stateC_2`, and `stateD_2` represent intercept offsets relative to the reference level `stateA`. A variable such as `z` must be included in each segment where it applies.
-- **Plotting and prediction**: Visualize by state using `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By default, other numeric variables (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "state", at = list(z = 0))`.
+- **Plotting and prediction**: Visualize by state using `plot(fit, color_by = "state")` or `plot(fit, facet_by = "state")`. By default, other numeric variables (like `z`) are held at their mean automatically by `interpolate_newdata()`, or can be set explicitly via `plot(fit, color_by = "state", at = list(z = 0))`. See the [plotting article](../articles/plotting.html) for more.
 
 # Relative changes between segments
 

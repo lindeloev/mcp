@@ -28,7 +28,7 @@ This article in brief:
  * How group-level effects apply across segments
  * How to simulate group-level change-point deviations
  * Get posteriors using `ranef(fit)`
- * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
+ * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)` ([more on plotting](../articles/plotting.html)).
  * How group-specific change points are bounded and ordered.
  * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/dpar.html).
 

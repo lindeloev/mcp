@@ -147,7 +147,7 @@ missing_draws |>
 
 ## Imputations and other continuous predictors
 
-Plotting differs from `fitted()` and `predict()` in one respect: The smooth curves in `plot()` are evaluated on data made by `interpolate_newdata()`, which keeps additional continuous predictors (i.e., predictors not assigned an aesthetic) at their observed means by default, or at values supplied through the `at`-argument. The plot caption reports these fixed values.
+Plotting differs from `fitted()` and `predict()` in one respect: The smooth curves in `plot()` are evaluated on data made by `interpolate_newdata()`, which keeps additional continuous predictors (i.e., predictors not assigned an aesthetic) at their observed means by default, or at values supplied through the `at`-argument. The plot caption reports these fixed values. See the [plotting article](../articles/plotting.html) for using `interpolate_newdata()` to make your own plots.
 
 The imputation markers above are different: `predict(fit)` evaluates the original data, so every missing row uses its own predictor values. If another continuous predictor is especially important, an imputation may therefore lie away from a curve drawn at that predictor's mean. This is expected, just as an observed response with unusual predictor values may lie away from that curve. Use `plot(fit, at = ...)` or `interpolate_newdata(fit, at = ...)` or make separate plots when those differences deserve emphasis.
 
