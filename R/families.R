@@ -37,7 +37,7 @@ bernoulli = function(link = "logit") {
 #'   models both the mean and shape. Regression coefficients for both dpars are
 #'   on their link scales, e.g., `shape_Intercept_1` and `shape_x_1`.
 #'
-#'   Without `shape()`, `shape_1` is the shape itself with an `inv_gamma(0.4, 0.3)` prior,
+#'   Without `shape()`, `shape_1` is the shape itself with a `dinvgamma(0.4, 0.3)` prior,
 #'   as in `brms`, much like the implicit `sigma_1` in `gaussian()`.
 #' @export
 #' @examples

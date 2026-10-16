@@ -85,8 +85,8 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
 #'
 #' `r lifecycle::badge("experimental")`
 #'
-#' Shows the specified prior distributions, resolved to numbers and on the familiar SD/scale
-#' parameterization rather than JAGS precision. `bounds` are the lower and upper bounds of
+#' Shows the specified priors in the syntax of `mcp(..., prior)`, resolved to numbers.
+#' As in `prior`, scales are SD/scale rather than JAGS precision (see [mcp-priors]). `bounds` are the lower and upper bounds of
 #' each prior, i.e., the arguments of `dunif()` or `T()`, or the support of the distribution.
 #' Change points are also "ordered": their specified priors are restricted to ordered change
 #' points. Use `plot_pars(fit, prior = TRUE)` to see the marginal priors after this restriction.

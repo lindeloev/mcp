@@ -480,33 +480,33 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
 
   ps = prior_summary(fit, verbose = TRUE)
   int_row = ps[ps$parameter == "Intercept_1", ]
-  testthat::expect_match(int_row$prior, "^normal\\(mean = [0-9.]+ - time_1 \\* 1, sd = [0-9.]+\\)$")
+  testthat::expect_match(int_row$prior, "^dnorm\\([0-9.]+ - time_1 \\* 1, [0-9.]+\\)$")
   testthat::expect_match(int_row$rule, "log(ifelse(y <= 0, 0.1, y))", fixed = TRUE)
 
   # Categorical contrast on log link uses dnorm(0, 2.5 / sd(dummy))
   group_row = ps[ps$parameter == "groupB_1", ]
   expected_group_sd = format_prior_number(2.5 / stats::sd(d$group == "B"))
-  testthat::expect_equal(group_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_group_sd, ")")))
+  testthat::expect_equal(group_row$prior, format_prior_display(paste0("dnorm(0, ", expected_group_sd, ")")))
   expect_prior(fit$prior$groupB_1, paste0("dnorm(0, ", expected_group_sd, ")"))
 
   # Slope on log link uses dnorm(0, 2.5 / sd(x))
   time_row = ps[ps$parameter == "time_1", ]
   expected_slope_sd = format_prior_number(2.5 / stats::sd(d$time))
-  testthat::expect_equal(time_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_slope_sd, ")")))
+  testthat::expect_equal(time_row$prior, format_prior_display(paste0("dnorm(0, ", expected_slope_sd, ")")))
   expect_prior(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
 
   # Group SDs are half-normals
   id_int_row = ps[ps$parameter == "Intercept_1_id_sd", ]
-  testthat::expect_equal(id_int_row$prior, "normal(mean = 0, sd = 2.5)")
+  testthat::expect_equal(id_int_row$prior, "dnorm(0, 2.5) T(0, )")
   testthat::expect_equal(id_int_row$bounds, "[0, Inf]")
 
   id_time_row = ps[ps$parameter == "time_1_id_sd", ]
-  testthat::expect_equal(id_time_row$prior, format_prior_display(paste0("normal(mean = 0, sd = ", expected_slope_sd, ")")))
+  testthat::expect_equal(id_time_row$prior, format_prior_display(paste0("dnorm(0, ", expected_slope_sd, ") T(0, )")))
   testthat::expect_equal(id_time_row$bounds, "[0, Inf]")
 
   # Sigma_1 uses response-scale half-Student-t
   sig_row = ps[ps$parameter == "sigma_1", ]
-  testthat::expect_match(sig_row$prior, "^student_t\\(df = 3, location = 0, scale = [0-9.]+\\)$")
+  testthat::expect_match(sig_row$prior, "^dt\\(0, [0-9.]+, 3\\) T\\(0, \\)$")
   testthat::expect_equal(sig_row$bounds, "[0, Inf]")
 })
 
@@ -602,8 +602,8 @@ test_that("resolved priors keep full precision regardless of options(digits)", {
 
   # Only prior_summary() is rounded for display
   ps = prior_summary(fit)
-  expect_equal(ps$prior[ps$parameter == "Intercept_1"], "normal(mean = 0, sd = 0.33333)")
-  expect_equal(ps$prior[ps$parameter == "x_1"], paste0("normal(mean = 0, sd = ", signif(slope_sd, 5), ")"))
+  expect_equal(ps$prior[ps$parameter == "Intercept_1"], "dnorm(0, 0.33333)")
+  expect_equal(ps$prior[ps$parameter == "x_1"], paste0("dnorm(0, ", signif(slope_sd, 5), ")"))
 })
 
 
@@ -628,7 +628,7 @@ test_that("change point priors refer to the exact ends of the observed range, cp
 
   # prior_summary() shows the ends of the observed range as numbers
   ps = prior_summary(fit)
-  expect_equal(ps$prior[1:2], c("uniform(min = 0.61863, max = 5)", "normal(mean = 7, sd = 1)"))
+  expect_equal(ps$prior[1:2], c("dunif(0.61863, 5)", "dnorm(7, 1) T(0.61863, 9.8765)"))
   expect_equal(ps$bounds[1:2], c("[0.61863, 5], ordered", "[0.61863, 9.8765], ordered"))
 })
 
@@ -638,11 +638,11 @@ test_that("partial user-specified Dirichlet priors propagate source and descript
   fit_dir = mcp(list(y ~ 1, ~ 1, ~ 1), data = data_dir, par_x = "x", prior = list(cp_1 = "dirichlet(2)"), sample = FALSE)
   verbose_dir = prior_summary(fit_dir, verbose = TRUE)
 
-  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_1"], "dirichlet(alpha = 2)")
+  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_1"], "dirichlet(2)")
   expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_1"], "user")
   expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_1"], "User-specified prior, restricted to ordered change points")
 
-  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_2"], "dirichlet(alpha = 2)")
+  expect_equal(verbose_dir$prior[verbose_dir$parameter == "cp_2"], "dirichlet(2)")
   expect_equal(verbose_dir$source[verbose_dir$parameter == "cp_2"], "user")
   expect_equal(verbose_dir$description[verbose_dir$parameter == "cp_2"], "Inherited from user-specified `cp_1`, restricted to ordered change points")
 })
@@ -692,7 +692,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
     family = gaussian(link = "log"), sample = FALSE
   )
   tiny_prior = prior_summary(tiny_fit)$prior[prior_summary(tiny_fit)$parameter == "Intercept_1"]
-  expect_equal(tiny_prior, paste0("normal(mean = ", round(median(log(tiny_data$y)), 1), " - x_1 * 1, sd = 2.5)"))
+  expect_equal(tiny_prior, paste0("dnorm(", round(median(log(tiny_data$y)), 1), " - x_1 * 1, 2.5)"))
 
   small_data = data.frame(x = 1:4, y = c(0.01, 0.02, 0.03, 0.04))
   small_fit = mcp(list(y ~ 1 + x), small_data, sample = FALSE)
@@ -728,7 +728,7 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   expect_prior(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
   expect_match(fit$jags_code, paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
   ps = prior_summary(fit, verbose = TRUE)
-  expect_equal(ps$rule[ps$parameter == "Intercept_1"], "normal(mean = mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, sd = 2.5 * sd(y))")
+  expect_equal(ps$rule[ps$parameter == "Intercept_1"], "dnorm(mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, 2.5 * sd(y))")
   expect_match(ps$description[ps$parameter == "Intercept_1"], "on the value at min(x)", fixed = TRUE)
 
   # Bounded priors shift their bounds too

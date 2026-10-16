@@ -220,27 +220,6 @@ resolve_prior_value = function(x, context) {
 }
 
 
-# Translate known JAGS prior calls into readable distribution descriptions.
-human_prior_call = function(x) {
-  parts = split_prior_truncation(x)
-  call = parse_prior_call(parts$distribution)
-  if (is.null(call))
-    return(parts$distribution)
-  a = call$args
-  switch(
-    call$name,
-    dt = if (length(a) == 3) paste0("student_t(df = ", a[3], ", location = ", a[1], ", scale = ", a[2], ")") else parts$distribution,
-    dnorm = if (length(a) == 2) paste0("normal(mean = ", a[1], ", sd = ", a[2], ")") else parts$distribution,
-    dunif = if (length(a) == 2) paste0("uniform(min = ", a[1], ", max = ", a[2], ")") else parts$distribution,
-    dbeta = if (length(a) == 2) paste0("beta(shape1 = ", a[1], ", shape2 = ", a[2], ")") else parts$distribution,
-    dgamma = if (length(a) == 2) paste0("gamma(shape = ", a[1], ", rate = ", a[2], ")") else parts$distribution,
-    dinvgamma = if (length(a) == 2) paste0("inv_gamma(shape = ", a[1], ", scale = ", a[2], ")") else parts$distribution,
-    dirichlet = if (length(a) == 1) paste0("dirichlet(alpha = ", a[1], ")") else parts$distribution,
-    parts$distribution
-  )
-}
-
-
 # Quantile of a prior in mcp's parameterization (scale, not precision) with numeric
 # arguments `a` and truncation `bounds`. Returns NULL for unsupported distributions.
 prior_quantile = function(dist, a, bounds, prob) {
@@ -325,7 +304,6 @@ compile_prior_record = function(parameter, code, all_names, context, source,
     }
   }
 
-  rule = if (kind == "distribution") human_prior_call(display_original) else display_original
   if (is.null(description) || is.na(description)) {
     description = switch(
       kind,
@@ -338,9 +316,9 @@ compile_prior_record = function(parameter, code, all_names, context, source,
 
   tibble::tibble(
     parameter = parameter,
-    prior = format_prior_display(if (kind == "distribution") human_prior_call(display) else display),
+    prior = format_prior_display(display),
     bounds = format_prior_display(bounds),
-    rule = format_prior_display(rule),
+    rule = format_prior_display(display_original),
     description = description,
     source = source,
     kind = kind,

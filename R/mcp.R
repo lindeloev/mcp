@@ -15,6 +15,7 @@
 #'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
 #'   `sigma_1`, etc.) and values are a distribution string (e.g., `"dnorm(0, 1) T(0, )"`),
 #'   a fixed value (e.g., `-2.1`), or the name of another parameter to share its value.
+#'   *OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so `dnorm(0, 0.001)` is a very narrow prior.*
 #'   Weakly informative defaults are used where priors are not specified;
 #'   see them with [prior_summary()]. See [mcp-priors] for the full syntax.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/priors.html).

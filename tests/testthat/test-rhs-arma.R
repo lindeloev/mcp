@@ -235,7 +235,7 @@ test_that("AR and MA defaults regularize direct coefficients", {
 
   ar_prior = prior_summary(fit)
   ar_prior = ar_prior[ar_prior$parameter == "ar1_1", ]
-  expect_match(ar_prior$prior, "normal", fixed = TRUE)
+  expect_equal(ar_prior$prior, "dnorm(0, 0.5) T(-1, 1)")
   expect_equal(ar_prior$bounds, "[-1, 1]")
 })
 
