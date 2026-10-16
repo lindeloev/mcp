@@ -252,7 +252,7 @@ test_that("posterior prediction and likelihood reuse fitted group deviations", {
   expect_equal(unname(log_lik(fit, summary = FALSE)), expected)
   nd = data.frame(x = c(2, 17), id = "a")
   pred = fitted(fit, newdata = nd, summary = FALSE)
-  expect_equal(pred$.epred[pred$.data_row == 1], pred$.epred[pred$.data_row == 2])
+  expect_equal(pred$.epred[pred$.row == 1], pred$.epred[pred$.row == 2])
 
   # New groups require explicitly omitting group-level effects
   nd$id = "new"

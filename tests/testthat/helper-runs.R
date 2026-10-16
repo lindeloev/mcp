@@ -425,11 +425,11 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
     return(invisible(NULL))
 
   loglik = log_lik(fit, summary = FALSE, width = FALSE, prior = prior, draws_format = "tidy")
-  weights = fit$data[[columns$weights]][loglik$.data_row]
+  weights = fit$data[[columns$weights]][loglik$.row]
 
   # Log-likelihood and fitted() should be evaluated at the same predictions
   mu = fitted(fit, summary = FALSE, width = FALSE, prior = prior, dpar = "mu")
-  keys = c(".chain", ".iteration", ".draw", ".data_row")
+  keys = c(".chain", ".iteration", ".draw", ".row")
   testthat::expect_equal(loglik[, keys], mu[, keys])
 
   # Gaussian is the easiest case to check that likelihood weights are applied correctly
@@ -437,7 +437,7 @@ test_pp_eval_weights = function(fit, prior = FALSE) {
     sigma = fitted(fit, summary = FALSE, width = FALSE, prior = prior, dpar = "sigma")
     testthat::expect_equal(loglik[, keys], sigma[, keys])
 
-    observed = fit$data[[columns$response]][loglik$.data_row]
+    observed = fit$data[[columns$response]][loglik$.row]
     testthat::expect_equal(
       loglik$.loglik,
       weights * stats::dnorm(observed, mu$.mu, sigma$.sigma, log = TRUE)
@@ -515,7 +515,7 @@ test_pp_eval = function(fit, prior = FALSE) {
       selected_cp$cols,
       columns$response,
       if (length(columns$weights) > 0) columns$weights else NULL,
-      ".data_row",
+      ".row",
       ".epred"  # dot-prefixed for summary = FALSE
     )
 
@@ -540,7 +540,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     )
 
     testthat::expect_equal(
-      sort(unique(population_result$.data_row)),
+      sort(unique(population_result$.row)),
       seq_len(nrow(population_newdata))
     )
     testthat::expect_false(any(group_cols %in% colnames(population_result)))

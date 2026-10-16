@@ -219,8 +219,8 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
 
 #' Evaluated-draw identity helpers
 #'
-#' Within one call to `pp_eval()`, `.data_row` identifies a row in the evaluated data.
-#' Together, `.draw` and `.data_row` must identify exactly one evaluated value.
+#' Within one call to `pp_eval()`, `.row` identifies a row in the evaluated data.
+#' Together, `.draw` and `.row` must identify exactly one evaluated value.
 #' Plotting groups, predictor values, and group-level columns are metadata for
 #' that row and never determine which draws may be summarised together.
 #'
@@ -231,21 +231,21 @@ get_predictor_matrix = function(predictors, group_effects = NULL) {
 validate_eval_draws = function(draws, type) {
   checkmate::assert_data_frame(draws)
   checkmate::assert_string(type)
-  assert_data_cols(draws, c(".draw", ".data_row", type))
+  assert_data_cols(draws, c(".draw", ".row", type))
 
-  if (anyNA(draws$.draw) || anyNA(draws$.data_row))
-    stop_github("Evaluated draws contain missing `.draw` or `.data_row` keys.")
+  if (anyNA(draws$.draw) || anyNA(draws$.row))
+    stop_github("Evaluated draws contain missing `.draw` or `.row` keys.")
 
   draw_ids = unique(draws$.draw)
-  data_rows = unique(draws$.data_row)
+  data_rows = unique(draws$.row)
   draw_index = match(draws$.draw, draw_ids)
-  row_index = match(draws$.data_row, data_rows)
+  row_index = match(draws$.row, data_rows)
   keys = draw_index + length(draw_ids) * (row_index - 1L)
   if (anyDuplicated(keys))
-    stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `.data_row`.")
+    stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `.row`.")
 
   if (nrow(draws) != length(draw_ids) * length(data_rows))
-    stop_github("Every `.data_row` must contain the same complete set of posterior draws.")
+    stop_github("Every `.row` must contain the same complete set of posterior draws.")
 
   invisible(draws)
 }
@@ -258,27 +258,27 @@ validate_eval_draws = function(draws, type) {
 #' draw/row combinations from being silently reshaped.
 #'
 #' @inheritParams validate_eval_draws
-#' @param data_rows Optional `.data_row` values to use as matrix columns.
+#' @param data_rows Optional `.row` values to use as matrix columns.
 #' @return A numeric matrix.
 #' @noRd
 tidy_to_matrix = function(draws, type, data_rows = NULL) {
   checkmate::assert_string(type)
-  assert_data_cols(draws, c(".draw", ".data_row", type))
+  assert_data_cols(draws, c(".draw", ".row", type))
 
   if (is.null(data_rows))
-    data_rows = sort(unique(draws$.data_row))
+    data_rows = sort(unique(draws$.row))
   if (anyDuplicated(data_rows))
-    stop_github("Requested `.data_row` values must be unique.")
+    stop_github("Requested `.row` values must be unique.")
 
-  missing_rows = setdiff(data_rows, unique(draws$.data_row))
+  missing_rows = setdiff(data_rows, unique(draws$.row))
   if (length(missing_rows) > 0)
     stop_github("Requested evaluation rows are absent: ", paste(missing_rows, collapse = ", "), ".")
-  draws = dplyr::filter(draws, .data$.data_row %in% data_rows)
+  draws = dplyr::filter(draws, .data$.row %in% data_rows)
 
   draw_ids = sort(unique(draws$.draw))
   result = matrix(NA_real_, nrow = length(draw_ids), ncol = length(data_rows), dimnames = list(NULL, as.character(data_rows)))
   matrix_rows = match(draws$.draw, draw_ids)
-  matrix_cols = match(draws$.data_row, data_rows)
+  matrix_cols = match(draws$.row, data_rows)
   result[cbind(matrix_rows, matrix_cols)] = draws[[type]]
   result
 }
@@ -290,21 +290,21 @@ tidy_to_matrix = function(draws, type, data_rows = NULL) {
 #' @param quantiles Vector of quantiles between zero and one.
 #' @param na.rm Whether to remove missing values before computing quantiles.
 #' @param keep Evaluation-row metadata to rejoin after summarising.
-#' @return A tibble with `.data_row`, `quantile`, the `type` column, and requested metadata.
+#' @return A tibble with `.row`, `quantile`, the `type` column, and requested metadata.
 #' @noRd
 get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
   keep = unique(keep)
-  assert_data_cols(draws, c(".data_row", type, keep))
-  grid = draws %>% dplyr::select(dplyr::all_of(c(".data_row", keep))) %>% dplyr::distinct()
-  if (anyDuplicated(grid$.data_row))
-    stop_github("Evaluation-row metadata differs across draws for the same `.data_row`.")
+  assert_data_cols(draws, c(".row", type, keep))
+  grid = draws %>% dplyr::select(dplyr::all_of(c(".row", keep))) %>% dplyr::distinct()
+  if (anyDuplicated(grid$.row))
+    stop_github("Evaluation-row metadata differs across draws for the same `.row`.")
 
   result = draws %>%
-    dplyr::group_by(.data$.data_row) %>%
+    dplyr::group_by(.data$.row) %>%
     dplyr::reframe(quantile = quantiles,
                    !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE, na.rm = na.rm))
 
-  dplyr::left_join(result, grid, by = ".data_row", relationship = "many-to-one")
+  dplyr::left_join(result, grid, by = ".row", relationship = "many-to-one")
 }
 
 
@@ -343,14 +343,14 @@ find_mixture_quantile = function(family, dpars, data, p) {
 # integer search for discrete count families).
 get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = FALSE, dpars = attr(draws, "dpars"), response_data = attr(draws, "response_data")) {
   keep = unique(keep)
-  grid = draws %>% dplyr::select(dplyr::all_of(c(".data_row", keep))) %>% dplyr::distinct()
+  grid = draws %>% dplyr::select(dplyr::all_of(c(".row", keep))) %>% dplyr::distinct()
 
   # Fallback to empirical quantiles if no cdf method or dpars available
   if (is.null(family$r$cdf) || is.null(dpars))
     return(get_quantiles(draws, quantiles, ".prediction", keep = keep))
 
   # Split draws by evaluation row to process one data point across all posterior draws
-  row_indices = split(seq_len(nrow(draws)), draws$.data_row)
+  row_indices = split(seq_len(nrow(draws)), draws$.row)
   unique_rows = as.integer(names(row_indices))
 
   res_list = lapply(seq_along(row_indices), function(i) {
@@ -370,13 +370,13 @@ get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = F
       .prediction = q_vals,
       stringsAsFactors = FALSE
     )
-    df_res$.data_row = data_row_id
+    df_res$.row = data_row_id
     df_res
   })
 
   # Combine and re-attach predictor / grouping metadata
   result = dplyr::bind_rows(res_list)
-  dplyr::left_join(result, grid, by = ".data_row", relationship = "many-to-one")
+  dplyr::left_join(result, grid, by = ".row", relationship = "many-to-one")
 }
 
 

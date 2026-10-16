@@ -138,7 +138,7 @@ pp_eval = function(
   if (replicate_garma)
     kept_cols = kept_cols[kept_cols != data_columns$response]
   newdata = data.frame(newdata[, kept_cols, drop = FALSE])
-  newdata$.data_row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
+  newdata$.row = seq_len(nrow(newdata))  # Evaluation key throughout summaries, matrices, plots, and metrics
   newdata_return = newdata
   if (!is.null(response_return) && data_columns$response %notin% colnames(newdata_return))
     newdata_return[[data_columns$response]] = response_return[[data_columns$response]]
@@ -194,7 +194,7 @@ pp_eval = function(
   # draw's data rows to be contiguous. Evaluate in draw/data order, then
   # restore the public row order below.
   evaluation_order = if (evaluating_arma) {
-    order(draws$.draw, draws$.data_row)
+    order(draws$.draw, draws$.row)
   } else {
     seq_len(nrow(draws))
   }
@@ -222,7 +222,7 @@ pp_eval = function(
     draws$.epred = fitted_values
 
   if (!is.null(response_return))
-    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$.data_row]
+    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$.row]
 
   draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"))
 
@@ -233,10 +233,10 @@ pp_eval = function(
     observed_rows = which(!is.na(newdata[, data_columns$response]))
     if (length(observed_rows) == 0)
       stop("Log-likelihood evaluation requires at least one observed response.")
-    draws = dplyr::filter(draws, .data$.data_row %in% observed_rows)
+    draws = dplyr::filter(draws, .data$.row %in% observed_rows)
     newdata_return = dplyr::filter(
       newdata_return,
-      .data$.data_row %in% observed_rows
+      .data$.row %in% observed_rows
     )
   }
 
@@ -253,15 +253,15 @@ pp_eval = function(
   if (summary == TRUE) {
     df_return = draws %>%
       # Summarise for each row in newdata
-      dplyr::group_by(.data$.data_row) %>%
+      dplyr::group_by(.data$.row) %>%
       dplyr::summarise(.groups = "drop",
                        .mean = mean(.data[[value_col]]),
                        .sd = stats::sd(.data[[value_col]])
       ) %>%
 
       # Apply original order and put newdata as the first columns
-      dplyr::arrange(.data$.data_row) %>%
-      dplyr::left_join(newdata_return, by = ".data_row", relationship = "one-to-one") %>%
+      dplyr::arrange(.data$.row) %>%
+      dplyr::left_join(newdata_return, by = ".row", relationship = "one-to-one") %>%
       dplyr::select(dplyr::one_of(colnames(newdata_return)), ".mean", ".sd")
 
 
@@ -277,12 +277,12 @@ pp_eval = function(
         dplyr::mutate(quantile = ifelse(.data$quantile < 0.5, ".lower", ".upper")) %>%
         tidyr::pivot_wider(names_from = "quantile", values_from = dplyr::all_of(value_col))
 
-      df_return = dplyr::left_join(df_return, quantiles, by = ".data_row", relationship = "one-to-one")
+      df_return = dplyr::left_join(df_return, quantiles, by = ".row", relationship = "one-to-one")
     }
-    return(dplyr::select(df_return, -".data_row"))
+    return(dplyr::select(df_return, -".row"))
   } else if (draws_format == "tidy") {
     # Order like tidybayes: all draws for each data row; then newdata, draw index, parameter (mcp_pars() order), and value columns
-    row_order = order(draws$.data_row, draws$.draw)
+    row_order = order(draws$.row, draws$.draw)
     draws = draws[row_order, ] %>%
       dplyr::relocate(dplyr::all_of(colnames(newdata_return)), ".chain", ".iteration", ".draw", dplyr::any_of(mcp_pars(fit)$parameter))
     if (.return_dpars) {
@@ -426,13 +426,13 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'
 #'   * If `summary = FALSE` and `draws_format = "tidy"`: A `tidybayes` `tibble` with all the posterior
 #'     draws (`Nd`) evaluated at each row in `newdata` (`Nn`), i.e., with `Nd x Nn` rows, ordered by
-#'     `.data_row` and then `.draw`. If there are
+#'     `.row` and then `.draw`. If there are
 #'     group-level effects, the returned data is expanded with the relevant levels for each row.
 #'
 #'     The return columns are:
 #'
 #'      - Predictors from `newdata`, plus its response column when supplied.
-#'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `.data_row`, the row number in the evaluated `newdata`.
+#'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `.row`, the row number in the evaluated `newdata`.
 #'      - Draw values: one column for each parameter in the model.
 #'      - The estimate (matching tidybayes conventions): `.epred` for expected responses, `.linpred` with `scale = "linear"`,
 #'        the `.dpar` for other dpars (e.g., `.mu` or `.sigma`), `.prediction`, `.residual`, or `.loglik`.
@@ -459,7 +459,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' # Custom quantiles from the draws, here for fitted().
 #' # Note that for predict(), this adds more Monte Carlo error than `width`.
 #' fitted(demo_fit, summary = FALSE) |>
-#'   dplyr::group_by(.data_row, time) |>
+#'   dplyr::group_by(.row, time) |>
 #'   dplyr::reframe(quantile = c(0.1, 0.5, 0.9), .epred = quantile(.epred, quantile)) |>
 #'   head()
 #'

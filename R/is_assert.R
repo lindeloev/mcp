@@ -116,7 +116,7 @@ assert_reserved_output_namespace = function(col_names, context = "data", extra =
   reserved_output = c(
     ".mean", ".sd", ".lower", ".upper",
     ".epred", ".linpred", ".prediction", ".residual", ".loglik",
-    ".draw", ".chain", ".iteration", ".data_row",
+    ".draw", ".chain", ".iteration", ".row",
     extra
   )
   collisions = intersect(col_names, reserved_output)

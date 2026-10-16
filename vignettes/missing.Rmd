@@ -136,7 +136,7 @@ Sometimes, the missing response is of direct interest. For example, you may want
 
 ```{r}
 missing_draws |>
-  filter(.data_row == 19) |>
+  filter(.row == 19) |>  # Row number 19 in original data
   summarise(
     p_greater = mean(.prediction > 20),
     p_lower = mean(.prediction < 10),

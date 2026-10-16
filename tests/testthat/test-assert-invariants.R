@@ -55,7 +55,7 @@ test_that("simulation validates required response auxiliaries", {
 
 
 test_that("data columns colliding with reserved output namespace are rejected early", {
-  reserved = c(".mean", ".sd", ".lower", ".upper", ".epred", ".prediction", ".residual", ".loglik", ".draw", ".chain", ".iteration", ".data_row")
+  reserved = c(".mean", ".sd", ".lower", ".upper", ".epred", ".prediction", ".residual", ".loglik", ".draw", ".chain", ".iteration", ".row")
   for (name in reserved) {
     bad_data = data.frame(x = 1:4, y = 1:4)
     bad_data[[name]] = c(1, 2, 1, 2)
@@ -76,7 +76,7 @@ test_that("newdata columns colliding with reserved output namespace are rejected
     "reserved output namespace"
   )
   expect_error(
-    predict(fit, newdata = data.frame(x = 1:2, .data_row = 1:2)),
+    predict(fit, newdata = data.frame(x = 1:2, .row = 1:2)),
     "reserved output namespace"
   )
 })

@@ -36,7 +36,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `summary()`, `fixef()`, and `ranef()` now name the parameter identifier column `parameter` instead of `name`, matching `prior_summary()` and `mcp_pars()`.
 
-  - `fitted()`, `predict()`, `residuals()`, and `log_lik()` with `summary = TRUE` now take `width = 0.95` instead of `probs` (deprecated with warning) and return the columns `.mean`, `.sd`, `.lower`, and `.upper` instead of `fitted`/`predict`/`residuals`/`loglik`, `error`, `Q2.5`, and `Q97.5`. This matches `summary()` (`width`, `mean`, `sd`, `lower`, `upper`), while the dot prefix prevents collisions with data columns, as in `broom::augment()`. Consequently, data columns named `sd`, `fitted`, `predict`, etc. are no longer rejected. For other quantiles, summarise the draws from `summary = FALSE`. The evaluation-row key `data_row` is now `.data_row`.
+  - `fitted()`, `predict()`, `residuals()`, and `log_lik()` with `summary = TRUE` now take `width = 0.95` instead of `probs` (deprecated with warning) and return the columns `.mean`, `.sd`, `.lower`, and `.upper` instead of `fitted`/`predict`/`residuals`/`loglik`, `error`, `Q2.5`, and `Q97.5`. This matches `summary()` (`width`, `mean`, `sd`, `lower`, `upper`), while the dot prefix prevents collisions with data columns, as in `broom::augment()`. Consequently, data columns named `sd`, `fitted`, `predict`, etc. are no longer rejected. For other quantiles, summarise the draws from `summary = FALSE`. The evaluation-row key `data_row` is now `.row`, matching `{tidybayes}`.
 
   - `Rhat` was renamed to `rhat` in `summary()`, `fixef()`, and `ranef()`, to match `{posterior}` standard.
 

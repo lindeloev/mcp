@@ -375,20 +375,20 @@ test_that("R-side dpar evaluation supports link and response scales", {
 
 test_that("evaluated-draw helpers enforce draw and data-row identity", {
   samples = expand.grid(
-    .data_row = 1:2,
+    .row = 1:2,
     .draw = 1:3
   )
   samples$.chain = 1L
   samples$.iteration = samples$.draw
   samples$x = 5
-  samples$group = factor(c("A", "B")[samples$.data_row])
-  samples$`.epred` = 10 * samples$.data_row + samples$.draw
+  samples$group = factor(c("A", "B")[samples$.row])
+  samples$`.epred` = 10 * samples$.row + samples$.draw
   samples = samples[c(6, 1, 4, 2, 5, 3), ]
 
   expect_silent(validate_eval_draws(samples, ".epred"))
 
   # Equal x values do not define the evaluation unit. Quantiles stay separate
-  # by .data_row and receive plotting metadata only after summarisation.
+  # by .row and receive plotting metadata only after summarisation.
   quantiles = get_quantiles(
     samples,
     c(0.25, 0.75),
@@ -396,8 +396,8 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
     keep = c("x", "group")
   )
   expect_equal(nrow(quantiles), 4)
-  expect_equal(unique(quantiles$.epred[quantiles$.data_row == 1]), c(11.5, 12.5))
-  expect_equal(unique(quantiles$.epred[quantiles$.data_row == 2]), c(21.5, 22.5))
+  expect_equal(unique(quantiles$.epred[quantiles$.row == 1]), c(11.5, 12.5))
+  expect_equal(unique(quantiles$.epred[quantiles$.row == 2]), c(21.5, 22.5))
 
   fitted_matrix = tidy_to_matrix(samples, type = ".epred", data_rows = c(2, 1))
   expect_equal(colnames(fitted_matrix), c("2", "1"))
@@ -408,7 +408,7 @@ test_that("evaluated-draw helpers enforce draw and data-row identity", {
 
   expect_error(
     validate_eval_draws(rbind(samples, samples[1, ]), ".epred"),
-    "one `.epred` value per `.draw` and `.data_row`",
+    "one `.epred` value per `.draw` and `.row`",
     fixed = TRUE
   )
   expect_error(
@@ -471,7 +471,7 @@ test_that("distributional parameters use the same evaluation identity", {
     summary = FALSE,
     width = FALSE
   )
-  keys = c(".chain", ".iteration", ".draw", ".data_row")
+  keys = c(".chain", ".iteration", ".draw", ".row")
 
   expect_equal(mu[, keys], sigma[, keys])
   expect_silent(validate_eval_draws(mu, ".mu"))

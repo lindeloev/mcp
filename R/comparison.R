@@ -141,7 +141,7 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
         lldata = fit$data[data_rows, ]
         loglik_samples = fit %>%
           pp_eval(newdata = lldata, summary = FALSE, type = "loglik") %>%
-          dplyr::filter(.data$.data_row == max(.data$.data_row))  # last observed row
+          dplyr::filter(.data$.row == max(.data$.row))  # last observed row
       }
 
       # Matrix conversion validates and explicitly orders the joint draws, so

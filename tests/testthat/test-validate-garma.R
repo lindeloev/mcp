@@ -307,16 +307,16 @@ test_that("missing GARMA responses stay paired with posterior draws", {
   imputed = get_imputed_response_draws(fit, prediction_draws)
 
   expect_equal(fitted_draws$.epred, fitted_again$.epred)
-  expect_true(all(is.na(fitted_draws$y[fitted_draws$.data_row == 2])))
+  expect_true(all(is.na(fitted_draws$y[fitted_draws$.row == 2])))
   expect_false(isTRUE(all.equal(
-    prediction_draws$.prediction[prediction_draws$.data_row == 2],
-    imputed[prediction_draws$.data_row == 2]
+    prediction_draws$.prediction[prediction_draws$.row == 2],
+    imputed[prediction_draws$.row == 2]
   )))
 
-  row3 = fitted_draws$.data_row == 3
-  imputed_by_draw = imputed[prediction_draws$.data_row == 2][match(
+  row3 = fitted_draws$.row == 3
+  imputed_by_draw = imputed[prediction_draws$.row == 2][match(
     fitted_draws$.draw[row3],
-    prediction_draws$.draw[prediction_draws$.data_row == 2]
+    prediction_draws$.draw[prediction_draws$.row == 2]
   )]
   expected_row3 = fitted_draws$Intercept_1[row3] +
     fitted_draws$ar1_1[row3] * (imputed_by_draw - fitted_draws$Intercept_1[row3])
