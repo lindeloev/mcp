@@ -94,8 +94,8 @@ data = data.frame(
 )
 empty = mcp(model, data, family = binomial(), sample = FALSE)
 data$y = empty$simulate(empty, data,
-  cp_1 = 29.5,
-  cp_2 = 69.5,
+  cp_1 = 30,
+  cp_2 = 70,
   Intercept_1 = 1.5,
   Intercept_3 = -1,
   x_2 = -0.15,
@@ -225,7 +225,7 @@ data = data.frame(
 )
 empty = mcp(model, data, par_x = 'x', sample = FALSE)
 data$y = empty$simulate(empty, data,
-  cp_1 = 54.5,
+  cp_1 = 55,
   Intercept_1 = 10,
   x_1 = 0.25,
   stateB_1 = 22,
@@ -265,8 +265,8 @@ data = data.frame(
 )
 empty = mcp(model, data, sample = FALSE, par_x = 'x')
 data$y = empty$simulate(empty, data,
-  cp_1 = 69.5,
-  cp_2 = 99.5,
+  cp_1 = 70,
+  cp_2 = 100,
 
   Intercept_1 = 10,
   z_1 = 0.2,
