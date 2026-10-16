@@ -44,7 +44,7 @@ test_that("custom normal change-point hierarchies retain model bounds", {
     prior = list(cp_1_id = "dnorm(0, cp_1_id_sd)"),
     sample = FALSE
   )
-  expect_match(fit$prior$cp_1_id, "T\\(cp_0 - cp_1, cp_2 - cp_1\\)")
+  expect_match(fit$prior$cp_1_id, "T(min(x) - cp_1, max(x) - cp_1)", fixed = TRUE)
   expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1, .*\\) T\\(cp_0, cp_2\\)")
 
   # Fixed values are not truncated

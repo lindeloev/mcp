@@ -40,6 +40,16 @@ get_prior = function(segments, cps, predictors, group_effects, family, prior = l
   legacy_prior_constants(prior, context)
   predictors$prior_type = get_prior_type(predictors)
 
+  # Disallow cp_0 and cp_K (at least for now)
+  prior_text = unlist(prior[vapply(prior, is.character, logical(1))])
+  cp_limits = paste0("cp_", c(0, context$n_segments))
+  if (any(stringr::str_detect(prior_text, paste0("\\b(", paste(cp_limits, collapse = "|"), ")\\b"))))
+    stop(
+      "Priors cannot refer to `", cp_limits[1], "` or `", cp_limits[2], "`, which are not parameters. ",
+      "Use `min(", context$x_display, ")` and `max(", context$x_display, ")` for the ends of the observed range.",
+      call. = FALSE
+    )
+
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
     default_predictor_specs(predictors, family, context),

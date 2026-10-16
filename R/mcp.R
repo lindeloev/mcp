@@ -420,6 +420,12 @@ mcp = function(
   # Return canonical formulas attached to .GlobalEnv to avoid environment bloat
   model = lapply(segments$form, stats::as.formula, env = globalenv())
   prior = prior[order(match(names(prior), parameters$parameter))]  # Order like mcp_pars()
+
+  # In fit$prior, show the JAGS nodes cp_0 and cp_K as the ends of the observed range, as users specify them
+  x_range = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, nrow(segments)), "\\b"))
+  prior = lapply(prior, function(value) if (is.character(value)) stringr::str_replace_all(value, x_range) else value)
+
+  # Class stuff
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
   class(jags_code) = c("mcptext", "character")  # for nicer printing

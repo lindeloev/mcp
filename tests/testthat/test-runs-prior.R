@@ -202,7 +202,7 @@ testthat::test_that("Dirichlet change point prior matches direct R simulation", 
 
 testthat::test_that("Minimum segment lengths go in cp_order_", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"), sample = FALSE)
-  testthat::expect_equal(fit$prior$cp_2, "dnorm(2, 1) T(cp_1 + 0.5, cp_3)")
+  testthat::expect_equal(fit$prior$cp_2, "dnorm(2, 1) T(cp_1 + 0.5, max(x))")
   testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0,cp_3)", fixed = TRUE)
   testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
 
@@ -237,12 +237,13 @@ testthat::test_that("Change points keep their specified priors, restricted to or
 testthat::test_that("Change point inits are ordered and within the priors, around fixed and user-supplied values", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1, ~ 1), data.frame(x = 0:100, y = 0), par_x = "x", sample = FALSE,
     prior = list(cp_2 = "dunif(80, 90)", cp_3 = "dnorm(50, 5)"))
-  testthat::expect_equal(get_cp_inits(fit$prior, c(0, 100)), list(cp_1 = 25, cp_2 = 81, cp_3 = 82))
-  testthat::expect_equal(get_cp_inits(fit$prior, c(0, 100), list(cp_2 = 85)), list(cp_1 = 25, cp_3 = 86))
-  testthat::expect_error(get_cp_inits(fit$prior, c(0, 100), list(cp_3 = 70)), "no room for ordered change points")
+  jags_prior = function(fit) as.list(stats::setNames(fit$.internal$prior_table$value, fit$.internal$prior_table$parameter))  # With cp_0 and cp_K
+  testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100)), list(cp_1 = 25, cp_2 = 81, cp_3 = 82))
+  testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100), list(cp_2 = 85)), list(cp_1 = 25, cp_3 = 86))
+  testthat::expect_error(get_cp_inits(jags_prior(fit), c(0, 100), list(cp_3 = 70)), "no room for ordered change points")
 
   fit = mcp(list(y ~ 1, ~ 1, ~ 1), data.frame(x = 0:100, y = 0), par_x = "x", sample = FALSE, prior = list(cp_2 = 20))
-  testthat::expect_equal(get_cp_inits(fit$prior, c(0, 100)), list(cp_1 = 19))
+  testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100)), list(cp_1 = 19))
 })
 
 
@@ -536,7 +537,7 @@ test_that("priors are resolved without changing their parameterization", {
   expect_prior(
     unclass(default_fit$prior),
     list(
-      cp_1 = "dunif(cp_0, cp_2)",
+      cp_1 = "dunif(min(x), max(x))",
       Intercept_1 = sub(",", " - x_1 * 1,", intercept),
       x_1 = slope,
       Intercept_2 = intercept,
@@ -606,16 +607,24 @@ test_that("resolved priors keep full precision regardless of options(digits)", {
 })
 
 
-test_that("change point priors refer to the exact ends of the observed range, cp_0 and cp_K", {
+test_that("change point priors refer to the exact ends of the observed range, cp_0 and cp_K in JAGS", {
   data = data.frame(x = c(0.618632254190743, 2:9, 9.87654321), y = 1:10)
   fit = mcp(
     list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE,
     prior = list(cp_1 = "dunif(min(x), 5)", cp_2 = "dnorm(7, 1)", Intercept_1 = "dnorm(min(x), 1)")
   )
-  expect_equal(fit$prior$cp_1, "dunif(cp_0, 5)")
-  expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(cp_0, cp_3)")
+  expect_equal(fit$prior$cp_1, "dunif(min(x), 5)")
+  expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(min(x), max(x))")
   expect_equal(fit$prior$Intercept_1, "dnorm(0.618632254190743, 1)")
   expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0,cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
+
+  # cp_0 and cp_K are JAGS nodes, not parameters
+  expect_error(mcp(list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE, prior = list(cp_1 = "dunif(cp_0, 5)")), "Use `min(x)` and `max(x)`", fixed = TRUE)
+  expect_error(mcp(list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE, prior = list(cp_2 = "dnorm(7, 1) T(, cp_3)")), "`cp_3`", fixed = TRUE)
+
+  # Passing fit$prior back gives the same model
+  refit = mcp(list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE, prior = fit$prior)
+  expect_equal(refit$prior, fit$prior)
 
   # prior_summary() shows the ends of the observed range as numbers
   ps = prior_summary(fit)
