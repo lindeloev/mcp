@@ -2,11 +2,7 @@
 # formula code to make model predictions
 # ------------------------------------------------------------
 
-#' Make the levels of categorical predictors match the original data
-#'
-#' @inheritParams add_rhs_predictors
-#' @return `newdata` with all categorical columns as factors that have identical levels to the original data.
-#' @noRd
+# Make categorical columns in `newdata` factors with levels identical to the original data
 relevel_newdata = function(newdata, fit) {
   # Check that the necessary data is available
   rhs_vars = get_predictor_cols(fit)
@@ -73,13 +69,8 @@ populate_design_columns = function(table, evaluated_designs) {
 }
 
 
-#' Add predictors to `newdata`
-#'
-#' @param newdata A data.frame that contains the predictor columns from
-#'   `fit$data` and `fit$model`.
-#' @param fit An `mcpfit` object.
-#' @return `newdata` with additional (dummy-coded) columns that make up the design matrix required for the model.
-#' @noRd
+# Add the (dummy-coded) columns of the design matrix to `newdata`, which contains the
+# predictor columns from `fit$data` and `fit$model`
 add_rhs_predictors = function(newdata, fit) {
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
@@ -455,14 +446,9 @@ simulate_atomic = function(fit,
 }
 
 
-#' Wrapper for `simulate_atomic()` with named arguments
-#'
-#' Auto-completion of named arguments  makes it easier to call from, e.g., RStudio.
-#' This is typically stored as `fit$simulate()`.
-#'
-#' @param parameters Output of `get_pars_table()`.
-#' @return An R function.
-#' @noRd
+# Make `fit$simulate()`: a wrapper for `simulate_atomic()` with the model parameters as named
+# arguments, so they auto-complete in, e.g., RStudio.
+# - parameters: Output of `get_pars_table()`.
 get_fitsimulate = function(parameters) {
   # Population-level parameters in mcp_pars() order. Group-level SDs default to 0 (no group-level deviations).
   parameters = parameters[parameters$scope == "population", ]

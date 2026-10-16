@@ -1,11 +1,5 @@
-#' RowSums of element-wise products.
-#' Like an inner product, just vectorized for many y.
-#' This ensures R <--> JAGS code compatibility
-#'
-#' @param x A matrix
-#' @param y A matrix
-#' @return A vector
-#' @noRd
+# RowSums of element-wise products of matrices. Like an inner product, just vectorized for many y.
+# This ensures R <--> JAGS code compatibility.
 inprod = function(x, y) {
   checkmate::assert_matrix(x)
   checkmate::assert_matrix(y)

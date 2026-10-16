@@ -118,11 +118,7 @@ parse_predictor_group_term = function(
 }
 
 
-#' Get predictor group-level definitions for one segment
-#'
-#' @inheritParams get_predictors_segment
-#' @return A tibble containing group coefficients and explicit turn-offs.
-#' @noRd
+# Predictor group-level definitions for one segment, including explicit turn-offs
 get_predictor_group_definitions_segment = function(
   components, segment, family, data, par_x, check_rank = TRUE, previous = NULL
 ) {

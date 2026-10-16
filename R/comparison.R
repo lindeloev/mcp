@@ -537,14 +537,7 @@ validate_savage_dickey_expression = function(expression, parameters) {
 }
 
 
-#' Compute the density at a specific point.
-#'
-#' Used in \link{hypothesis}
-#'
-#' @param x Numeric draws.
-#' @param value What value to evaluate the density at
-#' @return A float
-#' @noRd
+# Density of the draws `x` at `value`. Used in hypothesis().
 get_density = function(x, value) {
   if (diff(range(x)) == 0) {
     stop("Cannot estimate density for constant values.", call. = FALSE)
