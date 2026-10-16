@@ -120,7 +120,7 @@ fit$jags_code
 
 We used `options(mcp_reparam = FALSE)` to see the plain model. By default, `mcp` samples some parameters on other scales, which we will return to [below](#reparameterizations).
 
-Look at the JAGS code under `# par_x local to each segment` and `# Formula for mu` to see this exact indicator formulation in action: `x_local_1_[i_]` and `x_local_2_[i_]` correspond to $X_{1,i}$ and $X_{2,i}$, and each segment's slope is multiplied by its activation indicator (e.g., `(x[i_] >= cp_1)`).
+Look at the JAGS code under `# x measured from each segment's change point` and `# Formula for mu` to see this exact indicator formulation in action: `x_local_1_[i_]` and `x_local_2_[i_]` correspond to $X_{1,i}$ and $X_{2,i}$, and each segment's slope is multiplied by its activation indicator (e.g., `(x[i_] >= cp_1)`).
 
 `fitted()`, `predict()`, `log_lik()`, etc. evaluate the exact same formula in R. See [the model in R](#the-model-in-r).
 

@@ -10,7 +10,7 @@
 #' @noRd
 get_formula_jags = function(segments, predictors, group_effects, par_x, family, design_specs = list()) {
   # Add X-helpers which code the X relative to the start of each segment.
-  local_x_str = "\n# par_x local to each segment"
+  local_x_str = paste0("\n# ", par_x, " measured from each segment's change point")
   for (i in seq_len(nrow(segments))) {
     segment_start = if (i > 1) paste0(" - ", segments$cp_start[i]) else ""
     local_x_str = paste0(local_x_str, "\nx_local_", i, "_[i_] = min(", par_x, "[i_], ", segments$cp_end[i], ")", segment_start)

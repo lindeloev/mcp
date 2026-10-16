@@ -58,7 +58,7 @@ default_cp_specs = function(cps, context) {
     specs[[group_name]] = tibble::tibble(
       parameter = group_name,
       code = paste0("dnorm(0, ", sd_name, ") ", group_cp_truncation(cps, j, "min(.x)", "max(.x)")),
-      description = "Ordered group-level change-point deviations from the population location",
+      description = "Group-level change-point deviations, truncated between the neighbouring change points",
       source = "default"
     )
   }
