@@ -57,10 +57,13 @@
 #'   Initial values for change points must be ordered.
 #'   Defaults to `NULL` where all chains start at equispaced change points and the prior medians.
 #'   User-provided `inits` take precedence.
-#' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
-#'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
-#'   framework. R-side simulation and prediction methods continue to use the
-#'   mcp-default formulas (with warning), so they may no longer match custom JAGS code.
+#' @param jags_code String. JAGS code to sample instead of the code that `mcp` writes.
+#'   This is an expert option for edits to `fit$jags_code` that keep the parameters in
+#'   [mcp_pars()], the data, and the likelihood.
+#'   Only the parameters in [mcp_pars()] are monitored. R-side simulation and prediction
+#'   methods continue to use the `mcp` formulas (with warning), so `fitted()`, `predict()`,
+#'   `plot()`, `loo()`, etc. are wrong if the custom code changes the formula or likelihood.
+#'   The written JAGS code is not a stable interface and may change between `mcp` versions.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html) about how `mcp` writes JAGS code.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
