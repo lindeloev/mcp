@@ -75,7 +75,7 @@ head(df)
 ```
 
 
-Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled effectively. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
+Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled efficiently. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
 ```{r, results = FALSE}
 fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 6000)
@@ -109,7 +109,7 @@ equality = hypothesis(fit_default, "cp_1 = 4")
 equality
 ```
 
-Notice that `mcp` issues a warning when computing Savage-Dickey Bayes factors on default priors. Because default priors are broad, they suppress the prior density denominator and can heavily bias point Bayes factors. If you obtained these results with a bespoke, substantive prior, you would interpret them as:
+Notice that `mcp` issues a warning when computing Savage-Dickey Bayes factors on default priors. The Savage-Dickey ratio divides by the prior density at the tested value, so the Bayes factor is only as meaningful as that prior. The wider the prior, the lower that density, and the more the Bayes factor favors the point null. If you obtained these results with a bespoke, substantive prior, you would interpret them as:
 
  * `hypothesis`: For internal convenience, `hypothesis` always re-arranges to test against zero. 
  * `mean`: The posterior mean of `cp_1 - 4`, i.e., of the left-hand side after re-arranging.
@@ -234,7 +234,7 @@ In recent versions of `loo`, `loo_compare()` reports `p_worse` (the estimated pr
 
 These diagnostics highlight when the normal approximation underlying `se_diff` and `p_worse` is unreliable. For example, `|elpd_diff| < 4` flags that models have very similar predictive performance and should be treated as practically indistinguishable (as between `model2` and `model1` here), while `N < 100` warns of small-sample uncertainty underestimation. See the [LOO glossary](https://mc-stan.org/loo/reference/loo-glossary.html) or `?loo::loo-glossary` for details on all diagnostic flags.
 
-You could do the same using `waic`. This is computationally lighter at the cost of robustness to influential data points. The results are almost always practically identical.
+You could do the same using `waic()`. WAIC is asymptotically equivalent to LOO-CV but less robust to influential data points, so `loo()` is generally preferred. The results are often practically identical.
 
 ```{r, collapse=TRUE}
 waic_default = waic(fit_default)

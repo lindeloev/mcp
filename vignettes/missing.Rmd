@@ -95,7 +95,7 @@ fitted(fit, width = 0.8) |>
 Imputations are not added to `plot()` automatically. Since `plot()` returns a ggplot, it is easy to extend. Here an `×` marks the posterior mean and a vertical line shows the central 80% imputation interval:
 
 ```{r}
-# Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
+# Start with mcp plot with prediction interval
 plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add imputation interval

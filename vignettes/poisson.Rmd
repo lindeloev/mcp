@@ -78,7 +78,7 @@ plot_pars(fit)
 
 *[Brief overview of all default priors](../articles/default_priors.html#summary-reference-table)*
 
-`poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
+`poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So the rate is around `r round(exp(result$mean[result$parameter == "Intercept_1"]), 2)` disasters per year in segment 1 and `r round(exp(result$mean[result$parameter == "Intercept_2"]), 2)` in segment 2. Exponentiating the posterior mean of the log-rate gives approximately the posterior median of $\lambda$, not its mean. For the posterior mean, exponentiate the draws before averaging, e.g., `mean(exp(as_draws_df(fit)$Intercept_1))`, or use `fitted(fit)`.
 
 The intercept prior is a normal distribution centered on the rounded median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale equal to the maximum of 2.5 and its rounded MAD. Replacing zeros keeps the log finite and the minimum scale avoids an accidentally narrow prior.
 
@@ -88,7 +88,7 @@ Coefficients are [autoscaled as in `rstanarm`](../articles/default_priors.html#d
 prior_summary(fit)
 ```
 
-As always, the prior on the change point forces it to occur in the observed range. The coefficient priors are deliberately broad defaults, so update them with more informed priors for your particular case when possible, e.g.:
+The default prior on the change point restricts it to the observed range. The coefficient priors are deliberately broad defaults, so update them with more informed priors for your particular case when possible, e.g.:
 
 ```{r, eval=FALSE}
 prior = list(
@@ -125,7 +125,7 @@ fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
 fitted(fit, newdata = transform(df, exposure = 1))
 ```
 
-This works the same way for `predict()`, which then returns predicted counts at unit exposure. The `fitted(..., rate = TRUE)` argument does not apply for NB; it is only for binomial models, where it converts counts to proportions of trials.
+This works the same way for `predict()`, which then returns predicted counts at unit exposure. The `fitted(..., rate = TRUE)` argument does not apply to Poisson or negative-binomial models; it is only for binomial models, where it converts counts to proportions of trials.
 
 Adding a categorical predictor to the model, you can also model rate ratios. When an offset is present, `mcp` automatically shifts the default intercept prior from centering on observed log-counts to observed log-rates ($\log(y) - \text{offset}$), keeping the minimum scale at 2.5.
 

@@ -35,6 +35,8 @@
 #'    and starts afresh.
 #'
 #' `sigma` and `shape` are required by the likelihood, so they include an intercept in segment 1.
+#' They are joined in later segments that do not include them. `ar()` and `ma()` are not required,
+#' so a segment that does not include them has no AR/MA component.
 #' Each segment after the first starts at a change point, so it always includes a change-point
 #' intercept (`cp_1`, `cp_2`, ...). Use `cp()` to add terms to it, e.g., `cp((1 | id))`.
 #'

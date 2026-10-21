@@ -259,7 +259,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 [Missing responses and posterior imputation](https://lindeloev.github.io/mcp/articles/missing.html):
 
-- Missing responses are sampled in JAGS and retained with their matching posterior draws.
+- Missing responses are imputed jointly with the parameters.
 
 - Use `fitted(fit) |> filter(is.na(y))` for expected responses and `predict(fit) |> filter(is.na(y))` for posterior imputations.
 

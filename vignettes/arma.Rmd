@@ -95,7 +95,7 @@ summary(fit)
 
 The naming syntax is `[component][order]_[segment]` for intercepts. For example, `ar1_2` is the first-order autoregressive coefficient and `ma1_2` the first-order moving-average coefficient in segment 2. Slopes use the usual `mcp` parameter names, e.g., `ar1_x_3` for a slope on AR(1) in segment 3.
 
-Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior mean is almost always exactly the same as `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are due to randomness in the simulation - not in the fit.
+Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior means are typically close to the estimates of `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are mostly due to randomness in the simulation - not in the fit.
 
 For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau (`time < 74.5`) is `r round(sd(fit$data$price[fit$data$time < 74.5]), 1)`. As always, it is good to assess posteriors and convergence more directly:
 
@@ -316,7 +316,7 @@ We can also visualize the priors because we sampled the prior. `prior = TRUE` wo
 plot_pars(fit, prior = TRUE, npars = NULL)
 ```
 
-Notice that the plot smooths the posteriors at sharp cutoffs, slightly misrepresenting the true distribution.
+Notice that the density estimates are smoothed at sharp cutoffs, such as the `T(-1, 1)` bounds, slightly misrepresenting the true distribution.
 
 Let's inspect the priors for a more advanced AR model, since you would often have to inform these:
 

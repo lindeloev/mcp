@@ -56,7 +56,7 @@
 #'   Names must be parameters in [mcp_pars()]. Fixed parameters and parameters that are
 #'   reparameterized for faster sampling cannot be initialized (see `mcp_reparam` in [mcp-package]).
 #'   Initial values for change points must be ordered.
-#'   Defaults to `NULL` where all chains start at equispaced change points and the prior medians.
+#'   Defaults to `NULL` where all chains start at equally spaced change points and the prior medians.
 #'   User-provided `inits` take precedence.
 #' @param jags_code String. JAGS code to sample instead of the code that `mcp` writes.
 #'   This is an expert option for edits to `fit$jags_code` that keep the parameters in

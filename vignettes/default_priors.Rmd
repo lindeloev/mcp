@@ -66,11 +66,11 @@ General quantities used in the table below:
 | **Mean ($\mu$): Identity link** (`binomial`, `bernoulli`) | `dunif(0, 1)` | contrasts: `dunif(-1, 1)`<br>slopes: `dnorm(0, 1 / sd(column))` | `dt(0, 1, 3) T(0, )`† | |
 | **Constant dispersion** (implicit `sigma`, `shape`) | `sigma_1`: `dt(0, S_y, 3) T(0, )`<br>`shape_1`: `dinvgamma(0.4, 0.3)` | — | — | `brms` |
 | **Modeled `sigma()`** (log link) | `dt(0, 2.5, 3)` | contrasts: `dt(0, 2.5, 3)`<br>slopes: `dt(0, 2.5 / sd(column), 3)` | `dt(0, 2.5, 3) T(0, )`† | `brms` intercept |
-| **Modeled `shape()`** (log link) | `dnorm(0, 2.5)` | contrasts: `dnorm(0, 2.5)`<br>slopes: `dnorm(0, 2.5 / sd(column))` | `dnorm(0, 2.5) T(0, )`\*\* | |
+| **Modeled `shape()`** (log link) | `dnorm(0, 2.5)` | contrasts: `dnorm(0, 2.5)`<br>slopes: `dnorm(0, 2.5 / sd(column))` | `dnorm(0, 2.5) T(0, )`† | |
 | **Autocorrelation** (`ar()`, `ma()`) | `dnorm(0, 0.5) T(-1, 1)` | contrasts: `dnorm(0, 0.25)`<br>slopes: `dnorm(0, 0.25 / sd(column))` | — | |
-| **Change points** (`cp_i`) | `dunif(min(x), max(x))`\*\*\* | — | `dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
+| **Change points** (`cp_i`) | `dunif(min(x), max(x))`\*\* | — | `dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
 
-\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. \*\* Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is [`mcp`-specific](#mcp-specific). \*\*\* Ordered ([flat Dirichlet](#change-points))
+\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. † Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is [`mcp`-specific](#mcp-specific). \*\* Ordered ([flat Dirichlet](#change-points))
 
 
 # Default prior on change points {#change-points}
@@ -190,11 +190,11 @@ The segment lengths are a linear function of the change points, so the same dens
 
 # Default priors on group-level effects
 
-Each group-level effect has a population-level SD parameter. Predictor-side deviations use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives the `brms` half-Student-t prior on the response scale, except for log, logit, and probit links and inside `sigma()` and `shape()` (see the table above). Slope SDs are divided by $\operatorname{sd}(\text{column})$, like the population-level slopes. For distributional parameters, deviations and SD are on that parameter's link scale (for example, effects inside `sigma()` are on the log-SD scale).
+Each group-level effect has a population-level SD parameter. Group-level deviations in the predictor part use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives the `brms` half-Student-t prior on the response scale, except for log, logit, and probit links and inside `sigma()` and `shape()` (see the table above). Slope SDs are divided by $\operatorname{sd}(\text{column})$, like the population-level slopes. For distributional parameters, deviations and SD are on that parameter's link scale (for example, effects inside `sigma()` are on the log-SD scale).
 
 ## Group-level change points {#group-level-change-points}
 
-Change-point effects use the same ordinary normal hierarchy, additionally bounded by the observed range of $x$ and ordered within each group. Therefore, `cp_i_id_sd` is the SD of the normal distribution **before truncation** rather than the realized SD. See [group-level effects with mcp](../articles/group_effects.html) for the model equation and practical interpretation.
+Group-level change points use the same ordinary normal hierarchy, additionally bounded by the observed range of $x$ and ordered within each group. Therefore, `cp_i_id_sd` is the SD of the normal distribution **before truncation** rather than the realized SD. See [group-level effects with mcp](../articles/group_effects.html) for the model equation and practical interpretation.
 
 The default prior on the SD of group-level change points, e.g., `cp_1_id_sd`, is $$\text{Normal}\left(0, \frac{W}{4}\right) T(0, ), \qquad W = \frac{2 (\max(x) - \min(x))}{N + 1}$$ where $N$ is the number of change points. $W$ is the expected width of the interval in which a group's change point can vary, i.e., between its two neighboring change points. Under the default prior, adjacent change points are on average $(\max(x) - \min(x)) / (N + 1)$ apart. With one change point, $W$ is the observed range of $x$.
 
@@ -217,7 +217,7 @@ Here, a deviation means a default that differs from the precedent that `mcp` fol
 
 - **Offsets with identity links:** `rstanarm` centers the intercept on `mean(y)`, ignoring `offset()`. But with an `offset()`, the intercept describes $y - \text{offset}$, so `mcp` computes its location and scale from $y - \text{offset}$, just as for log links. `brms` subtracts `mean(offset)` from the location but computes the scale from $y$.
 
-- **Intercept placement:** `rstanarm` and `brms` place the intercept prior on centered predictors. `mcp` places the default prior on `Intercept_1` at $\min(x)$ for x-terms but does not center other predictors, so the prior applies where they are zero. If such a predictor is far from zero, e.g., age in years, center it before fitting or set a prior on `Intercept_1`. Read more about the [the mcp model](../articles/formulas.html).
+- **Intercept placement:** `rstanarm` and `brms` place the intercept prior on centered predictors. `mcp` places the default prior on `Intercept_1` at $\min(x)$ for x-terms but does not center other predictors, so the prior applies where they are zero. If such a predictor is far from zero, e.g., age in years, center it before fitting or set a prior on `Intercept_1`. Read more about [the mcp model](../articles/formulas.html).
 
 - **x-term interactions:** `rstanarm` scales `x:z` by the SD of the model-matrix column, $\operatorname{sd}(x \cdot z)$, which depends on the location of $x$ and $z$. For example, it is around 1000 for `x:group` when $x$ is calendar years. Since x-terms are measured from the change point, the location of $x$ is not meaningful here. `mcp` instead uses $\operatorname{sd}(x) \cdot \operatorname{sd}(z)$, where 0/1 indicators contribute a factor of 1, so the prior applies per SD of $x$ and $z$.
 
@@ -232,7 +232,7 @@ Some parameters have no precedent in `rstanarm` or `brms`, so `mcp` uses its own
 
 - **Autoregressive and moving-average terms:** `mcp` uses zero-centered `dnorm(0, 0.5) T(-1, 1)` priors to favor stationary and invertible dynamics, with modest changes across segments and predictors (`dnorm(0, 0.25)`).
 
-- **Identity links for `binomial()` and `bernoulli()`:** `rstanarm` does not support this link, and `brms` applies its generic defaults (e.g., `student_t(3, 0, 2.5)` for the intercept), which do not respect that probabilities lie between 0 and 1. `mcp` uses a uniform intercept (`uniform(0, 1)`), uniform contrasts on the possible differences (`uniform(-1, 1)`), and slopes of `normal(0, 1 / sd(column))`.
+- **Identity links for `binomial()` and `bernoulli()`:** `rstanarm` does not support this link, and `brms` applies its generic defaults (e.g., `student_t(3, 0, 2.5)` for the intercept), which do not respect that probabilities lie between 0 and 1. `mcp` uses a uniform intercept (`dunif(0, 1)`), uniform contrasts on the possible differences (`dunif(-1, 1)`), and slopes of `dnorm(0, 1 / sd(column))`.
 
 - **Change points:** As described [above](#change-points). The SDs of group-level change points have an `mcp`-specific prior, described [above](#group-level-change-points).
 
