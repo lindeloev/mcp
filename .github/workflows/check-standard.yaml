@@ -181,6 +181,9 @@ jobs:
           R CMD INSTALL rjags_5-3.tar.gz
           Rscript -e 'stopifnot(packageVersion("rjags") >= "5")'
 
+      - name: Bernoulli ESS across seeds
+        run: Rscript dev/jags5-ess.R
+
       - name: Run tests
         run: testthat::test_local(reporter = "summary", stop_on_failure = TRUE)
         shell: Rscript {0}
