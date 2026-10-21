@@ -163,6 +163,10 @@ jobs:
           echo "134f380f1a945ccfd29342d542761febeff990ab7736cbbaf29ddf3aee2ee148  jags5.pkg" | shasum -a 256 -c
           sudo installer -pkg jags5.pkg -target /
           rm jags5.pkg
+          pkgutil --pkgs | grep -i jags | xargs -n1 pkgutil --files | grep -i "pkgconfig\|dylib" || true
+          JAGS_PC=$(find /opt/jags /usr/local -name jags.pc 2>/dev/null | head -1)
+          echo "Found $JAGS_PC"
+          echo "PKG_CONFIG_PATH=$(dirname "$JAGS_PC")" >> "$GITHUB_ENV"
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
