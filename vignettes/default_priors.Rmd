@@ -21,7 +21,7 @@ set.seed(42)
 
 This article documents the default priors in `mcp`. These are the priors used if you do not specify otherwise in `mcp(..., prior = list())`. 
 
-In short, `mcp` uses the conventional default priors of `rstanarm` for intercepts and coefficients and of `brms` for scale parameters, with `mcp`-specific defaults for change points and autocorrelation and a few [documented deviations](#deviations). 
+In short, `mcp` uses the conventional default priors of `rstanarm` for intercepts and coefficients and of `brms` for scale parameters, with [`mcp`-specific defaults](#mcp-specific) for change points, autocorrelation, and identity-link binomial models, and a few [documented deviations](#deviations). 
 
 See [Working with priors](../articles/priors.html) for how to set your own priors and do prior predictive checks.
 
@@ -70,7 +70,7 @@ General quantities used in the table below:
 | **Autocorrelation** (`ar()`, `ma()`) | `dnorm(0, 0.5) T(-1, 1)` | contrasts: `dnorm(0, 0.25)`<br>slopes: `dnorm(0, 0.25 / sd(column))` | — | |
 | **Change points** (`cp_i`) | `dunif(min(x), max(x))`\*\*\* | — | `dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )` | |
 
-\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. \*\* Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is `mcp`-specific; see [deviations](#deviations). \*\*\* Ordered ([flat Dirichlet](#change-points))
+\* For `poisson()`, these are `rstanarm`'s Gaussian defaults (see [deviations](#deviations)), and the intercept is truncated `T(0, )`, or `T(-min(offset), )` with an `offset()`. \*\* Group SDs for slopes are divided by $\operatorname{sd}(\text{column})$. A blank precedent means that the default is [`mcp`-specific](#mcp-specific). \*\*\* Ordered ([flat Dirichlet](#change-points))
 
 
 # Default prior on change points {#change-points}
@@ -205,6 +205,8 @@ The prior is half-normal rather than the half-Student-t used for predictor group
 
 # Deviations from `rstanarm` and `brms` {#deviations}
 
+Here, a deviation means a default that differs from the precedent that `mcp` follows for that parameter: `rstanarm` for intercepts and coefficients and `brms` for scale parameters. `brms`'s improper flat coefficient priors are not a precedent, since JAGS does not support them. 
+
 `mcp` deviates from these precedents in a few places:
 
 - **Logit and probit links (`binomial()`, `bernoulli()`):** `mcp` uses `rstanarm`'s autoscaling, but with scales that make the intercept prior (approximately) uniform on the probability scale. For probit, `dnorm(0, 1)` is exactly uniform on the probability scale. For logit, `dnorm(0, 1.5)` is approximately so (95% interval from about 0.05 to 0.95; [McElreath, 2020](https://xcelab.net/rm/), section 11.1). Larger scales, such as `rstanarm`'s 2.5, place excess prior mass near 0 and 1. This is particularly undesirable in change-point models, where several segments each contribute their own intercept. Group-level SDs use the same scales (1.5 and 1) instead of `brms`'s 2.5.
@@ -215,22 +217,24 @@ The prior is half-normal rather than the half-Student-t used for predictor group
 
 - **Offsets with identity links:** `rstanarm` centers the intercept on `mean(y)`, ignoring `offset()`. But with an `offset()`, the intercept describes $y - \text{offset}$, so `mcp` computes its location and scale from $y - \text{offset}$, just as for log links. `brms` subtracts `mean(offset)` from the location but computes the scale from $y$.
 
-
 - **Intercept placement:** `rstanarm` and `brms` place the intercept prior on centered predictors. `mcp` places the default prior on `Intercept_1` at $\min(x)$ for x-terms but does not center other predictors, so the prior applies where they are zero. If such a predictor is far from zero, e.g., age in years, center it before fitting or set a prior on `Intercept_1`. Read more about the [the mcp model](../articles/formulas.html).
 
 - **x-term interactions:** `rstanarm` scales `x:z` by the SD of the model-matrix column, $\operatorname{sd}(x \cdot z)$, which depends on the location of $x$ and $z$. For example, it is around 1000 for `x:group` when $x$ is calendar years. Since x-terms are measured from the change point, the location of $x$ is not meaningful here. `mcp` instead uses $\operatorname{sd}(x) \cdot \operatorname{sd}(z)$, where 0/1 indicators contribute a factor of 1, so the prior applies per SD of $x$ and $z$.
-
-- **Proper coefficient priors:** `brms` uses improper flat priors on coefficients, which JAGS does not support. `mcp` uses `rstanarm`'s instead.
 
 - **Factors without an intercept (`0 + state`):** In `y ~ 0 + state`, R codes a coefficient for every factor level instead of an intercept and contrasts. `rstanarm` uses its coefficient prior, centered at zero, which is strongly informative when the data are far from zero. This applies where a segment starts at zero: segment 1, and joined segments with no earlier intercept or x-term, e.g., segment 2 in `list(y ~ 0, ~ 0 + state)`. In other joined segments, e.g., `~ 0 + state` after `y ~ 1 + x`, the coefficients are jumps from where the earlier segment left off, so they get the contrast prior.
 
 - **Coefficients in `sigma()`, `shape()`, `ar()`, and `ma()`, and group-level SDs:** The prior scale of slopes is divided by $\operatorname{sd}(\text{column})$, so that it applies per SD of the predictor, as for `mu`. Contrasts are not divided because a 0/1 dummy has no units to convert. `brms` uses flat priors for these coefficients and the same scale for all group-level SDs.
 
-- **Identity links for binomial and Bernoulli models:** `rstanarm` does not support this link, and `brms` applies its generic defaults (e.g., `student_t(3, 0, 2.5)` for the intercept), which do not respect that probabilities lie between 0 and 1. `mcp` uses a uniform intercept (`uniform(0, 1)`), uniform contrasts on the possible differences (`uniform(-1, 1)`), and slopes of `normal(0, 1 / sd(column))`.
+
+# `mcp`-specific priors {#mcp-specific}
+
+Some parameters have no precedent in `rstanarm` or `brms`, so `mcp` uses its own defaults:
 
 - **Autoregressive and moving-average terms:** `mcp` uses zero-centered `dnorm(0, 0.5) T(-1, 1)` priors to favor stationary and invertible dynamics, with modest changes across segments and predictors (`dnorm(0, 0.25)`).
 
-- **Change points:** `mcp`-specific, as described [above](#change-points). The SDs of group-level change points have an `mcp`-specific prior, described [above](#group-level-change-points).
+- **Identity links for `binomial()` and `bernoulli()`:** `rstanarm` does not support this link, and `brms` applies its generic defaults (e.g., `student_t(3, 0, 2.5)` for the intercept), which do not respect that probabilities lie between 0 and 1. `mcp` uses a uniform intercept (`uniform(0, 1)`), uniform contrasts on the possible differences (`uniform(-1, 1)`), and slopes of `normal(0, 1 / sd(column))`.
+
+- **Change points:** As described [above](#change-points). The SDs of group-level change points have an `mcp`-specific prior, described [above](#group-level-change-points).
 
 
 # Applied discussion of default priors in other articles
