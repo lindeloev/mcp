@@ -178,7 +178,7 @@ jobs:
         run: |
           curl -L --retry 3 -o rjags_5-3.tar.gz "https://sourceforge.net/projects/mcmc-jags/files/rjags/5/Source/rjags_5-3.tar.gz/download"
           R CMD INSTALL rjags_5-3.tar.gz
-          Rscript -e 'stopifnot(rjags::jags.version() >= "5"); print(rjags::jags.version())'
+          Rscript -e 'print(rjags::jags.version()); stopifnot(startsWith(as.character(rjags::jags.version()), "5."))'
 
       - name: Run tests
         run: testthat::test_local(reporter = "summary", stop_on_failure = TRUE)

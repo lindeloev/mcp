@@ -173,7 +173,7 @@ test_example_plot = function(plot, example) {
 #' @param example The name passed to `mcp_example()`.
 snapshot_example_plot = function(plot, example) {
   # JAGS 5 samples differ from JAGS 4 for the same seed, so the reference snapshots only apply to JAGS 4.
-  testthat::skip_if(rjags::jags.version() >= "5", "Example snapshots were made with JAGS 4.")
+  testthat::skip_if(!startsWith(as.character(rjags::jags.version()), "4."), "Example snapshots were made with JAGS 4.")
   if (inherits(plot, "patchwork"))
     plot = plot & ggplot2::theme_gray()
   else
