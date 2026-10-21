@@ -116,6 +116,9 @@ pp_eval = function(
   } else if (data_columns$response %notin% colnames(newdata)) {
     stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
   }
+  missing_group_cols = setdiff(intersect(required_cols, group_info$cols), colnames(newdata))
+  if (length(missing_group_cols) > 0)
+    stop("These grouping columns are missing from `newdata`: ", and_collapse(missing_group_cols), ". Add them, or set `group_effects = FALSE` for population-level ", type, " values.", call. = FALSE)
   assert_data_cols(newdata, required_cols)
   assert_response_data(
     fit$family,

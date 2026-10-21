@@ -319,6 +319,8 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
   draws = posterior::as_draws_df(posterior_draws(fit, prior = prior))
   has_prior_draws = !prior && !is.null(mcmclist_draws(fit, prior = TRUE, error = FALSE))
   draws_prior = if (has_prior_draws) posterior::as_draws_df(posterior_draws(fit, prior = TRUE))
+  if (!prior && !has_prior_draws && any(stringr::str_detect(hypotheses, "<|>")))
+    message("Bayes factors for directional hypotheses need prior draws, so `BF` is NA. Run mcp(..., sample = 'both') to compute them.")
 
   # Loop through hypotheses and populate df_result
   df_result = tibble::tibble()

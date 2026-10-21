@@ -233,7 +233,7 @@ test_that("independent-series models evaluate plots, trends, and dpars without r
   # When series is also included as a grouping effect, omitting it errors unless group_effects = FALSE
   fit_grp = mcp(list(y ~ 1 + (1 | id) + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
   fit_grp$mcmc_post = coda::mcmc.list(coda::mcmc(matrix(rep(1, 30), nrow = 5, dimnames = list(NULL, c("Intercept_1", "Intercept_1_id[a]", "Intercept_1_id[b]", "Intercept_1_id_sd", "sigma_1", "ar1_1")))))
-  expect_error(fitted(fit_grp, newdata = nd, arma = FALSE), "missing from the data: id")
+  expect_error(fitted(fit_grp, newdata = nd, arma = FALSE), "grouping columns are missing from `newdata`: id", fixed = TRUE)
   fitted_pop = expect_no_error(fitted(fit_grp, newdata = nd, arma = FALSE, group_effects = FALSE))
   expect_equal(nrow(fitted_pop), 5)
 })

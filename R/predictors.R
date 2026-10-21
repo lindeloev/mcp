@@ -187,6 +187,8 @@ get_par_x = function(vars, data, par_x = NULL) {
     # Check user-supplied par_x
     if (par_x %notin% colnames(data))
       stop("par_x = '", par_x, "' not found in data.")
+    if (inherits(data[[par_x]], c("Date", "POSIXt")))
+      stop("par_x = '", par_x, "' is a date. Convert it to a number first, e.g., days since the first date: `as.numeric(difftime(data$", par_x, ", min(data$", par_x, "), units = \"days\"))`.")
     if (!is_continuous(data[[par_x]]))
       stop("par_x = '", par_x, "' has to be continuous. Is it binary or categorical?")
   } else {
