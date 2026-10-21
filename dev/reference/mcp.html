@@ -119,7 +119,7 @@ with syntactic column names. The response variable can contain missing values, w
 <dd><p>Named list, e.g., <code>prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")</code>.
 List names are parameter names (<code>cp_1</code>, <code>Intercept_1</code>, <code>x_2</code>,
 <code>sigma_1</code>, etc.) and values are a distribution string (e.g., <code>"dnorm(0, 1) T(0, )"</code>),
-a fixed value (e.g., <code>-2.1</code>), or the name of another parameter to share its value.
+a constant (e.g., <code>-2.1</code>), or the name of another parameter to share its value.
 <em>OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so <code>dnorm(0, 0.001)</code> is a very narrow prior.</em>
 Weakly informative defaults are used where priors are not specified;
 see them with <code><a href="prior_summary.html">prior_summary()</a></code>. See <a href="mcp-priors.html">mcp-priors</a> for the full syntax.
@@ -147,7 +147,7 @@ plots, summaries, and other methods to select prior draws.</p></li>
 <li><p><code>"both"</code>: Sample both prior and posterior. Plots, summaries, etc.
 will default to using the posterior. Use <code>prior = TRUE</code> to select prior draws.</p></li>
 <li><p><code>"none"</code> or <code>FALSE</code>: Do not sample. Returns an mcpfit
-object without draws. This is useful if you only want to check
+object without draws (an "empty fit"). This is useful if you only want to check
 prior strings (<code>fit$prior</code>), the JAGS model (<code>fit$jags_code</code>), etc.</p></li>
 </ul></dd>
 
@@ -171,10 +171,10 @@ use diagnostics to assess convergence.</p></dd>
 <dd><p>A named list of initial values for the parameters, e.g., <code>list(Intercept_1 = 10)</code>,
 or a list of such lists with one per chain. This can be useful if a model fails to converge
 (<a href="https://lindeloev.github.io/mcp/articles/tips.html">read more</a>).
-Names must be parameters in <code><a href="mcp_pars.html">mcp_pars()</a></code>. Fixed parameters and parameters that are
+Names must be parameters in <code><a href="mcp_pars.html">mcp_pars()</a></code>. Parameters with constant priors and parameters that are
 reparameterized for faster sampling cannot be initialized (see <code>mcp_reparam</code> in <a href="mcp-package.html">mcp-package</a>).
 Initial values for change points must be ordered.
-Defaults to <code>NULL</code> where all chains start at equispaced change points and the prior medians.
+Defaults to <code>NULL</code> where all chains start at equally spaced change points and the prior medians.
 User-provided <code>inits</code> take precedence.</p></dd>
 
 
@@ -186,6 +186,8 @@ Only the parameters in <code><a href="mcp_pars.html">mcp_pars()</a></code> are m
 methods continue to use the <code>mcp</code> formulas (with warning), so <code><a href="execute-mcp-model.html">fitted()</a></code>, <code><a href="execute-mcp-model.html">predict()</a></code>,
 <code><a href="plot.mcpfit.html">plot()</a></code>, <code><a href="loo.mcpfit.html">loo()</a></code>, etc. are wrong if the custom code changes the formula or likelihood.
 The written JAGS code is not a stable interface and may change between <code>mcp</code> versions.
+<code>jags_code</code> is planned for deprecation once a future mcp release brings custom families
+and tooling to run <code>fit$jags_code</code> directly in JAGS.
 <a href="https://lindeloev.github.io/mcp/articles/implementation.html">Read more</a> about how <code>mcp</code> writes JAGS code.</p></dd>
 
 
@@ -286,17 +288,17 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.75 1.736 28.48 35.084 1.00     3249     4358 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.12 1.004 69.48 72.776 1.00     3660     6245 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        31.8   1.7   28.5   35.1   1.00     3249     4358 30.0      OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        71.1   1.0   69.5   72.8   1.00     3660     6245 70.0      OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.96 0.651  8.69 11.255 1.00     4919     6791 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.55 0.048  0.46  0.643 1.00     5176     6667  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.95 1.370 11.31 16.678 1.00     2254     4267 15.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.20 0.084 -0.37 -0.039 1.00     1238     2159 -0.3    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.87 0.286  3.35  4.470 1.00     5025     5407  3.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1  9.96  0.65   8.69  11.25  1.00     4919     6791 10.00     OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2       0.547 0.048  0.456  0.643 1.00     5176     6667  0.500    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.9   1.4   11.3   16.7   1.00     2254     4267 15.0      OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3      -0.205 0.084 -0.372 -0.039 1.00     1238     2159 -0.300    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      3.87  0.29   3.35   4.47  1.00     5025     5407  3.50     OK</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Visual inspection of the results</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span>  <span class="co"># Visualization of model fit/predictions</span></span></span>
@@ -364,17 +366,17 @@ and hierarchical models, providing the computational foundation used by BUGS and
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3: ~ 1 + time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Change point parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        34.0031 23.49   1.81  84.5 1.00     3984     5301 30.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        66.6937 23.21  17.01  98.4 1.00     3496     5260 70.0    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd  lower upper rhat ess_bulk ess_tail   sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_1        34    23      2    84    1.00     3984     5301 30       OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  cp_2        67    23     17    98    1.00     3496     5260 70       OK</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 13.9557 17.53 -19.87  47.7 1.00     9356     8910 10.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2      -0.0088  0.63  -1.24   1.2 1.00     9087     8988  0.5    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 13.5636 17.41 -20.94  47.9 1.00     8841     8553 15.0    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3       0.0193  0.62  -1.22   1.2 1.00     9023     8947 -0.3    OK</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      6.3353  7.29   0.19  25.0 1.00     8599     8635  3.5    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    parameter  mean    sd  lower upper rhat ess_bulk ess_tail   sim match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_1 14    18    -20    48    1.00     9356     8910 10       OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_2      -0.01  0.63  -1.24  1.22 1.00     9087     8988  0.50    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Intercept_3 14    17    -21    48    1.00     8841     8553 15       OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  time_3       0.02  0.62  -1.22  1.23 1.00     9023     8947 -0.30    OK</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1      6.3   7.3    0.2  25.0  1.00     8599     8635  3.5     OK</span>
 <span class="r-in"><span><span class="fu"><a href="plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="mcp-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>

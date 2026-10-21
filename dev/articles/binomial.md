@@ -124,16 +124,16 @@ summary(fit)
     ##   3: ~ 1 + year
     ## 
     ## Change point parameters:
-    ##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match
-    ##  cp_1        1921.529 2.8467 1915.617 1926.82 1.00     3888     6842 1925.0    OK
-    ##  cp_2        1974.270 0.8097 1972.185 1974.98 1.00     3462     1549 1975.0    OK
+    ##    parameter      mean     sd     lower     upper rhat ess_bulk ess_tail       sim match
+    ##  cp_1        1921.5    2.8    1915.6    1926.8    1.00     3888     6842 1925.0       OK
+    ##  cp_2        1974.27   0.81   1972.19   1974.98   1.00     3462     1549 1975.00      OK
     ## 
     ## Population-level parameters:
-    ##    parameter     mean     sd    lower   upper rhat ess_bulk ess_tail    sim match
-    ##  Intercept_1    2.182 0.1869    1.837    2.58 1.00     4564     7680    2.0    OK
-    ##  year_2        -0.093 0.0067   -0.107   -0.08 1.00     7275    11366   -0.1    OK
-    ##  Intercept_3   -0.761 0.2342   -1.264   -0.36 1.00     1665     1643   -0.5    OK
-    ##  year_3         0.110 0.0101    0.091    0.13 1.01     1125     2155    0.1    OK
+    ##    parameter      mean     sd     lower     upper rhat ess_bulk ess_tail       sim match
+    ##  Intercept_1    2.18   0.19      1.84      2.58   1.00     4564     7680    2.00      OK
+    ##  year_2        -0.0928 0.0067   -0.1065   -0.0803 1.00     7275    11366   -0.1000    OK
+    ##  Intercept_3   -0.76   0.23     -1.26     -0.36   1.00     1665     1643   -0.50      OK
+    ##  year_3         0.110  0.010     0.091     0.131  1.01     1125     2155    0.100     OK
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
@@ -210,12 +210,9 @@ priors](https://lindeloev.github.io/mcp/dev/articles/priors.md),
 including how to fix values. Here, I post a few notes about the
 binomial-specific default priors.
 
-The default priors in `mcp` are set so that they are reasonably broad to
-cover most scenarios, though also specific enough to sample effectively.
-They are not “default” as in “canonical”. Rather, they are “default” as
-in “what happens if you do nothing else”. All priors are stored in
-`fit$prior` (also `empty$prior`). We did not specify `prior` above, so
-it ran with default priors:
+All priors are stored in `fit$prior` (also `empty$prior`). We did not
+specify `prior` above, so it ran with the [default
+priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md):
 
 ``` r
 

@@ -117,7 +117,9 @@ The same rules apply separately to
 
 `sigma` and `shape` are required by the likelihood, so they include an
 intercept in segment 1. Per rule 3, they are joined in later segments
-that do not include them.
+that do not include them. [`ar()`](https://rdrr.io/r/stats/ar.html) and
+`ma()` are not required, so a segment that does not include them has no
+AR/MA component.
 
 Segment 2+ starts at a change point, so it always includes a
 change-point intercept (`cp_1`, `cp_2`, …), which cannot be removed. Use
@@ -183,8 +185,8 @@ model = list(
 
 # 3. Group-level effects in the predictor part
 model = list(
-  y ~ 1 + x + (1 | id),  # Intercept_1, x_1, group intercept deviations
-    ~ 0 + x + (1 | id),  # At cp_1: Joined slope (x_2); new group deviations and SD
+  y ~ 1 + x + (1 | id),  # Intercept_1, x_1, group-level intercept deviations
+    ~ 0 + x + (1 | id),  # At cp_1: Joined slope (x_2); new group-level deviations and SD
     ~ 0 + x              # At cp_2: Joined slope (x_3); (1 | id) not included
 )
 
@@ -199,7 +201,7 @@ model = list(
 model = list(
   y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_Intercept_1, sigma_x_1); AR(1) (ar1_1)
     ~ 0 + x + ar(1, 1 + x),  # At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)
-    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_Intercept_3; AR not included
+    ~ 0 + sigma(1) + ar(0),  # At cp_2: Joined mu plateau; new sigma_Intercept_3; ar(0) states that AR is not included
     ~ 0 + ma(2)              # At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)
 )
 ```
@@ -216,7 +218,7 @@ model = list(
     ~ 0 + x + state + same(z),   # Reuse z_1; other coefficients are new
     ~ 1 + same(x + z),           # Reuse x_2 and z_1
     ~ 0 + same(x, as = 1) + same(state, as = 2), # Reuse x_1 and segment 2 factor coding/coefficients
-    ~ 0 + same((1|id), as = 1),  # Reuse segment 1 group deviations and SD
+    ~ 0 + same((1|id), as = 1),  # Reuse segment 1 group-level deviations and SD
     ~ 1 + sigma(0 + x),          # New log-SD slope sigma_x_6, joined to initial sigma_Intercept_1
     ~ 0 + sigma(1 + same(x))     # New log-SD intercept sigma_Intercept_7; reuse sigma_x_6
 )
@@ -308,9 +310,9 @@ an extra plateau segment:
 # Define model with multiple predictors
 model = list(
   y ~ 1 + x:state + z, # Segment 1: by-state slopes on x, and z
-  ~ 1 + x + state,     # Segment 2: shared slope on x, by-state intercepts
+  ~ 1 + x + state,     # Segment 2: common slope on x, by-state intercepts
   ~ 0 + I(x^2),        # Segment 3: joined quadratic; state not included
-  ~ 1                  # Segment 4: shared intercept for all states
+  ~ 1                  # Segment 4: common intercept for all states
 )
 
 # Load data and inspect parameters without sampling
@@ -390,9 +392,9 @@ hypothesis(demo_fit, "time_3 > time_2")
     ## 1 time_3 - time_2 > 0 -0.750 0.0936 -0.935 -0.570     0     0
 
 The estimate reflects the difference `time_3 - time_2` (how much steeper
-or flatter the slope became in segment 3), along with its credibility
-interval, posterior probability, and directional Bayes factor. [Read
-more about hypothesis testing in the comparison
+or flatter the slope became in segment 3), along with its central
+posterior interval, posterior probability, and directional Bayes factor.
+[Read more about hypothesis testing in the comparison
 article](https://lindeloev.github.io/mcp/dev/articles/comparison.md).
 Here, the estimate is negative, so the slope is smaller in segment 3
 than in segment 2, with great certainty (`prob = 0`).

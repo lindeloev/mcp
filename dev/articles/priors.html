@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Working with priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-16</h4>
+            <h4 data-toc-skip class="date">2026-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/priors.Rmd" class="external-link"><code>vignettes/priors.Rmd</code></a></small>
       <div class="d-none name"><code>priors.Rmd</code></div>
@@ -127,14 +127,15 @@ and autocorrelation. Inspect them using
 <h2 id="setting-a-prior">Setting a prior<a class="anchor" aria-label="anchor" href="#setting-a-prior"></a>
 </h2>
 <p><code>mcp</code> takes priors in the form of a named list. The names
-are the parameter names, and the values are distribution strings, fixed
-values, or the names of other parameters. Here is a fairly complicated
-example, to demonstrate the various ways priors can be used:</p>
+are the parameter names, and the values are distribution strings,
+constants, or the names of other parameters. Here is a fairly
+complicated example, to demonstrate the various ways priors can be
+used:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>,  <span class="co"># Intercept_1 + x_1</span></span>
 <span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>,  <span class="co"># cp_1, Intercept_2, and x_2</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>  <span class="co"># cp_2</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span>  <span class="co"># cp_2, Intercept_3, and x_3</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prior</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -142,7 +143,7 @@ example, to demonstrate the various ways priors can be used:</p>
 <span>  x_1 <span class="op">=</span> <span class="st">"dbeta(2, 5)"</span>,  <span class="co"># slope: beta with right skew</span></span>
 <span>  cp_1 <span class="op">=</span> <span class="st">"dnorm(30, 10)"</span>,  <span class="co"># change point around 30 (and before cp_2)</span></span>
 <span>  x_2 <span class="op">=</span> <span class="st">"dt(0, 1, 3) T(x_1, )"</span>,  <span class="co"># slope 2 &gt; slope 1 and t-distributed</span></span>
-<span>  cp_2 <span class="op">=</span> <span class="fl">80</span>,  <span class="co"># A constant (set; not estimated)</span></span>
+<span>  cp_2 <span class="op">=</span> <span class="fl">80</span>,  <span class="co"># Constant (not estimated)</span></span>
 <span>  x_3 <span class="op">=</span> <span class="st">"x_2"</span>  <span class="co"># same slope as x_2 (use same() instead; see below)</span></span>
 <span>  <span class="co"># Intercept_2 and Intercept_3 not specified. Use default.</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -322,10 +323,9 @@ priors above to compare their prior predictive space:</p>
 <p>You can see how the manual priors force strictly positive slopes
 (<span class="math inline">x_2 &gt; x_1 &gt; 0</span>) that compound to
 span a much wider vertical range than the defaults, alongside an abrupt
-concerted change at the fixed change point <span class="math inline">x =
-80</span>. In contrast, the default priors are centered on the observed
-data, with zero-centered slopes and change points distributed smoothly
-across the <span class="math inline">x</span> range.</p>
+concerted change at the constant change point <span class="math inline">x = 80</span>. In contrast, the default priors are
+centered on the observed data, with zero-centered slopes and change
+points distributed smoothly across the observed range of <span class="math inline">x</span>.</p>
 </div>
 <div class="section level2">
 <h2 id="cp_prior">Priors on change points<a class="anchor" aria-label="anchor" href="#cp_prior"></a>

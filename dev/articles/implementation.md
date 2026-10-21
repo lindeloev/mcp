@@ -217,8 +217,7 @@ Look at the JAGS code under
 `# x measured from each segment's change point` and `# Formula for mu`
 to see this exact indicator formulation in action: `x_local_1_[i_]` and
 `x_local_2_[i_]` correspond to X\_{1,i} and X\_{2,i}, and each segment’s
-slope is multiplied by its activation indicator (e.g.,
-`(x[i_] >= cp_1)`).
+slope is multiplied by its indicator (e.g., `(x[i_] >= cp_1)`).
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
@@ -297,8 +296,9 @@ The ordering must also hold for the initial values, or JAGS stops with
 “Observed node inconsistent with unobserved parents at initialization”.
 By default, all chains start at the same, equally spaced change points,
 moved the least possible to be inside the bounds of their priors, at
-least the minimum segment lengths apart, and ordered around fixed change
-points. User-supplied initial values for change points must be ordered.
+least the minimum segment lengths apart, and ordered around constant
+change points. User-supplied initial values for change points must be
+ordered.
 
 ## Reparameterizations
 

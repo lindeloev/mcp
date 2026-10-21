@@ -163,17 +163,17 @@ summary(fit)
 ##   3: ~ 1 + time
 ## 
 ## Change point parameters:
-##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  cp_1        31.67 1.789 28.37 35.278 1.00     3301     4250 30.0    OK
-##  cp_2        71.15 0.995 69.47 72.782 1.00     3649     6590 70.0    OK
+##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+##  cp_1        31.7   1.8   28.4   35.3   1.00     3301     4250 30.0      OK
+##  cp_2        71.15  0.99  69.47  72.78  1.00     3649     6590 70.00     OK
 ## 
 ## Population-level parameters:
-##    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-##  Intercept_1  9.94 0.662  8.62 11.217 1.00     4835     6307 10.0    OK
-##  time_2       0.55 0.047  0.46  0.642 1.00     5165     6622  0.5    OK
-##  Intercept_3 13.95 1.334 11.36 16.574 1.00     2306     4675 15.0    OK
-##  time_3      -0.21 0.082 -0.37 -0.045 1.00     1287     2440 -0.3    OK
-##  sigma_1      3.87 0.279  3.36  4.463 1.00     4455     4623  3.5    OK
+##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+##  Intercept_1  9.94  0.66   8.62  11.22  1.00     4835     6307 10.00     OK
+##  time_2       0.546 0.047  0.456  0.642 1.00     5165     6622  0.500    OK
+##  Intercept_3 14.0   1.3   11.4   16.6   1.00     2306     4675 15.0      OK
+##  time_3      -0.206 0.082 -0.366 -0.045 1.00     1287     2440 -0.300    OK
+##  sigma_1      3.87  0.28   3.36   4.46  1.00     4455     4623  3.50     OK
 ```
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
@@ -339,7 +339,7 @@ effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
 - Model group-level intercepts, slopes, and change points using
   `(1|id)`, `(0 + x||id)`, or `cp((1|id))`. Get posteriors using
-  `ranef(fit)`.
+  `ranef(fit)` for deviations or `coef(fit)` for group-specific values.
 
 - Plot using `plot(fit, facet_by = "my_group")` and
   `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
@@ -421,8 +421,7 @@ intervals](https://lindeloev.github.io/mcp/articles/predict.html):
 [Missing responses and posterior
 imputation](https://lindeloev.github.io/mcp/articles/missing.html):
 
-- Missing responses are sampled in JAGS and retained with their matching
-  posterior draws.
+- Missing responses are imputed jointly with the parameters.
 
 - Use `fitted(fit) |> filter(is.na(y))` for expected responses and
   `predict(fit) |> filter(is.na(y))` for posterior imputations.
@@ -541,6 +540,7 @@ Summaries that pertain to the whole `mcpfit` or to specific parameters.
   [`print(`*`<mcpsummary>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`fixef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`ranef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+  [`coef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`print(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   : Summarise mcpfit objects
 
@@ -589,7 +589,8 @@ Per-observation summaries or draws
 
   Extract MCMC Draws from `mcpfit` Objects
 
-- [`ndraws()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
+- [`variables()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
+  [`ndraws()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
   [`nchains()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
   [`niterations()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
   :

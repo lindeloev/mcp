@@ -12,14 +12,7 @@ website](https://lindeloev.github.io/mcp/articles/comparison.html#cross-validati
 
 ``` r
 # S3 method for class 'mcpfit'
-loo(
-  x,
-  ...,
-  by_row = FALSE,
-  pointwise = lifecycle::deprecated(),
-  ndraws = NULL,
-  nsamples = lifecycle::deprecated()
-)
+loo(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 
 # S3 method for class 'mcpfit'
 waic(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
@@ -36,20 +29,6 @@ waic(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 - ...:
 
   Must be empty. Reserved for future use.
-
-- by_row:
-
-  `TRUE` calls
-  [`loo.function`](https://mc-stan.org/loo/reference/loo.html) to
-  compute log-likelihood contributions row-by-row
-  (observation-by-observation), which is slower but more memory
-  efficient. `FALSE` (default) computes the full log-likelihood matrix
-  at once. Note that both modes calculate pointwise (observation-level)
-  PSIS-LOO cross-validation.
-
-- pointwise:
-
-  Deprecated alias for `by_row`.
 
 - ndraws:
 
@@ -87,10 +66,10 @@ comparing a reduced model requires refitting it.
 `log_lik(fit, group_effects = FALSE)` and `log_lik(fit, arma = FALSE)`
 remain available as conditional or counterfactual diagnostics.
 
-When `ndraws` is supplied to `loo()`, draws are balanced across chains
-and thinned at evenly spaced midpoint iterations. This preserves MCMC
-chain identities and chronological order, allowing `relative_eff()` to
-be computed directly.
+When `ndraws` is supplied, draws are balanced across chains and thinned
+at evenly spaced midpoint iterations. This preserves MCMC chain
+identities and chronological order, allowing `relative_eff()` to be
+computed directly.
 
 ## Functions
 

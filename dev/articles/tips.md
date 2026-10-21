@@ -13,6 +13,20 @@ warn when `rhat > 1.01` or ESS \< 400.
   sample longer, e.g.: `mcp(model, data, warmup = 10000, iter = 20000)`.
   This is often needed with many (e.g., 5+) change points.
 
+- Change points can have several modes, e.g., at two candidate jumps in
+  the data. Chains may stay in one mode for thousands of iterations, so
+  sampling longer may not help. Look for modes using
+  `plot_pars(fit, regex_pars = "^cp_")`. If there are several, the
+  posterior is genuinely uncertain between them, and more chains (e.g.,
+  `mcp(..., chains = 6)`) give a better sense of how probable each one
+  is.
+
+- Center predictors other than the change-point variable, e.g.,
+  `data$z = data$z - mean(data$z)`. When `z` is far from zero, its
+  coefficient and the intercept are strongly correlated, which slows
+  sampling of both and, in turn, the change points. After centering, the
+  intercept is the value at the mean of `z`.
+
 - It can be a sign of a deeper non-identifiability in the model. This
   will show up as strong correlations in the joint distribution of any
   pair of implicated parameters:
@@ -21,9 +35,9 @@ warn when `rhat > 1.01` or ESS \< 400.
 
 - You can set the initial values for the JAGS sampler using, e.g.,
   `mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))`. Names must be
-  parameters in `mcp_pars(fit)`. Fixed parameters and parameters
-  reparameterized for faster sampling cannot be initialized. Initial
-  values for change points must be ordered.
+  parameters in `mcp_pars(fit)`. Parameters with constant priors and
+  parameters reparameterized for faster sampling cannot be initialized.
+  Initial values for change points must be ordered.
 
   - By default, all chains start at the same change points. Change
     points cannot pass each other, so a chain that starts with change

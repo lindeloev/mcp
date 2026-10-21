@@ -63,6 +63,8 @@ hypothesis(fit_void, c(
 ))
 ```
 
+    ## Bayes factors for directional hypotheses need prior draws, so `BF` is NA. Run mcp(..., sample = 'both') to compute them.
+
     ## # A tibble: 2 × 7
     ##   hypothesis             mean    sd lower upper  prob    BF
     ##   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
@@ -178,7 +180,7 @@ mean and a vertical line shows the central 80% imputation interval:
 
 ``` r
 
-# Start with mcp plot with prediction interval. Use all draws for less Monte Carlo error.
+# Start with mcp plot with prediction interval
 plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add imputation interval

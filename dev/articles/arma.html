@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-10-16</h4>
+            <h4 data-toc-skip class="date">2026-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -254,17 +254,17 @@ weaker-but-negative in the second:</p>
 <span><span class="co">##   2: ~ 0 + time + ar(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##    parameter  mean    sd  lower    upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  cp_1        89.13 7.313 75.078 102.8561 1.00      808     1387</span></span>
+<span><span class="co">##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  cp_1        89.1   7.3   75.1   102.9   1.00      808     1387</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##    parameter  mean    sd  lower    upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  Intercept_1 20.63 1.343 18.210  23.4603 1.00     1455     2275</span></span>
-<span><span class="co">##  time_2      -0.03 0.033 -0.092   0.0388 1.00     1919     3400</span></span>
-<span><span class="co">##  sigma_1      5.11 0.301  4.566   5.7384 1.00     4745     4300</span></span>
-<span><span class="co">##  ar1_1        0.69 0.101  0.490   0.8816 1.00     1233     2525</span></span>
-<span><span class="co">##  ar1_2       -0.28 0.141 -0.555  -0.0015 1.00     3425     6201</span></span>
-<span><span class="co">##  ar2_1        0.18 0.100 -0.013   0.3735 1.00     1283     2292</span></span></code></pre>
+<span><span class="co">##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  Intercept_1 20.6   1.3   18.2    23.5   1.00     1455     2275</span></span>
+<span><span class="co">##  time_2      -0.030 0.033 -0.092   0.039 1.00     1919     3400</span></span>
+<span><span class="co">##  sigma_1      5.11  0.30   4.57    5.74  1.00     4745     4300</span></span>
+<span><span class="co">##  ar1_1        0.69  0.10   0.49    0.88  1.00     1233     2525</span></span>
+<span><span class="co">##  ar1_2       -0.28  0.14  -0.55   -0.00  1.00     3425     6201</span></span>
+<span><span class="co">##  ar2_1        0.181 0.100 -0.013   0.374 1.00     1283     2292</span></span></code></pre>
 <p>The naming syntax is <code>[component][order]_[segment]</code> for
 intercepts. For example, <code>ar1_2</code> is the first-order
 autoregressive coefficient and <code>ma1_2</code> the first-order
@@ -273,10 +273,10 @@ moving-average coefficient in segment 2. Slopes use the usual
 on AR(1) in segment 3.</p>
 <p>Comparing the columns <code>mean</code> and <code>sim</code> we see
 that the AR coefficients are reasonably recovered. In fact, the
-posterior mean is almost always exactly the same as
+posterior means are typically close to the estimates of
 <code>arima(data, order = c(N, 0, 0))</code> (see below), so the
-non-perfect fits are due to randomness in the simulation - not in the
-fit.</p>
+non-perfect fits are mostly due to randomness in the simulation - not in
+the fit.</p>
 <p>For Gaussian GARMA models, <code>sigma</code> describes the
 <em>innovations</em>, i.e., the part of the residuals not explained by
 AR and MA coefficients. <code>sd(fit$data$price)</code> is therefore
@@ -344,9 +344,9 @@ Gaussian models, <code><a href="https://rdrr.io/r/stats/sigma.html" class="exter
 deviation:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,  <span class="co"># First order ARMA</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,        <span class="co"># New AR coefficient; no MA</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span>  <span class="co"># No ARMA modelled in this segment</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,    <span class="co"># First order ARMA</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">0</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,  <span class="co"># New AR coefficient; ma(0) states that MA is not included</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>                          <span class="co"># No ARMA in this segment. ~ 1 is identical but ar(0) is explicit.</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -410,16 +410,16 @@ series start and end:</p>
 <span><span class="co">##   2: ~ 0 + time + ar(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  cp_1        27.644 3.015 21.459 33.64 1.00     2030     1845 30.0    OK</span></span>
+<span><span class="co">##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  cp_1        27.6   3.0   21.5   33.6   1.00     2030     1845 30.0      OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1  9.763 0.250  9.274 10.27 1.00     8438     8424 10.0    OK</span></span>
-<span><span class="co">##  time_2       0.094 0.017  0.061  0.13 1.00     5847     7401  0.1    OK</span></span>
-<span><span class="co">##  sigma_1      1.563 0.064  1.444  1.70 1.00     5325     5557  1.5    OK</span></span>
-<span><span class="co">##  ar1_1        0.302 0.112  0.081  0.52 1.00     5752     7270  0.3    OK</span></span>
-<span><span class="co">##  ar1_2        0.842 0.038  0.768  0.92 1.00     7202     6583  0.8    OK</span></span></code></pre>
+<span><span class="co">##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  Intercept_1  9.76  0.25   9.27  10.27  1.00     8438     8424 10.00     OK</span></span>
+<span><span class="co">##  time_2       0.094 0.017  0.061  0.129 1.00     5847     7401  0.100    OK</span></span>
+<span><span class="co">##  sigma_1      1.563 0.064  1.444  1.696 1.00     5325     5557  1.500    OK</span></span>
+<span><span class="co">##  ar1_1        0.30  0.11   0.08   0.52  1.00     5752     7270  0.30     OK</span></span>
+<span><span class="co">##  ar1_2        0.842 0.038  0.768  0.917 1.00     7202     6583  0.800    OK</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Plot fit and ar(1) parameter</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
@@ -487,12 +487,12 @@ inherent randomness in simulating data):</p>
 <span><span class="co">##   1: response ~ 1 + ar(3)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##    parameter  mean    sd  lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1 20.27 1.283 17.801 22.85 1.00     8529     8336 20.0    OK</span></span>
-<span><span class="co">##  sigma_1      8.27 0.419  7.506  9.13 1.00     5176     4420  8.0    OK</span></span>
-<span><span class="co">##  ar1_1        0.77 0.065  0.644  0.90 1.00     2473     4148  0.7    OK</span></span>
-<span><span class="co">##  ar2_1        0.18 0.085  0.014  0.35 1.00     1785     3470  0.2    OK</span></span>
-<span><span class="co">##  ar3_1       -0.42 0.065 -0.545 -0.29 1.00     2458     4463 -0.4    OK</span></span></code></pre>
+<span><span class="co">##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  Intercept_1 20.3   1.3   17.8   22.8   1.00     8529     8336 20.0      OK</span></span>
+<span><span class="co">##  sigma_1      8.27  0.42   7.51   9.13  1.00     5176     4420  8.00     OK</span></span>
+<span><span class="co">##  ar1_1        0.771 0.065  0.644  0.900 1.00     2473     4148  0.700    OK</span></span>
+<span><span class="co">##  ar2_1        0.182 0.085  0.014  0.348 1.00     1785     3470  0.200    OK</span></span>
+<span><span class="co">##  ar3_1       -0.418 0.065 -0.545 -0.287 1.00     2458     4463 -0.400    OK</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="inferring-an-autocorrelation-only-change">Inferring an autocorrelation-only change<a class="anchor" aria-label="anchor" href="#inferring-an-autocorrelation-only-change"></a>
@@ -553,16 +553,16 @@ more</a>):</p>
 <span><span class="co">##   2: ~ 0 + same(x) + ar(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##    parameter   mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  cp_1        61.440 2.338 58.35 65.81 1.00     7650     6251 60.0    OK</span></span>
+<span><span class="co">##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  cp_1        61.4   2.3   58.4   65.8   1.00     7650     6251 60.0      OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##    parameter   mean    sd lower upper rhat ess_bulk ess_tail  sim match</span></span>
-<span><span class="co">##  Intercept_1 20.484 1.805 16.98 24.05 1.00     2358     4498 20.0    OK</span></span>
-<span><span class="co">##  x_1          0.985 0.023  0.94  1.03 1.00     2486     4774  1.0    OK</span></span>
-<span><span class="co">##  sigma_1      4.717 0.242  4.27  5.22 1.00    17354    16283  5.0    OK</span></span>
-<span><span class="co">##  ar1_1        0.687 0.066  0.56  0.82 1.00    20342    26114  0.8    OK</span></span>
-<span><span class="co">##  ar1_2       -0.033 0.120 -0.27  0.21 1.00    19655    17850  0.2    OK</span></span></code></pre>
+<span><span class="co">##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  Intercept_1 20.5   1.8   17.0   24.0   1.00     2358     4498 20.0      OK</span></span>
+<span><span class="co">##  x_1          0.985 0.023  0.939  1.030 1.00     2486     4774  1.000    OK</span></span>
+<span><span class="co">##  sigma_1      4.72  0.24   4.27   5.22  1.00    17354    16283  5.00     OK</span></span>
+<span><span class="co">##  ar1_1        0.687 0.066  0.558  0.816 1.00    20342    26114  0.800    OK</span></span>
+<span><span class="co">##  ar1_2       -0.03  0.12  -0.27   0.21  1.00    19655    17850  0.20     OK</span></span></code></pre>
 <p>We can also plot some of the parameters. As usual, we see that the
 change point is not well defined by any known distribution. The fact
 that the posterior mean is around 61 does not (necessarily) mean that
@@ -648,8 +648,9 @@ including <code><a href="../reference/plot.mcpfit.html">plot()</a></code> and <c
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span>, npars <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="672"></p>
-<p>Notice that the plot smooths the posteriors at sharp cutoffs,
-slightly misrepresenting the true distribution.</p>
+<p>Notice that the density estimates are smoothed at sharp cutoffs, such
+as the <code>T(-1, 1)</code> bounds, slightly misrepresenting the true
+distribution.</p>
 <p>Let’s inspect the priors for a more advanced AR model, since you
 would often have to inform these:</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">

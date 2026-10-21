@@ -25,8 +25,8 @@ confint(object, parm, level = 0.95, prior = FALSE, ...)
 
 - pars:
 
-  Optional names of population-level parameters to extract, or `"all"`
-  for all population-level parameters.
+  Optional names of population-level parameters to extract, or
+  `"population"` for all population-level parameters.
 
 - dpar:
 
@@ -55,6 +55,15 @@ confint(object, parm, level = 0.95, prior = FALSE, ...)
 [`vcov()`](https://rdrr.io/r/stats/vcov.html) returns a covariance or
 correlation matrix. [`confint()`](https://rdrr.io/r/stats/confint.html)
 returns a two-column matrix of central intervals.
+
+## Details
+
+As in `lme4`, [`vcov()`](https://rdrr.io/r/stats/vcov.html) covers the
+coefficients of
+[fixef()](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+(by default those of `mu`), while
+[`confint()`](https://rdrr.io/r/stats/confint.html) covers all
+population-level parameters, including change points.
 
 ## Examples
 
@@ -95,7 +104,7 @@ confint(demo_fit, prior = TRUE)
 #> sigma_1       0.1277497 25.805782
 
 # Include change points, residual SDs, group SDs, and AR/MA parameters.
-vcov(demo_fit, pars = "all")
+vcov(demo_fit, pars = "population")
 #>                     cp_1         cp_2  Intercept_1        time_2  Intercept_3        time_3       sigma_1
 #> cp_1         2.860236828 -0.023006037  0.479259027  0.0450919199 -0.113947879  7.548661e-03  1.694093e-02
 #> cp_2        -0.023006037  0.982126142  0.026726008 -0.0018991431 -0.277033079  4.117322e-03 -3.602333e-03
@@ -108,7 +117,7 @@ vcov(demo_fit, pars = "all")
 # Inspect posterior parameter correlations across the full population model.
 # Useful to quickly check identifiability (high correlation). Inspecting
 # `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
-vcov(demo_fit, pars = "all", correlation = TRUE)
+vcov(demo_fit, pars = "population", correlation = TRUE)
 #>                    cp_1        cp_2  Intercept_1      time_2  Intercept_3       time_3      sigma_1
 #> cp_1         1.00000000 -0.01372642  0.426373660  0.56081588 -0.048614970  0.053346578  0.034170837
 #> cp_2        -0.01372642  1.00000000  0.040576214 -0.04030850 -0.201703189  0.049655673 -0.012399945

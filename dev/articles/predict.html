@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-10-16</h4>
+            <h4 data-toc-skip class="date">2026-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -339,69 +339,56 @@ In <code>mcp</code>, most functions come with a
 a change point to the baseline level (an intercept change to
 <code>Intercept_1</code>) will occur approximately after the same
 interval as between <code>cp_1</code> and <code>cp_2</code> (i.e., at
-<code>cp_2 + (cp_2 - cp_1)</code>). Here is a way to “hack”
-<code>mcp</code> to do this. <em>(NOTE: I plan on implementing this in a
-much more user-friendly way in a future release; see the discussion in
-<a href="https://github.com/lindeloev/mcp/issues/78" class="external-link">this github
-issue</a> and current status in <a href="https://github.com/lindeloev/mcp/issues/82" class="external-link">this github
-issue</a>)</em>.</p>
+<code>cp_2 + (cp_2 - cp_1)</code>). We can model this by adding the
+future segment to the model and putting an informative prior on its
+change point.</p>
 <div class="section level3">
-<h3 id="step-1-run-the-model-for-observed-data">Step 1: run the model for observed data<a class="anchor" aria-label="anchor" href="#step-1-run-the-model-for-observed-data"></a>
+<h3 id="step-1-add-the-unobserved-segments-and-fit">Step 1: add the unobserved segment(s) and fit<a class="anchor" aria-label="anchor" href="#step-1-add-the-unobserved-segments-and-fit"></a>
 </h3>
-<p>We already did that above, resulting in our <code>fit</code>. But we
-only do it to get the default priors that are suitable for inferring
-change points in this region, so you could’ve just run it without
-sampling:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">empty</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="step-2-add-the-unobserved-segments-and-fit">Step 2: add the unobserved segment(s) and fit<a class="anchor" aria-label="anchor" href="#step-2-add-the-unobserved-segments-and-fit"></a>
-</h3>
-<p>Now we extend the model with the future segment of which we have
+<p>First, we extend the model with the future segment of which we have
 prior knowledge:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="op">~</span> <span class="fu">same</span><span class="op">(</span><span class="fl">1</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Return to Intercept_1 after cp_3</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>And finally, we extend the list of priors with the new change point
-<code>cp_3</code>. The model needs a predictor value at the end of the
-forecasting horizon so that the future change point remains within its
-supported range. Its response is missing, so it contributes no observed
-outcome. It may be helpful to review <a href="../articles/priors.html">the article on priors in mcp</a>.</p>
+<p>Then we set a prior on the new change point <code>cp_3</code>. Change
+point bounds that you set are used unchanged by <code>mcp</code> (which
+otherwise defaults to set bounds), also beyond the data, so
+<code>T(max(time), 170)</code> places <code>cp_3</code> after the last
+observation and before the end of our forecasting horizon at
+<code>time = 170</code>. All other parameters keep their default priors.
+It may be helpful to review <a href="../articles/priors.html#cp_prior">priors on change points</a>.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prior_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  cp_3 <span class="op">=</span> <span class="st">"dnorm(cp_2 + (cp_2 - cp_1), 20) T(max(time), 170)"</span>  <span class="co"># In the future at the same interval</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Now let’s fit it.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">forecast_horizon</span> <span class="op">=</span> <span class="fl">170</span></span>
-<span><span class="va">data_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="va">forecast_horizon</span>, response <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">observed_start</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
-<span><span class="va">observed_end</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
-<span><span class="va">prior_forecast</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">empty</span><span class="op">$</span><span class="va">prior</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_1"</span>, <span class="st">"cp_2"</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  cp_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif("</span>, <span class="va">observed_start</span>, <span class="st">", "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,</span>
-<span>  cp_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dunif("</span>, <span class="va">observed_start</span>, <span class="st">", "</span>, <span class="va">observed_end</span>, <span class="st">")"</span><span class="op">)</span>,  <span class="co"># Change points are ordered, so cp_2 is after cp_1</span></span>
-<span>  cp_3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"dnorm(cp_2 + (cp_2 - cp_1), 20) T("</span>, <span class="va">observed_end</span>, <span class="st">", "</span>, <span class="va">forecast_horizon</span>, <span class="st">")"</span><span class="op">)</span>  <span class="co"># In the future at the same interval</span></span>
-<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Now let’s fit it:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data_forecast</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Some parameters may not have converged well:</span></span>
-<span><span class="co">##   * rhat &gt; 1.01 or ess_bulk &lt; 400 or ess_tail &lt; 400: cp_3 and Intercept_3 and time_3</span></span>
-<span><span class="co">## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.</span></span></code></pre>
+<code class="sourceCode R"><span><span class="va">old</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mcp_reparam <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">fit_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model_forecast</span>, data <span class="op">=</span> <span class="va">data</span>, prior <span class="op">=</span> <span class="va">prior_forecast</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span></span></code></pre></div>
+<p><em>Side note on the <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options()</a></code> step: We turned off
+<code>mcp</code> reparameterization which usually increases ESS/s but in
+this case lowers it. One of the reparam tricks sets the intercept of a
+disjoined segment as the value at the end of that segment (<a href="../articles/implementation.html#reparameterizations">read
+more</a>). Here, segment 3 ends at the future <code>cp_3</code>, far
+from the data, so this sampling trick causes poor mixing.</em></p>
 </div>
 <div class="section level3">
-<h3 id="step-3-predict">Step 3: predict!<a class="anchor" aria-label="anchor" href="#step-3-predict"></a>
+<h3 id="step-2-predict">Step 2: predict!<a class="anchor" aria-label="anchor" href="#step-2-predict"></a>
 </h3>
 <p>We can now compute the 80% posterior predictive interval at
 <code>time = 125</code>:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
 <span><span class="co">##    time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.33  5.62 -<span style="color: #BB0000;">0.455</span>   14.0</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.63  5.48 0.092<span style="text-decoration: underline;">5</span>   14.1</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
-visualize the model. For now, we will have to hack this a bit too,
-manually doing our plot:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+visualize the model. <code><a href="../reference/plot.mcpfit.html">plot()</a></code> shows only the observed range
+of <code>time</code>, so we make the plot ourselves:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get expected-response and posterior predictive draws</span></span>
 <span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">170</span><span class="op">)</span></span>
 <span><span class="va">fitted_forecast</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, summary <span class="op">=</span> <span class="cn">FALSE</span>, ndraws <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
@@ -422,7 +409,7 @@ manually doing our plot:</p>
 <span>  <span class="co"># Observed data</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">time</span>, y <span class="op">=</span> <span class="va">response</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Predicting with future change points"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="predict_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="predict_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can read the predicted values from above at <code>x = 125</code>
 off this graph. We literally just predicted for all values between 1 and
 170, and visualized it using a ribbon. This means that you can also
@@ -442,7 +429,7 @@ data point (<code>max(time)</code>), so that it occurs <em>after</em>
 it, i.e., at <code>time &gt; 100</code>. This is knowledge that the
 third change point had not yet been observed at <code>time = 100</code>,
 and this pushes the distribution further into the future (actually
-around 122; see <code>summary(fit_forecast)</code>).</p>
+around 120; see <code>summary(fit_forecast)</code>).</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

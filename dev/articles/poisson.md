@@ -71,13 +71,13 @@ result
     ##   2: ~ 1
     ## 
     ## Change point parameters:
-    ##    parameter    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  cp_1        1890.48 2.513 1886.15 1896.53 1.00     1944      990
+    ##    parameter     mean    sd    lower    upper rhat ess_bulk ess_tail
+    ##  cp_1        1890.5   2.5   1886.1   1896.5   1.00     1944      990
     ## 
     ## Population-level parameters:
-    ##    parameter    mean    sd   lower   upper rhat ess_bulk ess_tail
-    ##  Intercept_1    1.13 0.094    0.94    1.31 1.00     4302     4741
-    ##  Intercept_2   -0.09 0.129   -0.35    0.15 1.00     4472     5006
+    ##    parameter     mean    sd    lower    upper rhat ess_bulk ess_tail
+    ##  Intercept_1    1.131 0.094    0.944    1.313 1.00     4302     4741
+    ##  Intercept_2   -0.09  0.13    -0.35     0.15  1.00     4472     5006
 
 We can see that the model ran well with good convergence and large
 effective sample sizes. At a first glance, the change point is estimated
@@ -117,9 +117,12 @@ priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary
 [`poisson()`](https://rdrr.io/r/stats/family.html) defaults to
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter \lambda. \lambda has the nice property
-of being the mean number of events. So we see that the mean number of
-events in segment 1 is `exp(result$mean[2])` (3.0978228) and it is
-`exp(result$mean[3])` (0.9135371) for segment 2.
+of being the mean number of events. So the rate is around 3.1 disasters
+per year in segment 1 and 0.91 in segment 2. Exponentiating the
+posterior mean of the log-rate gives approximately the posterior median
+of \lambda, not its mean. For the posterior mean, exponentiate the draws
+before averaging, e.g., `mean(exp(as_draws_df(fit)$Intercept_1))`, or
+use `fitted(fit)`.
 
 The intercept prior is a normal distribution centered on the rounded
 median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale
@@ -146,10 +149,10 @@ prior_summary(fit)
     ## 2 Intercept_1       1 mu    dnorm(0, 2.5)     none                 
     ## 3 Intercept_2       2 mu    dnorm(0, 2.5)     none
 
-As always, the prior on the change point forces it to occur in the
-observed range. The coefficient priors are deliberately broad defaults,
-so update them with more informed priors for your particular case when
-possible, e.g.:
+The default prior on the change point restricts it to the observed
+range. The coefficient priors are deliberately broad defaults, so update
+them with more informed priors for your particular case when possible,
+e.g.:
 
 ``` r
 
@@ -211,8 +214,9 @@ fitted(fit, newdata = transform(df, exposure = 1))
 This works the same way for
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 which then returns predicted counts at unit exposure. The
-`fitted(..., rate = TRUE)` argument does not apply for NB; it is only
-for binomial models, where it converts counts to proportions of trials.
+`fitted(..., rate = TRUE)` argument does not apply to Poisson or
+negative-binomial models; it is only for binomial models, where it
+converts counts to proportions of trials.
 
 Adding a categorical predictor to the model, you can also model rate
 ratios. When an offset is present, `mcp` automatically shifts the

@@ -55,7 +55,7 @@ Simulate some data using `fit$simulate()`:
 # Simulate data
 df = data.frame(items = rep(1:9, each = 40), recalled = 1)
 
-# Get just the model - no fit
+# Empty fit (no draws)
 empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 
 df$recalled = empty$simulate(
@@ -77,7 +77,7 @@ head(df)
     ## 6     1        1
 
 Now fit it with and without the informative prior. We set `iter` fairly
-high because this model is not sampled effectively. We will also add
+high because this model is not sampled efficiently. We will also add
 `sample = "both"` to sample *both* prior and posterior. We will need
 both to compute Bayes factors using
 [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
@@ -130,10 +130,11 @@ equality
 ```
 
 Notice that `mcp` issues a warning when computing Savage-Dickey Bayes
-factors on default priors. Because default priors are broad, they
-suppress the prior density denominator and can heavily bias point Bayes
-factors. If you obtained these results with a bespoke, substantive
-prior, you would interpret them as:
+factors on default priors. The Savage-Dickey ratio divides by the prior
+density at the tested value, so the Bayes factor is only as meaningful
+as that prior. The wider the prior, the lower that density, and the more
+the Bayes factor favors the point null. If you obtained these results
+with a bespoke, substantive prior, you would interpret them as:
 
 - `hypothesis`: For internal convenience, `hypothesis` always
   re-arranges to test against zero.
@@ -418,9 +419,12 @@ underestimation. See the [LOO
 glossary](https://mc-stan.org/loo/reference/loo-glossary.html) or
 `?loo::loo-glossary` for details on all diagnostic flags.
 
-You could do the same using `waic`. This is computationally lighter at
-the cost of robustness to influential data points. The results are
-almost always practically identical.
+You could do the same using
+[`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
+WAIC is asymptotically equivalent to LOO-CV but less robust to
+influential data points, so
+[`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
+is generally preferred. The results are often practically identical.
 
 ``` r
 

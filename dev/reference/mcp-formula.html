@@ -98,6 +98,8 @@ at the segment's change point and stop growing at the next change point.</p></li
 from where the earlier intercept and x-terms left off. With an intercept, it is <em>disjoined</em>
 and starts afresh.</p></li>
 </ol><p><code>sigma</code> and <code>shape</code> are required by the likelihood, so they include an intercept in segment 1.
+They are joined in later segments that do not include them. <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> and <code>ma()</code> are not required,
+so a segment that does not include them has no AR/MA component.
 Each segment after the first starts at a change point, so it always includes a change-point
 intercept (<code>cp_1</code>, <code>cp_2</code>, ...). Use <code>cp()</code> to add terms to it, e.g., <code>cp((1 | id))</code>.</p>
 <p><strong>Formula syntax.</strong> The first segment has the format <code>response ~ predictors</code>. Later segments use

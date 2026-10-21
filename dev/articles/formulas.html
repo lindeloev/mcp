@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Understanding mcp formulas</h1>
             
-            <h4 data-toc-skip class="date">2026-10-16</h4>
+            <h4 data-toc-skip class="date">2026-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/formulas.Rmd" class="external-link"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="d-none name"><code>formulas.Rmd</code></div>
@@ -231,7 +231,9 @@ afresh.</li>
 <code>shape()</code>, <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>, and <code>ma()</code>.</p>
 <p><code>sigma</code> and <code>shape</code> are required by the
 likelihood, so they include an intercept in segment 1. Per rule 3, they
-are joined in later segments that do not include them.</p>
+are joined in later segments that do not include them. <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>
+and <code>ma()</code> are not required, so a segment that does not
+include them has no AR/MA component.</p>
 <p>Segment 2+ starts at a change point, so it always includes a
 change-point intercept (<code>cp_1</code>, <code>cp_2</code>, …), which
 cannot be removed. Use <code>cp()</code> to add terms to it, e.g.,
@@ -290,8 +292,8 @@ automatically select the correct change-point variable.</p>
 <span></span>
 <span><span class="co"># 3. Group-level effects in the predictor part</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># Intercept_1, x_1, group intercept deviations</span></span>
-<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># At cp_1: Joined slope (x_2); new group deviations and SD</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># Intercept_1, x_1, group-level intercept deviations</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">id</span><span class="op">)</span>,  <span class="co"># At cp_1: Joined slope (x_2); new group-level deviations and SD</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>              <span class="co"># At cp_2: Joined slope (x_3); (1 | id) not included</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -306,7 +308,7 @@ automatically select the correct change-point variable.</p>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, <span class="co"># Intercept_1, x_1; log-SD slope (sigma_Intercept_1, sigma_x_1); AR(1) (ar1_1)</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,  <span class="co"># At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)</span></span>
-<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,          <span class="co"># At cp_2: Joined mu plateau; new sigma_Intercept_3; AR not included</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>,  <span class="co"># At cp_2: Joined mu plateau; new sigma_Intercept_3; ar(0) states that AR is not included</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">ma</span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>              <span class="co"># At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -321,7 +323,7 @@ automatically select the correct change-point variable.</p>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">z</span><span class="op">)</span>,   <span class="co"># Reuse z_1; other coefficients are new</span></span>
 <span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span> <span class="op">+</span> <span class="va">z</span><span class="op">)</span>,           <span class="co"># Reuse x_2 and z_1</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">state</span>, as <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="co"># Reuse x_1 and segment 2 factor coding/coefficients</span></span>
-<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,  <span class="co"># Reuse segment 1 group deviations and SD</span></span>
+<span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,  <span class="co"># Reuse segment 1 group-level deviations and SD</span></span>
 <span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,          <span class="co"># New log-SD slope sigma_x_6, joined to initial sigma_Intercept_1</span></span>
 <span>    <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>     <span class="co"># New log-SD intercept sigma_Intercept_7; reuse sigma_x_6</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -404,9 +406,9 @@ with an extra plateau segment:</p>
 <code class="sourceCode R"><span><span class="co"># Define model with multiple predictors</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">state</span> <span class="op">+</span> <span class="va">z</span>, <span class="co"># Segment 1: by-state slopes on x, and z</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span>,     <span class="co"># Segment 2: shared slope on x, by-state intercepts</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span>,     <span class="co"># Segment 2: common slope on x, by-state intercepts</span></span>
 <span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,        <span class="co"># Segment 3: joined quadratic; state not included</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span>                  <span class="co"># Segment 4: shared intercept for all states</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span>                  <span class="co"># Segment 4: common intercept for all states</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load data and inspect parameters without sampling</span></span>
@@ -477,11 +479,11 @@ distances between change points, are derived quantities. You can use
 <span><span class="co">## <span style="color: #BCBCBC;">1</span> time_3 - time_2 &gt; 0 -<span style="color: #BB0000;">0.750</span> 0.093<span style="text-decoration: underline;">6</span> -<span style="color: #BB0000;">0.935</span> -<span style="color: #BB0000;">0.570</span>     0     0</span></span></code></pre>
 <p>The estimate reflects the difference <code>time_3 - time_2</code>
 (how much steeper or flatter the slope became in segment 3), along with
-its credibility interval, posterior probability, and directional Bayes
-factor. <a href="../articles/comparison.html">Read more about hypothesis
-testing in the comparison article</a>. Here, the estimate is negative,
-so the slope is smaller in segment 3 than in segment 2, with great
-certainty (<code>prob = 0</code>).</p>
+its central posterior interval, posterior probability, and directional
+Bayes factor. <a href="../articles/comparison.html">Read more about
+hypothesis testing in the comparison article</a>. Here, the estimate is
+negative, so the slope is smaller in segment 3 than in segment 2, with
+great certainty (<code>prob = 0</code>).</p>
 <p>If you need the full posterior distribution of the change (e.g., for
 <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code>, <code><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist()</a></code>, or plotting with
 <code>ggplot2</code>), extract draws, e.g., using

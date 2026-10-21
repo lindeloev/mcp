@@ -98,9 +98,9 @@ plot(fit, interval = "predict")
 ![](dpar_files/figure-html/unnamed-chunk-5-1.png)
 
 We can see all parameters are well recovered (compare `sim` to `mean`).
-Like the other parameters, the `sigma`s are named after the segment
-where they were instantiated. There will always be a `sigma_Intercept_1`
-because `sigma` is required by the likelihood.
+Like the other parameters, the `sigma` coefficients are named after the
+segment where they are included. There will always be a
+`sigma_Intercept_1` because `sigma` is required by the likelihood.
 
 ``` r
 
@@ -115,14 +115,14 @@ summary(fit)
     ##   2: ~ 0 + sigma(1)
     ## 
     ## Change point parameters:
-    ##          parameter mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1              48.6 1.204  44.7  50.0 1.00     2380      795 50.0    OK
+    ##          parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1              48.6   1.2   44.7   50.0   1.00     2380      795 50.0      OK
     ## 
     ## Population-level parameters:
-    ##          parameter mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1       19.8 0.768  18.2  21.3 1.00     8093     8386 20.0    OK
-    ##  sigma_Intercept_1  1.7 0.108   1.5   1.9 1.00     4749     4707  1.6    OK
-    ##  sigma_Intercept_2  3.2 0.099   3.0   3.4 1.00     5444     4697  3.0    OK
+    ##          parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1       19.75  0.77  18.25  21.29  1.00     8093     8386 20.00     OK
+    ##  sigma_Intercept_1  1.70  0.11   1.49   1.92  1.00     4749     4707  1.61     OK
+    ##  sigma_Intercept_2  3.156 0.099  2.971  3.358 1.00     5444     4697  2.996    OK
 
 ## Advanced example
 
@@ -169,8 +169,9 @@ is simply `sigma_1`.
 ### Simulate data
 
 We simulate some data from this model, setting all parameters. As
-always, we can fit an empty model to get `fit$simulate`, which is useful
-for simulation and predictions from this model.
+always, we can make an empty fit (`sample = FALSE`) to get
+`fit$simulate`, which is useful for simulation and predictions from this
+model.
 
 ``` r
 
@@ -210,8 +211,9 @@ plot(fit, interval = "predict")
 
 ![](dpar_files/figure-html/unnamed-chunk-10-1.png)
 
-We can also plot the `sigma_` parameters directly. Now the y-axis is
-`sigma`:
+We can also plot `sigma` itself using
+[`plot_dpar()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md).
+Now the y-axis is the residual SD:
 
 ``` r
 
@@ -240,21 +242,21 @@ summary(fit)
     ##   4: ~ 0 + same(x)
     ## 
     ## Change point parameters:
-    ##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  cp_1               4.9e+01 0.55893  4.8e+01  5.0e+01 1.00     3290     2903  5.0e+01    OK
-    ##  cp_2               8.3e+01 1.61942  7.9e+01  8.6e+01 1.00     2653     3564  8.0e+01    OK
-    ##  cp_3               1.4e+02 7.17434  1.3e+02  1.6e+02 1.05       74      105  1.4e+02    OK
+    ##          parameter      mean      sd     lower     upper rhat ess_bulk ess_tail       sim match
+    ##  cp_1               49.36    0.56     48.13     50.42    1.00     3290     2903  50.00       OK
+    ##  cp_2               82.6     1.6      79.3      85.7     1.00     2653     3564  80.0        OK
+    ##  cp_3              143.4     7.2     130.5     158.0     1.05       74      105 140.0        OK
     ## 
     ## Population-level parameters:
-    ##          parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-    ##  Intercept_1       -2.0e+01 0.38263 -2.0e+01 -1.9e+01 1.00     7479     7912 -2.0e+01    OK
-    ##  Intercept_2        5.8e-01 0.63471 -6.7e-01  1.8e+00 1.00     4927     6198  0.0e+00    OK
-    ##  x_3                8.6e-01 0.05766  7.5e-01  9.7e-01 1.00     5747     7346  8.0e-01    OK
-    ##  sigma_Intercept_1  2.2e-01 0.22480 -1.9e-01  6.9e-01 1.00     4477     4873  0.0e+00    OK
-    ##  sigma_x_1          3.9e-02 0.00791  2.3e-02  5.4e-02 1.00     4101     4972  4.6e-02    OK
-    ##  sigma_Intercept_2  1.3e+00 0.11550  1.1e+00  1.5e+00 1.01     1378     3438  1.4e+00    OK
-    ##  sigma_x_3          4.2e-02 0.00937  2.2e-02  6.1e-02 1.09       28       66  3.0e-02    OK
-    ##  sigma_xE2_3       -4.2e-06 0.00018 -3.3e-04  4.7e-04 1.11       25       52  1.5e-04    OK
+    ##          parameter      mean      sd     lower     upper rhat ess_bulk ess_tail       sim match
+    ##  Intercept_1       -19.74    0.38    -20.48    -18.95    1.00     7479     7912 -20.00       OK
+    ##  Intercept_2         0.58    0.63     -0.67      1.82    1.00     4927     6198   0.00       OK
+    ##  x_3                 0.861   0.058     0.749     0.974   1.00     5747     7346   0.800      OK
+    ##  sigma_Intercept_1   0.22    0.22     -0.19      0.69    1.00     4477     4873   0.00       OK
+    ##  sigma_x_1           0.0388  0.0079    0.0234    0.0543  1.00     4101     4972   0.0462     OK
+    ##  sigma_Intercept_2   1.28    0.12      1.07      1.52    1.01     1378     3438   1.39       OK
+    ##  sigma_x_3           0.0425  0.0094    0.0222    0.0609  1.09       28       66   0.0300     OK
+    ##  sigma_xE2_3        -0.00000 0.00018  -0.00033   0.00047 1.11       25       52   0.00015    OK
 
 ``` r
 
@@ -403,25 +405,26 @@ plot(fit, interval = "predict", facet_by = "id")
 
 ![](dpar_files/figure-html/unnamed-chunk-18-1.png)
 
-As usual, we can get the individual change points:
+As usual, we can get the group-specific change points using `coef(fit)`,
+or their deviations from `cp_1` using `ranef(fit)`:
 
 ``` r
 
-ranef(fit)
+coef(fit)
 ```
 
-    ## # A tibble: 9 × 10
-    ##   parameter    mean    sd lower upper  rhat ess_bulk ess_tail     sim match
-    ##   <chr>       <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl>   <dbl> <chr>
-    ## 1 cp_1_id[1]  -3.53  19.8 -46.0 29.9   1.00     1931     1593  18.4   OK   
-    ## 2 cp_1_id[2]  32.5   27.4 -14.3 89.3   1.00     1289     1594  37.4   OK   
-    ## 3 cp_1_id[3] -26.7   18.8 -69.2  3.49  1.00     1095      987 -11.4   OK   
-    ## 4 cp_1_id[4]  -3.38  23.4 -47.6 42.9   1.00     1987     1684  -5.82  OK   
-    ## 5 cp_1_id[5]  15.3   20.0 -25.8 50.8   1.00     1902     1921  18.9   OK   
-    ## 6 cp_1_id[6]  18.6   23.5 -27.8 68.5   1.00     1832     1568  34.8   OK   
-    ## 7 cp_1_id[7] -11.9   20.0 -57.1 19.1   1.00     1369     1242 -22.9   OK   
-    ## 8 cp_1_id[8]  -9.14  18.7 -49.2 22.3   1.00     1599     1431   0.691 OK   
-    ## 9 cp_1_id[9] -14.8   24.7 -75.0 27.6   1.00     1346      945  -8.27  OK
+    ## # A tibble: 9 × 12
+    ##   parameter group_col level  mean    sd lower upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>     <chr>     <chr> <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1      id        1      137.  13.6 106.   156.  1.00     2383     3561  148. OK   
+    ## 2 cp_1      id        2      173.  27.2 122.   222.  1.00      877     2080  167. OK   
+    ## 3 cp_1      id        3      113.  10.2  90.7  128.  1.00     1107      813  119. OK   
+    ## 4 cp_1      id        4      137.  21.0 103.   180.  1.00     1893     3376  124. OK   
+    ## 5 cp_1      id        5      155.  15.0 121.   175.  1.00     1679     2596  149. OK   
+    ## 6 cp_1      id        6      159.  23.1 109.   211.  1.00     1043     1320  165. OK   
+    ## 7 cp_1      id        7      128.  13.4  97.2  143.  1.00     2461     2247  107. OK   
+    ## 8 cp_1      id        8      131.  11.2 104.   143.  1.00     2262     3118  131. OK   
+    ## 9 cp_1      id        9      125.  22.1  72.8  163.  1.00     1211     1223  122. OK
 
 … and verify via posterior predictive checks:
 

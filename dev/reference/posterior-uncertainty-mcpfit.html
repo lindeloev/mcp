@@ -98,7 +98,7 @@ matrix?</p></dd>
 
 <dt id="arg-pars">pars<a class="anchor" aria-label="anchor" href="#arg-pars"></a></dt>
 <dd><p>Optional names of population-level parameters to extract, or
-<code>"all"</code> for all population-level parameters.</p></dd>
+<code>"population"</code> for all population-level parameters.</p></dd>
 
 
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
@@ -126,6 +126,11 @@ include in the intervals.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> returns a covariance or correlation matrix. <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>
 returns a two-column matrix of central intervals.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>As in <code>lme4</code>, <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> covers the coefficients of <a href="summary.mcpfit.html">fixef()</a> (by default those of <code>mu</code>),
+while <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code> covers all population-level parameters, including change points.</p>
     </div>
 
     <div class="section level2">
@@ -166,7 +171,7 @@ returns a two-column matrix of central intervals.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1       0.1277497 25.805782</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Include change points, residual SDs, group SDs, and AR/MA parameters.</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"population"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     cp_1         cp_2  Intercept_1        time_2  Intercept_3        time_3       sigma_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         2.860236828 -0.023006037  0.479259027  0.0450919199 -0.113947879  7.548661e-03  1.694093e-02</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.023006037  0.982126142  0.026726008 -0.0018991431 -0.277033079  4.117322e-03 -3.602333e-03</span>
@@ -179,7 +184,7 @@ returns a two-column matrix of central intervals.</p>
 <span class="r-in"><span><span class="co"># Inspect posterior parameter correlations across the full population model.</span></span></span>
 <span class="r-in"><span><span class="co"># Useful to quickly check identifiability (high correlation). Inspecting</span></span></span>
 <span class="r-in"><span><span class="co"># `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"all"</span>, correlation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"population"</span>, correlation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    cp_1        cp_2  Intercept_1      time_2  Intercept_3       time_3      sigma_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         1.00000000 -0.01372642  0.426373660  0.56081588 -0.048614970  0.053346578  0.034170837</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cp_2        -0.01372642  1.00000000  0.040576214 -0.04030850 -0.201703189  0.049655673 -0.012399945</span>

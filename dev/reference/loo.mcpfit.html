@@ -80,14 +80,7 @@ Read more in <code><a href="https://mc-stan.org/loo/reference/loo.html" class="e
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'mcpfit'</span></span>
-<span><span class="fu">loo</span><span class="op">(</span></span>
-<span>  <span class="va">x</span>,</span>
-<span>  <span class="va">...</span>,</span>
-<span>  by_row <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  pointwise <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  ndraws <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<span><span class="fu">loo</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, ndraws <span class="op">=</span> <span class="cn">NULL</span>, nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">waic</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, ndraws <span class="op">=</span> <span class="cn">NULL</span>, nsamples <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -103,17 +96,6 @@ Read more in <code><a href="https://mc-stan.org/loo/reference/loo.html" class="e
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Must be empty. Reserved for future use.</p></dd>
-
-
-<dt id="arg-by-row">by_row<a class="anchor" aria-label="anchor" href="#arg-by-row"></a></dt>
-<dd><p><code>TRUE</code> calls <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo.function</a></code> to compute log-likelihood
-contributions row-by-row (observation-by-observation), which is slower but more
-memory efficient. <code>FALSE</code> (default) computes the full log-likelihood matrix at once.
-Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.</p></dd>
-
-
-<dt id="arg-pointwise">pointwise<a class="anchor" aria-label="anchor" href="#arg-pointwise"></a></dt>
-<dd><p>Deprecated alias for <code>by_row</code>.</p></dd>
 
 
 <dt id="arg-ndraws">ndraws<a class="anchor" aria-label="anchor" href="#arg-ndraws"></a></dt>
@@ -148,7 +130,7 @@ identity because draws come from the full model's posterior; comparing a
 reduced model requires refitting it. <code>log_lik(fit, group_effects = FALSE)</code>
 and <code>log_lik(fit, arma = FALSE)</code> remain available as conditional or
 counterfactual diagnostics.</p>
-<p>When <code>ndraws</code> is supplied to <code>loo()</code>, draws are balanced across chains and
+<p>When <code>ndraws</code> is supplied, draws are balanced across chains and
 thinned at evenly spaced midpoint iterations. This preserves MCMC chain
 identities and chronological order, allowing <code>relative_eff()</code> to be
 computed directly.</p>

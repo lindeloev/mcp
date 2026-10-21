@@ -270,69 +270,56 @@ can simply do `plot(fit, prior = TRUE)`, `fitted(fit, prior = TRUE)`, or
 Say you want to forecast at `time = 125` and you know that a change
 point to the baseline level (an intercept change to `Intercept_1`) will
 occur approximately after the same interval as between `cp_1` and `cp_2`
-(i.e., at `cp_2 + (cp_2 - cp_1)`). Here is a way to “hack” `mcp` to do
-this. *(NOTE: I plan on implementing this in a much more user-friendly
-way in a future release; see the discussion in [this github
-issue](https://github.com/lindeloev/mcp/issues/78) and current status in
-[this github issue](https://github.com/lindeloev/mcp/issues/82))*.
+(i.e., at `cp_2 + (cp_2 - cp_1)`). We can model this by adding the
+future segment to the model and putting an informative prior on its
+change point.
 
-### Step 1: run the model for observed data
+### Step 1: add the unobserved segment(s) and fit
 
-We already did that above, resulting in our `fit`. But we only do it to
-get the default priors that are suitable for inferring change points in
-this region, so you could’ve just run it without sampling:
+First, we extend the model with the future segment of which we have
+prior knowledge:
 
 ``` r
 
-empty = mcp(model, data = data, sample = FALSE)
-```
-
-### Step 2: add the unobserved segment(s) and fit
-
-Now we extend the model with the future segment of which we have prior
-knowledge:
-
-``` r
-
-model_forecast = c(empty$model, list(
+model_forecast = c(model, list(
   ~ same(1, as = 1)  # Return to Intercept_1 after cp_3
 ))
 ```
 
-And finally, we extend the list of priors with the new change point
-`cp_3`. The model needs a predictor value at the end of the forecasting
-horizon so that the future change point remains within its supported
-range. Its response is missing, so it contributes no observed outcome.
-It may be helpful to review [the article on priors in
-mcp](https://lindeloev.github.io/mcp/dev/articles/priors.md).
+Then we set a prior on the new change point `cp_3`. Change point bounds
+that you set are used unchanged by `mcp` (which otherwise defaults to
+set bounds), also beyond the data, so `T(max(time), 170)` places `cp_3`
+after the last observation and before the end of our forecasting horizon
+at `time = 170`. All other parameters keep their default priors. It may
+be helpful to review [priors on change
+points](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior).
 
 ``` r
 
-forecast_horizon = 170
-data_forecast = rbind(data, data.frame(time = forecast_horizon, response = NA))
-observed_start = min(data$time)
-observed_end = max(data$time)
-prior_forecast = c(empty$prior[!names(empty$prior) %in% c("cp_1", "cp_2")], list(
-  cp_1 = paste0("dunif(", observed_start, ", ", observed_end, ")"),
-  cp_2 = paste0("dunif(", observed_start, ", ", observed_end, ")"),  # Change points are ordered, so cp_2 is after cp_1
-  cp_3 = paste0("dnorm(cp_2 + (cp_2 - cp_1), 20) T(", observed_end, ", ", forecast_horizon, ")")  # In the future at the same interval
-))
+prior_forecast = list(
+  cp_3 = "dnorm(cp_2 + (cp_2 - cp_1), 20) T(max(time), 170)"  # In the future at the same interval
+)
 ```
 
-Now let’s fit it:
+Now let’s fit it.
 
 ``` r
 
-fit_forecast = mcp(model_forecast, data = data_forecast, prior = prior_forecast)
+old = options(mcp_reparam = FALSE)
+fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
+options(old)
 ```
 
-    ## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.
+*Side note on the [`options()`](https://rdrr.io/r/base/options.html)
+step: We turned off `mcp` reparameterization which usually increases
+ESS/s but in this case lowers it. One of the reparam tricks sets the
+intercept of a disjoined segment as the value at the end of that segment
+([read
+more](https://lindeloev.github.io/mcp/dev/articles/implementation.html#reparameterizations)).
+Here, segment 3 ends at the future `cp_3`, far from the data, so this
+sampling trick causes poor mixing.*
 
-    ## Warning: Some parameters may not have converged well:
-    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_3 and Intercept_3 and time_3
-    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup` or simplifying the model before trusting these results.
-
-### Step 3: predict!
+### Step 2: predict!
 
 We can now compute the 80% posterior predictive interval at
 `time = 125`:
@@ -345,11 +332,12 @@ predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
     ## # A tibble: 1 × 5
     ##    time .mean   .sd .lower .upper
     ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1   125  7.33  5.62 -0.455   14.0
+    ## 1   125  7.63  5.48 0.0925   14.1
 
 To really understand what’s going on here, it may be helpful to
-visualize the model. For now, we will have to hack this a bit too,
-manually doing our plot:
+visualize the model.
+[`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
+shows only the observed range of `time`, so we make the plot ourselves:
 
 ``` r
 
@@ -375,7 +363,7 @@ ggplot(predict_forecast, aes(x = time, y = .prediction)) +
   labs(title = "Predicting with future change points")
 ```
 
-![](predict_files/figure-html/unnamed-chunk-14-1.png)
+![](predict_files/figure-html/unnamed-chunk-13-1.png)
 
 You can read the predicted values from above at `x = 125` off this
 graph. We literally just predicted for all values between 1 and 170, and
@@ -395,4 +383,4 @@ lower bound of the prior on the future change point (`cp_3`) to the last
 data point (`max(time)`), so that it occurs *after* it, i.e., at
 `time > 100`. This is knowledge that the third change point had not yet
 been observed at `time = 100`, and this pushes the distribution further
-into the future (actually around 122; see `summary(fit_forecast)`).
+into the future (actually around 120; see `summary(fit_forecast)`).

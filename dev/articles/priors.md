@@ -18,16 +18,16 @@ defaults for change points and autocorrelation. Inspect them using
 ## Setting a prior
 
 `mcp` takes priors in the form of a named list. The names are the
-parameter names, and the values are distribution strings, fixed values,
-or the names of other parameters. Here is a fairly complicated example,
-to demonstrate the various ways priors can be used:
+parameter names, and the values are distribution strings, constants, or
+the names of other parameters. Here is a fairly complicated example, to
+demonstrate the various ways priors can be used:
 
 ``` r
 
 model = list(
   y ~ 1 + x,  # Intercept_1 + x_1
   ~ 1 + x,  # cp_1, Intercept_2, and x_2
-  ~ 1 + x  # cp_2
+  ~ 1 + x  # cp_2, Intercept_3, and x_3
 )
 
 prior = list(
@@ -35,7 +35,7 @@ prior = list(
   x_1 = "dbeta(2, 5)",  # slope: beta with right skew
   cp_1 = "dnorm(30, 10)",  # change point around 30 (and before cp_2)
   x_2 = "dt(0, 1, 3) T(x_1, )",  # slope 2 > slope 1 and t-distributed
-  cp_2 = 80,  # A constant (set; not estimated)
+  cp_2 = 80,  # Constant (not estimated)
   x_3 = "x_2"  # same slope as x_2 (use same() instead; see below)
   # Intercept_2 and Intercept_3 not specified. Use default.
 )
@@ -257,10 +257,10 @@ plot_pp_manual + plot_pp_default  # using patchwork
 
 You can see how the manual priors force strictly positive slopes (x_2 \>
 x_1 \> 0) that compound to span a much wider vertical range than the
-defaults, alongside an abrupt concerted change at the fixed change point
-x = 80. In contrast, the default priors are centered on the observed
-data, with zero-centered slopes and change points distributed smoothly
-across the x range.
+defaults, alongside an abrupt concerted change at the constant change
+point x = 80. In contrast, the default priors are centered on the
+observed data, with zero-centered slopes and change points distributed
+smoothly across the observed range of x.
 
 ## Priors on change points
 

@@ -5,7 +5,8 @@ used if you do not specify otherwise in `mcp(..., prior = list())`.
 
 In short, `mcp` uses the conventional default priors of `rstanarm` for
 intercepts and coefficients and of `brms` for scale parameters, with
-`mcp`-specific defaults for change points and autocorrelation and a few
+[`mcp`-specific defaults](#mcp-specific) for change points,
+autocorrelation, and identity-link binomial models, and a few
 [documented deviations](#deviations).
 
 See [Working with
@@ -57,24 +58,16 @@ The default priors follow three principles:
     \text{Normal}(\operatorname{mean}(y), 2.5 \cdot
     \operatorname{sd}(y)) for identity links, \text{Normal}(0, 1.5) for
     logit links, and \text{Normal}(0, 1) for probit links (see
-    [deviations](#deviations) for these and for log links). `rstanarm`
-    and `brms` place the intercept prior on centered predictors.
-    Similarly, the default prior on `Intercept_1` applies to the value
-    at the start of segment 1, \min(x), though other predictors are not
-    centered (see [deviations](#deviations)). `Intercept_1` is still
-    reported at x = 0, as in [`lm()`](https://rdrr.io/r/stats/lm.html),
-    so `fit$prior` and
+    [deviations](#deviations) for these and for log links). Similar to
+    `rstanarm`’s prior on centered predictors, the default prior on
+    `Intercept_1` applies to the value at the start of the data,
+    \min(x), rather than at x = 0. `Intercept_1` itself is still the
+    value at x = 0, as in [`lm()`](https://rdrr.io/r/stats/lm.html), so
     [`prior_summary()`](https://lindeloev.github.io/mcp/dev/reference/prior_summary.md)
-    show its prior given the slope, e.g.,
-    `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))`. This matters when x is
-    far from zero, e.g., calendar years. Likewise, factor levels and
-    contrasts with their own x-terms apply at \min(x), e.g., `stateB_1`
-    in `y ~ 1 + state * x` is the difference between states at \min(x).
-    Later intercepts are already at their change point. User-specified
-    priors on `Intercept_1` apply directly at x = 0. For a factor
-    without an intercept, e.g., `y ~ 0 + state`, each factor level has
-    its own intercept, so each gets this prior (see
-    [deviations](#deviations)).
+    shows its prior given the slope, e.g.,
+    `dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))`. Later intercepts are
+    already at their change point. See [deviations](#deviations) for
+    details.
 
 3.  **Scale parameters follow
     [`brms`](https://paulbuerkner.com/brms/reference/set_prior.html):**
@@ -106,11 +99,10 @@ General quantities used in the table below:
 \* For [`poisson()`](https://rdrr.io/r/stats/family.html), these are
 `rstanarm`’s Gaussian defaults (see [deviations](#deviations)), and the
 intercept is truncated `T(0, )`, or `T(-min(offset), )` with an
-[`offset()`](https://rdrr.io/r/stats/offset.html). \*\* Group SDs for
+[`offset()`](https://rdrr.io/r/stats/offset.html). † Group SDs for
 slopes are divided by \operatorname{sd}(\text{column}). A blank
-precedent means that the default is `mcp`-specific; see
-[deviations](#deviations). \*\*\* Ordered ([flat
-Dirichlet](#change-points))
+precedent means that the default is [`mcp`-specific](#mcp-specific).
+\*\* Ordered ([flat Dirichlet](#change-points))
 
 ## Default prior on change points
 
@@ -197,9 +189,9 @@ for how JAGS samples it, including why \alpha \< 1 is not supported.
 
 ## Default priors on group-level effects
 
-Each group-level effect has a population-level SD parameter.
-Predictor-side deviations use a zero-mean normal distribution governed
-by that SD, as in ordinary multilevel regression. With a
+Each group-level effect has a population-level SD parameter. Group-level
+deviations in the predictor part use a zero-mean normal distribution
+governed by that SD, as in ordinary multilevel regression. With a
 multi-coefficient `||` term, every independent coefficient has its own
 SD. The SD receives the `brms` half-Student-t prior on the response
 scale, except for log, logit, and probit links and inside
@@ -212,7 +204,7 @@ the log-SD scale).
 
 ### Group-level change points
 
-Change-point effects use the same ordinary normal hierarchy,
+Group-level change points use the same ordinary normal hierarchy,
 additionally bounded by the observed range of x and ordered within each
 group. Therefore, `cp_i_id_sd` is the SD of the normal distribution
 **before truncation** rather than the realized SD. See [group-level
@@ -253,6 +245,12 @@ vary by group, the actual interval depends on the neighboring
 group-level change points, so W is an approximation.
 
 ## Deviations from `rstanarm` and `brms`
+
+Here, a deviation means a default that differs from the precedent that
+`mcp` follows for that parameter: `rstanarm` for intercepts and
+coefficients and `brms` for scale parameters. `brms`’s improper flat
+coefficient priors are not a precedent, since JAGS does not support
+them.
 
 `mcp` deviates from these precedents in a few places:
 
@@ -301,10 +299,14 @@ group-level change points, so W is an approximation.
 
 - **Intercept placement:** `rstanarm` and `brms` place the intercept
   prior on centered predictors. `mcp` places the default prior on
-  `Intercept_1` at \min(x) for x-terms but does not center other
-  predictors, so the prior applies where they are zero. If such a
-  predictor is far from zero, e.g., age in years, center it before
-  fitting or set a prior on `Intercept_1`. Read more about the [the mcp
+  `Intercept_1` at \min(x), which matters when x is far from zero, e.g.,
+  calendar years. Likewise, factor contrasts with their own x-terms get
+  their default prior at \min(x), e.g., `stateB_1` in
+  `y ~ 1 + state * x`. User-specified priors on `Intercept_1` apply
+  directly at x = 0. Other predictors are not centered, so the prior
+  applies where they are zero. If such a predictor is far from zero,
+  e.g., age in years, center it before fitting or set a prior on
+  `Intercept_1`. Read more about [the mcp
   model](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
 
 - **x-term interactions:** `rstanarm` scales `x:z` by the SD of the
@@ -314,10 +316,6 @@ group-level change points, so W is an approximation.
   point, the location of x is not meaningful here. `mcp` instead uses
   \operatorname{sd}(x) \cdot \operatorname{sd}(z), where 0/1 indicators
   contribute a factor of 1, so the prior applies per SD of x and z.
-
-- **Proper coefficient priors:** `brms` uses improper flat priors on
-  coefficients, which JAGS does not support. `mcp` uses `rstanarm`’s
-  instead.
 
 - **Factors without an intercept (`0 + state`):** In `y ~ 0 + state`, R
   codes a coefficient for every factor level instead of an intercept and
@@ -337,21 +335,29 @@ group-level change points, so W is an approximation.
   has no units to convert. `brms` uses flat priors for these
   coefficients and the same scale for all group-level SDs.
 
-- **Identity links for binomial and Bernoulli models:** `rstanarm` does
-  not support this link, and `brms` applies its generic defaults (e.g.,
-  `student_t(3, 0, 2.5)` for the intercept), which do not respect that
-  probabilities lie between 0 and 1. `mcp` uses a uniform intercept
-  (`uniform(0, 1)`), uniform contrasts on the possible differences
-  (`uniform(-1, 1)`), and slopes of `normal(0, 1 / sd(column))`.
+## `mcp`-specific priors
+
+Some parameters have no precedent in `rstanarm` or `brms`, so `mcp` uses
+its own defaults:
 
 - **Autoregressive and moving-average terms:** `mcp` uses zero-centered
   `dnorm(0, 0.5) T(-1, 1)` priors to favor stationary and invertible
   dynamics, with modest changes across segments and predictors
   (`dnorm(0, 0.25)`).
 
-- **Change points:** `mcp`-specific, as described
-  [above](#change-points). The SDs of group-level change points have an
-  `mcp`-specific prior, described [above](#group-level-change-points).
+- **Identity links for
+  [`binomial()`](https://rdrr.io/r/stats/family.html) and
+  [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md):**
+  `rstanarm` does not support this link, and `brms` applies its generic
+  defaults (e.g., `student_t(3, 0, 2.5)` for the intercept), which do
+  not respect that probabilities lie between 0 and 1. `mcp` uses a
+  uniform intercept (`dunif(0, 1)`), uniform contrasts on the possible
+  differences (`dunif(-1, 1)`), and slopes of
+  `dnorm(0, 1 / sd(column))`.
+
+- **Change points:** As described [above](#change-points). The SDs of
+  group-level change points have an `mcp`-specific prior, described
+  [above](#group-level-change-points).
 
 ## Applied discussion of default priors in other articles
 

@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Diagnosing and fixing problems</h1>
             
-            <h4 data-toc-skip class="date">2026-10-16</h4>
+            <h4 data-toc-skip class="date">2026-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/tips.Rmd" class="external-link"><code>vignettes/tips.Rmd</code></a></small>
       <div class="d-none name"><code>tips.Rmd</code></div>
@@ -125,6 +125,19 @@ in <code>plot_pars(fit)</code>. By default, <code><a href="../reference/mcp.html
 and sample longer, e.g.:
 <code>mcp(model, data, warmup = 10000, iter = 20000)</code>. This is
 often needed with many (e.g., 5+) change points.</p></li>
+<li><p>Change points can have several modes, e.g., at two candidate
+jumps in the data. Chains may stay in one mode for thousands of
+iterations, so sampling longer may not help. Look for modes using
+<code>plot_pars(fit, regex_pars = "^cp_")</code>. If there are several,
+the posterior is genuinely uncertain between them, and more chains
+(e.g., <code>mcp(..., chains = 6)</code>) give a better sense of how
+probable each one is.</p></li>
+<li><p>Center predictors other than the change-point variable, e.g.,
+<code>data$z = data$z - mean(data$z)</code>. When <code>z</code> is far
+from zero, its coefficient and the intercept are strongly correlated,
+which slows sampling of both and, in turn, the change points. After
+centering, the intercept is the value at the mean of
+<code>z</code>.</p></li>
 <li><p>It can be a sign of a deeper non-identifiability in the model.
 This will show up as strong correlations in the joint distribution of
 any pair of implicated parameters:
@@ -133,9 +146,9 @@ This may give you ideas how to change the model.</p></li>
 <li>
 <p>You can set the initial values for the JAGS sampler using, e.g.,
 <code>mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))</code>. Names must
-be parameters in <code>mcp_pars(fit)</code>. Fixed parameters and
-parameters reparameterized for faster sampling cannot be initialized.
-Initial values for change points must be ordered.</p>
+be parameters in <code>mcp_pars(fit)</code>. Parameters with constant
+priors and parameters reparameterized for faster sampling cannot be
+initialized. Initial values for change points must be ordered.</p>
 <ul>
 <li>By default, all chains start at the same change points. Change
 points cannot pass each other, so a chain that starts with change points

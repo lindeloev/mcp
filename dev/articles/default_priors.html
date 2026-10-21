@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Default priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-16</h4>
+            <h4 data-toc-skip class="date">2026-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/default_priors.Rmd" class="external-link"><code>vignettes/default_priors.Rmd</code></a></small>
       <div class="d-none name"><code>default_priors.Rmd</code></div>
@@ -116,8 +116,8 @@ are the priors used if you do not specify otherwise in
 <code>mcp(..., prior = list())</code>.</p>
 <p>In short, <code>mcp</code> uses the conventional default priors of
 <code>rstanarm</code> for intercepts and coefficients and of
-<code>brms</code> for scale parameters, with <code>mcp</code>-specific
-defaults for change points and autocorrelation and a few <a href="#deviations">documented deviations</a>.</p>
+<code>brms</code> for scale parameters, with <a href="#mcp-specific"><code>mcp</code>-specific defaults</a> for change
+points, autocorrelation, and identity-link binomial models, and a few <a href="#deviations">documented deviations</a>.</p>
 <p>See <a href="../articles/priors.html">Working with priors</a> for how
 to set your own priors and do prior predictive checks.</p>
 <div class="section level2">
@@ -164,24 +164,15 @@ setting a wider prior.</p></li>
 \operatorname{sd}(y))</span> for identity links, <span class="math inline">\text{Normal}(0, 1.5)</span> for logit links, and
 <span class="math inline">\text{Normal}(0, 1)</span> for probit links
 (see <a href="#deviations">deviations</a> for these and for log links).
-<code>rstanarm</code> and <code>brms</code> place the intercept prior on
-centered predictors. Similarly, the default prior on
-<code>Intercept_1</code> applies to the value at the start of segment 1,
-<span class="math inline">\min(x)</span>, though other predictors are
-not centered (see <a href="#deviations">deviations</a>).
-<code>Intercept_1</code> is still reported at <span class="math inline">x = 0</span>, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>, so
-<code>fit$prior</code> and <code><a href="../reference/prior_summary.html">prior_summary()</a></code> show its prior
+Similar to <code>rstanarm</code>’s prior on centered predictors, the
+default prior on <code>Intercept_1</code> applies to the value at the
+start of the data, <span class="math inline">\min(x)</span>, rather than
+at <span class="math inline">x = 0</span>. <code>Intercept_1</code>
+itself is still the value at <span class="math inline">x = 0</span>, as
+in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>, so <code><a href="../reference/prior_summary.html">prior_summary()</a></code> shows its prior
 given the slope, e.g.,
-<code>dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))</code>. This matters
-when <span class="math inline">x</span> is far from zero, e.g., calendar
-years. Likewise, factor levels and contrasts with their own x-terms
-apply at <span class="math inline">\min(x)</span>, e.g.,
-<code>stateB_1</code> in <code>y ~ 1 + state * x</code> is the
-difference between states at <span class="math inline">\min(x)</span>.
-Later intercepts are already at their change point. User-specified
-priors on <code>Intercept_1</code> apply directly at <span class="math inline">x = 0</span>. For a factor without an intercept,
-e.g., <code>y ~ 0 + state</code>, each factor level has its own
-intercept, so each gets this prior (see <a href="#deviations">deviations</a>).</p></li>
+<code>dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))</code>. Later
+intercepts are already at their change point. See <a href="#deviations">deviations</a> for details.</p></li>
 <li><p><strong>Scale parameters follow <a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link"><code>brms</code></a>:</strong>
 The residual SD and, for identity links, group-level SDs get a
 half-Student-t, <span class="math inline">\text{Student-t}(3, 0, S_y) \,
@@ -312,7 +303,7 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <code>dnorm(0, 2.5 / sd(column))</code>
 </td>
 <td>
-<code>dnorm(0, 2.5) T(0, )</code>**</td>
+<code>dnorm(0, 2.5) T(0, )</code>†</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -330,7 +321,7 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <td>
 <strong>Change points</strong> (<code>cp_i</code>)</td>
 <td>
-<code>dunif(min(x), max(x))</code>***</td>
+<code>dunif(min(x), max(x))</code>**</td>
 <td>—</td>
 <td><code>dnorm(0, (max(x) - min(x)) / (2 * (n_cp() + 1))) T(0, )</code></td>
 <td></td>
@@ -340,9 +331,9 @@ link</strong> (<code>binomial</code>, <code>bernoulli</code>)</td>
 <p>* For <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson()</a></code>, these are <code>rstanarm</code>’s
 Gaussian defaults (see <a href="#deviations">deviations</a>), and the
 intercept is truncated <code>T(0, )</code>, or
-<code>T(-min(offset), )</code> with an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>. ** Group
+<code>T(-min(offset), )</code> with an <code><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset()</a></code>. † Group
 SDs for slopes are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>. A blank
-precedent means that the default is <code>mcp</code>-specific; see <a href="#deviations">deviations</a>. *** Ordered (<a href="#change-points">flat Dirichlet</a>)</p>
+precedent means that the default is <a href="#mcp-specific"><code>mcp</code>-specific</a>. ** Ordered (<a href="#change-points">flat Dirichlet</a>)</p>
 </div>
 </div>
 <div class="section level2">
@@ -424,20 +415,20 @@ to sampler code</a> for how JAGS samples it, including why <span class="math inl
 <h2 id="default-priors-on-group-level-effects">Default priors on group-level effects<a class="anchor" aria-label="anchor" href="#default-priors-on-group-level-effects"></a>
 </h2>
 <p>Each group-level effect has a population-level SD parameter.
-Predictor-side deviations use a zero-mean normal distribution governed
-by that SD, as in ordinary multilevel regression. With a
-multi-coefficient <code>||</code> term, every independent coefficient
-has its own SD. The SD receives the <code>brms</code> half-Student-t
-prior on the response scale, except for log, logit, and probit links and
-inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and <code>shape()</code> (see the table
-above). Slope SDs are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>, like the
+Group-level deviations in the predictor part use a zero-mean normal
+distribution governed by that SD, as in ordinary multilevel regression.
+With a multi-coefficient <code>||</code> term, every independent
+coefficient has its own SD. The SD receives the <code>brms</code>
+half-Student-t prior on the response scale, except for log, logit, and
+probit links and inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and <code>shape()</code>
+(see the table above). Slope SDs are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>, like the
 population-level slopes. For distributional parameters, deviations and
 SD are on that parameter’s link scale (for example, effects inside
 <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> are on the log-SD scale).</p>
 <div class="section level3">
 <h3 id="group-level-change-points">Group-level change points<a class="anchor" aria-label="anchor" href="#group-level-change-points"></a>
 </h3>
-<p>Change-point effects use the same ordinary normal hierarchy,
+<p>Group-level change points use the same ordinary normal hierarchy,
 additionally bounded by the observed range of <span class="math inline">x</span> and ordered within each group. Therefore,
 <code>cp_i_id_sd</code> is the SD of the normal distribution
 <strong>before truncation</strong> rather than the realized SD. See <a href="../articles/group_effects.html">group-level effects with mcp</a>
@@ -479,6 +470,11 @@ approximation.</p>
 <div class="section level2">
 <h2 id="deviations">Deviations from <code>rstanarm</code> and <code>brms</code><a class="anchor" aria-label="anchor" href="#deviations"></a>
 </h2>
+<p>Here, a deviation means a default that differs from the precedent
+that <code>mcp</code> follows for that parameter: <code>rstanarm</code>
+for intercepts and coefficients and <code>brms</code> for scale
+parameters. <code>brms</code>’s improper flat coefficient priors are not
+a precedent, since JAGS does not support them.</p>
 <p><code>mcp</code> deviates from these precedents in a few places:</p>
 <ul>
 <li><p><strong>Logit and probit links (<code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>,
@@ -523,10 +519,14 @@ but computes the scale from <span class="math inline">y</span>.</p></li>
 <li><p><strong>Intercept placement:</strong> <code>rstanarm</code> and
 <code>brms</code> place the intercept prior on centered predictors.
 <code>mcp</code> places the default prior on <code>Intercept_1</code> at
-<span class="math inline">\min(x)</span> for x-terms but does not center
-other predictors, so the prior applies where they are zero. If such a
-predictor is far from zero, e.g., age in years, center it before fitting
-or set a prior on <code>Intercept_1</code>. Read more about the <a href="../articles/formulas.html">the mcp model</a>.</p></li>
+<span class="math inline">\min(x)</span>, which matters when <span class="math inline">x</span> is far from zero, e.g., calendar years.
+Likewise, factor contrasts with their own x-terms get their default
+prior at <span class="math inline">\min(x)</span>, e.g.,
+<code>stateB_1</code> in <code>y ~ 1 + state * x</code>. User-specified
+priors on <code>Intercept_1</code> apply directly at <span class="math inline">x = 0</span>. Other predictors are not centered, so
+the prior applies where they are zero. If such a predictor is far from
+zero, e.g., age in years, center it before fitting or set a prior on
+<code>Intercept_1</code>. Read more about <a href="../articles/formulas.html">the mcp model</a>.</p></li>
 <li><p><strong>x-term interactions:</strong> <code>rstanarm</code>
 scales <code>x:z</code> by the SD of the model-matrix column, <span class="math inline">\operatorname{sd}(x \cdot z)</span>, which depends
 on the location of <span class="math inline">x</span> and <span class="math inline">z</span>. For example, it is around 1000 for
@@ -537,9 +537,6 @@ years. Since x-terms are measured from the change point, the location of
 \operatorname{sd}(z)</span>, where 0/1 indicators contribute a factor of
 1, so the prior applies per SD of <span class="math inline">x</span> and
 <span class="math inline">z</span>.</p></li>
-<li><p><strong>Proper coefficient priors:</strong> <code>brms</code>
-uses improper flat priors on coefficients, which JAGS does not support.
-<code>mcp</code> uses <code>rstanarm</code>’s instead.</p></li>
 <li><p><strong>Factors without an intercept
 (<code>0 + state</code>):</strong> In <code>y ~ 0 + state</code>, R
 codes a coefficient for every factor level instead of an intercept and
@@ -558,21 +555,29 @@ applies per SD of the predictor, as for <code>mu</code>. Contrasts are
 not divided because a 0/1 dummy has no units to convert.
 <code>brms</code> uses flat priors for these coefficients and the same
 scale for all group-level SDs.</p></li>
-<li><p><strong>Identity links for binomial and Bernoulli
-models:</strong> <code>rstanarm</code> does not support this link, and
-<code>brms</code> applies its generic defaults (e.g.,
-<code>student_t(3, 0, 2.5)</code> for the intercept), which do not
-respect that probabilities lie between 0 and 1. <code>mcp</code> uses a
-uniform intercept (<code>uniform(0, 1)</code>), uniform contrasts on the
-possible differences (<code>uniform(-1, 1)</code>), and slopes of
-<code>normal(0, 1 / sd(column))</code>.</p></li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="mcp-specific">
+<code>mcp</code>-specific priors<a class="anchor" aria-label="anchor" href="#mcp-specific"></a>
+</h2>
+<p>Some parameters have no precedent in <code>rstanarm</code> or
+<code>brms</code>, so <code>mcp</code> uses its own defaults:</p>
+<ul>
 <li><p><strong>Autoregressive and moving-average terms:</strong>
 <code>mcp</code> uses zero-centered <code>dnorm(0, 0.5) T(-1, 1)</code>
 priors to favor stationary and invertible dynamics, with modest changes
 across segments and predictors (<code>dnorm(0, 0.25)</code>).</p></li>
-<li><p><strong>Change points:</strong> <code>mcp</code>-specific, as
-described <a href="#change-points">above</a>. The SDs of group-level
-change points have an <code>mcp</code>-specific prior, described <a href="#group-level-change-points">above</a>.</p></li>
+<li><p><strong>Identity links for <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code> and
+<code><a href="../reference/bernoulli.html">bernoulli()</a></code>:</strong> <code>rstanarm</code> does not
+support this link, and <code>brms</code> applies its generic defaults
+(e.g., <code>student_t(3, 0, 2.5)</code> for the intercept), which do
+not respect that probabilities lie between 0 and 1. <code>mcp</code>
+uses a uniform intercept (<code>dunif(0, 1)</code>), uniform contrasts
+on the possible differences (<code>dunif(-1, 1)</code>), and slopes of
+<code>dnorm(0, 1 / sd(column))</code>.</p></li>
+<li><p><strong>Change points:</strong> As described <a href="#change-points">above</a>. The SDs of group-level change points
+have an <code>mcp</code>-specific prior, described <a href="#group-level-change-points">above</a>.</p></li>
 </ul>
 </div>
 <div class="section level2">

@@ -52,7 +52,7 @@ mcp(
   `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`.
   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
   `sigma_1`, etc.) and values are a distribution string (e.g.,
-  `"dnorm(0, 1) T(0, )"`), a fixed value (e.g., `-2.1`), or the name of
+  `"dnorm(0, 1) T(0, )"`), a constant (e.g., `-2.1`), or the name of
   another parameter to share its value. *OBS: Distributions use JAGS
   names but SD/scale instead of JAGS precision, so `dnorm(0, 0.001)` is
   a very narrow prior.* Weakly informative defaults are used where
@@ -99,8 +99,8 @@ mcp(
     prior draws.
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
-    draws. This is useful if you only want to check prior strings
-    (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
+    draws (an "empty fit"). This is useful if you only want to check
+    prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
 - chains:
 
@@ -125,11 +125,12 @@ mcp(
   more](https://lindeloev.github.io/mcp/articles/tips.html)). Names must
   be parameters in
   [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md).
-  Fixed parameters and parameters that are reparameterized for faster
-  sampling cannot be initialized (see `mcp_reparam` in
+  Parameters with constant priors and parameters that are
+  reparameterized for faster sampling cannot be initialized (see
+  `mcp_reparam` in
   [mcp-package](https://lindeloev.github.io/mcp/dev/reference/mcp-package.md)).
   Initial values for change points must be ordered. Defaults to `NULL`
-  where all chains start at equispaced change points and the prior
+  where all chains start at equally spaced change points and the prior
   medians. User-provided `inits` take precedence.
 
 - jags_code:
@@ -148,7 +149,9 @@ mcp(
   [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
   etc. are wrong if the custom code changes the formula or likelihood.
   The written JAGS code is not a stable interface and may change between
-  `mcp` versions. [Read
+  `mcp` versions. `jags_code` is planned for deprecation once a future
+  mcp release brings custom families and tooling to run `fit$jags_code`
+  directly in JAGS. [Read
   more](https://lindeloev.github.io/mcp/articles/implementation.html)
   about how `mcp` writes JAGS code.
 
@@ -269,17 +272,17 @@ summary(demo_fit)
 #>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        31.75 1.736 28.48 35.084 1.00     3249     4358 30.0    OK
-#>  cp_2        71.12 1.004 69.48 72.776 1.00     3660     6245 70.0    OK
+#>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+#>  cp_1        31.8   1.7   28.5   35.1   1.00     3249     4358 30.0      OK
+#>  cp_2        71.1   1.0   69.5   72.8   1.00     3660     6245 70.0      OK
 #> 
 #> Population-level parameters:
-#>    parameter  mean    sd lower  upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1  9.96 0.651  8.69 11.255 1.00     4919     6791 10.0    OK
-#>  time_2       0.55 0.048  0.46  0.643 1.00     5176     6667  0.5    OK
-#>  Intercept_3 13.95 1.370 11.31 16.678 1.00     2254     4267 15.0    OK
-#>  time_3      -0.20 0.084 -0.37 -0.039 1.00     1238     2159 -0.3    OK
-#>  sigma_1      3.87 0.286  3.35  4.470 1.00     5025     5407  3.5    OK
+#>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+#>  Intercept_1  9.96  0.65   8.69  11.25  1.00     4919     6791 10.00     OK
+#>  time_2       0.547 0.048  0.456  0.643 1.00     5176     6667  0.500    OK
+#>  Intercept_3 13.9   1.4   11.3   16.7   1.00     2254     4267 15.0      OK
+#>  time_3      -0.205 0.084 -0.372 -0.039 1.00     1238     2159 -0.300    OK
+#>  sigma_1      3.87  0.29   3.35   4.47  1.00     5025     5407  3.50     OK
 
 # Visual inspection of the results
 plot(demo_fit)  # Visualization of model fit/predictions
@@ -347,17 +350,17 @@ summary(demo_fit, prior = TRUE)
 #>   3: ~ 1 + time
 #> 
 #> Change point parameters:
-#>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  cp_1        34.0031 23.49   1.81  84.5 1.00     3984     5301 30.0    OK
-#>  cp_2        66.6937 23.21  17.01  98.4 1.00     3496     5260 70.0    OK
+#>    parameter  mean    sd  lower upper rhat ess_bulk ess_tail   sim match
+#>  cp_1        34    23      2    84    1.00     3984     5301 30       OK
+#>  cp_2        67    23     17    98    1.00     3496     5260 70       OK
 #> 
 #> Population-level parameters:
-#>    parameter    mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-#>  Intercept_1 13.9557 17.53 -19.87  47.7 1.00     9356     8910 10.0    OK
-#>  time_2      -0.0088  0.63  -1.24   1.2 1.00     9087     8988  0.5    OK
-#>  Intercept_3 13.5636 17.41 -20.94  47.9 1.00     8841     8553 15.0    OK
-#>  time_3       0.0193  0.62  -1.22   1.2 1.00     9023     8947 -0.3    OK
-#>  sigma_1      6.3353  7.29   0.19  25.0 1.00     8599     8635  3.5    OK
+#>    parameter  mean    sd  lower upper rhat ess_bulk ess_tail   sim match
+#>  Intercept_1 14    18    -20    48    1.00     9356     8910 10       OK
+#>  time_2      -0.01  0.63  -1.24  1.22 1.00     9087     8988  0.50    OK
+#>  Intercept_3 14    17    -21    48    1.00     8841     8553 15       OK
+#>  time_3       0.02  0.62  -1.22  1.23 1.00     9023     8947 -0.30    OK
+#>  sigma_1      6.3   7.3    0.2  25.0  1.00     8599     8635  3.5     OK
 plot(demo_fit, prior = TRUE)
 
 

@@ -166,17 +166,17 @@ summary(fit)
     ##   2: ~ 0 + time + ar(1)
     ## 
     ## Change point parameters:
-    ##    parameter  mean    sd  lower    upper rhat ess_bulk ess_tail
-    ##  cp_1        89.13 7.313 75.078 102.8561 1.00      808     1387
+    ##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail
+    ##  cp_1        89.1   7.3   75.1   102.9   1.00      808     1387
     ## 
     ## Population-level parameters:
-    ##    parameter  mean    sd  lower    upper rhat ess_bulk ess_tail
-    ##  Intercept_1 20.63 1.343 18.210  23.4603 1.00     1455     2275
-    ##  time_2      -0.03 0.033 -0.092   0.0388 1.00     1919     3400
-    ##  sigma_1      5.11 0.301  4.566   5.7384 1.00     4745     4300
-    ##  ar1_1        0.69 0.101  0.490   0.8816 1.00     1233     2525
-    ##  ar1_2       -0.28 0.141 -0.555  -0.0015 1.00     3425     6201
-    ##  ar2_1        0.18 0.100 -0.013   0.3735 1.00     1283     2292
+    ##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail
+    ##  Intercept_1 20.6   1.3   18.2    23.5   1.00     1455     2275
+    ##  time_2      -0.030 0.033 -0.092   0.039 1.00     1919     3400
+    ##  sigma_1      5.11  0.30   4.57    5.74  1.00     4745     4300
+    ##  ar1_1        0.69  0.10   0.49    0.88  1.00     1233     2525
+    ##  ar1_2       -0.28  0.14  -0.55   -0.00  1.00     3425     6201
+    ##  ar2_1        0.181 0.100 -0.013   0.374 1.00     1283     2292
 
 The naming syntax is `[component][order]_[segment]` for intercepts. For
 example, `ar1_2` is the first-order autoregressive coefficient and
@@ -185,10 +185,10 @@ use the usual `mcp` parameter names, e.g., `ar1_x_3` for a slope on
 AR(1) in segment 3.
 
 Comparing the columns `mean` and `sim` we see that the AR coefficients
-are reasonably recovered. In fact, the posterior mean is almost always
-exactly the same as `arima(data, order = c(N, 0, 0))` (see below), so
-the non-perfect fits are due to randomness in the simulation - not in
-the fit.
+are reasonably recovered. In fact, the posterior means are typically
+close to the estimates of `arima(data, order = c(N, 0, 0))` (see below),
+so the non-perfect fits are mostly due to randomness in the simulation -
+not in the fit.
 
 For Gaussian GARMA models, `sigma` describes the *innovations*, i.e.,
 the part of the residuals not explained by AR and MA coefficients.
@@ -267,9 +267,9 @@ controls the innovation standard deviation:
 ``` r
 
 model = list(
-  y ~ 1 + ar(1) + ma(1) + sigma(1),  # First order ARMA
-  ~ 0 + x + ar(1) + sigma(1),        # New AR coefficient; no MA
-  ~ 1  # No ARMA modelled in this segment
+  y ~ 1 + ar(1) + ma(1) + sigma(1),    # First order ARMA
+  ~ 0 + x + ar(1) + ma(0) + sigma(1),  # New AR coefficient; ma(0) states that MA is not included
+  ~ 1 + ar(0)                          # No ARMA in this segment. ~ 1 is identical but ar(0) is explicit.
 )
 ```
 
@@ -334,16 +334,16 @@ summary(fit)
     ##   2: ~ 0 + time + ar(1)
     ## 
     ## Change point parameters:
-    ##    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        27.644 3.015 21.459 33.64 1.00     2030     1845 30.0    OK
+    ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1        27.6   3.0   21.5   33.6   1.00     2030     1845 30.0      OK
     ## 
     ## Population-level parameters:
-    ##    parameter   mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1  9.763 0.250  9.274 10.27 1.00     8438     8424 10.0    OK
-    ##  time_2       0.094 0.017  0.061  0.13 1.00     5847     7401  0.1    OK
-    ##  sigma_1      1.563 0.064  1.444  1.70 1.00     5325     5557  1.5    OK
-    ##  ar1_1        0.302 0.112  0.081  0.52 1.00     5752     7270  0.3    OK
-    ##  ar1_2        0.842 0.038  0.768  0.92 1.00     7202     6583  0.8    OK
+    ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1  9.76  0.25   9.27  10.27  1.00     8438     8424 10.00     OK
+    ##  time_2       0.094 0.017  0.061  0.129 1.00     5847     7401  0.100    OK
+    ##  sigma_1      1.563 0.064  1.444  1.696 1.00     5325     5557  1.500    OK
+    ##  ar1_1        0.30  0.11   0.08   0.52  1.00     5752     7270  0.30     OK
+    ##  ar1_2        0.842 0.038  0.768  0.917 1.00     7202     6583  0.800    OK
 
 ``` r
 
@@ -429,12 +429,12 @@ summary(fit)
     ##   1: response ~ 1 + ar(3)
     ## 
     ## Population-level parameters:
-    ##    parameter  mean    sd  lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 20.27 1.283 17.801 22.85 1.00     8529     8336 20.0    OK
-    ##  sigma_1      8.27 0.419  7.506  9.13 1.00     5176     4420  8.0    OK
-    ##  ar1_1        0.77 0.065  0.644  0.90 1.00     2473     4148  0.7    OK
-    ##  ar2_1        0.18 0.085  0.014  0.35 1.00     1785     3470  0.2    OK
-    ##  ar3_1       -0.42 0.065 -0.545 -0.29 1.00     2458     4463 -0.4    OK
+    ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1 20.3   1.3   17.8   22.8   1.00     8529     8336 20.0      OK
+    ##  sigma_1      8.27  0.42   7.51   9.13  1.00     5176     4420  8.00     OK
+    ##  ar1_1        0.771 0.065  0.644  0.900 1.00     2473     4148  0.700    OK
+    ##  ar2_1        0.182 0.085  0.014  0.348 1.00     1785     3470  0.200    OK
+    ##  ar3_1       -0.418 0.065 -0.545 -0.287 1.00     2458     4463 -0.400    OK
 
 ## Inferring an autocorrelation-only change
 
@@ -510,16 +510,16 @@ summary(fit)
     ##   2: ~ 0 + same(x) + ar(1)
     ## 
     ## Change point parameters:
-    ##    parameter   mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  cp_1        61.440 2.338 58.35 65.81 1.00     7650     6251 60.0    OK
+    ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1        61.4   2.3   58.4   65.8   1.00     7650     6251 60.0      OK
     ## 
     ## Population-level parameters:
-    ##    parameter   mean    sd lower upper rhat ess_bulk ess_tail  sim match
-    ##  Intercept_1 20.484 1.805 16.98 24.05 1.00     2358     4498 20.0    OK
-    ##  x_1          0.985 0.023  0.94  1.03 1.00     2486     4774  1.0    OK
-    ##  sigma_1      4.717 0.242  4.27  5.22 1.00    17354    16283  5.0    OK
-    ##  ar1_1        0.687 0.066  0.56  0.82 1.00    20342    26114  0.8    OK
-    ##  ar1_2       -0.033 0.120 -0.27  0.21 1.00    19655    17850  0.2    OK
+    ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1 20.5   1.8   17.0   24.0   1.00     2358     4498 20.0      OK
+    ##  x_1          0.985 0.023  0.939  1.030 1.00     2486     4774  1.000    OK
+    ##  sigma_1      4.72  0.24   4.27   5.22  1.00    17354    16283  5.00     OK
+    ##  ar1_1        0.687 0.066  0.558  0.816 1.00    20342    26114  0.800    OK
+    ##  ar1_2       -0.03  0.12  -0.27   0.21  1.00    19655    17850  0.20     OK
 
 We can also plot some of the parameters. As usual, we see that the
 change point is not well defined by any known distribution. The fact
@@ -641,8 +641,8 @@ plot_pars(fit, prior = TRUE, npars = NULL)
 
 ![](arma_files/figure-html/unnamed-chunk-20-1.png)
 
-Notice that the plot smooths the posteriors at sharp cutoffs, slightly
-misrepresenting the true distribution.
+Notice that the density estimates are smoothed at sharp cutoffs, such as
+the `T(-1, 1)` bounds, slightly misrepresenting the true distribution.
 
 Let’s inspect the priors for a more advanced AR model, since you would
 often have to inform these:

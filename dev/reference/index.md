@@ -80,6 +80,7 @@ Summaries that pertain to the whole `mcpfit` or to specific parameters.
   [`print(`*`<mcpsummary>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`fixef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`ranef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
+  [`coef(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   [`print(`*`<mcpfit>`*`)`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
   : Summarise mcpfit objects
 
@@ -128,7 +129,8 @@ Per-observation summaries or draws
 
   Extract MCMC Draws from `mcpfit` Objects
 
-- [`ndraws()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
+- [`variables()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
+  [`ndraws()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
   [`nchains()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
   [`niterations()`](https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.md)
   :

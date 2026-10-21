@@ -55,8 +55,8 @@ mcp_example_data(name)
     prior draws.
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
-    draws. This is useful if you only want to check prior strings
-    (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
+    draws (an "empty fit"). This is useful if you only want to check
+    prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
 - plot:
 

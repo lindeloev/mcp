@@ -74,6 +74,9 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'mcpfit'</span></span>
+<span><span class="fu">variables</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">niterations</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
@@ -81,6 +84,8 @@
 <span></span>
 <span><span class="co"># S3 method for class 'mcpfit'</span></span>
 <span><span class="fu">ndraws</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">variables</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">ndraws</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span></span>
@@ -103,23 +108,27 @@
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An integer count of iterations, chains, or draws.</p>
+    <p><code>variables()</code> returns the names of the draws' variables, e.g., <code>"cp_1"</code> and
+<code>"cp_1_id[John]"</code>. The other methods return an integer count of iterations, chains, or draws.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>These methods require posterior draws. To count prior draws, use
+    <p>These methods require posterior draws. To index prior draws, use
 e.g. <code>ndraws(as_draws(fit, prior = TRUE))</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>
 
-<ul><li><p><code>niterations(mcpfit)</code>: Number of iterations per chain of an <code>mcpfit</code> object.</p></li>
+<ul><li><p><code>variables(mcpfit)</code>: Variable names of an <code>mcpfit</code> object, as in <code>as_draws(fit)</code>.</p></li>
+<li><p><code>niterations(mcpfit)</code>: Number of iterations per chain of an <code>mcpfit</code> object.</p></li>
 <li><p><code>nchains(mcpfit)</code>: Number of chains of an <code>mcpfit</code> object.</p></li>
 </ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">niterations</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">variables</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "cp_1"        "cp_2"        "Intercept_1" "time_2"      "Intercept_3" "time_3"      "sigma_1"    </span>
+<span class="r-in"><span><span class="fu">niterations</span><span class="op">(</span><span class="va">demo_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 500</span>
 <span class="r-in"><span><span class="fu">nchains</span><span class="op">(</span><span class="fu"><a href="as_draws.mcpfit.html">as_draws</a></span><span class="op">(</span><span class="va">demo_fit</span>, prior <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>

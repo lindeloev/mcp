@@ -5,21 +5,25 @@ the predictor and change-point parts of a formula. The syntax follows
 `lme4` and `brms`: `(1|group)` specifies a group-level intercept,
 `(factor||group)` specifies independent group coefficients,
 [`fixef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
-reports population-level coefficients, and
+reports population-level coefficients,
 [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
-reports group-level deviations.
+reports group-level deviations, and
+[`coef()`](https://rdrr.io/r/stats/coef.html) reports their sums, i.e.,
+the group-specific coefficients and change points.
 
 This article in brief:
 
 - Predictor and change-point group-level effects
 - How group-level effects apply across segments
 - How to simulate group-level change-point deviations
-- Get posteriors using `ranef(fit)`
+- Get posteriors using `ranef(fit)` for deviations or `coef(fit)` for
+  group-specific values
 - Plot using `plot(fit, facet_by="my_group")` and
   `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`
   ([more on
   plotting](https://lindeloev.github.io/mcp/dev/articles/plotting.md)).
-- How group-specific change points are bounded and ordered.
+- How group-specific change points are restricted to the observed range
+  and ordered.
 - The article on modeling standard deviation via
   [`sigma()`](https://rdrr.io/r/stats/sigma.html) contains [another
   group-level change-point
@@ -284,8 +288,32 @@ mcp::ranef(fit)
 Inspecting the `sim` and `match` columns, we see that the simulated
 deviations lie within the intervals. However, the intervals are wide
 because the deviations trade off against the population-level `cp_1`,
-which is informed by only six groups. The group-specific locations
-(`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above.
+which is informed by only six groups.
+
+The group-specific change points (`cp_1 + cp_1_id[g]`) are much more
+precise, as seen in the plot above. Get them using `coef(fit)`, which
+adds the population-level parameter to each deviation, as in `lme4` and
+`brms`:
+
+``` r
+
+coef(fit)
+```
+
+    ## # A tibble: 6 × 12
+    ##   parameter group_col level      mean    sd lower upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>     <chr>     <chr>     <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1      id        Batgirl    40.5  1.40  37.7  43.2  1.00      777     1840  40.3 OK   
+    ## 2 cp_1      id        Batman     43.7  1.41  40.9  46.4  1.00     1013     2164  42.9 OK   
+    ## 3 cp_1      id        Clark      71.8  1.27  69.4  74.4  1.00     1512     2841  70.8 OK   
+    ## 4 cp_1      id        Jane       59.6  1.31  57.1  62.2  1.00     1603     2376  60.0 OK   
+    ## 5 cp_1      id        Louis      68.1  1.28  65.5  70.6  1.00     1672     3288  66.4 OK   
+    ## 6 cp_1      id        Spiderman  59.4  1.24  57.1  61.9  1.00     1079     2241  59.7 OK
+
+Because the deviations are relative to `cp_1`, they share its estimation
+error. If `cp_1` misses its simulated value, the deviations tend to miss
+with it, even when every group’s change point is recovered. The `match`
+column of `coef(fit)` checks the group-specific change points directly.
 
 Prediction methods include all group-level effects by default. Set
 `group_effects = FALSE` (or `NA`, as in `brms`) for population-level
@@ -305,7 +333,7 @@ the group-level deviations with `"group"`:
 plot_pars(fit, pars = "group", type = "trace", ncol = 3, npars = NULL)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-14-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-15-1.png)
 
 The `ncol` argument controls the number of columns. Group-level effects
 often have many levels, so this is useful for viewing all deviations.
@@ -319,7 +347,7 @@ example, `^` anchors the start of a parameter name:
 plot_pars(fit, regex_pars = "^cp_1_id", type = "dens_overlay", ncol = 2, npars = NULL)
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-15-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-16-1.png)
 
 You can also do posterior predictive checks with facets. For a
 single-response model like this, it adds little over
@@ -331,7 +359,7 @@ be familiar with:
 pp_check(fit, facet_by = "id")
 ```
 
-![](group_effects_files/figure-html/unnamed-chunk-16-1.png)
+![](group_effects_files/figure-html/unnamed-chunk-17-1.png)
 
 ## Priors for group-level effects
 
@@ -382,7 +410,7 @@ fit$jags_code
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation
     ##   for (id_ in 1:n_unique_id) {
-    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighbouring change points
+    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighboring change points
     ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point
     ##   }
     ##   cp_2 = max(x)
