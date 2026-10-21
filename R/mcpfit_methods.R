@@ -529,7 +529,7 @@ family.mcpfit = function(object, ...) {
 #' @rdname model-accessors-mcpfit
 #' @export
 nobs.mcpfit = function(object, ...) {
-  rlang::check_dots_empty()
+  # No dots check: stats::sigma() etc. call nobs(object, use.fallback = ...)
   y_col = mcp_columns(object)$response
   sum(!is.na(object$data[[y_col]]))
 }
@@ -564,7 +564,7 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #' @param correlation Return the correlation matrix instead of the covariance
 #'   matrix?
 #' @param pars Optional names of population-level parameters to extract, or
-#'   `"all"` for all population-level parameters.
+#'   `"population"` for all population-level parameters.
 #' @param dpar Distributional parameter(s) to select when `pars = NULL`, e.g., `"mu"`, `"sigma"`, or `"ar1"`.
 #' @param parm Optional names or positions of population-level parameters to
 #'   include in the intervals.
@@ -585,12 +585,12 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #' confint(demo_fit, prior = TRUE)
 #'
 #' # Include change points, residual SDs, group SDs, and AR/MA parameters.
-#' vcov(demo_fit, pars = "all")
+#' vcov(demo_fit, pars = "population")
 #'
 #' # Inspect posterior parameter correlations across the full population model.
 #' # Useful to quickly check identifiability (high correlation). Inspecting
 #' # `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
-#' vcov(demo_fit, pars = "all", correlation = TRUE)
+#' vcov(demo_fit, pars = "population", correlation = TRUE)
 NULL
 
 
@@ -608,7 +608,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
       parameters$role == "coefficient" &
         parameters$dpar %in% dpar
     ]
-  } else if (identical(pars, "all")) {
+  } else if (identical(pars, "population")) {
     pars = parameters$parameter
   } else {
     checkmate::assert_character(pars, any.missing = FALSE)

@@ -63,6 +63,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_identical(fit$call[[1]], quote(mcp))
   expect_identical(family(fit), fit$family)
   expect_equal(nobs(fit), 4)
+  expect_equal(nobs(fit, use.fallback = TRUE), 4)  # As called by, e.g., stats::sigma()
   expect_identical(model.frame(fit), fit$data)
   expect_identical(formula(fit), fit$model)
   expect_identical(formula(fit, segment = 1), fit$model[[1]])
@@ -79,7 +80,7 @@ test_that("mcpfit model accessors follow standard R conventions", {
   expect_equal(vcov(fit), stats::cov(values[, fixed, drop = FALSE]))
   expect_equal(vcov(fit, prior = TRUE), stats::cov(prior_values[, fixed, drop = FALSE]))
   expect_equal(vcov(fit, correlation = TRUE), stats::cor(values[, fixed, drop = FALSE]))
-  expect_equal(vcov(fit, pars = "all"), stats::cov(values))
+  expect_equal(vcov(fit, pars = "population"), stats::cov(values))
   expect_error(vcov(fit, pars = "nonexistent"))
   expected_intervals = t(vapply(
     population,
@@ -386,6 +387,7 @@ test_that("cores is deprecated and ignored", {
 
 test_that("Simple mcpfit methods", {
   expect_equal(ndraws(demo_fit), 1000)
+  expect_identical(variables(demo_fit), posterior::variables(as_draws(demo_fit)))
   expect_equal(niterations(demo_fit), 500)
   expect_equal(nchains(demo_fit), 2)
 

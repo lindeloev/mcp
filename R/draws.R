@@ -141,15 +141,24 @@ tidy_draws.mcpfit = function(model, ...) {
 #'
 #' @inheritParams fitted.mcpfit
 #' @param x An `mcpfit` object or a posterior draws object.
-#' @details These methods require posterior draws. To count prior draws, use
+#' @details These methods require posterior draws. To index prior draws, use
 #'   e.g. `ndraws(as_draws(fit, prior = TRUE))`.
-#' @return An integer count of iterations, chains, or draws.
+#' @return `variables()` returns the names of the draws' variables, e.g., `"cp_1"` and
+#'   `"cp_1_id[John]"`. The other methods return an integer count of iterations, chains, or draws.
 #' @name draws-index-mcp
 #' @examples
+#' variables(demo_fit)
 #' niterations(demo_fit)
 #' nchains(as_draws(demo_fit, prior = TRUE))
 NULL
 
+
+#' @aliases variables.mcpfit
+#' @describeIn draws-index-mcp Variable names of an `mcpfit` object, as in `as_draws(fit)`.
+#' @exportS3Method posterior::variables
+variables.mcpfit = function(x, ...) {
+  posterior::variables(posterior_draws(x))
+}
 
 #' @aliases niterations.mcpfit
 #' @describeIn draws-index-mcp Number of iterations per chain of an `mcpfit` object.
@@ -171,6 +180,10 @@ ndraws.mcpfit = function(x, ...) {
   draws = mcmclist_draws(x)
   sum(vapply(draws, nrow, integer(1)))
 }
+
+#' @rdname draws-index-mcp
+#' @export
+variables = posterior::variables
 
 #' @rdname draws-index-mcp
 #' @export
