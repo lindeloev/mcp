@@ -460,7 +460,7 @@ mcp = function(
       mcp = utils::packageVersion("mcp"),
       R = getRversion(),
       rjags = if (sample %in% c("post", "prior", "both")) utils::packageVersion("rjags"),
-      jags = if (sample %in% c("post", "prior", "both")) rjags::jags.version()
+      jags = if (sample %in% c("post", "prior", "both")) tryCatch(rjags::jags.version(), error = function(e) NULL)
     ),
 
     # Pass info to *.mcpfit() functions.
