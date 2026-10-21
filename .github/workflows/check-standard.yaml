@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: [dev, main]
+    branches: [dev, main, jags5]
   pull_request:
     branches: [dev, main]
   workflow_dispatch:
@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   R-CMD-check:
+    if: github.ref_name != 'jags5'
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
@@ -131,4 +132,50 @@ jobs:
             clean = FALSE,
             install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package")
           )
+        shell: Rscript {0}
+
+  # JAGS 5 needs rjags 5-x, which is not on CRAN yet. Informative only: failures do not fail the workflow.
+  jags5:
+    runs-on: macos-latest
+
+    name: macos-latest (release, JAGS 5)
+
+    continue-on-error: true
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      MCP_TEST_LEVEL: release
+      TESTTHAT_CPUS: 4
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      # Single-build installer to /opt/jags/5.x-current, where rjags 5-x's configure looks for it via pkg-config.
+      - name: Install JAGS 5
+        run: |
+          brew install pkgconf
+          curl -L --retry 3 -o jags5.pkg "https://sourceforge.net/projects/mcmc-jags/files/JAGS/5.x/macOS/JAGS-5.0.0-vecLib-single-aarch64.pkg/download"
+          echo "134f380f1a945ccfd29342d542761febeff990ab7736cbbaf29ddf3aee2ee148  jags5.pkg" | shasum -a 256 -c
+          sudo installer -pkg jags5.pkg -target /
+          rm jags5.pkg
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgload
+          needs: check
+
+      # Replace the CRAN rjags 4-x binary installed above
+      - name: Install rjags 5
+        run: |
+          curl -L --retry 3 -o rjags_5-3.tar.gz "https://sourceforge.net/projects/mcmc-jags/files/rjags/5/Source/rjags_5-3.tar.gz/download"
+          R CMD INSTALL rjags_5-3.tar.gz
+          Rscript -e 'stopifnot(rjags::jags.version() >= "5"); print(rjags::jags.version())'
+
+      - name: Run tests
+        run: testthat::test_local(reporter = "summary", stop_on_failure = TRUE)
         shell: Rscript {0}
