@@ -573,6 +573,8 @@ formula.mcpfit = function(x, segment = NULL, ...) {
 #' @param ... Must be empty. Reserved for future use.
 #' @return `vcov()` returns a covariance or correlation matrix. `confint()`
 #'   returns a two-column matrix of central intervals.
+#' @details As in `lme4`, `vcov()` covers the coefficients of [fixef()][fixef.mcpfit()] (by default those of `mu`),
+#'   while `confint()` covers all population-level parameters, including change points.
 #' @name posterior-uncertainty-mcpfit
 #' @examples
 #' # Posterior covariance of the primary-response coefficients, matching fixef().

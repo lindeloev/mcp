@@ -66,3 +66,8 @@ Base R allows using variables from the calling environment in formulas. mcp requ
 
 # 2026-10-16: fit$simulate(fit, ...) is preferred over simulate(fit)
 Even though it looks odd to write `fit` twice, `fit$simulate()` gives code completion for model parameters. I will likely not support `simulate(fit, ...)` for this reason.
+
+# 2026-10-22: vcov() follows fixef(); confint() covers all population-level parameters
+This mirrors `lme4`, where `vcov()` covers the fixed effects and `confint()` also covers variance components and `sigma`. That is a better precedent than base R `lm()` and `glm()`, from which this behavior differ. 
+
+mcp defaults to return summaries for `dpar = "mu"` because the constant `sigma_1` is also a coefficient in mcp. `brms` `vcov()` and `fixef()` include all modeled dpars (e.g., `sigma_Intercept`).
