@@ -146,6 +146,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       MCP_TEST_LEVEL: release
       TESTTHAT_CPUS: 4
+      TESTTHAT_MAX_FAILS: Inf
 
     steps:
       - uses: actions/checkout@v7
