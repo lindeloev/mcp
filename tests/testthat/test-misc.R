@@ -620,13 +620,9 @@ test_that("loo relative_eff avoids underflow on large negative log likelihoods",
   df = data.frame(x = 1:5, y = rnorm(5, 10, 1), w = rep(1000, 5))
   fit = suppressWarnings(mcp(list(y | weights(w) ~ 1), data = df, par_x = "x", chains = 1, iter = 50, quiet = TRUE))
 
-  res_mat = suppressWarnings(loo(fit, by_row = FALSE))
-  expect_false(anyNA(res_mat$diagnostics$r_eff))
-  expect_true(all(is.finite(res_mat$diagnostics$r_eff)))
-
-  res_row = suppressWarnings(loo(fit, by_row = TRUE))
-  expect_false(anyNA(res_row$diagnostics$r_eff))
-  expect_true(all(is.finite(res_row$diagnostics$r_eff)))
+  res = suppressWarnings(loo(fit))
+  expect_false(anyNA(res$diagnostics$r_eff))
+  expect_true(all(is.finite(res$diagnostics$r_eff)))
 })
 
 test_that("legacy mcpfits explain how to reproduce v0.3.4", {
@@ -784,30 +780,6 @@ test_that("posterior_linpred evaluates binomial models on probability scale when
   # prediction data family validation fails for invalid trials
   expect_error(predict(fit, newdata = data.frame(x = 1:3, N = -1), rate = FALSE), "Element 1 is not >= 1")
 })
-
-test_that("loo supports by_row and soft-deprecates pointwise", {
-  data = data.frame(x = 1:5, y = c(2, 4, 6, 8, 10))
-  fit = mcp(list(y ~ 1 + x), data = data, sample = FALSE)
-  
-  population = mcp_pars(fit, scope = "population")$parameter
-  draws = matrix(rep(c(1, 2, 0.5), each = 5), nrow = 5)
-  colnames(draws) = population
-  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
-
-  loo_by_row = suppressWarnings(loo(fit, by_row = TRUE))
-  expect_s3_class(loo_by_row, "psis_loo")
-  expect_warning(
-    withCallingHandlers(
-      loo(fit, pointwise = TRUE),
-      warning = function(w) {
-        if (!grepl("deprecated", conditionMessage(w)))
-          invokeRestart("muffleWarning")
-      }
-    ),
-    "deprecated"
-  )
-})
-
 
 test_that("find_mixture_quantile handles large count means without integer overflow", {
   family = as_mcpfamily(poisson())

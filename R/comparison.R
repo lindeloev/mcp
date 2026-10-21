@@ -10,11 +10,6 @@
 #' @aliases loo LOO loo.mcpfit loo_compare
 #' @param x An \code{\link{mcpfit}} object.
 #' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
-#' @param by_row `TRUE` calls \code{\link[loo]{loo.function}} to compute log-likelihood
-#'   contributions row-by-row (observation-by-observation), which is slower but more
-#'   memory efficient. `FALSE` (default) computes the full log-likelihood matrix at once.
-#'   Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.
-#' @param pointwise Deprecated alias for `by_row`.
 #' @param ndraws Integer or `NULL`. Target number of posterior draws used for
 #'   the log-likelihood or information criterion. Draws are balanced across
 #'   chains, so the actual number may be rounded. `NULL` uses all draws.
@@ -37,7 +32,7 @@
 #'   and `log_lik(fit, arma = FALSE)` remain available as conditional or
 #'   counterfactual diagnostics.
 #'
-#'   When `ndraws` is supplied to `loo()`, draws are balanced across chains and
+#'   When `ndraws` is supplied, draws are balanced across chains and
 #'   thinned at evenly spaced midpoint iterations. This preserves MCMC chain
 #'   identities and chronological order, allowing `relative_eff()` to be
 #'   computed directly.
@@ -64,12 +59,7 @@
 #' loo2 = loo(fit2)
 #' loo_compare(loo1, loo2)
 #' }
-loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(),
-                      ndraws = NULL, nsamples = lifecycle::deprecated()) {
-  if (lifecycle::is_present(pointwise)) {
-    lifecycle::deprecate_soft("0.4.0", "loo(pointwise)", "loo(by_row)")
-    by_row = pointwise
-  }
+loo.mcpfit = function(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated()) {
   ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "loo.mcpfit", "ndraws", "nsamples")
   rlang::check_dots_used()  # `loo::loo()` silently ignores unknown arguments, e.g., `arma = FALSE`
   fit = x
@@ -77,93 +67,15 @@ loo.mcpfit = function(x, ..., by_row = FALSE, pointwise = lifecycle::deprecated(
   assert_loglik_garma_history(fit, fit$data, TRUE, "`loo()`")
   warn_arma_check(fit, TRUE, "information_criterion")
 
-  # Extract posterior draws
-  mcmc_post = mcmclist_draws(fit)
-  ndraws = validate_loglik_ndraws(fit, ndraws)
-  n_chains = length(mcmc_post)
-
   # Thin chains evenly across iterations because this is required by loo::relative_eff().
-  if (!is.null(ndraws)) {
-    n_iter_min = min(vapply(mcmc_post, nrow, integer(1)))
-    iter_per_chain = max(1L, as.integer(round(ndraws / n_chains)))
-    indices = pmax(1L, as.integer(round(
-      (seq_len(iter_per_chain) - 0.5) * n_iter_min / iter_per_chain
-    )))
+  fit = thin_post_draws(fit, validate_loglik_ndraws(fit, ndraws))
+  mcmc_post = mcmclist_draws(fit)
+  chain_id = rep(seq_along(mcmc_post), vapply(mcmc_post, nrow, integer(1)))
 
-    # Subset mcmc chains and any retained JAGS response imputations
-    fit$mcmc_post = coda::mcmc.list(lapply(mcmc_post, function(ch) {
-      coda::mcmc(ch[indices, , drop = FALSE])
-    }))
-    if (!is.null(fit$.internal$imputed_response)) {
-      fit$.internal$imputed_response = coda::mcmc.list(lapply(
-        fit$.internal$imputed_response,
-        function(ch) coda::mcmc(ch[indices, , drop = FALSE])
-      ))
-    }
-
-    n_draws = n_chains * iter_per_chain
-    chain_id = rep(seq_len(n_chains), each = iter_per_chain)
-  } else {
-    n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
-    chain_id = rep(seq_along(mcmc_post), vapply(mcmc_post, nrow, integer(1)))
-  }
-
-  observed_rows = which(!is.na(fit$data[, mcp_columns(fit)$response]))
-  if (length(observed_rows) == 0)
-    stop("LOO requires at least one observed response.")
-
-  # Matrix: Fast but memory-greedy matrix-based computation
-  if (by_row == FALSE) {
-    loglik = log_lik(fit, summary = FALSE)
-    col_max = apply(loglik, 2, function(x) { m = max(x); if (is.finite(m)) m else 0 })
-    r_eff = loo::relative_eff(exp(sweep(loglik, 2, col_max, "-")), chain_id)
-    result = loo::loo(loglik, r_eff = r_eff, ...)
-
-  # Pointwise: per-data-row computation
-  } else {
-    predictors = get_fit_model_tables(fit)$predictors
-    ar_order = get_arma_order(predictors, "ar")
-    ma_order = get_arma_order(predictors, "ma")
-
-    # For small models, the majority of the computation time will be pp_eval overhead
-    llfun = function(data_i, draws = NULL, link_fun = identity) {
-      original_row = data_i$.mcp_original_row
-      if (is.na(ar_order) && is.na(ma_order)) {
-        loglik_samples = pp_eval(
-          fit, newdata = fit$data[original_row, , drop = FALSE],
-          summary = FALSE, type = "loglik"
-        )
-      } else {
-        # AR needs only its direct response lags. MA innovations recursively
-        # depend on all preceding observations, so retain the full history.
-        first_row = if (is.na(ma_order)) max(1, original_row - ar_order) else 1
-        data_rows = seq(first_row, original_row)
-        lldata = fit$data[data_rows, ]
-        loglik_samples = fit %>%
-          pp_eval(newdata = lldata, summary = FALSE, type = "loglik") %>%
-          dplyr::filter(.data$.row == max(.data$.row))  # last observed row
-      }
-
-      # Matrix conversion validates and explicitly orders the joint draws, so
-      # every observation passed to loo uses the same draw identity.
-      loglik = as.numeric(tidy_to_matrix(loglik_samples, type = ".loglik")[, 1])
-      link_fun(loglik)
-    }
-
-    loo_data = data.frame(.mcp_original_row = observed_rows)
-
-    r_eff = loo::relative_eff(
-      llfun, data = loo_data, chain_id = chain_id,
-      link_fun = function(x) { m = max(x); exp(if (is.finite(m)) x - m else x) },
-      draws = seq_len(n_draws)
-    )
-    result = loo::loo.function(
-      llfun, data = loo_data, r_eff = r_eff,
-      draws = seq_len(n_draws), ...
-    )
-  }
-
-  result
+  loglik = log_lik(fit, summary = FALSE)
+  col_max = apply(loglik, 2, function(x) { m = max(x); if (is.finite(m)) m else 0 })
+  r_eff = loo::relative_eff(exp(sweep(loglik, 2, col_max, "-")), chain_id)
+  loo::loo(loglik, r_eff = r_eff, ...)
 }
 
 
@@ -179,10 +91,30 @@ waic.mcpfit = function(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated()
   checkmate::assert_class(fit, "mcpfit")
   assert_loglik_garma_history(fit, fit$data, TRUE, "`waic()`")
   warn_arma_check(fit, TRUE, "information_criterion")
-  mcmclist_draws(fit)
-  ndraws = validate_loglik_ndraws(fit, ndraws)
-  loglik = log_lik(fit, summary = FALSE, ndraws = ndraws)
-  loo::waic(loglik)
+  fit = thin_post_draws(fit, validate_loglik_ndraws(fit, ndraws))
+  loo::waic(log_lik(fit, summary = FALSE))
+}
+
+
+# Subset posterior draws and any retained JAGS response imputations to evenly
+# spaced midpoint iterations, balanced across chains. Returns `fit` unchanged if `ndraws` is NULL.
+thin_post_draws = function(fit, ndraws) {
+  mcmc_post = mcmclist_draws(fit)
+  if (is.null(ndraws))
+    return(fit)
+
+  n_iter_min = min(vapply(mcmc_post, nrow, integer(1)))
+  iter_per_chain = max(1L, as.integer(round(ndraws / length(mcmc_post))))
+  indices = pmax(1L, as.integer(round(
+    (seq_len(iter_per_chain) - 0.5) * n_iter_min / iter_per_chain
+  )))
+  subset_chains = function(draws) coda::mcmc.list(lapply(draws, function(ch) {
+    coda::mcmc(ch[indices, , drop = FALSE])
+  }))
+  fit$mcmc_post = subset_chains(mcmc_post)
+  if (!is.null(fit$.internal$imputed_response))
+    fit$.internal$imputed_response = subset_chains(fit$.internal$imputed_response)
+  fit
 }
 
 

@@ -137,11 +137,11 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Added `log_lik(fit)` which returns a draws-by-observation matrix by default. This is the usual `{brms}` return shape and is accepted directly by `{loo}`. `log_lik()` supports the same arguments as e.g. `fitted()`.
 
-  - Several new arguments to `loo`. `loo(fit, by_row = TRUE)` uses `loo::loo.function()` for more memory-efficient (but slower) computation of LOO. Use `loo(fit, ndraws = 1000)` to compute LOO on a subset of draws.
-
   - Methods like `fitted()` and `predict()` now select group-level effects using `group_effects` (previously `varying`). `group_effects = FALSE` or `NA` gives population-level predictions, `"cp"` and `"predictor"` select all group-level effects in that formula part, and parameter names accept `*` wildcards, e.g., `fitted(fit, group_effects = c("cp_*", "state*_1_id"))`. `ranef()` continues to return all group-level effects.
 
   - Fits made with custom `jags_code` now warn when calling R-side simulation, prediction, or model-evaluation methods, because those methods continue to evaluate the supplied formulas rather than the custom JAGS code. `jags_code` is planned for deprecation once a future release brings custom families and tooling to run `jags_code` directly in JAGS. If you need this, please [open an issue](https://github.com/lindeloev/mcp/issues) describing your use case.
+
+  - `fitted()`, `predict()`, `residuals()`, `log_lik()`, `loo()`, etc. are now more memory efficient (e.g., ~2.5 GB instead of ~12 GB for 2000 observations). Use `loo(fit, ndraws = 1000)` to compute LOO on a subset of draws.
 
 - **Priors and hypotheses:**
 
@@ -197,7 +197,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - `rate = TRUE` in `fitted()`, `predict()`, and `plot()` now errors for families other than binomial and Bernoulli. In v0.3.4, it was silently ignored. For rates per unit of exposure in models with `offset(log(exposure))`, set exposure to 1, e.g., `fitted(fit, newdata = transform(df, exposure = 1))`.
 
-  - `loo()` and `waic()` always evaluate the fitted model, including all group-level effects and AR/MA terms. Use `log_lik(fit, group_effects = FALSE)` or `log_lik(fit, arma = FALSE)` for conditional log-likelihoods. Additionally, `loo(ndraws = ...)` now thins draws evenly across chains to preserve MCMC chain identities and order.
+  - `loo()` and `waic()` always evaluate the fitted model, including all group-level effects and AR/MA terms. Use `log_lik(fit, group_effects = FALSE)` or `log_lik(fit, arma = FALSE)` for conditional log-likelihoods. Additionally, `loo(ndraws = ...)` and `waic(ndraws = ...)` now thin draws evenly across chains to preserve MCMC chain identities and order.
 
   - New `mcpfit` objects no longer include empty `$loo` and `$waic` components.
 

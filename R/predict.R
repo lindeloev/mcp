@@ -6,6 +6,7 @@
 # - type: One of "fitted", "predict", "residuals", or "loglik".
 # - .return_fitted: Include fitted values with unsummarised predictions.
 # - .return_dpars: Include distributional parameters and response data as attributes with unsummarised predictions.
+# - .max_cells: Approximate number of draw-row combinations to evaluate at a time. Limits memory use.
 pp_eval = function(
   object,
   newdata = NULL,
@@ -21,7 +22,8 @@ pp_eval = function(
   draws_format = "tidy",
   scale = 'response',
   .return_fitted = FALSE,
-  .return_dpars = FALSE
+  .return_dpars = FALSE,
+  .max_cells = 1e6
 ) {
   ########################
   # ASSERTS AND RECODING #
@@ -146,23 +148,15 @@ pp_eval = function(
   # GET FITS/PREDICTIONS #
   ########################
   simulate_type = if (type == "residuals") "fitted" else type
-  if (length(group_info$cols) > 0) {
-    # Match group-level draws to each row of data.
-    draws = dplyr::left_join(
-      tibble::as_tibble(add_rhs_predictors(newdata, fit)),
-      mcp_draws(fit, population = TRUE, group = group_effects, prior = prior, ndraws = ndraws, newdata = newdata),
-      by = unique(group_info$cols),
-      relationship = "many-to-many"
-    )
-  } else {
-    # Without group-level effects, use all draws for each row of data.
-    mcmc_draws = tibble::as_tibble(mcp_draws(fit, population = TRUE, group = group_effects, prior = prior, ndraws = ndraws))
-    predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
-    draws = dplyr::cross_join(mcmc_draws, predictors)
-  }
+  predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
+  param_draws = tibble::as_tibble(mcp_draws(
+    fit, population = TRUE, group = group_effects, prior = prior, ndraws = ndraws,
+    newdata = if (length(group_info$cols) > 0) newdata
+  ))
 
   # Complete the conditional history, keeping imputations out of prediction output.
-  if (conditional_garma && anyNA(draws[[data_columns$response]])) {
+  impute_response = conditional_garma && anyNA(predictors[[data_columns$response]])
+  if (impute_response) {
     if (prior)
       stop("Missing GARMA histories require posterior draws. Use `arma = \"replicate\"` for prior prediction.", call. = FALSE)
     if (!all(model_tables$group_effects$name %in% group_info$pars))
@@ -183,65 +177,98 @@ pp_eval = function(
         },
         call. = FALSE
       )
-    missing_rows = is.na(draws[[data_columns$response]])
-    draws[[data_columns$response]][missing_rows] = get_imputed_response_draws(fit, draws)[missing_rows]
   }
-
-  # This is the important step! Evaluate the mcp model on newdata and draws.
-  # Group-level joins are row-major, while GARMA recurrences require each
-  # draw's data rows to be contiguous. Evaluate in draw/data order, then
-  # restore the public row order below.
-  evaluation_order = if (evaluating_arma) {
-    order(draws$.draw, draws$.row)
-  } else {
-    seq_len(nrow(draws))
-  }
-  evaluation_data = draws[evaluation_order, , drop = FALSE]
-  evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .return_fitted = .return_fitted)
-  evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
-
-  fitted_values = attr(evaluated, "fitted")
-  dpars_values = attr(evaluated, "dpars")
-  response_data_values = attr(evaluated, "response_data")
-  attributes(evaluated) = NULL
-
-  if (evaluating_arma) {
-    restore_order = order(evaluation_order)
-    evaluated = evaluated[restore_order]
-    if (!is.null(fitted_values)) fitted_values = fitted_values[restore_order]
-    if (!is.null(dpars_values)) dpars_values = lapply(dpars_values, function(v) v[restore_order])
-    if (!is.null(response_data_values)) response_data_values = lapply(response_data_values, function(v) v[restore_order])
-  }
-  draws[[value_col]] = evaluated
-
-  # Plotting can request fitted and predicted values from the same evaluated
-  # parameter rows and model evaluation.
-  if (.return_fitted)
-    draws$.epred = fitted_values
-
-  if (!is.null(response_return))
-    draws[[data_columns$response]] = response_return[[data_columns$response]][draws$.row]
-
-  draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"))
 
   # Missing outcomes are latent in the fitted JAGS model, but they are not
   # observed-data likelihood contributions. Retain them while evaluating
-  # GARMA histories above, then remove them from returned log likelihoods.
+  # GARMA histories below, then remove them from returned log likelihoods.
   if (type == "loglik") {
     observed_rows = which(!is.na(newdata[, data_columns$response]))
     if (length(observed_rows) == 0)
       stop("Log-likelihood evaluation requires at least one observed response.")
-    draws = dplyr::filter(draws, .data$.row %in% observed_rows)
     newdata_return = dplyr::filter(
       newdata_return,
       .data$.row %in% observed_rows
     )
   }
 
+  # Each draw is expanded across all data rows, so evaluate blocks of about
+  # `.max_cells` draw-row combinations to keep memory use flat for large data.
+  # Summaries and matrices only need the evaluated values from each block.
+  draw_ids = unique(param_draws$.draw)
+  block_size = max(1, floor(.max_cells / nrow(newdata)))
+  blocks = list()
+  for (block_ids in split(draw_ids, ceiling(seq_along(draw_ids) / block_size))) {
+    block_draws = param_draws[param_draws$.draw %in% block_ids, ]
+    if (length(group_info$cols) > 0) {
+      # Match group-level draws to each row of data.
+      draws = dplyr::left_join(predictors, block_draws, by = unique(group_info$cols), relationship = "many-to-many")
+    } else {
+      # Without group-level effects, use all draws for each row of data.
+      draws = dplyr::cross_join(block_draws, predictors)
+    }
 
-  # Optionally compute residuals
-  if (type == "residuals")
-    draws = dplyr::mutate(draws, !!value_col := .data[[data_columns$response]] - .data[[value_col]])
+    if (impute_response) {
+      missing_rows = is.na(draws[[data_columns$response]])
+      draws[[data_columns$response]][missing_rows] = get_imputed_response_draws(fit, draws)[missing_rows]
+    }
+
+    # This is the important step! Evaluate the mcp model on newdata and draws.
+    # Group-level joins are row-major, while GARMA recurrences require each
+    # draw's data rows to be contiguous. Evaluate in draw/data order, then
+    # restore the public row order below.
+    evaluation_order = if (evaluating_arma) {
+      order(draws$.draw, draws$.row)
+    } else {
+      seq_len(nrow(draws))
+    }
+    evaluation_data = draws[evaluation_order, , drop = FALSE]
+    evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .return_fitted = .return_fitted)
+    evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
+
+    fitted_values = attr(evaluated, "fitted")
+    dpars_values = attr(evaluated, "dpars")
+    response_data_values = attr(evaluated, "response_data")
+    attributes(evaluated) = NULL
+
+    if (evaluating_arma) {
+      restore_order = order(evaluation_order)
+      evaluated = evaluated[restore_order]
+      if (!is.null(fitted_values)) fitted_values = fitted_values[restore_order]
+      if (!is.null(dpars_values)) dpars_values = lapply(dpars_values, function(v) v[restore_order])
+      if (!is.null(response_data_values)) response_data_values = lapply(response_data_values, function(v) v[restore_order])
+    }
+    draws[[value_col]] = evaluated
+
+    # Plotting can request fitted and predicted values from the same evaluated
+    # parameter rows and model evaluation.
+    if (.return_fitted)
+      draws$.epred = fitted_values
+
+    if (!is.null(response_return))
+      draws[[data_columns$response]] = response_return[[data_columns$response]][draws$.row]
+
+    draws = draws %>% dplyr::select(-dplyr::starts_with(".pred_"))
+    if (type == "loglik")
+      draws = dplyr::filter(draws, .data$.row %in% observed_rows)
+
+    # Optionally compute residuals
+    if (type == "residuals")
+      draws = dplyr::mutate(draws, !!value_col := .data[[data_columns$response]] - .data[[value_col]])
+
+    if (summary || draws_format == "matrix")
+      draws = draws[c(".draw", ".row", value_col)]
+    blocks[[length(blocks) + 1]] = list(draws = draws, dpars = dpars_values, response_data = response_data_values)
+  }
+
+  # Concatenate blocks
+  combine_blocks = function(name) {
+    values = lapply(blocks, `[[`, name)
+    if (is.null(values[[1]])) NULL else do.call(Map, c(f = c, values))
+  }
+  draws = dplyr::bind_rows(lapply(blocks, `[[`, "draws"))
+  dpars_values = combine_blocks("dpars")
+  response_data_values = combine_blocks("response_data")
 
   # Fail early if group-level joins or another evaluation step duplicated
   # or dropped any joint draw/evaluation-row combinations.

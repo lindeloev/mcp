@@ -155,14 +155,15 @@ test_s3_methods = function(fit) {
     testthat::expect_true(loo::is.psis_loo(fit_loo))
     testthat::expect_true(loo::is.waic(fit_waic))
 
-    # Test pointwise / by_row
-    loo_pointwise = suppressMessages(suppressWarnings(loo(fit, by_row = TRUE)))
-    rownames(fit_loo$pointwise) = NULL
-    testthat::expect_equal(fit_loo$pointwise, loo_pointwise$pointwise)
-
     # Test log_lik and rstantools registration
     fit_loglik = log_lik(fit)
     testthat::expect_true(is.matrix(fit_loglik))
+
+    # Evaluation in uneven blocks of 7 draws gives identical results
+    max_cells = 7 * nrow(fit$data)
+    testthat::expect_identical(pp_eval(fit, type = "loglik", summary = FALSE, draws_format = "matrix", .max_cells = max_cells), fit_loglik)
+    testthat::expect_identical(pp_eval(fit, type = "loglik", summary = FALSE, .max_cells = max_cells), pp_eval(fit, type = "loglik", summary = FALSE))
+    testthat::expect_identical(pp_eval(fit, .max_cells = max_cells), pp_eval(fit))
     if (requireNamespace("rstantools", quietly = TRUE)) {
       testthat::expect_equal(rstantools::log_lik(fit), fit_loglik)
     }
