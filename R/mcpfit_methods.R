@@ -214,9 +214,10 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @param object An \code{\link{mcpfit}} object.
 #' @param width Float. The width of the central posterior interval (between 0
 #'   and 1).
-#' @param digits Non-negative integer. Number of significant digits used when
-#'   printing the summary. Defaults to 2. The returned tibble retains the
-#'   unrounded values.
+#' @param digits Non-negative integer. Number of significant digits of `sd` when
+#'   printing the summary. Defaults to 2. `mean`, `lower`, `upper`, and `sim` are
+#'   rounded to the same decimal places in each row. The returned tibble retains
+#'   the unrounded values.
 #' @param prior Logical. Summarise prior draws (`TRUE`) instead of posterior draws (`FALSE`, default)?
 #' @param verbose Logical. Include the `segment` and `dpar` columns. Defaults
 #'   to `FALSE` for a compact summary.
@@ -371,10 +372,20 @@ print.mcpsummary = function(x, digits = attr(x, "mcpsummary")$digits, ...) {
   if (nrow(x) > 0) {
     # Format before splitting, so both printed tables share column widths.
     display = data.frame(lapply(x, format, digits = digits), check.names = FALSE)
+
+    # Round each row to the decimals that show `digits` significant digits of its sd.
+    # Pad right to align decimal points (and add the "." missing for 0 decimals).
+    decimals = pmax(0, digits - 1 - floor(log10(abs(x$sd))))
+    decimals[!is.finite(decimals)] = digits  # E.g., sd = 0 or NA
+    pad = strrep(" ", max(decimals) - decimals + (decimals == 0 & max(decimals) > 0))
+    for (col in intersect(c("mean", "sd", "lower", "upper", "sim"), names(x)))
+      display[[col]] = format(paste0(sprintf("%.*f", decimals, x[[col]]), pad), justify = "right")
+    
     if ("rhat" %in% names(display))
-      display$rhat = format(x$rhat, digits = digits, nsmall = digits)
+      display$rhat = sprintf("%.2f", x$rhat)
     is_cp = x$parameter %in% info$cp_names
 
+    # Start printing
     if (any(is_cp)) {
       cat("\nChange point parameters:\n")
       print(display[is_cp, , drop = FALSE], digits = digits, row.names = FALSE)
