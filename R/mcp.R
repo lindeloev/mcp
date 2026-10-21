@@ -65,6 +65,8 @@
 #'   methods continue to use the `mcp` formulas (with warning), so `fitted()`, `predict()`,
 #'   `plot()`, `loo()`, etc. are wrong if the custom code changes the formula or likelihood.
 #'   The written JAGS code is not a stable interface and may change between `mcp` versions.
+#'   `jags_code` is planned for deprecation once a future mcp release brings custom families 
+#'   and tooling to run `fit$jags_code` directly in JAGS.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html) about how `mcp` writes JAGS code.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,

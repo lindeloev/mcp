@@ -141,7 +141,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Methods like `fitted()` and `predict()` now select group-level effects using `group_effects` (previously `varying`). `group_effects = FALSE` or `NA` gives population-level predictions, `"cp"` and `"predictor"` select all group-level effects in that formula part, and parameter names accept `*` wildcards, e.g., `fitted(fit, group_effects = c("cp_*", "state*_1_id"))`. `ranef()` continues to return all group-level effects.
 
-  - Fits made with custom `jags_code` now warn when calling R-side simulation, prediction, or model-evaluation methods, because those methods continue to evaluate the supplied formulas rather than the custom JAGS code.
+  - Fits made with custom `jags_code` now warn when calling R-side simulation, prediction, or model-evaluation methods, because those methods continue to evaluate the supplied formulas rather than the custom JAGS code. `jags_code` is planned for deprecation once a future release brings custom families and tooling to run `jags_code` directly in JAGS. If you need this, please [open an issue](https://github.com/lindeloev/mcp/issues) describing your use case.
 
 - **Priors and hypotheses:**
 
