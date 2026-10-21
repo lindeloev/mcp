@@ -2,19 +2,25 @@
 % Please edit documentation in R/draws.R
 \name{draws-index-mcp}
 \alias{draws-index-mcp}
+\alias{variables.mcpfit}
 \alias{niterations.mcpfit}
 \alias{nchains.mcpfit}
 \alias{ndraws.mcpfit}
+\alias{variables}
 \alias{ndraws}
 \alias{nchains}
 \alias{niterations}
 \title{Index \code{mcpfit} objects}
 \usage{
+\method{variables}{mcpfit}(x, ...)
+
 \method{niterations}{mcpfit}(x, ...)
 
 \method{nchains}{mcpfit}(x, ...)
 
 \method{ndraws}{mcpfit}(x, ...)
+
+variables(x, ...)
 
 ndraws(x)
 
@@ -28,23 +34,27 @@ niterations(x)
 \item{...}{Must be empty. Reserved for future use.}
 }
 \value{
-An integer count of iterations, chains, or draws.
+\code{variables()} returns the names of the draws' variables, e.g., \code{"cp_1"} and
+\code{"cp_1_id[John]"}. The other methods return an integer count of iterations, chains, or draws.
 }
 \description{
 Index variables, iterations, chains, and draws.
 }
 \details{
-These methods require posterior draws. To count prior draws, use
+These methods require posterior draws. To index prior draws, use
 e.g. \code{ndraws(as_draws(fit, prior = TRUE))}.
 }
 \section{Functions}{
 \itemize{
+\item \code{variables(mcpfit)}: Variable names of an \code{mcpfit} object, as in \code{as_draws(fit)}.
+
 \item \code{niterations(mcpfit)}: Number of iterations per chain of an \code{mcpfit} object.
 
 \item \code{nchains(mcpfit)}: Number of chains of an \code{mcpfit} object.
 
 }}
 \examples{
+variables(demo_fit)
 niterations(demo_fit)
 nchains(as_draws(demo_fit, prior = TRUE))
 }

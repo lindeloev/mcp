@@ -33,7 +33,7 @@ plots, summaries, and other methods to select prior draws.
 \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
 will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
-object without draws. This is useful if you only want to check
+object without draws (an "empty fit"). This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 

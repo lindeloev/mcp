@@ -17,7 +17,7 @@
 matrix?}
 
 \item{pars}{Optional names of population-level parameters to extract, or
-\code{"all"} for all population-level parameters.}
+\code{"population"} for all population-level parameters.}
 
 \item{dpar}{Distributional parameter(s) to select when \code{pars = NULL}, e.g., \code{"mu"}, \code{"sigma"}, or \code{"ar1"}.}
 
@@ -38,6 +38,10 @@ returns a two-column matrix of central intervals.
 Summarise the joint and marginal uncertainty of population-level model
 parameters using posterior or prior draws.
 }
+\details{
+As in \code{lme4}, \code{vcov()} covers the coefficients of \link[=fixef.mcpfit]{fixef()} (by default those of \code{mu}),
+while \code{confint()} covers all population-level parameters, including change points.
+}
 \examples{
 # Posterior covariance of the primary-response coefficients, matching fixef().
 vcov(demo_fit)
@@ -49,10 +53,10 @@ confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
 confint(demo_fit, prior = TRUE)
 
 # Include change points, residual SDs, group SDs, and AR/MA parameters.
-vcov(demo_fit, pars = "all")
+vcov(demo_fit, pars = "population")
 
 # Inspect posterior parameter correlations across the full population model.
 # Useful to quickly check identifiability (high correlation). Inspecting
 # `bayesplot::mcmc_pairs(as_draws(demo_fit))` is better, though.
-vcov(demo_fit, pars = "all", correlation = TRUE)
+vcov(demo_fit, pars = "population", correlation = TRUE)
 }

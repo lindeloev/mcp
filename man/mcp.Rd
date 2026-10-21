@@ -36,7 +36,7 @@ with syntactic column names. The response variable can contain missing values, w
 \item{prior}{Named list, e.g., \code{prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")}.
 List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
 \code{sigma_1}, etc.) and values are a distribution string (e.g., \code{"dnorm(0, 1) T(0, )"}),
-a fixed value (e.g., \code{-2.1}), or the name of another parameter to share its value.
+a constant (e.g., \code{-2.1}), or the name of another parameter to share its value.
 \emph{OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so \code{dnorm(0, 0.001)} is a very narrow prior.}
 Weakly informative defaults are used where priors are not specified;
 see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.
@@ -64,7 +64,7 @@ plots, summaries, and other methods to select prior draws.
 \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
 will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
-object without draws. This is useful if you only want to check
+object without draws (an "empty fit"). This is useful if you only want to check
 prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 
@@ -80,10 +80,10 @@ use diagnostics to assess convergence.}
 \item{inits}{A named list of initial values for the parameters, e.g., \code{list(Intercept_1 = 10)},
 or a list of such lists with one per chain. This can be useful if a model fails to converge
 (\href{https://lindeloev.github.io/mcp/articles/tips.html}{read more}).
-Names must be parameters in \code{\link[=mcp_pars]{mcp_pars()}}. Fixed parameters and parameters that are
+Names must be parameters in \code{\link[=mcp_pars]{mcp_pars()}}. Parameters with constant priors and parameters that are
 reparameterized for faster sampling cannot be initialized (see \code{mcp_reparam} in \link{mcp-package}).
 Initial values for change points must be ordered.
-Defaults to \code{NULL} where all chains start at equispaced change points and the prior medians.
+Defaults to \code{NULL} where all chains start at equally spaced change points and the prior medians.
 User-provided \code{inits} take precedence.}
 
 \item{jags_code}{String. JAGS code to sample instead of the code that \code{mcp} writes.
@@ -93,6 +93,8 @@ Only the parameters in \code{\link[=mcp_pars]{mcp_pars()}} are monitored. R-side
 methods continue to use the \code{mcp} formulas (with warning), so \code{fitted()}, \code{predict()},
 \code{plot()}, \code{loo()}, etc. are wrong if the custom code changes the formula or likelihood.
 The written JAGS code is not a stable interface and may change between \code{mcp} versions.
+\code{jags_code} is planned for deprecation once a future mcp release brings custom families
+and tooling to run \code{fit$jags_code} directly in JAGS.
 \href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more} about how \code{mcp} writes JAGS code.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number

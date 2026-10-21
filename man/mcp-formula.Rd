@@ -40,6 +40,8 @@ and starts afresh.
 }
 
 \code{sigma} and \code{shape} are required by the likelihood, so they include an intercept in segment 1.
+They are joined in later segments that do not include them. \code{ar()} and \code{ma()} are not required,
+so a segment that does not include them has no AR/MA component.
 Each segment after the first starts at a change point, so it always includes a change-point
 intercept (\code{cp_1}, \code{cp_2}, ...). Use \code{cp()} to add terms to it, e.g., \code{cp((1 | id))}.
 

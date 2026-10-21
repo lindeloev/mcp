@@ -11,14 +11,7 @@
 \alias{WAIC}
 \title{Information Criteria for Model Comparison}
 \usage{
-\method{loo}{mcpfit}(
-  x,
-  ...,
-  by_row = FALSE,
-  pointwise = lifecycle::deprecated(),
-  ndraws = NULL,
-  nsamples = lifecycle::deprecated()
-)
+\method{loo}{mcpfit}(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 
 \method{waic}{mcpfit}(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 }
@@ -26,13 +19,6 @@
 \item{x}{An \code{\link{mcpfit}} object.}
 
 \item{...}{Must be empty. Reserved for future use.}
-
-\item{by_row}{\code{TRUE} calls \code{\link[loo]{loo.function}} to compute log-likelihood
-contributions row-by-row (observation-by-observation), which is slower but more
-memory efficient. \code{FALSE} (default) computes the full log-likelihood matrix at once.
-Note that both modes calculate pointwise (observation-level) PSIS-LOO cross-validation.}
-
-\item{pointwise}{Deprecated alias for \code{by_row}.}
 
 \item{ndraws}{Integer or \code{NULL}. Target number of posterior draws used for
 the log-likelihood or information criterion. Draws are balanced across
@@ -67,7 +53,7 @@ reduced model requires refitting it. \code{log_lik(fit, group_effects = FALSE)}
 and \code{log_lik(fit, arma = FALSE)} remain available as conditional or
 counterfactual diagnostics.
 
-When \code{ndraws} is supplied to \code{loo()}, draws are balanced across chains and
+When \code{ndraws} is supplied, draws are balanced across chains and
 thinned at evenly spaced midpoint iterations. This preserves MCMC chain
 identities and chronological order, allowing \code{relative_eff()} to be
 computed directly.

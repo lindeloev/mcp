@@ -9,6 +9,7 @@
 \alias{fixef}
 \alias{ranef.mcpfit}
 \alias{ranef}
+\alias{coef.mcpfit}
 \alias{print.mcpfit}
 \alias{print}
 \title{Summarise mcpfit objects}
@@ -29,6 +30,8 @@
 
 \method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
+\method{coef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
+
 \method{print}{mcpfit}(x, ...)
 }
 \arguments{
@@ -37,9 +40,10 @@
 \item{width}{Float. The width of the central posterior interval (between 0
 and 1).}
 
-\item{digits}{Non-negative integer. Number of significant digits used when
-printing the summary. Defaults to 2. The returned tibble retains the
-unrounded values.}
+\item{digits}{Non-negative integer. Number of significant digits of \code{sd} when
+printing the summary. Defaults to 2. \code{mean}, \code{lower}, \code{upper}, and \code{sim} are
+rounded to the same decimal places in each row. The returned tibble retains
+the unrounded values.}
 
 \item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 
@@ -107,6 +111,8 @@ simulation and summary multiple times to get a sense of the robustness.
 interval (\code{lower} to \code{upper}). For change points starting a disjoined
 segment, \code{sim} only needs to be between the same two adjacent observed
 \code{x} as the interval, since the likelihood is identical anywhere between them.
+Group-level deviations in \code{ranef()} are relative to their population-level parameter,
+so they share its error; \code{coef()} checks the group-specific values directly.
 }
 }
 \description{
@@ -122,6 +128,15 @@ information, change point and population-level parameters, and diagnostics.
 \item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
 Change-point deviations are relative to their population-level change point;
 \verb{cp_i_<group>_sd} (e.g., \code{cp_1_id_sd}) is the SD of their normal distribution before truncation.
+Use \code{coef()} for group-specific values.
+
+\item \code{coef(mcpfit)}: Group-specific coefficients and change points of \code{mcpfit}:
+the population-level parameter plus each group-level deviation, as in \code{lme4} and \code{brms}.
+For example, \code{cp_1} for \code{group_col = "id"} and \code{level = "a"} summarises the draws of
+\code{cp_1 + cp_1_id[a]}, which is the change point of group \code{a}. Deviations without a
+population-level parameter, e.g., from \code{(0 + x || id)}, are added to zero.
+Coefficients of distributional parameters such as \code{sigma()} are on the link scale.
+For simulated data, \code{sim} is the sum of the simulated values.
 
 \item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object,
 or the prior summary with \code{prior = TRUE}. Without the requested draws, only the model is shown.
