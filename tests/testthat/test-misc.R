@@ -118,7 +118,6 @@ test_that("fixef() and vcov() select distributional-parameter coefficients", {
 
 
 test_that("unimplemented generics fail helpfully", {
-  expect_error(coef(demo_fit), "Use `fixef(fit)`", fixed = TRUE)
   expect_error(update(demo_fit, iter = 100), "Call `mcp()` again instead", fixed = TRUE)
 })
 
@@ -394,7 +393,7 @@ test_that("Simple mcpfit methods", {
   expect_false(is_mcpfit(mtcars))
   lifecycle::expect_deprecated(expect_true(is.mcpfit(demo_fit)))
 
-  # Unsupported generics point to the supported alternatives
+  # coef() without group-level effects points to fixef()
   expect_error(coef(demo_fit), "fixef(fit)", fixed = TRUE)
 
   # Base R coercions return plain draws, like rstanarm and brms, so bayesplot works on the fit

@@ -271,6 +271,20 @@ test_summary = function(fit, group_cols, prior = FALSE) {
     )
     n_group_levels = sum(unlist(group_level_counts))
     testthat::expect_equal(nrow(group_effects), n_group_levels)
+
+    # coef() adds the population-level parameter (or 0) to each deviation, so means are additive
+    group_coefs = coef(fit, prior = prior)
+    testthat::expect_named(group_coefs, c("parameter", "group_col", "level", summary_cols[-1]))
+    testthat::expect_named(coef(fit, prior = prior, verbose = TRUE), c("parameter", "group_col", "level", "segment", "dpar", summary_cols[-1]))
+    draws = posterior::as_draws_df(posterior_draws(fit, prior = prior))
+    population = pars$population_parameter[match(sub("\\[.*\\]$", "", group_effects$parameter), pars$parameter)]
+    population_means = vapply(population, function(name) if (is.na(name)) 0 else mean(draws[[name]]), numeric(1))
+    testthat::expect_equal(group_coefs$mean, unname(population_means) + group_effects$mean)
+    if ("sim" %in% summary_cols) {
+      simulated = get_simulated_values(fit)
+      population_sim = ifelse(is.na(population), 0, simulated[population])
+      testthat::expect_equal(group_coefs$sim, unname(population_sim) + group_effects$sim)
+    }
   }
 }
 

@@ -45,6 +45,77 @@ get_simulated = function(fit) {
 }
 
 
+# Simulated values named like the draws, e.g., "cp_1" and "cp_1_id[a]", or NULL
+get_simulated_values = function(fit) {
+  simulated = get_simulated(fit)
+  if (is.null(simulated))
+    return(NULL)
+
+  # Use one value for each level of group-level deviations
+  for (this_group_effect in mcp_pars(fit, scope = "group")$parameter) {
+    if (!is.null(simulated[[this_group_effect]])) {
+      # Find the needed values and labels
+      value = simulated[[this_group_effect]]  # Extract simulation values
+      group_effects = definition_rows(get_fit_model_tables(fit)$group_effects)
+      label_col = group_effects$group_col[group_effects$name == this_group_effect]
+      labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
+      if (length(value) != length(labs)) {
+        warning("This is simulated data, but the labels for group-level effect '", label_col, "' in data do not have the same length as the numeric parameters used for simulation.")
+        next
+      }
+
+      # Name like the MCMC columns and use one value for each group level.
+      keep = !duplicated(labs)
+      value = value[keep]
+      names(value) = paste0(this_group_effect, "[", labs[keep], "]")
+
+      # Delete the simulation vector and add the new label-value pairs to list
+      simulated[[this_group_effect]] = NULL
+      simulated = c(simulated, as.list(value))
+    }
+  }
+  unlist(simulated)
+}
+
+
+# Add the `sim` values and whether they are within the central interval (`match`)
+add_sim_match = function(estimates, sim, fit) {
+  estimates$sim = sim
+  is_match = estimates$sim >= estimates$lower & estimates$sim <= estimates$upper
+
+  # A disjoined change point has the same likelihood anywhere between two adjacent observed x.
+  # Match if `sim` is between the same observed x as the interval.
+  cols = mcp_columns(fit)
+  x_obs = sort(unique(fit$data[[cols$par_x]][!is.na(fit$data[[cols$response]])]))
+  gap = function(value) findInterval(value, x_obs, left.open = TRUE)
+  is_disjoined = estimates$parameter %in% get_disjoined_cps(fit)
+  is_match[is_disjoined] = (gap(estimates$lower) <= gap(estimates$sim) & gap(estimates$sim) <= gap(estimates$upper))[is_disjoined]
+  estimates$match = ifelse(is_match, yes = "OK", no = "")
+  estimates
+}
+
+
+# Parameter estimates and diagnostics of each variable in `draws`, as in summary.mcpfit
+summarise_pars = function(draws, width) {
+  tail_prob = (1 - width) / 2
+  posterior::summarise_draws(
+    draws,
+    mean = base::mean,
+    sd = stats::sd,
+    lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
+    upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
+    rhat = posterior::rhat,
+    ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
+    ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
+  ) %>%
+    dplyr::rename(parameter = "variable") %>%
+    dplyr::mutate(
+      ess_bulk = round(.data$ess_bulk),
+      ess_tail = round(.data$ess_tail)
+  )
+}
+
+
 # Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
 #
 # - fit: An \code{\link{mcpfit}}` object.
@@ -111,24 +182,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   }
 
   draws = posterior::subset_draws(draws, variable = get_cols)
-
-  # Get parameter estimates and diagnostics
-  tail_prob = (1 - width) / 2
-  estimates = posterior::summarise_draws(
-    draws,
-    mean = base::mean,
-    sd = stats::sd,
-    lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
-    upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
-    rhat = posterior::rhat,
-    ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
-    ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
-  ) %>%
-    dplyr::rename(parameter = "variable") %>%
-    dplyr::mutate(
-      ess_bulk = round(.data$ess_bulk),
-      ess_tail = round(.data$ess_tail)
-  )
+  estimates = summarise_pars(draws, width)
 
   # Order rows and add `segment`/`dpar` using the canonical parameter table
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
@@ -141,54 +195,9 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   estimates = estimates[order(match_idx), ]
 
   # Add simulation parameters if the data is simulated
-  simulated = get_simulated(fit)
-  if(!is.null(simulated)) {
-
-    # Handle group-level deviations. Find the matching labels.
-    for (this_group_effect in mcp_pars(fit, scope = "group")$parameter) {
-      if (!is.null(simulated[[this_group_effect]])) {
-        # Find the needed values and labels
-        value = simulated[[this_group_effect]]  # Extract simulation values
-        group_effects = definition_rows(get_fit_model_tables(fit)$group_effects)
-        label_col = group_effects$group_col[group_effects$name == this_group_effect]
-        labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
-        if (length(value) != length(labs)) {
-          warning("This is simulated data, but the labels for group-level effect '", label_col, "' in data do not have the same length as the numeric parameters used for simulation.")
-          next
-        }
-
-        # Name like the MCMC columns and use one value for each group level.
-        keep = !duplicated(labs)
-        value = value[keep]
-        names(value) = paste0(this_group_effect, "[", labs[keep], "]")
-
-        # Delete the simulation vector and add the new label-value pairs to list
-        simulated[[this_group_effect]] = NULL
-        simulated = c(simulated, as.list(value))
-      }
-    }
-
-    # Now unpack the whole bunch to a left_join() friendly data.frame.
-    simulated = unlist(simulated)  # as named vector
-    simulated = data.frame(
-      parameter = names(simulated),
-      sim = as.numeric(simulated),  # without row names
-      stringsAsFactors = FALSE
-    )
-
-    # Add simulation values for comparison with the fitted parameters.
-    estimates = dplyr::left_join(estimates, simulated, by = "parameter", relationship = "one-to-one")
-    is_match = estimates$sim >= estimates$lower & estimates$sim <= estimates$upper
-
-    # A disjoined change point has the same likelihood anywhere between two adjacent observed x.
-    # Match if `sim` is between the same observed x as the interval.
-    cols = mcp_columns(fit)
-    x_obs = sort(unique(fit$data[[cols$par_x]][!is.na(fit$data[[cols$response]])]))
-    gap = function(value) findInterval(value, x_obs, left.open = TRUE)
-    is_disjoined = estimates$parameter %in% get_disjoined_cps(fit)
-    is_match[is_disjoined] = (gap(estimates$lower) <= gap(estimates$sim) & gap(estimates$sim) <= gap(estimates$upper))[is_disjoined]
-    estimates$match = ifelse(is_match, yes = "OK", no = "")
-  }
+  simulated = get_simulated_values(fit)
+  if (!is.null(simulated))
+    estimates = add_sim_match(estimates, unname(simulated[estimates$parameter]), fit)
 
   # Return-columns and column-order
   if (!verbose)
@@ -266,6 +275,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'     interval (`lower` to `upper`). For change points starting a disjoined
 #'     segment, `sim` only needs to be between the same two adjacent observed
 #'     `x` as the interval, since the likelihood is identical anywhere between them.
+#'     Group-level deviations in `ranef()` are relative to their population-level parameter,
+#'     so they share its error; `coef()` checks the group-specific values directly.
 #'
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -422,11 +433,65 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 #' @describeIn summary.mcpfit Group-level deviations (random effects) of `mcpfit`.
 #'   Change-point deviations are relative to their population-level change point;
 #'   `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their normal distribution before truncation.
+#'   Use `coef()` for group-specific values.
 #' @export ranef
 #' @exportS3Method nlme::ranef
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
   get_summary(object, width, scope = "group", prior = prior, verbose = verbose)
+}
+
+#' @describeIn summary.mcpfit Group-specific coefficients and change points of `mcpfit`:
+#'   the population-level parameter plus each group-level deviation, as in `lme4` and `brms`.
+#'   For example, `cp_1` for `group_col = "id"` and `level = "a"` summarises the draws of
+#'   `cp_1 + cp_1_id[a]`, which is the change point of group `a`. Deviations without a
+#'   population-level parameter, e.g., from `(0 + x || id)`, are added to zero.
+#'   Coefficients of distributional parameters such as `sigma()` are on the link scale.
+#'   For simulated data, `sim` is the sum of the simulated values.
+#' @export
+coef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
+  rlang::check_dots_empty()
+  assert_width(width)
+  pars = mcp_pars(object, scope = "group")
+  if (nrow(pars) == 0)
+    stop("The model has no group-level effects. Use `fixef(fit)` for population-level coefficients.", call. = FALSE)
+
+  # Sum population-level and group-level draws for each group level
+  draws = posterior::as_draws_df(posterior_draws(object, prior = prior))
+  columns = posterior::variables(draws)
+  sums = list()
+  rows = list()
+  for (i in seq_len(nrow(pars))) {
+    population = if (is.na(pars$population_parameter[i])) 0 else draws[[pars$population_parameter[i]]]
+    group_columns = columns[startsWith(columns, paste0(pars$parameter[i], "["))]
+    sums[group_columns] = lapply(group_columns, function(column) population + draws[[column]])
+    rows[[i]] = tibble::tibble(
+      parameter = sub(paste0("_", pars$group_col[i], "$"), "", pars$parameter[i]),
+      group_col = pars$group_col[i],
+      level = sub("^.*?\\[(.*)\\]$", "\\1", group_columns),
+      segment = pars$segment[i],
+      dpar = pars$dpar[i],
+      .population = pars$population_parameter[i],
+      .column = group_columns
+    )
+  }
+  rows = dplyr::bind_rows(rows)
+  sums = tibble::as_tibble(sums)
+  sums$.chain = draws$.chain
+  sums$.iteration = draws$.iteration
+
+  estimates = summarise_pars(posterior::as_draws_df(sums), width)
+  estimates = dplyr::bind_cols(dplyr::select(rows, -".population", -".column"), dplyr::select(estimates, -"parameter"))
+
+  # Add simulation parameters if the data is simulated
+  simulated = get_simulated_values(object)
+  if (!is.null(simulated)) {
+    population_sim = ifelse(is.na(rows$.population), 0, simulated[rows$.population])
+    estimates = add_sim_match(estimates, unname(population_sim + simulated[rows$.column]), object)
+  }
+  if (!verbose)
+    estimates = dplyr::select(estimates, -"segment", -"dpar")
+  estimates
 }
 
 
@@ -596,12 +661,6 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
   intervals
 }
 
-
-# Fail helpfully instead of returning NULL. See dev/DECISIONS.md.
-#' @export
-coef.mcpfit = function(object, ...) {
-  stop("`coef()` is not implemented for mcpfit objects. Use `fixef(fit)` for population-level coefficients and `ranef(fit)` for group-level deviations.", call. = FALSE)
-}
 
 # The default method would silently re-evaluate `fit$call` with whatever `model` and `data` are in the caller's environment.
 #' @export

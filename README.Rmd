@@ -215,7 +215,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 [Group-level (random) effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
 
-- Model group-level intercepts, slopes, and change points using `(1|id)`, `(0 + x||id)`, or `cp((1|id))`. Get posteriors using `ranef(fit)`.
+- Model group-level intercepts, slopes, and change points using `(1|id)`, `(0 + x||id)`, or `cp((1|id))`. Get posteriors using `ranef(fit)` for deviations or `coef(fit)` for group-specific values.
 
 - Plot using `plot(fit, facet_by = "my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
 

@@ -20,14 +20,14 @@ bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_fam
 set.seed(42)
 ```
 
-`mcp` supports group-level effects (also called random effects) in both the predictor and change-point parts of a formula. The syntax follows `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level coefficients, and `ranef()` reports group-level deviations.
+`mcp` supports group-level effects (also called random effects) in both the predictor and change-point parts of a formula. The syntax follows `lme4` and `brms`: `(1|group)` specifies a group-level intercept, `(factor||group)` specifies independent group coefficients, `fixef()` reports population-level coefficients, `ranef()` reports group-level deviations, and `coef()` reports their sums, i.e., the group-specific coefficients and change points.
 
 This article in brief:
 
  * Predictor and change-point group-level effects
  * How group-level effects apply across segments
  * How to simulate group-level change-point deviations
- * Get posteriors using `ranef(fit)`
+ * Get posteriors using `ranef(fit)` for deviations or `coef(fit)` for group-specific values
  * Plot using `plot(fit, facet_by="my_group")` and `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)` ([more on plotting](../articles/plotting.html)).
  * How group-specific change points are bounded and ordered.
  * The article on modeling standard deviation via `sigma()` contains [another group-level change-point example](../articles/dpar.html).
@@ -187,7 +187,15 @@ It seems that `mcp` recovered the group-specific change points well. There is a 
 mcp::ranef(fit)
 ```
 
-Inspecting the `sim` and `match` columns, we see that the simulated deviations lie within the intervals. However, the intervals are wide because the deviations trade off against the population-level `cp_1`, which is informed by only six groups. The group-specific locations (`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above.
+Inspecting the `sim` and `match` columns, we see that the simulated deviations lie within the intervals. However, the intervals are wide because the deviations trade off against the population-level `cp_1`, which is informed by only six groups. 
+
+The group-specific change points (`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above. Get them using `coef(fit)`, which adds the population-level parameter to each deviation, as in `lme4` and `brms`:
+
+```{r, R.options = list(width = 9999)}
+coef(fit)
+```
+
+Because the deviations are relative to `cp_1`, they share its estimation error. If `cp_1` misses its simulated value, the deviations tend to miss with it, even when every group's change point is recovered. The `match` column of `coef(fit)` checks the group-specific change points directly.
 
 Prediction methods include all group-level effects by default. Set `group_effects = FALSE` (or `NA`, as in `brms`) for population-level predictions, `group_effects = "cp"` for the group-level effects in the change-point part, `group_effects = "predictor"` for those in the predictor part, or supply parameter names such as `group_effects = "cp_1_id"`. Use `*` as a wildcard, e.g., `"cp_*"` or `"*_id"`. `ranef(fit)` deliberately remains simple and returns all group-level deviations.
 
