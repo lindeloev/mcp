@@ -160,7 +160,7 @@ As with `cp_order_`, `cp_weight_` is observed data (0), and it weights the `cp_*
 
 ## Initial values
 
-The ordering must also hold for the initial values, or JAGS stops with "Observed node inconsistent with unobserved parents at initialization". By default, all chains start at the same, equally spaced change points, moved the least possible to be inside the bounds of their priors, at least the minimum segment lengths apart, and ordered around fixed change points. User-supplied initial values for change points must be ordered.
+The ordering must also hold for the initial values, or JAGS stops with "Observed node inconsistent with unobserved parents at initialization". By default, all chains start at the same, equally spaced change points, moved the least possible to be inside the bounds of their priors, at least the minimum segment lengths apart, and ordered around constant change points. User-supplied initial values for change points must be ordered.
 
 
 # Reparameterizations

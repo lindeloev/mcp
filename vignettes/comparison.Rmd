@@ -61,7 +61,7 @@ Simulate some data using `fit$simulate()`:
 # Simulate data
 df = data.frame(items = rep(1:9, each = 40), recalled = 1)
 
-# Get just the model - no fit
+# Empty fit (no draws)
 empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 
 df$recalled = empty$simulate(

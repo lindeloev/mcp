@@ -14,7 +14,7 @@
 #' @param prior Named list, e.g., `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`. 
 #'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
 #'   `sigma_1`, etc.) and values are a distribution string (e.g., `"dnorm(0, 1) T(0, )"`),
-#'   a fixed value (e.g., `-2.1`), or the name of another parameter to share its value.
+#'   a constant (e.g., `-2.1`), or the name of another parameter to share its value.
 #'   *OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so `dnorm(0, 0.001)` is a very narrow prior.*
 #'   Weakly informative defaults are used where priors are not specified;
 #'   see them with [prior_summary()]. See [mcp-priors] for the full syntax.
@@ -36,7 +36,7 @@
 #'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
 #'       will default to using the posterior. Use `prior = TRUE` to select prior draws.
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
-#'       object without draws. This is useful if you only want to check
+#'       object without draws (an "empty fit"). This is useful if you only want to check
 #'       prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 #' @param cores Deprecated and ignored. Configure parallel processing with a
 #'   [future][future::plan] plan instead, for example
@@ -53,7 +53,7 @@
 #' @param inits A named list of initial values for the parameters, e.g., `list(Intercept_1 = 10)`,
 #'   or a list of such lists with one per chain. This can be useful if a model fails to converge
 #'   ([read more](https://lindeloev.github.io/mcp/articles/tips.html)).
-#'   Names must be parameters in [mcp_pars()]. Fixed parameters and parameters that are
+#'   Names must be parameters in [mcp_pars()]. Parameters with constant priors and parameters that are
 #'   reparameterized for faster sampling cannot be initialized (see `mcp_reparam` in [mcp-package]).
 #'   Initial values for change points must be ordered.
 #'   Defaults to `NULL` where all chains start at equally spaced change points and the prior medians.

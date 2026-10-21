@@ -107,7 +107,7 @@ In general, the log-SD parameters are named `sigma_[normalname]`, where "normaln
 
 ## Simulate data
 
-We simulate some data from this model, setting all parameters. As always, we can fit an empty model to get `fit$simulate`, which is useful for simulation and predictions from this model.
+We simulate some data from this model, setting all parameters. As always, we can make an empty fit (`sample = FALSE`) to get `fit$simulate`, which is useful for simulation and predictions from this model.
 
 ```{r}
 # Set up model

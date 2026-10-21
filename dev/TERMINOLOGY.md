@@ -39,6 +39,7 @@ See `vignettes/priors.Rmd#cp_prior`.
 
 - **specified prior**: the prior as set by the user or by default, i.e., what `fit$prior` and `prior_summary()` show.
 - **marginal prior**: the prior of one parameter after all restrictions, i.e., what `plot_pars(fit, prior = TRUE)` shows. OK to write "resulting marginal prior" when explaining effect of restrictions.
+- **constant** / **constant prior**: a numerical prior, e.g., `cp_2 = 80`, as in `brms`'s `constant()` prior and `kind = "constant"` in `prior_summary(fit, verbose = TRUE)`. The parameter is not estimated. "Fix" is OK as a verb, e.g., "fix `cp_2` to 80". Avoid: fixed value, fixed parameter, since "fixed" can be confused with fixed (population-level) effects and `fixef()`.
 - **data-dependent terms**: `min(x)`, `sd(y)`, `n_cp()`, etc. in prior strings.
 - **resolved**: with data-dependent terms replaced by numbers.
 - **bounds** / **boundary**: the lower and upper bounds of a parameter: the arguments of `dunif()` or `T()`, or the support of its prior distribution (e.g., `[0, 1]` for `dbeta()`, `[0, Inf]` for `sigma`). Avoid: limits, range, constraints, support.
@@ -48,6 +49,7 @@ See `vignettes/priors.Rmd#cp_prior`.
 
 ## Draws and predictions
 - **draws**: prior or posterior draws, following the `posterior` package. Avoid: samples (except for "sample" as a verb, e.g., `mcp(..., sample = "both")`).
+- **empty fit**: an `mcpfit` without draws, from `mcp(..., sample = FALSE)`, e.g., to get `fit$simulate()`, `fit$prior`, or `fit$jags_code`. Conventionally named `empty` in examples. Avoid: empty model.
 
 
 ## Words reserved for other concepts

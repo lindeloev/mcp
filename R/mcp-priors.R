@@ -15,7 +15,7 @@
 #'      precision: SD for `dnorm()`, SD on the log scale for `dlnorm()` (`sdlog` in [stats::dlnorm()]),
 #'      and scale for `dt()`, `ddexp()`, and `dlogis()`. Change points also accept `dirichlet(alpha)`,
 #'      and all priors accept data-dependent terms such as `sd(y)` (see below).
-#'  * A numerical value (e.g., `Intercept_1 = -2.1`) indicating a fixed value.
+#'  * A numerical value (e.g., `Intercept_1 = -2.1`) fixing the parameter to that constant.
 #'  * A model parameter name (e.g., `Intercept_2 = "Intercept_1"`), sharing that parameter's value.
 #'      Note that reusing coefficients via `same()` in the segment formulas (e.g., `~ same(1)`)
 #'      is generally preferred. If two group-level deviations are shared via the prior,
@@ -68,7 +68,7 @@
 #' prior = list(
 #'   cp_1 = "dunif(20, 50)",         # Distribution
 #'   time_2 = "dnorm(0, 2) T(0, )",  # Truncated distribution
-#'   Intercept_3 = 15,               # Fixed value
+#'   Intercept_3 = 15,               # Constant
 #'   time_3 = "time_2"               # Shared with another parameter
 #' )
 #' fit = mcp(model, data = mcp_example_data("demo"), prior = prior, sample = "none")

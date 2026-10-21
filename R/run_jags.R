@@ -180,7 +180,7 @@ assert_inits = function(inits, pars, jags_code) {
   invalid = setdiff(unlist(lapply(if (is.list(inits[[1]])) inits else list(inits), names)), pars[is_sampled])
   if (length(invalid) > 0)
     stop("`inits` can only set these parameters of this model: `", paste0(pars[is_sampled], collapse = "`, `"), "`. Got `", paste0(unique(invalid), collapse = "`, `"),
-         "`. Fixed parameters and parameters that are reparameterized for faster sampling (see `mcp_reparam` in ?mcp-package) cannot be initialized.", call. = FALSE)
+         "`. Parameters with constant priors and parameters that are reparameterized for faster sampling (see `mcp_reparam` in ?mcp-package) cannot be initialized.", call. = FALSE)
 }
 
 
