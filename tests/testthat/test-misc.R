@@ -219,7 +219,7 @@ test_that("summary, fixef, and ranef select parameter roles consistently", {
     id = rep(c("a", "b"), each = 4)
   )
   fit = mcp(
-    list(y ~ 1 + ar(1) + (1 | id), ~ cp((1 | id)) + 1),
+    list(y ~ 1 + ar(1) + (1 | id), ~ cp((1 | id)) + 1 + ar(0)),
     data, par_x = "x", sample = FALSE
   )
   pars = mcp_pars(fit)

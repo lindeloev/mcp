@@ -127,9 +127,9 @@ You can combine `ar()` and `ma()` with any regression model and with [group-leve
 
 ```{r}
 model = list(
-  y ~ 1 + ar(1) + ma(1) + sigma(1),  # First order ARMA
-  ~ 0 + x + ar(1) + sigma(1),        # New AR coefficient; no MA
-  ~ 1  # No ARMA modelled in this segment
+  y ~ 1 + ar(1) + ma(1) + sigma(1),    # First order ARMA
+  ~ 0 + x + ar(1) + ma(0) + sigma(1),  # New AR coefficient; ma(0) states that MA is not included
+  ~ 1 + ar(0)                          # No ARMA in this segment. ~ 1 is identical but ar(0) is explicit.
 )
 ```
 

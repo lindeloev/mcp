@@ -158,6 +158,25 @@ test_that("AR/MA model checks warn only about conditional information criteria",
 })
 
 
+test_that("segments that do not include the preceding ar() or ma() warn", {
+  data = data.frame(x = 1:6, y = 1:6)
+  fit_model = function(model) mcp(model, data, par_x = "x", sample = FALSE, quiet = TRUE)
+
+  expect_warning(
+    fit_model(list(y ~ 1 + ar(1), ~ 1)),
+    "add `ar(0)` to the segment to silence it. To join the ar()-component from segment 1, include `ar(1, 0)` in segment 2. Before mcp v0.4.0",
+    fixed = TRUE
+  )
+  expect_warning(
+    fit_model(list(y ~ 1 + ma(2), ~ 1, ~ 0)),  # Segment 3 follows a segment without ma()
+    "Segment 2 does not include ma(), so it has no ma(2) component.",
+    fixed = TRUE
+  )
+  expect_no_warning(fit_model(list(y ~ 1 + ar(1) + ma(1), ~ 1 + ar(0) + ma(0), ~ 0)))
+  expect_no_warning(fit_model(list(y ~ 1 + ar(1), ~ 0 + ar(1, 0))))
+})
+
+
 test_that("ar() and ma() require a family GARMA implementation", {
   data = data.frame(x = 1:4, y = 1:4)
   family = gaussian(link = "log")

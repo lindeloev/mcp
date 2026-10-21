@@ -249,7 +249,10 @@ test_that("offset() is required in all segments where its dpar applies", {
     fixed = TRUE
   )
   # AR applies only in segments that include it
-  expect_no_error(mcp(list(y ~ 1 + ar(1, 1 + offset(z)), ~ 1 + x), d, par_x = "x", sample = FALSE))
+  expect_warning(
+    mcp(list(y ~ 1 + ar(1, 1 + offset(z)), ~ 1 + x), d, par_x = "x", sample = FALSE),
+    "Segment 2 does not include ar()", fixed = TRUE
+  )
   expect_error(
     mcp(list(y ~ 1 + ar(1, 1 + offset(z)), ~ 1 + x + ar(1)), d, par_x = "x", sample = FALSE),
     "`offset()` must be included in all segments of `ar` but is missing in segment 2",

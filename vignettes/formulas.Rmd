@@ -142,7 +142,7 @@ model = list(
 model = list(
   y ~ 1 + x + sigma(1 + x) + ar(1), # Intercept_1, x_1; log-SD slope (sigma_Intercept_1, sigma_x_1); AR(1) (ar1_1)
     ~ 0 + x + ar(1, 1 + x),  # At cp_1: Joined slope (x_2); sigma joined plateau; new AR(1) (ar1_2, ar1_x_2)
-    ~ 0 + sigma(1),          # At cp_2: Joined mu plateau; new sigma_Intercept_3; AR not included
+    ~ 0 + sigma(1) + ar(0),  # At cp_2: Joined mu plateau; new sigma_Intercept_3; ar(0) states that AR is not included
     ~ 0 + ma(2)              # At cp_3: Joined mu plateau; sigma joined; MA(2) (ma1_4, ma2_4)
 )
 ```

@@ -107,6 +107,26 @@ get_included_arma = function(components) {
 }
 
 
+# Warn when a segment does not include the ar()/ma() of the preceding segment, which then ends
+# there. ar() continued into later segments in mcp v0.3.4. Including ar(0) silences the warning.
+warn_arma_not_included = function(components) {
+  included = get_included_arma(components)
+  next_rows = included[included$order > 0 & included$segment < length(components), ]
+  next_rows$segment = next_rows$segment + 1
+  next_rows = dplyr::anti_join(next_rows, included, by = c("dpar", "segment"))
+  for (i in seq_len(nrow(next_rows))) {
+    dpar = next_rows$dpar[i]
+    segment = next_rows$segment[i]
+    warning(
+      "Segment ", segment, " does not include ", dpar, "(), so it has no ", dpar, "(", next_rows$order[i], ") component. If this is intentional, you can ignore this warning or add `", dpar, "(0)` to the segment to silence it. ",
+      "To join the ", dpar, "()-component from segment ", segment - 1, ", include `", dpar, "(", next_rows$order[i], ", 0)` in segment ", segment, ".",
+      if (dpar == "ar") " Before mcp v0.4.0, ar() continued into later segments.",
+      call. = FALSE
+    )
+  }
+}
+
+
 # Validate an optional independent-series column
 assert_arma_series = function(data, series) {
   checkmate::assert_string(series, null.ok = TRUE)

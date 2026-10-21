@@ -331,8 +331,10 @@ mcp = function(
   )
 
   has_arma = any(predictor_definitions$dpar %in% c("ar", "ma"))
-  if (has_arma)
+  if (has_arma) {
     check_arma_model(family, predictor_definitions, segments, data, par_x, series)
+    warn_arma_not_included(predictor_tables$components)
+  }
 
   # Make formulas
   formula_jags = get_formula_jags(

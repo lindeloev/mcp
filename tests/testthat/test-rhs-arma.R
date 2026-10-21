@@ -132,7 +132,10 @@ test_that("AR/MA components are off until included again", {
     c(ar1_1 = 2L, ar1_3 = NA_integer_)
   )
 
-  fit = mcp(list(y ~ ar(1), ~ 0, ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE)
+  expect_warning(
+    fit <- mcp(list(y ~ ar(1), ~ 0, ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE),
+    "Segment 2 does not include ar()", fixed = TRUE
+  )
   expect_false("ar1_2" %in% mcp_pars(fit)$parameter)
   expect_match(fit$.internal$formula_jags, "x\\[i_\\] < cp_1.*ar1_1", perl = TRUE)
   expect_match(fit$.internal$formula_jags, "x\\[i_\\] >= cp_2.*ar1_3", perl = TRUE)

@@ -2,7 +2,7 @@ models_ar = list(
   # Segment-specific AR coefficients and an AR predictor effect.
   list(y ~ 1 + ar(2, series = id),
        ~ 0 + x + ar(1, 1 + x),
-       ~ 0,
+       ~ 0 + ar(0),
        simulated = list(
          cp_1 = 79.5,
          cp_2 = 139.5,
