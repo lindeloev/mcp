@@ -43,8 +43,8 @@ mcp_example = function(name, sample = "post", plot = TRUE) {
   examples = list(
     ar = "# Define model
 model = list(
-  price ~ 1 + ar(2),
-  ~ 0 + ar(1)
+  price ~ 1 + ar(2),  # Intercept_1; ar1_1, ar2_1
+  ~ 0 + ar(1)         # At cp_1: Joined plateau; new ar1_2. ar2_1 not included
 )
 
 # Simulate data
@@ -80,9 +80,9 @@ if (plot) {
 
     binomial = "# Define model
 model = list(
-  y | trials(N) ~ 1,  # constant success probability
-  ~ 0 + x,  # joined changing success probability
-  ~ 1 + x  # disjoined changing success probability
+  y | trials(N) ~ 1,  # Plateau (Intercept_1): constant success probability
+  ~ 0 + x,            # At cp_1: Joined slope (x_2) on the logit scale
+  ~ 1 + x             # At cp_2: Disjoined slope (Intercept_3, x_3)
 )
 
 # Simulate data
@@ -114,9 +114,9 @@ if (plot) {
 
     demo = "# Define model
 model = list(
-  response ~ 1,
-  ~ 0 + time,
-  ~ 1 + time
+  response ~ 1,  # Plateau (Intercept_1)
+  ~ 0 + time,    # At cp_1: Joined slope (time_2)
+  ~ 1 + time     # At cp_2: Disjoined slope (Intercept_3, time_3)
 )
 
 # Simulate data
@@ -148,8 +148,8 @@ if (plot) {
 
     group_mu = "# Define model
 model = list(
-  y ~ 1 + state + (state || id),
-  ~ 1 + state + same((state || id))  # identical group effects in both segments
+  y ~ 1 + state + (state || id),     # Intercept_1, stateB_1; group-level deviations (Intercept_1_id, stateB_1_id)
+  ~ 1 + state + same((state || id))  # At cp_1: Disjoined (Intercept_2, stateB_2); reuse the group-level deviations
 )
 
 # Simulate balanced data with 9 levels of the grouping factor
@@ -184,8 +184,8 @@ if (plot) {
 }",
     intercepts = "# Define model
 model = list(
-  y ~ 1,
-  ~ 1
+  y ~ 1,  # Plateau (Intercept_1)
+  ~ 1     # At cp_1: Disjoined plateau (Intercept_2)
 )
 
 # Simulate data
@@ -212,8 +212,8 @@ if (plot) {
 }",
     missing = "# Define model
 model = list(
-  y ~ 1 + x + state,
-  ~ 0 + x + same(state)  # reuse the state coefficients
+  y ~ 1 + x + state,     # Intercept_1, x_1, stateB_1
+  ~ 0 + x + same(state)  # At cp_1: Joined slope (x_2); reuse stateB_1
 )
 
 # Simulate complete data
@@ -250,9 +250,9 @@ if (plot) {
 }",
     multiple = "# Define model
 model = list(
-  y ~ 1 + x:state + z,
-  ~ 1 + x + state,
-  ~ 0 + I(x^2) + same(state)
+  y ~ 1 + x:state + z,        # Intercept_1, by-state slopes (x.stateA_1, ...), z_1
+  ~ 1 + x + state,            # At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included
+  ~ 0 + I(x^2) + same(state)  # At cp_2: Joined quadratic (xE2_3); reuse stateB_2, ...
 )
 
 # Simulate data
@@ -296,9 +296,9 @@ if (plot) {
 }",
     sigma = "# Define model
 model = list(
-  y ~ 1,
-  ~ 0 + sigma(1 + x),
-  ~ 0 + x
+  y ~ 1,               # Intercept_1; sigma_Intercept_1 is implicit
+  ~ 0 + sigma(1 + x),  # At cp_1: Joined mu plateau; disjoined sigma (sigma_Intercept_2, sigma_x_2)
+  ~ 0 + x              # At cp_2: Joined slope (x_3); sigma joined, plateauing at cp_2
 )
 
 # Simulate data
@@ -333,8 +333,8 @@ if (plot) {
 }",
     group_cp = "# Define model
 model = list(
-  y ~ 1 + x,              # intercept + slope
-    ~ cp((1|id)) + 0 + x  # joined slope with group-level change points
+  y ~ 1 + x,              # Intercept_1, x_1
+    ~ cp((1|id)) + 0 + x  # At cp_1, group-level by id (cp_1_id): Joined slope (x_2)
 )
 
 # Simulate data
