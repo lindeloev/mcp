@@ -218,12 +218,8 @@ pp_eval = function(
     # Group-level joins are row-major, while GARMA recurrences require each
     # draw's data rows to be contiguous. Evaluate in draw/data order, then
     # restore the public row order below.
-    evaluation_order = if (evaluating_arma) {
-      order(draws$.draw, draws$.row)
-    } else {
-      seq_len(nrow(draws))
-    }
-    evaluation_data = draws[evaluation_order, , drop = FALSE]
+    evaluation_order = if (evaluating_arma) order(draws$.draw, draws$.row)
+    evaluation_data = if (evaluating_arma) draws[evaluation_order, , drop = FALSE] else draws
     evaluate = function() rlang::exec(simulate_vectorized, fit, !!!evaluation_data, .type = simulate_type, .rate = rate, .dpar = dpar, .arma = arma, .scale = scale, .return_fitted = .return_fitted)
     evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
 

@@ -227,6 +227,11 @@ test_arma_simulation = function(fit) {
     testthat::expect_true(all(simulated >= 0))
     testthat::expect_true(all(simulated == floor(simulated)))
   }
+
+  # Summaries of fresh series use the exact predictive moments given each replicated history
+  replicated = suppressWarnings(predict(fit, arma = "replicate", ndraws = 5))
+  testthat::expect_identical(nrow(replicated), nrow(fit$data))
+  testthat::expect_false(anyNA(replicated[c(".mean", ".sd", ".lower", ".upper")]))
 }
 
 
