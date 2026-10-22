@@ -197,7 +197,7 @@ pp_eval = function(
   # Summaries and matrices only need the evaluated values from each block.
   draw_ids = unique(param_draws$.draw)
   block_size = max(1, floor(.max_cells / nrow(newdata)))
-  keep_dpars = .return_dpars || (summary && type == "predict" && !isFALSE(width))  # For exact predictive quantiles
+  keep_dpars = .return_dpars || (summary && type == "predict")  # For exact predictive moments and quantiles
   blocks = list()
   for (block_ids in split(draw_ids, ceiling(seq_along(draw_ids) / block_size))) {
     block_draws = param_draws[param_draws$.draw %in% block_ids, ]
@@ -277,12 +277,19 @@ pp_eval = function(
 
   # Optionally summarise
   if (summary == TRUE) {
+    # Exact predictive moments over the posterior draws via the laws of total expectation and variance
+    exact_moments = type == "predict" && !is.null(fit$family$r$variance)
+    if (exact_moments) {
+      draws$.epred = fit$family$r$epred(dpars_values, response_data_values, rate = rate)
+      draws$.variance = fit$family$r$variance(dpars_values, response_data_values, rate = rate)
+    }
+
     df_return = draws %>%
       # Summarise for each row in newdata
       dplyr::group_by(.data$.row) %>%
       dplyr::summarise(.groups = "drop",
-                       .mean = mean(.data[[value_col]]),
-                       .sd = stats::sd(.data[[value_col]])
+                       .mean = if (exact_moments) mean(.data$.epred) else mean(.data[[value_col]]),
+                       .sd = if (exact_moments) sqrt(mean(.data$.variance) + mean((.data$.epred - mean(.data$.epred))^2)) else stats::sd(.data[[value_col]])
       ) %>%
 
       # Apply original order and put newdata as the first columns
@@ -452,6 +459,9 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'        posterior predictive SD for `predict()` and the posterior SD of the
 #'        evaluated quantity otherwise.
 #'      - `.lower` and `.upper`: The lower and upper ends of the central interval given in `width`.
+#'
+#'     For `predict()` with built-in families, these are the exact moments and quantiles of the
+#'     posterior predictive distribution (the mixture over posterior draws), so they do not vary with the seed.
 #'
 #'     With `prior = TRUE`, these are the analogous prior summaries. mcp's own
 #'     columns are dot-prefixed to avoid collisions with data columns.

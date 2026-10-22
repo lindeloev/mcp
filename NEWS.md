@@ -157,7 +157,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Default `plot(fit)` style has been updated in many ways to accommodate multiple regression and group-effects.
 
-  - Predictive intervals (`plot(fit, q_predict = TRUE)` and `predict(fit, summary = TRUE)`) are now precise and faster. They used to be estimated from posterior parameter draws, which has MC error.
+  - Predictive summaries are now exact and faster. The intervals (`plot(fit, interval = "predict")` and `predict(fit)$.lower`/`$.upper`) and moments (`predict(fit)$.mean`/`$.sd`) are computed from the posterior predictive distribution instead of from random predictions.
 
   - Added `interpolate_newdata(fit, by = NULL)` which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use `by` to include grouping factors. The documentation shows how this can be useful for generating [custom plots](https://lindeloev.github.io/mcp/articles/plotting.html#making-your-own-plots) when simple tweaking `plot()` is not enough.
 

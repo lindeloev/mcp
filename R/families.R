@@ -249,6 +249,7 @@ mcpfamily_gaussian = function(family) {
 
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
+    variance = function(dpars, data, rate = FALSE) dpars$sigma^2,
     log_lik = function(y, dpars, data) stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE),
     rng = function(n, dpars, data, rate = FALSE) {
       stats::rnorm(n, dpars$mu, dpars$sigma)
@@ -344,6 +345,7 @@ mcpfamily_binomial = function(family) {
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) if (rate) dpars$mu else data$trials * dpars$mu,
+    variance = function(dpars, data, rate = FALSE) if (rate) dpars$mu * (1 - dpars$mu) / data$trials else data$trials * dpars$mu * (1 - dpars$mu),
     log_lik = function(y, dpars, data) stats::dbinom(y, data$trials, dpars$mu, log = TRUE),
     rng = function(n, dpars, data, rate = FALSE) {
       y = stats::rbinom(n, data$trials, dpars$mu)
@@ -423,6 +425,7 @@ mcpfamily_bernoulli = function(family) {
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
+    variance = function(dpars, data, rate = FALSE) dpars$mu * (1 - dpars$mu),
     log_lik = function(y, dpars, data) stats::dbinom(y, 1, dpars$mu, log = TRUE),
     rng = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu),
     cdf = function(q, dpars, data) stats::pbinom(q, 1, dpars$mu),
@@ -492,6 +495,7 @@ mcpfamily_poisson = function(family) {
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
+    variance = function(dpars, data, rate = FALSE) dpars$mu,
     log_lik = function(y, dpars, data) {
       validate_count_mean(dpars$mu)
       stats::dpois(y, dpars$mu, log = TRUE)
@@ -564,6 +568,7 @@ mcpfamily_negbinomial = function(family) {
   )
   r = list(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
+    variance = function(dpars, data, rate = FALSE) dpars$mu + dpars$mu^2 / dpars$shape,
     log_lik = function(y, dpars, data) {
       validate_count_mean(dpars$mu)
       stats::dnbinom(y, mu = dpars$mu, size = dpars$shape, log = TRUE)
@@ -856,6 +861,7 @@ assert_mcpfamily = function(x) {
     checkmate::assert_character(auxiliary$operations)
   }
   checkmate::assert_function(x$r$epred)
+  checkmate::assert_function(x$r$variance, null.ok = TRUE)
   checkmate::assert_function(x$r$log_lik)
   checkmate::assert_function(x$r$rng)
   checkmate::assert_function(x$r$cdf, null.ok = TRUE)

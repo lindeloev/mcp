@@ -434,6 +434,12 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       observed_draws = matrix(observed, nrow(fitted_draws), ncol(fitted_draws), byrow = TRUE)
       testthat::expect_equal(residual_draws, observed_draws - fitted_draws)
     }
+
+    if (colname == "predict" && !is.null(fit$family$r$variance)) {
+      # Exact predictive moments: the mean is the expected response and summaries do not depend on the seed
+      testthat::expect_equal(result$.mean, fitted(fit, rate = FALSE, prior = prior)$.mean)
+      testthat::expect_equal(func(fit, prior = prior, rate = FALSE), result)
+    }
   }
 }
 
