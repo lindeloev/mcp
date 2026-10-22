@@ -35,7 +35,7 @@ library(ggplot2)
 
 Sometimes the interest is not in recovering individual missing responses, but in how gaps in the data affect inference about the change points. To demonstrate this, `mcp_example("void")` takes the data from `mcp_example("demo")` and sets the responses near both change points to `NA` (`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to the full data and the bottom panel the fit with the voids:
 
-```{r, results = FALSE, fig.height = 7}
+```{r, fig.height = 7}
 fit_void = mcp_example("void")
 ```
 
@@ -59,7 +59,7 @@ hypothesis(fit_void, c(
 
 The built-in example has a change in slope, a strong difference between two states, scattered missing responses, and a short run of missing responses:
 
-```{r, results = FALSE}
+```{r}
 fit = mcp_example("missing")
 ```
 

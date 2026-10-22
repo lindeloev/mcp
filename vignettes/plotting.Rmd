@@ -85,7 +85,7 @@ plot(demo_fit, prior = TRUE, lines = 100)
 ## Categorical predictors, groups, and other predictors
 In models with a categorical predictor, `plot()` draws a curve for each level and colors them automatically. Here, we use the "multiple" example, which has a categorical predictor (`state`) and a continuous predictor (`z`) in addition to the change-point variable (`x`):
 
-```{r, results = FALSE}
+```{r}
 fit = mcp_example("multiple", plot = FALSE)
 ```
 
@@ -114,7 +114,7 @@ Use `scale = "linear"` to plot on the scale of the linear predictor, e.g., the l
 # Distributional parameters
 `plot_dpar()` plots a distributional parameter, such as `sigma`, along the change-point variable. It takes most of the same arguments as `plot()`, but only `interval = "fitted"`. Here, we use the "sigma" example, where the residual standard deviation changes at both change points:
 
-```{r, results = FALSE}
+```{r}
 fit_sigma = mcp_example("sigma", plot = FALSE)
 ```
 

@@ -77,7 +77,7 @@ head(df)
 
 Now fit it with and without the informative prior. We set `iter` fairly high because this model is not sampled efficiently. We will also add `sample = "both"` to sample *both* prior and posterior. We will need both to compute Bayes factors using `hypothesis()` later.
 
-```{r, results = FALSE}
+```{r}
 fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 6000)
 fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 6000)
 fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 6000)

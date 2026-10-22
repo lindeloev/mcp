@@ -169,7 +169,7 @@ ggplot(df, aes(x=x, y=y)) +
 # Summarise and plot group-level effects
 Fitting the model is simple:
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, data = df)
 ```
 

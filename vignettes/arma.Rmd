@@ -73,7 +73,7 @@ head(ar_data)
 
 See how this was generated in `mcp_example("ar")$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
 
-```{r, results = FALSE}
+```{r}
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
   ~ 0 + time + ar(1)  # time_2, ar1_2; replaces AR(2) with AR(1)
@@ -208,7 +208,7 @@ arima(df$response, order = c(3, 0, 0))
 
 OK, we can see that the `ar` coefficients and sigma (`arima()` reports $\sigma^2$) are simulated correctly, if taking `arima()` as ground truth. Inferring with `mcp` is straightforward:
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, df, par_x = "time")
 ```
 
@@ -246,7 +246,7 @@ df$y = empty$simulate(
 
 We use `same(x)` in segment 2 to keep the slope identical across segments, so the change point is strictly in autocorrelation. We use `sample = "both"` because we will do a Savage-Dickey test later.
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, data = df, iter = 10000, sample = "both")
 ```
 

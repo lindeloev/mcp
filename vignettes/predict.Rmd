@@ -35,7 +35,7 @@ head(data)
 
 ... and model it as three segments, i.e., two change points:
 
-```{r, results = FALSE}
+```{r}
 # Define the model
 model = list(
   response ~ 1,  # plateau (Intercept_1)
@@ -157,7 +157,7 @@ prior_forecast = list(
 
 Now let's fit it.
 
-```{r, results = FALSE}
+```{r}
 old = options(mcp_reparam = FALSE)
 fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
 options(old)

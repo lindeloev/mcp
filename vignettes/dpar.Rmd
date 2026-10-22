@@ -62,7 +62,7 @@ head(df)
 
 Now we fit the model to the simulated data.
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, data = df, par_x = "x")
 ```
 
@@ -131,7 +131,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, data = df, diagnostics = FALSE)
 ```
 
@@ -209,7 +209,7 @@ df$y = empty$simulate(
 
 Fit it:
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, data = df, par_x = "x")
 ```
 

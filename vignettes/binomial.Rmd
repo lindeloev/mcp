@@ -83,7 +83,7 @@ plot(df$year, df$y)
 # Check parameter recovery
 The next sections go into more detail, but let us quickly see if we can recover the parameters used to simulate the data.
 
-```{r, results = FALSE}
+```{r}
 fit = mcp(model, data = df, family = binomial(), iter = 10000)
 ```
 

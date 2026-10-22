@@ -90,7 +90,7 @@ head(df)
 
 Sample the prior and posterior.
 
-```{r, results = FALSE}
+```{r}
 future::plan(future::multisession, workers = 3)
 fit_manual = mcp(model, data = df, sample = "both", prior = prior)
 fit_default = mcp(model, data = df, sample = "both")
@@ -138,7 +138,7 @@ This is a contrived example. Usually setting priors manually aims to sample the 
 
 Prior predictive checks are a great way to ensure that the priors are meaningful before fitting to data. Simply set `sample = "prior"`. Let us do it for the manual and default priors above to compare their prior predictive space:
 
-```{r, results = FALSE}
+```{r}
 # Sample priors
 fit_pp_manual = mcp(model, data = df, prior = prior, sample = "prior")
 fit_pp_default = mcp(model, data = df, sample = "prior")

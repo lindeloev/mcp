@@ -97,7 +97,7 @@ With $K$ segments, i.e., $K - 1$ change points $\tau_1 < \dots < \tau_{K-1}$, th
 
 The plot below compares these theoretical beta marginals (black lines) with prior draws from `mcp` (red lines) for 2 and 5 change points:
 
-```{r, echo = FALSE, results = FALSE}
+```{r, echo = FALSE}
 library(mcp)
 df_dummy = data.frame(x = c(0, 0.5, 1), y = rnorm(3))
 
