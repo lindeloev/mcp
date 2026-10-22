@@ -17,10 +17,11 @@ get_formula_terms = function(tables) {
   # Offsets apply in their own segment only
   offsets = Filter(function(spec) isTRUE(spec$has_offset), tables$design_specs)
   field = function(name, type) unname(vapply(offsets, function(spec) spec[[name]], type))
+  segment = field("segment", integer(1))
   offsets = tibble::tibble(
     dpar = field("dpar", character(1)),
     order = field("order", integer(1)),
-    segment = field("segment", integer(1)),
+    segment = segment,
     next_segment = ifelse(segment < nrow(tables$segments), segment + 1L, NA_integer_),
     x_factor = "1",
     offset = field("offset_name", character(1))

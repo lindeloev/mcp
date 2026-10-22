@@ -32,8 +32,8 @@ works before sampling and is the stable way to discover model parameters.
 }
 \examples{
 # Show every parameter in the model
-mcp_pars(demo_fit)
+print(mcp_pars(demo_fit), width = Inf)
 
 # Select population-level coefficients
-mcp_pars(demo_fit, scope = "population", role = "coefficient")
+mcp_pars(demo_fit, scope = "population", role = "coefficient")$parameter
 }

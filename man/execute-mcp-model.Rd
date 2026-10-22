@@ -194,6 +194,9 @@ evaluated quantity otherwise.
 \item \code{.lower} and \code{.upper}: The lower and upper ends of the central interval given in \code{width}.
 }
 
+For \code{predict()} with built-in families, these are the exact moments and quantiles of the
+posterior predictive distribution (the mixture over posterior draws), so they do not vary with the seed.
+
 With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
 columns are dot-prefixed to avoid collisions with data columns.
 \item If \code{summary = FALSE} and \code{draws_format = "tidy"}: A \code{tidybayes} \code{tibble} with all the posterior

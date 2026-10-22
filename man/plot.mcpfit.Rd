@@ -56,7 +56,7 @@ plot_dpar(
 \item \code{c("fitted", "predict")}: Both. \code{plot_dpar()} supports only \code{"none"} and \code{"fitted"}.
 }
 
-For other quantiles, see \href{https://lindeloev.github.io/mcp/articles/plotting.html#other-quantiles}{the plotting article} for computing them from
+For other quantiles, see \href{https://lindeloev.github.io/mcp/articles/plotting.html#making-your-own-plots}{the plotting article} for computing them from
 \code{fitted(..., summary = FALSE)} or \code{predict(..., summary = FALSE)} and adding them as a ggplot2 layer.}
 
 \item{width}{Width of the central interval(s) given in \code{interval} (strictly between 0 and 1).
