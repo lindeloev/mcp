@@ -1,10 +1,3 @@
-# RowSums of element-wise products of matrices. Like an inner product, just vectorized for many y.
-# This ensures R <--> JAGS code compatibility.
-inprod = function(x, y) {
-  rowSums(x * y)
-}
-
-
 # Converts zero-length vectors to NULL. Returns x otherwise
 logical0_to_null = function(x) {
   if (length(x) > 0) x
@@ -151,152 +144,12 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = cha
 }
 
 
-# Get column names of predictor designs ordered by design-matrix column
-# - predictors: Output of get_predictors()
-# - group_effects: Output of get_group_effects()
-get_predictor_design_names = function(predictors, group_effects = NULL) {
-  # Extract group-level predictor columns
-  group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
-    tibble::tibble(matrix_col = integer(), name = character(), segment = integer())
-  } else {
-    group_effects[group_effects$part == "predictor", c("matrix_col", "name", "segment"), drop = FALSE]
-  }
-
-  # Combine population and group-level predictors
-  design = dplyr::bind_rows(
-    tibble::tibble(
-      matrix_col = predictors$matrix_col,
-      name = predictors$name,
-      segment = predictors$segment
-    ),
-    group_predictors
-  )
-
-  # Disambiguate duplicate names across occurrences and ensure uniqueness
-  design = design[order(design$matrix_col), , drop = FALSE]
-  duplicate = duplicated(design$name) | duplicated(design$name, fromLast = TRUE)
-  design$name[duplicate] = paste0(design$name[duplicate], "_occurrence_", design$segment[duplicate])
-  make.unique(design$name)
-}
-
-
-#' Create a model matrix from the predictor metadata tables
-#'
-#' Combines population and group-level predictor design columns.
-#'
-#' @param predictors The output of `get_predictors()`.
-#' @param group_effects The output of `get_group_effects()`.
-#' @return A matrix with one column for each population or group-level
-#'   predictor coefficient.
-#' @noRd
+# Design matrix with one column per coefficient in `predictors` and predictor `group_effects`,
+# ordered by `matrix_col`. The columns are in their `matrix_data`.
 get_predictor_matrix = function(predictors, group_effects = NULL) {
-  checkmate::assert_data_frame(predictors)
-  group_predictors = if (is.null(group_effects) || "matrix_col" %notin% names(group_effects)) {
-    tibble::tibble(
-      matrix_col = integer(), name = character(), matrix_data = list()
-    )
-  } else {
-    group_effects[group_effects$part == "predictor", , drop = FALSE]
-  }
-  # Each coefficient contributes one column; both sources share matrix indices.
-  column_order = order(c(predictors$matrix_col, group_predictors$matrix_col))
-  matrix_data = c(predictors$matrix_data, group_predictors$matrix_data)[column_order]
-  column_names = get_predictor_design_names(predictors, group_effects)
-
-  predictor_matrix = do.call(cbind, matrix_data)
-  colnames(predictor_matrix) = column_names
-  predictor_matrix
-}
-
-
-#' Evaluated-draw identity helpers
-#'
-#' Within one call to `pp_eval()`, `.row` identifies a row in the evaluated data.
-#' Together, `.draw` and `.row` must identify exactly one evaluated value.
-#' Plotting groups, predictor values, and group-level columns are metadata for
-#' that row and never determine which draws may be summarised together.
-#'
-#' @param draws Evaluated draws in tidy format.
-#' @param type Name of the evaluated-value column, matching `pp_eval(type)`.
-#' @return `draws`, invisibly.
-#' @noRd
-validate_eval_draws = function(draws, type) {
-  checkmate::assert_data_frame(draws)
-  checkmate::assert_string(type)
-  assert_data_cols(draws, c(".draw", ".row", type))
-
-  if (anyNA(draws$.draw) || anyNA(draws$.row))
-    stop_github("Evaluated draws contain missing `.draw` or `.row` keys.")
-
-  draw_ids = unique(draws$.draw)
-  data_rows = unique(draws$.row)
-  draw_index = match(draws$.draw, draw_ids)
-  row_index = match(draws$.row, data_rows)
-  keys = draw_index + length(draw_ids) * (row_index - 1L)
-  if (anyDuplicated(keys))
-    stop_github("Evaluated draws must contain one `", type, "` value per `.draw` and `.row`.")
-
-  if (nrow(draws) != length(draw_ids) * length(data_rows))
-    stop_github("Every `.row` must contain the same complete set of posterior draws.")
-
-  invisible(draws)
-}
-
-
-#' Convert evaluated draws from tidy to matrix format
-#'
-#' Converts the output of `pp_eval(fit, draws_format = "tidy")` to an `N_draws`
-#' by `N_evaluation_rows` matrix. Explicit keys prevent duplicate or incomplete
-#' draw/row combinations from being silently reshaped.
-#'
-#' @inheritParams validate_eval_draws
-#' @param data_rows Optional `.row` values to use as matrix columns.
-#' @return A numeric matrix.
-#' @noRd
-tidy_to_matrix = function(draws, type, data_rows = NULL) {
-  checkmate::assert_string(type)
-  assert_data_cols(draws, c(".draw", ".row", type))
-
-  if (is.null(data_rows))
-    data_rows = sort(unique(draws$.row))
-  if (anyDuplicated(data_rows))
-    stop_github("Requested `.row` values must be unique.")
-
-  missing_rows = setdiff(data_rows, unique(draws$.row))
-  if (length(missing_rows) > 0)
-    stop_github("Requested evaluation rows are absent: ", paste(missing_rows, collapse = ", "), ".")
-  draws = dplyr::filter(draws, .data$.row %in% data_rows)
-
-  draw_ids = sort(unique(draws$.draw))
-  result = matrix(NA_real_, nrow = length(draw_ids), ncol = length(data_rows), dimnames = list(NULL, as.character(data_rows)))
-  matrix_rows = match(draws$.draw, draw_ids)
-  matrix_cols = match(draws$.row, data_rows)
-  result[cbind(matrix_rows, matrix_cols)] = draws[[type]]
-  result
-}
-
-
-#' Compute evaluated-draw quantiles without pooling evaluation rows
-#'
-#' @inheritParams validate_eval_draws
-#' @param quantiles Vector of quantiles between zero and one.
-#' @param na.rm Whether to remove missing values before computing quantiles.
-#' @param keep Evaluation-row metadata to rejoin after summarising.
-#' @return A tibble with `.row`, `quantile`, the `type` column, and requested metadata.
-#' @noRd
-get_quantiles = function(draws, quantiles, type, keep = NULL, na.rm = FALSE) {
-  keep = unique(keep)
-  assert_data_cols(draws, c(".row", type, keep))
-  grid = draws %>% dplyr::select(dplyr::all_of(c(".row", keep))) %>% dplyr::distinct()
-  if (anyDuplicated(grid$.row))
-    stop_github("Evaluation-row metadata differs across draws for the same `.row`.")
-
-  result = draws %>%
-    dplyr::group_by(.data$.row) %>%
-    dplyr::reframe(quantile = quantiles,
-                   !!type := stats::quantile(.data[[type]], probs = quantiles, names = FALSE, na.rm = na.rm))
-
-  dplyr::left_join(result, grid, by = ".row", relationship = "many-to-one")
+  group_predictors = group_effects[group_effects$part == "predictor", ]
+  columns = c(predictors$matrix_data, group_predictors$matrix_data)
+  do.call(cbind, columns[order(c(predictors$matrix_col, group_predictors$matrix_col))])
 }
 
 
@@ -328,47 +181,18 @@ find_mixture_quantile = function(family, dpars, data, p) {
 }
 
 
-# Compute exact predictive quantiles via mixture CDF inversion
-#
-# Evaluates the exact posterior predictive mixture CDF at each data row
-# and finds the target quantiles via root-finding (uniroot for continuous,
-# integer search for discrete count families).
-get_mixture_quantiles = function(draws, quantiles, family, keep = NULL, rate = FALSE, dpars = attr(draws, "dpars"), response_data = attr(draws, "response_data")) {
-  keep = unique(keep)
-  grid = draws %>% dplyr::select(dplyr::all_of(c(".row", keep))) %>% dplyr::distinct()
-
-  # Fallback to empirical quantiles if no cdf method or dpars available
-  if (is.null(family$r$cdf) || is.null(dpars))
-    return(get_quantiles(draws, quantiles, ".prediction", keep = keep))
-
-  # Split draws by evaluation row to process one data point across all posterior draws
-  row_indices = split(seq_len(nrow(draws)), draws$.row)
-  unique_rows = as.integer(names(row_indices))
-
-  res_list = lapply(seq_along(row_indices), function(i) {
-    idx = row_indices[[i]]
-    data_row_id = unique_rows[i]
-
-    # Slice distributional parameters for this data row across all MCMC draws
-    dp_slice = lapply(dpars, function(v) v[idx])
-    rd_slice = if (!is.null(response_data)) lapply(response_data, function(v) v[idx]) else NULL
-
-    # Invert the mixture CDF for each requested quantile probability and convert to the rate scale
-    q_vals = vapply(quantiles, function(q) find_mixture_quantile(family, dp_slice, rd_slice, q), numeric(1))
-    q_vals = family$response$observed(q_vals, lapply(rd_slice, `[`, 1), rate)
-
-    df_res = data.frame(
-      quantile = quantiles,
-      .prediction = q_vals,
-      stringsAsFactors = FALSE
-    )
-    df_res$.row = data_row_id
-    df_res
-  })
-
-  # Combine and re-attach predictor / grouping metadata
-  result = dplyr::bind_rows(res_list)
-  dplyr::left_join(result, grid, by = ".row", relationship = "many-to-one")
+# Exact quantiles of the posterior predictive distribution of each row, i.e., the mixture of
+# the response distributions of all draws. Returns a rows x probs matrix.
+# - dpars: Distributional parameters on the response scale (rows x draws).
+# - data: Response auxiliaries, e.g., `trials`, one value per row.
+get_mixture_quantiles = function(dpars, data, probs, family, rate = FALSE) {
+  quantiles = vapply(seq_len(nrow(dpars$mu)), function(row) {
+    row_dpars = lapply(dpars, function(value) value[row, ])
+    row_data = lapply(data, `[`, row)
+    q = vapply(probs, function(p) find_mixture_quantile(family, row_dpars, row_data, p), numeric(1))
+    family$response$observed(q, row_data, rate)
+  }, numeric(length(probs)))
+  matrix(quantiles, ncol = length(probs), byrow = TRUE)
 }
 
 

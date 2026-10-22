@@ -1,4 +1,4 @@
-# ABOUT: These functions "pad" the regression model from get_formula.R
+# ABOUT: These functions "pad" the linear predictors from get_formula_jags()
 # resulting in a full JAGS model
 # -----------------
 
@@ -25,16 +25,18 @@ get_jags_family_context = function(segments) {
 
 #' Make JAGS code for Multiple Change Point model
 #'
-#' @inheritParams mcp
-#' @param formula_jags String. The formula string returned by `get_formula_jags()`.
-#' @param segments Segment table returned by `get_segment_tables()`.
-#' @param group_effects Group-effect table returned by `get_group_effects()`.
-#' @param ar_order,ma_order NA or positive integer. The GARMA component orders.
+#' @param tables Model tables, as in `get_fit_model_tables(fit)`.
+#' @param prior Resolved priors from `get_prior()`.
 #' @param prior_table Resolved prior metadata from `get_prior()`.
+#' @param family An mcpfamily object.
 #' @return String. A JAGS model.
 #' @noRd
-get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order, ma_order, family, par_x,
-                          prior_table, series = FALSE) {
+get_jags_code = function(tables, prior, prior_table, family) {
+  segments = tables$segments
+  group_effects = definition_rows(tables$group_effects)
+  par_x = tables$data_columns$par_x
+  ar_order = get_arma_order(tables$predictors, "ar")
+  ma_order = get_arma_order(tables$predictors, "ma")
   prior_description = stats::setNames(prior_table$description, prior_table$parameter)
   prior_kind_ = stats::setNames(prior_table$kind, prior_table$parameter)
 
@@ -76,6 +78,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     )
   }
   cp_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
+  locations = cp_effects$name[vapply(prior[cp_effects$name], is_cp_location, logical(1))]
   min_lengths = rep("0", length(cps))
   for (i in seq_along(cps)) {
     name = names(cps)[i]
@@ -93,10 +96,17 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
     }
     mm = paste0(mm, cp_prior_str(name, value))
 
-    # Group-level change points right after their population change point
+    # Group-level change points right after their population change point. Bounds at earlier
+    # group-specific change points, e.g., "(cp_1 + cp_1_id[id_])", use their sampled locations.
     effect = cp_effects[cp_effects$population_name == name, , drop = FALSE]
-    if (nrow(effect) == 1)
-      mm = paste0(mm, cp_prior_str(effect$sd_name), cp_prior_str(effect$name, group_col = effect$group_col, population_name = name))
+    if (nrow(effect) == 1) {
+      group_value = prior[[effect$name]]
+      for (location in locations) {
+        population_name = cp_effects$population_name[cp_effects$name == location]
+        group_value = gsub(paste0(population_name, " + ", location, "["), paste0(location, "_location["), group_value, fixed = TRUE)
+      }
+      mm = paste0(mm, cp_prior_str(effect$sd_name), cp_prior_str(effect$name, group_value, group_col = effect$group_col, population_name = name))
+    }
   }
   mm = paste0(mm, "  cp_", K, " = max(", par_x, ")\n")
 
@@ -155,24 +165,18 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   #########
   has_arma_terms = !is.na(ar_order) || !is.na(ma_order)
   if (has_arma_terms)
-    mm = paste0(mm, get_garma_jagscode(ar_order, ma_order, par_x, series))
+    mm = paste0(mm, get_garma_jagscode(ar_order, ma_order, par_x, series = !is.null(tables$data_columns$series)))
 
 
   ###########
   # FORMULA #
   ###########
-  # Transform formula_jags into JAGS format. Insert par_x and group indices.
-  for (i in seq_len(max(segments$segment))) {
-    formula_jags = gsub(paste0("CP_", i, "_INDEX"), paste0("[", segments$cp_group_col[i], "_index_[i_]]"), formula_jags)
-  }
-
-  # Insert formula_jags
   mm = paste0(mm, "
   # Model and likelihood
   for (i_ in 1:length(", par_x, ")) {")
 
   # Add JAGS code for fitted values and indent it
-  mm = paste0(mm, gsub("\n", "\n    ", formula_jags))
+  mm = paste0(mm, gsub("\n", "\n    ", get_formula_jags(tables, family, locations)))
 
 
   ##############
@@ -196,7 +200,7 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
       link_code,
       paste0(linkinv_str, "(", link_code, ")")
     )
-    if (!is.na(spec$floor))  # Numerical floor, as in add_response_dpars()
+    if (!is.na(spec$floor))  # Numerical floor, as in simulate_model()
       response_code = paste0("max(", format(spec$floor, scientific = TRUE), ", ", response_code, ")")
 
     mm = paste0(mm, dpar, "_[i_] = ", response_code, "\n    ")
@@ -227,24 +231,18 @@ get_jags_code = function(prior, segments, group_effects, formula_jags, ar_order,
   ###############
 
   # Finish up
-  mm = paste0(mm, "
+  paste0(mm, "
   }
 }")
+}
 
-  # Use sampled absolute change-point locations directly throughout the JAGS
-  # graph. Public draws remain deviations through the deterministic nodes above.
-  for (i in seq_len(nrow(cp_effects))) {
-    value = prior[[cp_effects$name[i]]]
-    call = parse_prior_call(split_prior_truncation(value)$distribution)
-    if (!is.null(call) && call$name == "dnorm") {
-      cp = cp_effects$population_name[i]
-      name = cp_effects$name[i]
-      location = paste0(name, "_location[")
-      mm = gsub(paste0(cp, " + ", name, "["), location, mm, fixed = TRUE)
-      mm = gsub(paste0(cp, "+", name, "["), location, mm, fixed = TRUE)
-    }
-  }
-  mm
+
+# Whether a group-level change point with this prior is sampled as its absolute location,
+# e.g., cp_1_id_location ~ dnorm(cp_1 + mean, sd), rather than as a deviation (see get_prior_str()).
+# The JAGS graph then uses the location directly; the deviation is a deterministic node.
+is_cp_location = function(prior) {
+  call = parse_prior_call(split_prior_truncation(prior)$distribution)
+  !is.null(call) && call$name == "dnorm" && length(call$args) == 2
 }
 
 
@@ -298,7 +296,7 @@ get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
     } else {
       parts = split_prior_truncation(value)
       call = parse_prior_call(parts$distribution)
-      if (!is.null(call) && call$name == "dnorm" && length(call$args) == 2) {
+      if (is_cp_location(value)) {
         location_name = paste0(name, "_location")
         mean = if (call$args[1] == "0") population_name else paste0(population_name, " + ", call$args[1])
         distribution = paste0("dnorm(", mean, ", ", call$args[2], ")")

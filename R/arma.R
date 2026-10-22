@@ -244,17 +244,15 @@ assert_loglik_garma_history = function(fit, data = fit$data, arma = TRUE,
 }
 
 
-# Match retained JAGS imputations to expanded posterior evaluation rows.
-# Returns NA for rows without retained imputations.
-get_imputed_response_draws = function(fit, draws) {
+# The response with missing values replaced by their retained JAGS imputations: a rows x draws matrix.
+# - y: The response of the fitted data, one value per row.
+# - draw_ids: `.draw` indices of the draws, i.e., rows of the stacked posterior chains.
+get_imputed_response = function(fit, y, draw_ids) {
   rows = fit$.internal$imputed_response_rows
-  if (is.null(fit$.internal$imputed_response) || length(rows) == 0)
-    return(rep(NA_real_, nrow(draws)))
-
-  # A draws-by-rows matrix. Stacked chains match the `.draw` index of as_draws_df().
   nodes = paste0(mcp_columns(fit)$response, "[", rows, "]")
-  imputed = as.matrix(fit$.internal$imputed_response)[, nodes, drop = FALSE]
-  imputed[cbind(draws$.draw, match(draws$.row, rows))]
+  y = matrix(y, length(y), length(draw_ids))
+  y[rows, ] = t(as.matrix(fit$.internal$imputed_response)[draw_ids, nodes, drop = FALSE])
+  y
 }
 
 
@@ -283,24 +281,32 @@ warn_arma_check = function(fit, arma, check) {
 }
 
 
-# Check AR stationarity or MA invertibility row by row
-# - values: Evaluated model parameters, including ar1_, ma1_, etc.
-# - component: Either "ar" or "ma".
-arma_root_violations = function(values, component) {
-  component = rlang::arg_match0(component, c("ar", "ma"))
-  pattern = paste0("^", component, "([0-9]+)_$")
-  coefficient_names = grep(pattern, names(values), value = TRUE)
-  if (length(coefficient_names) == 0)
-    return(rep(FALSE, nrow(values)))
-  orders = as.integer(sub(pattern, "\\1", coefficient_names))
-  coefficients = as.matrix(values[, coefficient_names[order(orders)], drop = FALSE])
-  if (ncol(coefficients) == 1)
-    return(!is.finite(coefficients[, 1]) | abs(coefficients[, 1]) >= 1)
+# The AR or MA lags of evaluated linear predictors (see `evaluate_formula()`), ordered by lag,
+# e.g., `list(ar1 = , ar2 = )`. An empty list without such terms.
+get_lags = function(links, component) {
+  keys = grep(paste0("^", component, "[0-9]+$"), names(links), value = TRUE)
+  links[keys[order(as.integer(substring(keys, 3)))]]
+}
 
-  apply(coefficients, 1, function(x) {
-    polynomial = c(1, if (component == "ar") -x else x)
-    any(!is.finite(x)) || any(Mod(polyroot(polynomial)) <= 1)
-  })
+
+# Check AR stationarity or MA invertibility for each row and draw. Returns a rows x draws matrix.
+# - links: Evaluated linear predictors from `evaluate_formula()`, including "ar1", "ma1", etc.
+# - component: Either "ar" or "ma".
+arma_root_violations = function(links, component) {
+  component = rlang::arg_match0(component, c("ar", "ma"))
+  lags = get_lags(links, component)
+  if (length(lags) == 0)
+    return(FALSE)
+  coefficients = do.call(cbind, lapply(lags, as.vector))  # One column per lag
+  violations = if (ncol(coefficients) == 1) {
+    !is.finite(coefficients[, 1]) | abs(coefficients[, 1]) >= 1
+  } else {
+    apply(coefficients, 1, function(x) {
+      polynomial = c(1, if (component == "ar") -x else x)
+      any(!is.finite(x)) || any(Mod(polyroot(polynomial)) <= 1)
+    })
+  }
+  matrix(violations, nrow(lags[[1]]))
 }
 
 
@@ -313,10 +319,7 @@ arma_root_violations = function(values, component) {
 #' @noRd
 warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   diagnostics = resolve_diagnostics(diagnostics)
-  model_tables = get_fit_model_tables(fit)
-  model_predictors = model_tables$predictors
-  model_group_effects = model_tables$group_effects
-  components = intersect(c("ar", "ma"), unique(model_predictors$dpar))
+  components = intersect(c("ar", "ma"), unique(get_fit_model_tables(fit)$predictors$dpar))
   enabled = vapply(components, function(component) {
     !is.null(diagnostics[[component]])
   }, logical(1))
@@ -325,25 +328,19 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
 
   rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
   newdata = fit$data[rows, , drop = FALSE]
-  newdata$.row = seq_len(nrow(newdata))
-  group_info = unpack_group_effects(fit, pars = TRUE)
   draws = as.matrix(.subset2(fit, "mcmc_post"))
   # Spread the check over all retained post-warmup draws and chains.
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
   draws = mcp_draws(smoke_fit, population = TRUE, group = TRUE, pivot = FALSE)
-  predictor_data = add_rhs_predictors(newdata, fit)
-  groups = split(group_info$effects$name, group_info$effects$group_col)
-  draws_predictors = join_draws(predictor_data, draws, groups)
+  effects = unpack_group_effects(fit, pars = TRUE)$effects
+  pars = draws_to_pars(draws, newdata, split(effects$name, effects$group_col))
+  links = evaluate_formula(fit, get_model_data(fit, newdata), pars, nrow(draws))
 
-  values = evaluate_model_dpars(
-    fit, as.list(draws_predictors),
-    paste0(".pred_", get_predictor_design_names(model_predictors, model_group_effects))
-  )
+  # Maximum violation rate across rows
   probabilities = vapply(components, function(component) {
-    violations = arma_root_violations(values, component)
-    max(tapply(violations, draws_predictors$.row, mean))
+    max(rowMeans(arma_root_violations(links, component)))
   }, numeric(1))
   bad = vapply(names(probabilities), function(component) {
     threshold = diagnostics[[component]]
@@ -369,10 +366,10 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
 
 
 # Warn when fresh-series AR/MA coefficients violate root conditions
-# - values: Evaluated model parameters, including ar1_, ma1_, etc.
-warn_arma_simulation = function(values) {
+# - links: Evaluated linear predictors from `evaluate_formula()`, including "ar1", "ma1", etc.
+warn_arma_simulation = function(links) {
   bad = vapply(c("ar", "ma"), function(component) {
-    any(arma_root_violations(values, component))
+    any(arma_root_violations(links, component))
   }, logical(1))
   if (!any(bad))
     return(invisible(NULL))
@@ -463,71 +460,52 @@ get_garma_threshold_jagscode = function(predictors) {
 }
 
 
-# Evaluate or generate a GARMA response series
-simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
-                          dpars, data = list(), y = NULL, series_id = NULL) {
+#' Evaluate or generate GARMA response series
+#'
+#' Rows are time points, contiguous within each series, and columns are independent draws.
+#' At each time position, all series and draws are evaluated together.
+#'
+#' @param link_mu The linear predictor of mu without AR/MA terms (rows x draws).
+#' @param ar,ma Lists of AR and MA coefficients (rows x draws), one per lag.
+#' @param threshold Observation threshold that keeps the link of the response finite.
+#' @param dpars Distributional parameters on the response scale (rows x draws) to generate responses.
+#' @param data Response auxiliaries, e.g., `trials`, one value per row.
+#' @param y The observed response, one value per row or rows x draws. `NULL` generates fresh series.
+#' @param series The series of each row, or `NULL` for a single series.
+#' @return A list with the response `y` (rows x draws), `link_mu` including the AR/MA terms, and these AR/MA terms (`resid_garma`).
+#' @noRd
+simulate_garma = function(link_mu, ar, ma, threshold, family, dpars, data = list(), y = NULL, series = NULL) {
   assert_arma_thresholds(family, threshold, data)
+  if (is.null(series))
+    series = rep(1, nrow(link_mu))
+  runs = rle(match(series, unique(series)))
+  if (anyDuplicated(runs$values))
+    stop_github("Rows belonging to each series must be contiguous.")
 
-  if (is.null(series_id))
-    series_id = rep(1, length(base_link_mu))
-  if (length(series_id) != length(base_link_mu) || anyNA(series_id))
-    stop_github("series_id must have one non-missing value per observation.")
-  series_runs = rle(if (is.factor(series_id)) as.integer(series_id) else series_id)  # rle() rejects factors
-  if (anyDuplicated(series_runs$values))
-    stop_github("Rows belonging to each series_id must be contiguous.")
+  generate = is.null(y)
+  y = matrix(if (generate) NA_real_ else y, nrow(link_mu), ncol(link_mu))
+  link_y = matrix(family$linkfun(family$garma$observed_r(y, data, threshold)), nrow(y))
+  resid_abs = resid_ma = resid_garma = matrix(0, nrow(y), ncol(y))
 
-  generate_series = is.null(y)
+  position = sequence(runs$lengths)
+  for (rows in split(seq_along(position), position)) {
+    p = position[rows[1]]
+    for (lag in seq_len(min(length(ar), p - 1)))
+      resid_garma[rows, ] = resid_garma[rows, ] + ar[[lag]][rows, ] * resid_abs[rows - lag, ]
+    for (lag in seq_len(min(length(ma), p - 1)))
+      resid_garma[rows, ] = resid_garma[rows, ] + ma[[lag]][rows, ] * resid_ma[rows - lag, ]
 
-  ar_order = length(ar_list)
-  ma_order = length(ma_list)
-  n = length(base_link_mu)
-
-  # One recurrence for supplied and generated histories. At each time position,
-  # independent series/draws can be evaluated together, including ragged series.
-  if (generate_series)
-    y = rep(NA_real_, n)
-  link_y = family$linkfun(family$garma$observed_r(y, data, threshold))
-  resid_abs = numeric(n)
-  resid_ma = numeric(n)
-  resid_garma = numeric(n)
-  link_mu = numeric(n)
-  positions = sequence(series_runs$lengths)
-  rows_by_position = split(seq_len(n), factor(positions, levels = seq_len(max(positions))))
-
-  for (rows in rows_by_position) {
-    position = positions[rows[1]]
-    for (lag in seq_len(min(ar_order, position - 1))) {
-      resid_garma[rows] = resid_garma[rows] +
-        ar_list[[paste0("ar", lag, "_")]][rows] * resid_abs[rows - lag]
+    # A fresh series draws each response given the generated history
+    if (generate) {
+      row_dpars = lapply(dpars, function(value) value[rows, , drop = FALSE])
+      row_dpars$mu = family$linkinv(link_mu[rows, , drop = FALSE] + resid_garma[rows, , drop = FALSE])
+      row_data = lapply(data, function(value) value[rows])
+      y[rows, ] = family$r$rng(length(rows) * ncol(y), row_dpars, row_data)
+      link_y[rows, ] = family$linkfun(family$garma$observed_r(y[rows, ], row_data, threshold))
     }
-    for (lag in seq_len(min(ma_order, position - 1))) {
-      resid_garma[rows] = resid_garma[rows] +
-        ma_list[[paste0("ma", lag, "_")]][rows] * resid_ma[rows - lag]
-    }
-    link_mu[rows] = base_link_mu[rows] + resid_garma[rows]
-
-    # Only absent history values are generated here. Conditional predictions
-    # are separate response draws and never replace the supplied history.
-    missing_rows = rows[is.na(y[rows])]
-    if (length(missing_rows) > 0) {
-      row_dpars = lapply(dpars, function(x) if (length(x) == 1) x else x[missing_rows])
-      row_dpars$mu = family$linkinv(link_mu[missing_rows])
-      row_data = lapply(data, function(x) if (length(x) == 1) x else x[missing_rows])
-      y[missing_rows] = family$r$rng(length(missing_rows), row_dpars, row_data)
-      link_y[missing_rows] = family$linkfun(family$garma$observed_r(
-        y[missing_rows], row_data, threshold[missing_rows]
-      ))
-    }
-    resid_abs[rows] = link_y[rows] - base_link_mu[rows]
-    resid_ma[rows] = link_y[rows] - link_mu[rows]
+    resid_abs[rows, ] = link_y[rows, ] - link_mu[rows, ]
+    resid_ma[rows, ] = resid_abs[rows, ] - resid_garma[rows, ]
   }
 
-  list(
-    y = y,
-    mu = family$linkinv(link_mu),
-    link_mu = link_mu,
-    resid_garma = resid_garma,
-    resid_abs = resid_abs,
-    resid_ma = resid_ma
-  )
+  list(y = y, link_mu = link_mu + resid_garma, resid_garma = resid_garma)
 }

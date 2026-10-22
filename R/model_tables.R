@@ -8,8 +8,7 @@
 #' Used internally for most mcp functions.
 #'
 #' @inheritParams mcp
-#' @return A list with `segments` (one row per segment, including change-point
-#'   code for the change point starting that segment) and `cps` (one row per
+#' @return A list with `segments` (one row per segment) and `cps` (one row per
 #'   estimated change point, naturally indexed by `cp = 1, 2, ...`).
 #' @noRd
 get_segment_tables = function(model, data, family, par_x) {
@@ -76,10 +75,6 @@ get_segment_tables = function(model, data, family, par_x) {
   ###############################################
   # SPLIT INTO `segments` AND `cps`              #
   ###############################################
-  # `segments`: one row per segment, shared metadata only.
-  segment_metadata = segments %>%
-    dplyr::select("segment", "form", "form_env", "y", "trials", "weights", "x")
-
   # `cps`: one row per *estimated* change point (nrow(segments) - 1 of
   # them), naturally indexed by `cp` instead of borrowing the segment index.
   # `segment` is an explicit join key: the segment that this change point starts.
@@ -92,9 +87,6 @@ get_segment_tables = function(model, data, family, par_x) {
       group_col = as.character(.data$cp_group_col),
       sd_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col, "_sd"), NA_character_),
       group_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA_character_)
-    ) %>%
-    dplyr::mutate(
-      code = ifelse(!is.na(.data$group_name), yes = paste0("(", .data$name, " + ", .data$group_name, "CP_", .data$segment, "_INDEX)"), no = .data$name)
     )
 
   if (length(cp_group_cols) > 1) {
@@ -104,15 +96,8 @@ get_segment_tables = function(model, data, family, par_x) {
     )
   }
 
-  # `segments`: shared segment metadata with the code of the change points that start
-  # and end each segment. Segment 1 starts at `cp_0` = min(x) and the last
-  # segment ends at `cp_K` = max(x), i.e., the observed range of x.
-  segments = segment_metadata %>%
-    dplyr::left_join(dplyr::select(cps, "segment", cp_group_col = "group_col", cp_start = "code"), by = "segment") %>%
-    dplyr::mutate(
-      cp_start = dplyr::coalesce(.data$cp_start, "cp_0"),
-      cp_end = c(.data$cp_start[-1], paste0("cp_", dplyr::n()))
-    )
+  # `segments`: one row per segment, shared metadata only.
+  segments = dplyr::select(segments, "segment", "form", "form_env", "y", "trials", "weights", "x")
 
   list(segments = segments, cps = cps)
 }

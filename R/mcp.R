@@ -336,20 +336,9 @@ mcp = function(
     warn_arma_not_included(predictor_tables$components)
   }
 
-  # Make formulas
-  formula_jags = get_formula_jags(
-    segments, predictor_occurrences, group_occurrences, par_x, family,
-    design_specs = predictor_tables$design_specs
-  )
-
   # Make jags code if it is not provided by the user
   if (!custom_jags_code) {
-    ar_order = get_arma_order(predictor_definitions, "ar")
-    ma_order = get_arma_order(predictor_definitions, "ma")
-    jags_code = get_jags_code(
-      prior, segments, group_definitions, formula_jags, ar_order, ma_order, family, par_x,
-      prior_table, series = !is.null(series)
-    )
+    jags_code = get_jags_code(model_tables, prior, prior_table, family)
     assert_inits(inits, parameters$parameter, jags_code)
   }
 
@@ -468,7 +457,6 @@ mcp = function(
     # Not meant to be used by the end user.
     .internal = list(
       model_tables = model_tables,
-      formula_jags = formula_jags,
       prior_table = prior_table,
       prior_format = "jags_string_v1",
       diagnostics = diagnostics,

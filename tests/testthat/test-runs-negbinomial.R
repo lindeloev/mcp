@@ -95,16 +95,10 @@ test_that("negative-binomial R evaluation matches stats", {
     shape_1 = shape
   )
 
-  predictors = add_rhs_predictors(data, fit)
-  loglik = rlang::exec(
-    simulate_vectorized,
-    fit,
-    !!!predictors,
-    Intercept_1 = rep(log(mu), nrow(data)),
-    x_1 = rep(0, nrow(data)),
-    shape_1 = rep(shape, nrow(data)),
-    .type = "loglik"
-  )
+  loglik = simulate_model(
+    fit, get_model_data(fit, data), list(Intercept_1 = log(mu), x_1 = 0, shape_1 = shape),
+    n_draws = 1, y = data$y, type = "loglik"
+  )$value
   expect_equal(
     as.numeric(loglik),
     stats::dnbinom(data$y, mu = mu, size = shape, log = TRUE)

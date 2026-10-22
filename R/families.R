@@ -860,6 +860,9 @@ assert_mcpfamily = function(x) {
     checkmate::assert_flag(auxiliary$required)
     checkmate::assert_character(auxiliary$operations)
   }
+  
+  # R-side functions take `dpars` as rows x draws matrices on the response scale and `data` (response
+  # auxiliaries, e.g., `trials`) with one value per row. Like stats::dbinom() etc., they must recycle `data` down the columns.
   checkmate::assert_function(x$r$epred)
   checkmate::assert_function(x$r$variance, null.ok = TRUE)
   checkmate::assert_function(x$r$log_lik)
@@ -877,12 +880,3 @@ assert_mcpfamily = function(x) {
 
   invisible(x)
 }
-
-# This renaming enables fit$simulate() with JAGS-like code
-logit = stats::qlogis
-
-ilogit = stats::plogis
-
-probit = stats::qnorm
-
-phi = stats::pnorm

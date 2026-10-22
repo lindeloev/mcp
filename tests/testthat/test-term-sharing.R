@@ -20,14 +20,11 @@ test_that("AR sharing resolves every lag and preserves current segment transitio
   data = data.frame(x = 1:12, y = sin(1:12))
   fit = mcp(list(y ~ 1 + ar(2), ~ 1 + ar(2, same(1), threshold = 0.2)),
     data, par_x = "x", sample = FALSE)
-  args = c(as.list(add_rhs_predictors(data, fit)),
-    lapply(list(cp_1 = 6, Intercept_1 = 1, Intercept_2 = 2, sigma_1 = 1, ar1_1 = 0.3, ar2_1 = -0.1), rep, 12))
-  tables = get_fit_model_tables(fit)
-  values = evaluate_model_dpars(fit, args,
-    paste0(".pred_", get_predictor_design_names(tables$predictors, tables$group_effects)))
-  expect_equal(values$ar1_, rep(0.3, 12))
-  expect_equal(values$ar2_, rep(-0.1, 12))
-  expect_equal(values$garma_threshold_, rep(0.2, 12))
+  pars = list(cp_1 = 6, Intercept_1 = 1, Intercept_2 = 2, sigma_1 = 1, ar1_1 = 0.3, ar2_1 = -0.1)
+  links = evaluate_formula(fit, get_model_data(fit, data), pars, n_draws = 1)
+  expect_equal(as.vector(links$ar1), rep(0.3, 12))
+  expect_equal(as.vector(links$ar2), rep(-0.1, 12))
+  expect_match(fit$jags_code, "garma_threshold_\\[i_\\] = 0.2\n")
   expect_error(mcp(list(y ~ 1 + ar(1), ~ 1 + ar(2, same(1))),
     data, par_x = "x", sample = FALSE), "lag 2")
 
@@ -141,7 +138,7 @@ test_that("same() preserves source factor coding and supports explicit sources",
   expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "cp_2", "Intercept_1", "groupb_1", "groupc_1", "sigma_1"))
   expect_true(all(tables$predictors$name[tables$predictors$segment > 1 & tables$predictors$term_key == "group"] %in% c("groupb_1", "groupc_1")))
   expect_equal(unique(tables$predictors$definition_segment[tables$predictors$segment == 3]), 1L)
-  expect_no_error(add_rhs_predictors(data[1:3, ], fit))
+  expect_no_error(get_model_data(fit, data[1:3, ]))
 
   interaction_fit = mcp(
     list(y ~ 1 + x * group, ~ 0 + same(x * group)),

@@ -223,7 +223,7 @@ niterations = posterior::niterations
 #' @param newdata Optional prediction data selecting group levels. Levels must
 #'   be in the fitted data.
 #' @param pivot Logical. `FALSE` returns one row per draw with group-level deviations
-#'   as `name[level]` columns, to be matched to data rows using `join_draws()`.
+#'   as `name[level]` columns, to be matched to data rows using `draws_to_pars()`.
 #' @return `tibble` of posterior draws in `tidybayes` format.
 #' @noRd
 mcp_draws = function(
@@ -273,7 +273,7 @@ mcp_draws = function(
   # Select draws before expanding across group levels.
   draws = tibble::as_tibble(posterior::as_draws_df(fit, prior = prior))
   if (!is.null(ndraws))
-    draws = dplyr::sample_n(draws, ndraws)
+    draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
 
   # Prepare for tidyr::pivot_longer_spec:
   # Describe the reshape using original factor levels
@@ -291,7 +291,9 @@ mcp_draws = function(
         "to predict without group-level effects, or `fit$simulate()` to simulate new groups.",
         call. = FALSE
       )
-    group_draws_spec(groups[[col]], col, levels)
+    spec = tidyr::expand_grid(.value = groups[[col]], !!col := levels)
+    spec$.name = paste0(spec$.value, "[", spec[[col]], "]")
+    spec
   })
   group_nodes = unlist(lapply(specs, function(spec) spec$.name))
   draws = dplyr::select(draws, dplyr::all_of(unique(c(
@@ -323,27 +325,20 @@ mcp_draws = function(
 }
 
 
-# Reshape specification from draw columns, e.g., "x_1_id[a]", to the group-level deviation
-# `x_1_id` for each level of the grouping column `col`.
-group_draws_spec = function(names, col, levels) {
-  spec = tidyr::expand_grid(.value = names, !!col := levels)
-  spec$.name = paste0(spec$.value, "[", spec[[col]], "]")
-  spec
-}
-
-
-# Match draws from `mcp_draws(..., pivot = FALSE)` to the rows of `data`: one row per data row
-# and draw, with the group-level deviations of the level in each row. Grouping columns are matched
-# one at a time, so crossed grouping columns never expand the draws to all combinations of levels.
+# Parameter values of draws from `mcp_draws(..., pivot = FALSE)`, as used by `evaluate_formula()`:
+# one value per draw for population-level parameters and one value per row of `data` and draw
+# (a rows x draws matrix) for group-level deviations, matched by the grouping columns in `data`.
 # - groups: Group-level deviation names by grouping column, e.g., `list(id = c("Intercept_1_id", "x_1_id"))`.
-join_draws = function(data, draws, groups) {
-  joined = dplyr::cross_join(data, draws[!grepl("[", names(draws), fixed = TRUE)])
+draws_to_pars = function(draws, data, groups) {
+  is_par = !grepl("[", names(draws), fixed = TRUE) & names(draws) %notin% c(".chain", ".iteration", ".draw")
+  pars = as.list(draws[is_par])
   for (col in names(groups)) {
-    spec = group_draws_spec(groups[[col]], col, unique(data[[col]]))
-    group_draws = tidyr::pivot_longer_spec(draws[c(".draw", spec$.name)], spec)
-    joined = dplyr::left_join(joined, group_draws, by = c(".draw", col), relationship = "many-to-one")
+    levels = unique(data[[col]])
+    rows = match(data[[col]], levels)
+    for (name in groups[[col]])
+      pars[[name]] = t(unname(as.matrix(draws[paste0(name, "[", levels, "]")])))[rows, , drop = FALSE]
   }
-  joined
+  pars
 }
 
 

@@ -60,7 +60,7 @@ test_that("population terms apply only where included while x-terms join", {
   )
   expect_lifetimes(fit, c(z_1 = 2L, w_1 = 2L, x_1 = NA_integer_))
   expect_match(
-    fit$.internal$formula_jags,
+    fit$jags_code,
     "(?s)x\\[i_\\] < cp_1.*c\\(z_1, w_1\\)",
     perl = TRUE
   )
@@ -182,7 +182,7 @@ test_that("formula offsets work in mcp formulas", {
     ifelse(d_pois$x < 7.5 | (d_pois$x >= 11.5 & d_pois$x < 15.5), d_pois$pop, 1)
   )
   expect_match(
-    offset_lifetime$.internal$formula_jags,
+    offset_lifetime$jags_code,
     "(?s)x\\[i_\\] < cp_1.*offset_mu_1_",
     perl = TRUE
   )
@@ -369,6 +369,12 @@ test_that("factor punctuation produces safe parameter names", {
   expect_no_error(do.call(fit$simulate, args))
 })
 
+# Columns of the design matrix evaluated on `newdata` for the coefficients `names`
+design_columns = function(fit, newdata, names) {
+  predictors = get_fit_model_tables(fit)$predictors
+  get_model_data(fit, newdata)$matrix[, predictors$matrix_col[match(names, predictors$name)], drop = FALSE]
+}
+
 test_that("prediction reuses fitted factor encodings", {
   data = data.frame(
     x = 1:6,
@@ -377,27 +383,17 @@ test_that("prediction reuses fitted factor encodings", {
   )
   ordered_fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
   ordered_tables = get_predictor_tables(ordered_fit$model, data, ordered_fit$family, par_x = "x")
-  ordered_matrix = get_predictor_matrix(ordered_tables$predictors, ordered_tables$group_effects)
-  ordered_new = add_rhs_predictors(
-    transform(data, state = as.character(state)), ordered_fit
-  )
-  expect_equal(
-    unname(as.matrix(ordered_new[, paste0(".pred_", colnames(ordered_matrix))])),
-    unname(ordered_matrix)
-  )
+  ordered_matrix = get_predictor_matrix(ordered_tables$predictors)  # No group-level effects
+  ordered_new = get_model_data(ordered_fit, transform(data, state = as.character(state)))$matrix
+  expect_equal(unname(ordered_new), unname(ordered_matrix))
 
   custom_data = transform(data, state = factor(state))
   contrasts(custom_data$state) = stats::contr.sum(3)
   custom_fit = suppressWarnings(mcp(list(y ~ state), custom_data, par_x = "x", sample = FALSE))
   custom_tables = suppressWarnings(get_predictor_tables(custom_fit$model, custom_data, custom_fit$family, par_x = "x"))
-  custom_matrix = get_predictor_matrix(custom_tables$predictors, custom_tables$group_effects)
-  custom_new = add_rhs_predictors(
-    transform(custom_data, state = as.character(state)), custom_fit
-  )
-  expect_equal(
-    unname(as.matrix(custom_new[, paste0(".pred_", colnames(custom_matrix))])),
-    unname(custom_matrix)
-  )
+  custom_matrix = get_predictor_matrix(custom_tables$predictors)  # No group-level effects
+  custom_new = get_model_data(custom_fit, transform(custom_data, state = as.character(state)))$matrix
+  expect_equal(unname(custom_new), unname(custom_matrix))
 })
 
 test_that("prediction is independent of later contrast options", {
@@ -410,49 +406,35 @@ test_that("prediction is independent of later contrast options", {
   )
   fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
   fitted_tables = get_predictor_tables(fit$model, data, fit$family, par_x = "x")
-  fitted_matrix = get_predictor_matrix(fitted_tables$predictors, fitted_tables$group_effects)
+  fitted_matrix = get_predictor_matrix(fitted_tables$predictors)  # No group-level effects
 
   options(contrasts = c("contr.sum", "contr.poly"))
-  new_matrix = add_rhs_predictors(data, fit)
-  expect_equal(
-    unname(as.matrix(new_matrix[, paste0(".pred_", colnames(fitted_matrix))])),
-    unname(fitted_matrix)
-  )
+  new_matrix = get_model_data(fit, data)$matrix
+  expect_equal(unname(new_matrix), unname(fitted_matrix))
 })
 
 test_that("data-derived bases reuse their fitted specification", {
   data = data.frame(x = 1:8, y = 1:8)
   newdata = data.frame(x = 9:10)
+  coefficients = function(fit) setdiff(get_fit_model_tables(fit)$predictors$name, c("Intercept_1", "sigma_1"))
 
   scale_fit = mcp(list(y ~ scale(x)), data, sample = FALSE)
-  scale_matrix = add_rhs_predictors(newdata, scale_fit)
-  scale_pars = get_fit_model_tables(scale_fit)$predictors$name[
-    get_fit_model_tables(scale_fit)$predictors$dpar == "mu"
-  ]
   expect_equal(
-    scale_matrix[[paste0(".pred_", setdiff(scale_pars, "Intercept_1"))]],
+    as.numeric(design_columns(scale_fit, newdata, coefficients(scale_fit))),
     as.numeric(scale(newdata$x, center = mean(data$x), scale = stats::sd(data$x)))
   )
 
   poly_basis = stats::poly(data$x, 2)
   poly_fit = mcp(list(y ~ poly(x, 2)), data, sample = FALSE)
-  poly_matrix = add_rhs_predictors(newdata, poly_fit)
-  poly_pars = get_fit_model_tables(poly_fit)$predictors$name[
-    get_fit_model_tables(poly_fit)$predictors$dpar == "mu"
-  ]
   expect_equal(
-    unname(as.matrix(poly_matrix[, paste0(".pred_", setdiff(poly_pars, "Intercept_1"))])),
+    unname(design_columns(poly_fit, newdata, coefficients(poly_fit))),
     unname(stats::predict(poly_basis, newdata$x))
   )
 
   spline_basis = splines::ns(data$x, df = 3)
   spline_fit = mcp(list(y ~ splines::ns(x, df = 3)), data, sample = FALSE)
-  spline_matrix = add_rhs_predictors(newdata, spline_fit)
-  spline_pars = get_fit_model_tables(spline_fit)$predictors$name[
-    get_fit_model_tables(spline_fit)$predictors$dpar == "mu"
-  ]
   expect_equal(
-    unname(as.matrix(spline_matrix[, paste0(".pred_", setdiff(spline_pars, "Intercept_1"))])),
+    unname(design_columns(spline_fit, newdata, coefficients(spline_fit))),
     matrix(
       as.numeric(stats::predict(spline_basis, newdata$x)),
       nrow = nrow(newdata)
@@ -462,12 +444,8 @@ test_that("data-derived bases reuse their fitted specification", {
   bs_newdata = data.frame(x = 2:3)
   bs_basis = splines::bs(data$x, df = 3)
   bs_fit = mcp(list(y ~ splines::bs(x, df = 3)), data, sample = FALSE)
-  bs_matrix = add_rhs_predictors(bs_newdata, bs_fit)
-  bs_pars = get_fit_model_tables(bs_fit)$predictors$name[
-    get_fit_model_tables(bs_fit)$predictors$dpar == "mu"
-  ]
   expect_equal(
-    unname(as.matrix(bs_matrix[, paste0(".pred_", setdiff(bs_pars, "Intercept_1"))])),
+    unname(design_columns(bs_fit, bs_newdata, coefficients(bs_fit))),
     matrix(
       as.numeric(stats::predict(bs_basis, bs_newdata$x)),
       nrow = nrow(bs_newdata)
@@ -496,25 +474,17 @@ test_that("model formulas use .GlobalEnv while fitted designs preserve local tra
   expect_true(all(vapply(fits, function(fit) {
     identical(environment(fit$model[[1]]), globalenv())
   }, logical(1))))
-  new_matrix = add_rhs_predictors(data.frame(x = 9:10), fits$mu)
-  expect_equal(new_matrix$.pred_sq_localx_1, c(81, 100))
+  expect_equal(as.numeric(design_columns(fits$mu, data.frame(x = 9:10), "sq_localx_1")), c(81, 100))
 })
 
 
-test_that("each fitted design specification is evaluated once in add_rhs_predictors", {
+test_that("each fitted design specification is evaluated once in get_model_data", {
   d = data.frame(x = 1:10, y = 1:10, z = 1:10)
   fit = mcp(list(y ~ 1 + x + offset(z), ~ 1 + x + offset(2 * z)), data = d, family = poisson(), sample = FALSE)
-  specs = get_fit_model_tables(fit)$design_specs
-  expect_equal(length(specs), 2)
-
-  evaluated = evaluate_design_specs(specs, d)
-  expect_named(evaluated, names(specs))
-  expect_true(is.matrix(evaluated[[1]]$matrix))
-  expect_equal(as.numeric(evaluated[[1]]$offset), d$z)
-  expect_equal(as.numeric(evaluated[[2]]$offset), 2 * d$z)
+  expect_equal(length(get_fit_model_tables(fit)$design_specs), 2)
 
   eval_count = 0
-  trace_env = environment(add_rhs_predictors)
+  trace_env = environment(get_model_data)
   orig_get_fitted_design = trace_env$get_fitted_design
   unlockBinding("get_fitted_design", trace_env)
   on.exit({
@@ -526,11 +496,10 @@ test_that("each fitted design specification is evaluated once in add_rhs_predict
     orig_get_fitted_design(...)
   }
 
-  res = add_rhs_predictors(d, fit)
+  res = get_model_data(fit, d)
   expect_equal(eval_count, 2)
-  expect_true("offset_mu_1_" %in% names(res))
-  expect_equal(res$offset_mu_1_, d$z)
-  expect_true(all(c(".pred_Intercept_1", ".pred_x_1", ".pred_Intercept_2", ".pred_x_2") %in% names(res)))
+  expect_equal(res$offsets, list(offset_mu_1_ = d$z, offset_mu_2_ = 2 * d$z))
+  expect_equal(ncol(res$matrix), 4)  # Intercept_1, x_1, Intercept_2, x_2
 })
 
 

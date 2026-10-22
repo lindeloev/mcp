@@ -16,7 +16,7 @@ test_that("missing response draws follow covariates and group-level effects", {
   fitted_draws = fitted(fit, summary = FALSE, width = FALSE)
   prediction_draws = predict(fit, summary = FALSE, width = FALSE)
   missing_row = prediction_draws$.row == 10
-  imputed = get_imputed_response_draws(fit, prediction_draws)
+  imputed = as.vector(t(get_imputed_response(fit, fit$data$y, unique(prediction_draws$.draw))))  # Tidy order
 
   expect_equal(fit$.internal$imputed_response_rows, 10L)
   expect_false(isTRUE(all.equal(prediction_draws$.prediction[missing_row], imputed[missing_row])))

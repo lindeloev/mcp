@@ -137,8 +137,8 @@ test_that("AR/MA components are off until included again", {
     "Segment 2 does not include ar()", fixed = TRUE
   )
   expect_false("ar1_2" %in% mcp_pars(fit)$parameter)
-  expect_match(fit$.internal$formula_jags, "x\\[i_\\] < cp_1.*ar1_1", perl = TRUE)
-  expect_match(fit$.internal$formula_jags, "x\\[i_\\] >= cp_2.*ar1_3", perl = TRUE)
+  expect_match(fit$jags_code, "x\\[i_\\] < cp_1.*ar1_1", perl = TRUE)
+  expect_match(fit$jags_code, "x\\[i_\\] >= cp_2.*ar1_3", perl = TRUE)
 })
 
 
@@ -245,8 +245,8 @@ test_that("AR and MA defaults regularize direct coefficients", {
 
 test_that("AR/MA root warnings are conditional", {
   expect_equal(
-    arma_root_violations(data.frame(ma1_ = c(0.5, 1.1)), "ma"),
-    c(FALSE, TRUE)
+    arma_root_violations(list(ma1 = matrix(c(0.5, 1.1))), "ma"),
+    matrix(c(FALSE, TRUE))
   )
 
   data = data.frame(x = 1:6, y = rep(0, 6))

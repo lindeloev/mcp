@@ -249,6 +249,18 @@ assert_arma = function(arma, replicate_ok = TRUE) {
 }
 
 
+# `rate = TRUE` only applies to families with trials, e.g., binomial()
+assert_rate = function(rate, fit) {
+  checkmate::assert_flag(rate)
+  if (rate && !fit$family$response$has_rate)
+    stop(
+      "`rate = TRUE` is not supported for family = ", fit$family$family, "(). It only applies to families with trials, such as binomial(). ",
+      "For rates per unit of exposure in models with `offset(log(exposure))`, set `exposure = 1` in `newdata`.",
+      call. = FALSE
+    )
+}
+
+
 assert_typescale = function(type, scale) {
   rlang::arg_match0(type, c("predict", "fitted", "residuals", "loglik"))
   rlang::arg_match0(scale, c("response", "linear"))

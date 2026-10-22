@@ -172,8 +172,8 @@ test_that("generated code separates link and distribution scales", {
   ])
   expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 
-  expect_match(fit$.internal$formula_jags, "link_mu_\\[i_\\] =")
-  expect_match(fit$.internal$formula_jags, "link_sigma_\\[i_\\] =")
+  expect_match(fit$jags_code, "link_mu_\\[i_\\] =")
+  expect_match(fit$jags_code, "link_sigma_\\[i_\\] =")
   expect_match(fit$jags_code, "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
   expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
   expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
@@ -200,8 +200,8 @@ test_that("only dpars with a numerical floor are floored", {
   expect_match(fit$jags_code, "shape_\\[i_\\] = link_shape_\\[i_\\]\n")
   expect_false(grepl("max\\(1e", fit$jags_code))
 
-  dpars = add_response_dpars(list(link_mu_ = 0, link_shape_ = 1e-8), fit$family)
-  expect_equal(dpars$shape_, 1e-8)
+  dpars = simulate_model(fit, get_model_data(fit, data), list(Intercept_1 = 0, shape_1 = 1e-8), n_draws = 1, type = "fitted")$dpars
+  expect_equal(as.vector(dpars$shape), rep(1e-8, nrow(data)))
 })
 
 
@@ -246,7 +246,7 @@ test_that("distributional population terms apply only where included", {
   )
   expect_lifetimes(fit, c(sigma_z_1 = 2L))
   expect_match(
-    fit$.internal$formula_jags,
+    fit$jags_code,
     "(?s)x\\[i_\\] < cp_1.*c\\(sigma_z_1\\)",
     perl = TRUE
   )
@@ -373,65 +373,6 @@ test_that("R-side dpar evaluation supports link and response scales", {
 })
 
 
-test_that("evaluated-draw helpers enforce draw and data-row identity", {
-  samples = expand.grid(
-    .row = 1:2,
-    .draw = 1:3
-  )
-  samples$.chain = 1L
-  samples$.iteration = samples$.draw
-  samples$x = 5
-  samples$group = factor(c("A", "B")[samples$.row])
-  samples$`.epred` = 10 * samples$.row + samples$.draw
-  samples = samples[c(6, 1, 4, 2, 5, 3), ]
-
-  expect_silent(validate_eval_draws(samples, ".epred"))
-
-  # Equal x values do not define the evaluation unit. Quantiles stay separate
-  # by .row and receive plotting metadata only after summarisation.
-  quantiles = get_quantiles(
-    samples,
-    c(0.25, 0.75),
-    ".epred",
-    keep = c("x", "group")
-  )
-  expect_equal(nrow(quantiles), 4)
-  expect_equal(unique(quantiles$.epred[quantiles$.row == 1]), c(11.5, 12.5))
-  expect_equal(unique(quantiles$.epred[quantiles$.row == 2]), c(21.5, 22.5))
-
-  fitted_matrix = tidy_to_matrix(samples, type = ".epred", data_rows = c(2, 1))
-  expect_equal(colnames(fitted_matrix), c("2", "1"))
-  expect_equal(
-    unname(fitted_matrix),
-    rbind(c(21, 11), c(22, 12), c(23, 13))
-  )
-
-  expect_error(
-    validate_eval_draws(rbind(samples, samples[1, ]), ".epred"),
-    "one `.epred` value per `.draw` and `.row`",
-    fixed = TRUE
-  )
-  expect_error(
-    validate_eval_draws(samples[-1, ], ".epred"),
-    "same complete set of posterior draws",
-    fixed = TRUE
-  )
-
-  inconsistent_grid = samples
-  inconsistent_grid$x[1] = 6
-  expect_error(
-    get_quantiles(
-      inconsistent_grid,
-      0.5,
-      ".epred",
-      keep = "x"
-    ),
-    "metadata differs across draws",
-    fixed = TRUE
-  )
-})
-
-
 test_that("distributional parameters use the same evaluation identity", {
   data = data.frame(
     x = rep(1:3, each = 2),
@@ -474,8 +415,7 @@ test_that("distributional parameters use the same evaluation identity", {
   keys = c(".chain", ".iteration", ".draw", ".row")
 
   expect_equal(mu[, keys], sigma[, keys])
-  expect_silent(validate_eval_draws(mu, ".mu"))
-  expect_silent(validate_eval_draws(sigma, ".sigma"))
+  expect_equal(nrow(dplyr::distinct(mu[c(".draw", ".row")])), nrow(mu))
 
   sigma_summary = fitted(
     fit,
@@ -487,15 +427,6 @@ test_that("distributional parameters use the same evaluation identity", {
   expect_equal(sigma_summary$.lower, c(1, 3))
   expect_equal(sigma_summary$.upper, c(1, 3))
 
-  predicted = pp_eval(
-    fit,
-    newdata = newdata,
-    summary = FALSE,
-    type = "predict",
-    .return_fitted = TRUE
-  )
-  expect_equal(predicted$.epred, mu$.mu)
-  expect_null(attr(predicted$.prediction, ".epred"))
 })
 
 
@@ -534,7 +465,8 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(summary$.upper, c(0, 10))
 
   samples = fitted(fit, newdata = newdata, summary = FALSE, width = FALSE) %>% add_plot_groups()
-  quantiles = get_quantiles(samples, c(0.25, 0.75), ".epred", c("x", ".group", ".color"))
+  quantiles = tidyr::pivot_longer(summary, c(".lower", ".upper"), names_to = "quantile", values_to = ".epred") %>%
+    add_plot_groups(curve_by = "group")
   quantile_layer = geom_quantiles(
     quantiles,
     yvar = rlang::sym(".epred"),

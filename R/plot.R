@@ -81,7 +81,6 @@ get_plot = function(x,
   # Intervals
   interval = match.arg(interval, c("none", "fitted", "predict"), several.ok = TRUE)
   assert_width(width)
-  probs = c((1 - width) / 2, (1 + width) / 2)
   show_fitted = "fitted" %in% interval
   show_predict = "predict" %in% interval
 
@@ -151,66 +150,31 @@ get_plot = function(x,
   needs_arma = uses_garma(fit, arma, "fitted", dpar)
   newdata = interpolate_newdata(fit, by = by, at = at, arma = needs_arma, prior = prior)
 
-  # Predict
-  local_pp_eval = function(type, newdata, ndraws = NULL, return_fitted = FALSE, return_dpars = FALSE) {
+  # Evaluate like fitted() and predict(). The response is in newdata for AR/MA models, so drop it.
+  local_pp_eval = function(type, summary, ndraws) {
     pp_eval(
-      object = fit,
-      newdata = newdata,
-      summary = FALSE,  # Get draws
-      type = type,
-      rate = rate,
-      prior = prior,
-      dpar = dpar,
-      group_effects = group_pars,
-      arma = needs_arma,
-      ndraws = ndraws,
-      draws_format = "tidy",
-      scale = scale,
-      .return_fitted = return_fitted,
-      .return_dpars = return_dpars
-    )
-  }
-
-  prepare_draws = function(draws) {
-    draws = draws %>%
-      # Only a problem for AR/MA models, where newdata contains the response.
+      fit, newdata, summary = summary, type = type, width = width, rate = rate, prior = prior,
+      dpar = if (type == "fitted") dpar, group_effects = group_pars, arma = needs_arma, ndraws = ndraws, scale = scale
+    ) %>%
       dplyr::select(-dplyr::any_of(yvar))
-
-    # Fitted values are only present for `type = "fitted"` (or "predict" with
-    # `.return_fitted = TRUE`). Predict-only draws (no fitted interval) have
-    # no fitted values to rename.
-    fitted_col = get_value_col("fitted", dpar, scale)
-    if (fitted_col %in% names(draws))
-      draws = dplyr::rename(draws, "{data_columns$response}" := dplyr::all_of(fitted_col))
-
-    add_plot_groups(draws, curve_by = curve_by, color_by = color_by)
   }
 
-  # Fitted lines need only `lines` draws, selected jointly across all curves.
+  # Fitted lines need only `lines` draws, selected jointly across all curves. Values are in the response column.
   eval_lines = if (lines > 0) {
-    prepare_draws(local_pp_eval("fitted", newdata, ndraws = lines))
-  } else {
-    NULL
+    local_pp_eval("fitted", summary = FALSE, ndraws = lines) %>%
+      dplyr::rename("{yvar}" := dplyr::all_of(get_value_col("fitted", dpar, scale))) %>%
+      add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
 
+  # Central intervals, with the lower and upper ends in the `quantile` column
+  get_interval = function(type, value_col) {
+    local_pp_eval(type, summary = TRUE, ndraws = ndraws) %>%
+      tidyr::pivot_longer(c(".lower", ".upper"), names_to = "quantile", values_to = value_col) %>%
+      add_plot_groups(curve_by = curve_by, color_by = color_by)
+  }
+  fitted_data = if (show_fitted) get_interval("fitted", yvar)
+  predict_data = if (show_predict) get_interval("predict", ".prediction")
   plot_newdata = add_plot_groups(newdata, curve_by = curve_by, color_by = color_by)
-  fitted_data = NULL
-  predict_data = NULL
-  if (show_fitted || show_predict) {
-    type = if (show_predict) "predict" else "fitted"
-    draws = local_pp_eval(
-      type, newdata, ndraws = ndraws,
-      return_fitted = show_fitted && type == "predict",
-      return_dpars = show_predict && type == "predict"
-    )
-    draws = prepare_draws(draws)
-    keep = unique(c(data_columns$par_x, facet_by, ".group", ".color"))
-
-    if (show_fitted)
-      fitted_data = get_quantiles(draws, probs, yvar, keep)
-    if (show_predict)
-      predict_data = get_mixture_quantiles(draws, probs, fit$family, keep, rate = rate)
-  }
 
 
   ###############################

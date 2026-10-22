@@ -15,12 +15,8 @@ garma_test_fit = function(family, model, data, intercept, phi = 0.5, theta = 0.2
 
 
 evaluate_garma_test_fit = function(built, data, ...) {
-  predictors = add_rhs_predictors(data, built$fit)
-  args = lapply(built$args, rep, nrow(data))
-  do.call(
-    simulate_vectorized,
-    c(list(fit = built$fit), as.list(predictors), args, list(...))
-  )
+  model_data = get_model_data(built$fit, data)
+  simulate_model(built$fit, model_data, built$args, n_draws = 1, y = data$y, ...)$value
 }
 
 
@@ -83,12 +79,12 @@ test_that("R evaluates combined AR and MA on the link scale", {
     expected = spec$family$linkinv(expected_link)
     actual = evaluate_garma_test_fit(
       built, spec$data,
-      .type = "fitted", .rate = spec$family$family == "binomial"
+      type = "fitted", rate = spec$family$family == "binomial"
     )
     expect_equal(as.numeric(actual), expected)
     actual_linear = evaluate_garma_test_fit(
       built, spec$data,
-      .type = "fitted", .scale = "linear"
+      type = "fitted", scale = "linear"
     )
     expect_equal(as.numeric(actual_linear), expected_link)
   }
@@ -100,38 +96,39 @@ test_that("R-side GARMA log likelihood uses its conditional mean", {
   built = garma_test_fit(poisson(), list(y ~ 1 + ar(1) + ma(1)), data, log(2))
   expected_link = expected_garma_link(log(pmax(data$y, 0.1)), log(2), 0.5, 0.25)
   expected = stats::dpois(data$y, exp(expected_link), log = TRUE)
-  actual = evaluate_garma_test_fit(built, data, .type = "loglik")
+  actual = evaluate_garma_test_fit(built, data, type = "loglik")
   expect_equal(as.numeric(actual), expected)
 })
 
 
 test_that("conditional GARMA evaluation resets vectorized ordered series", {
   y = c(1, 2, 4, 10, 20, 40)
-  series_id = rep(c("a", "b"), each = 3)
-  base_link_mu = rep(0, length(y))
+  series = rep(c("a", "b"), each = 3)
   expected = numeric(length(y))
-  for (series in unique(series_id)) {
-    rows = which(series_id == series)
+  for (this_series in unique(series)) {
+    rows = which(series == this_series)
     expected[rows] = expected_garma_link(y[rows], 0, phi = 0.5, theta = 0.25)
   }
 
+  # Two identical draws (columns)
+  cells = function(value) matrix(value, length(y), 2)
   args = list(
-    base_link_mu = base_link_mu,
-    ar_list = list(ar1_ = rep(0.5, length(y))),
-    ma_list = list(ma1_ = rep(0.25, length(y))),
-    threshold = rep(0.1, length(y)),
+    link_mu = cells(0),
+    ar = list(ar1 = cells(0.5)),
+    ma = list(ma1 = cells(0.25)),
+    threshold = 0.1,
     family = as_mcpfamily(gaussian()),
-    dpars = list(mu = base_link_mu, sigma = rep(1, length(y))),
+    dpars = list(mu = cells(0), sigma = cells(1)),
     y = y,
-    series_id = series_id
+    series = series
   )
   actual = do.call(simulate_garma, args)
 
-  expect_equal(actual$link_mu, expected)
-  args$series_id = rep(c("a", "b"), 3)
+  expect_equal(actual$link_mu, cells(expected))
+  args$series = rep(c("a", "b"), 3)
   expect_error(
     do.call(simulate_garma, args),
-    "Rows belonging to each series_id must be contiguous.",
+    "Rows belonging to each series must be contiguous.",
     fixed = TRUE
   )
 })
@@ -183,7 +180,7 @@ test_that("prediction interfaces share conditional and replicated GARMA behavior
   conditional = predict(fit, summary = FALSE, width = FALSE)
   set.seed(42)
   conditional_matrix = posterior_predict.mcpfit(fit)
-  expect_equal(conditional_matrix, tidy_to_matrix(conditional, ".prediction"))
+  expect_equal(unname(conditional_matrix), matrix(conditional$.prediction, nrow = 2))
   expect_equal(posterior_epred.mcpfit(fit), fitted(fit, summary = FALSE, draws_format = "matrix"))
   set.seed(42)
   replicated = posterior_predict.mcpfit(fit, arma = "replicate")
@@ -309,7 +306,7 @@ test_that("missing GARMA responses stay paired with posterior draws", {
   fitted_draws = fitted(fit, summary = FALSE, width = FALSE)
   fitted_again = fitted(fit, summary = FALSE, width = FALSE)
   prediction_draws = predict(fit, summary = FALSE, width = FALSE)
-  imputed = get_imputed_response_draws(fit, prediction_draws)
+  imputed = as.vector(t(get_imputed_response(fit, fit$data$y, unique(prediction_draws$.draw))))  # Tidy order
 
   expect_equal(fitted_draws$.epred, fitted_again$.epred)
   expect_true(all(is.na(fitted_draws$y[fitted_draws$.row == 2])))
@@ -340,50 +337,47 @@ test_that("missing GARMA responses stay paired with posterior draws", {
 })
 
 
-test_that("one GARMA recurrence handles generated, supplied, and partial histories", {
+test_that("one GARMA recurrence handles generated and supplied histories", {
   # Unequal lengths exercise series starts and unavailable higher-order lags.
   # Row-varying coefficients and segment transitions represent segment/group changes.
+  # Columns are draws with different coefficients.
   n = 12
+  cells = function(value) matrix(value, n, 2)
   series = rep(c("01", "1", "site,a", "a[b]"), c(1, 4, 2, 5))
-  base = seq(-0.2, 0.2, length.out = n)
-  ar = list(ar1_ = seq(0.1, 0.4, length.out = n), ar2_ = rep(0.1, n))
-  ma = list(ma1_ = rep(-0.2, n), ma2_ = seq(0, 0.1, length.out = n))
-  threshold = rep(c(0.1, 0.2), each = 6)
+  base = cells(seq(-0.2, 0.2, length.out = n))
+  ar = list(ar1 = cbind(seq(0.1, 0.4, length.out = n), 0.3), ar2 = cells(0.1))
+  ma = list(ma1 = cells(-0.2), ma2 = cbind(seq(0, 0.1, length.out = n), -0.1))
+  threshold = 0.2
   for (family in list(gaussian(), poisson(), binomial(), negbinomial())) {
     family = as_mcpfamily(family)
     data = if (family$family == "binomial") list(trials = rep(c(3, 7), 6)) else list()
-    args = list(base_link_mu = base, ar_list = ar, ma_list = ma,
-                threshold = threshold, family = family, series_id = series,
-                dpars = list(mu = family$linkinv(base), sigma = rep(1, n), shape = rep(2, n)),
+    args = list(link_mu = base, ar = ar, ma = ma,
+                threshold = threshold, family = family, series = series,
+                dpars = list(mu = family$linkinv(base), sigma = cells(1), shape = cells(2)),
                 data = data)
     set.seed(21)
     generated = suppressMessages(do.call(simulate_garma, args))
     supplied = do.call(simulate_garma, c(args, list(y = generated$y)))
     expect_equal(supplied, generated)
 
-    # Independent row-by-row reference: coefficients belong to the current
-    # row; history crosses segment changes but never independent series.
+    # Independent row-by-row reference for each draw: coefficients belong to the
+    # current row; history crosses segment changes but never independent series.
     link_y = family$linkfun(family$garma$observed_r(generated$y, data, threshold))
-    expected = numeric(n)
-    for (rows in split(seq_len(n), series)) {
-      for (position in seq_along(rows)) {
-        row = rows[position]
-        previous = rev(head(rows, position - 1))
-        previous = head(previous, 2)
-        phi = c(ar$ar1_[row], ar$ar2_[row])[seq_along(previous)]
-        theta = c(ma$ma1_[row], ma$ma2_[row])[seq_along(previous)]
-        expected[row] = base[row] + sum(phi * (link_y[previous] - base[previous])) +
-          sum(theta * (link_y[previous] - expected[previous]))
+    expected = matrix(0, n, 2)
+    for (draw in 1:2) {
+      for (rows in split(seq_len(n), series)) {
+        for (position in seq_along(rows)) {
+          row = rows[position]
+          previous = rev(head(rows, position - 1))
+          previous = head(previous, 2)
+          phi = c(ar$ar1[row, draw], ar$ar2[row, draw])[seq_along(previous)]
+          theta = c(ma$ma1[row, draw], ma$ma2[row, draw])[seq_along(previous)]
+          expected[row, draw] = base[row, draw] + sum(phi * (link_y[previous, draw] - base[previous, draw])) +
+            sum(theta * (link_y[previous, draw] - expected[previous, draw]))
+        }
       }
     }
     expect_equal(generated$link_mu, expected)
-
-    partial_y = generated$y
-    partial_y[c(2, 6, 10)] = NA
-    partial = do.call(simulate_garma, c(args, list(y = partial_y)))
-    replayed = do.call(simulate_garma, c(args, list(y = partial$y)))
-    expect_equal(partial, replayed)
-    expect_equal(partial$y[!is.na(partial_y)], partial_y[!is.na(partial_y)])
   }
 })
 
@@ -439,12 +433,12 @@ test_that("GARMA thresholds enforce family-appropriate limits during model valid
   # simulate_garma directly enforces thresholds
   expect_error(
     simulate_garma(
-      base_link_mu = rep(0, 4),
-      ar_list = list(ar1_ = rep(0.5, 4)),
-      ma_list = list(),
-      threshold = rep(0.75, 4),
+      link_mu = matrix(0, 4, 1),
+      ar = list(ar1 = matrix(0.5, 4, 1)),
+      ma = list(),
+      threshold = 0.75,
       family = bernoulli(),
-      dpars = list(mu = rep(0.5, 4))
+      dpars = list(mu = matrix(0.5, 4, 1))
     ),
     "`threshold` for family = bernoulli() must be strictly between 0 and 0.5.",
     fixed = TRUE

@@ -12,7 +12,7 @@ df = tibble::tibble(
   N = round(runif(200, 1, 10)),
   x = seq(0, 20, length.out = 200),
   group = rep(c("A", "B"), 100),
-  y = rbinom(200, N, ilogit(2 - 0.1 * x + ifelse(group == "B", -1, 0)))
+  y = rbinom(200, N, stats::plogis(2 - 0.1 * x + ifelse(group == "B", -1, 0)))
 )
 
 fit_mcp = mcp(model, df, family = binomial(), warmup = 200, iter = 600, seed = 42, diagnostics = FALSE, quiet = TRUE)

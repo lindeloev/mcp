@@ -1,5 +1,5 @@
-# ABOUT: These functions take data/draws and run them through
-# formula code to make model predictions
+# ABOUT: These functions evaluate the model on data and parameter values in R, the
+# counterpart of the likelihood in fit$jags_code, for predictions and fit$simulate()
 # ------------------------------------------------------------
 
 # Make categorical columns in `newdata` factors with levels identical to the original data
@@ -41,17 +41,6 @@ relevel_newdata = function(newdata, fit) {
 }
 
 
-# Evaluate fitted design specifications on new data.
-evaluate_design_specs = function(design_specs, newdata) {
-  lapply(design_specs, function(spec) {
-    design_data = newdata
-    if (!is.null(spec$local_x_name))
-      design_data[[spec$local_x_name]] = 1
-    get_fitted_design(data = design_data, spec = spec)
-  })
-}
-
-
 # Populate matrix data columns in a predictor or group-effects table.
 populate_design_columns = function(table, evaluated_designs) {
   table$matrix_data = vector("list", nrow(table))
@@ -69,72 +58,104 @@ populate_design_columns = function(table, evaluated_designs) {
 }
 
 
-# Add the (dummy-coded) columns of the design matrix to `newdata`, which contains the
-# predictor columns from `fit$data` and `fit$model`
-add_rhs_predictors = function(newdata, fit) {
-  checkmate::assert_class(fit, "mcpfit")
-  checkmate::assert_data_frame(newdata)
+#' Data used to evaluate the model on `newdata`
+#'
+#' @param fit An `mcpfit` object.
+#' @param newdata A data frame with the predictors of the model.
+#' @return A list with one value (or matrix row) per row of `newdata`:
+#'   * `x`: The change-point variable.
+#'   * `matrix`: The fitted design matrix, with columns in `matrix_col` order.
+#'   * `offsets`: Named list of offsets, e.g., `offset_mu_1_`.
+#'   * `series`: The AR/MA series, or `NULL`.
+#'   * `response`: Named list of family response auxiliaries, e.g., `trials`.
+#' @noRd
+get_model_data = function(fit, newdata) {
+  tables = get_fit_model_tables(fit)
+  columns = mcp_columns(fit)
+  newdata = relevel_newdata(as.data.frame(newdata), fit)
 
-  # Make categorical predictors match the original data
-  newdata = newdata %>%
-    as.data.frame() %>%
-    relevel_newdata(fit)
+  # Evaluate each fitted design once. x-terms are multiplied by x measured from the change point later.
+  designs = lapply(tables$design_specs, function(spec) {
+    if (!is.null(spec$local_x_name))
+      newdata[[spec$local_x_name]] = 1
+    get_fitted_design(data = newdata, spec = spec)
+  })
+  offset_specs = Filter(function(spec) isTRUE(spec$has_offset), tables$design_specs)
 
-  # Evaluate each fitted design once
-  model_tables = get_fit_model_tables(fit)
-  predictors = model_tables$predictors
-  group_effects = model_tables$group_effects
-  design_specs = model_tables$design_specs
-  evaluated_designs = evaluate_design_specs(design_specs, newdata)
-
-  # Populate coefficient columns and build predictor matrix
-  predictors = populate_design_columns(predictors, evaluated_designs)
-  group_effects = populate_design_columns(group_effects, evaluated_designs)
-  predictor_matrix = get_predictor_matrix(predictors, group_effects)
-
-  # Collect offset columns from the evaluated designs
-  offset_cols = list()
-  for (id in names(design_specs)) {
-    spec = design_specs[[id]]
-    if (isTRUE(spec$has_offset))
-      offset_cols[[spec$offset_name]] = as.numeric(evaluated_designs[[id]]$offset)
-  }
-
-  # All permutations of rows in newdata and parameters
-  pred_df = as.data.frame(predictor_matrix) %>%
-    magrittr::set_colnames(paste0(".pred_", colnames(predictor_matrix)))
-  if (length(offset_cols) > 0)
-    pred_df = dplyr::bind_cols(pred_df, as.data.frame(offset_cols))
-
-  dplyr::bind_cols(pred_df, newdata)
+  list(
+    x = newdata[[columns$par_x]],
+    matrix = get_predictor_matrix(
+      populate_design_columns(tables$predictors, designs),
+      populate_design_columns(tables$group_effects, designs)
+    ),
+    offsets = stats::setNames(
+      lapply(names(offset_specs), function(id) as.numeric(designs[[id]]$offset)),
+      vapply(offset_specs, `[[`, character(1), "offset_name")
+    ),
+    series = if (!is.null(columns$series)) newdata[[columns$series]],
+    response = get_family_response_data(fit$family, tables$segments, newdata)
+  )
 }
 
 
-#' Evaluate model and return a list of dpars
+#' Evaluate the model for each row of data and each draw of parameter values
 #'
-#' Evaluates the R translation of `fit$.internal$formula_jags`. Parameters and
-#' data are looked up in `args`, while model nodes are assigned in a separate
-#' environment, so neither can overwrite the other.
+#' Underlies `pp_eval()` and `fit$simulate()`.
 #'
-#' @param fit An `mcpfit` object.
-#' @param args args from `simulate_vectorized`
-#' @param pred_pars Design-column argument names in model-matrix order.
-#' @return `data.frame` with one column per dpar
+#' @inheritParams evaluate_formula
+#' @param y The response, one value per row or a rows x draws matrix. AR/MA terms are
+#'   conditional on it. `NULL` generates fresh AR/MA series when `type = "predict"`.
+#' @param type One of `"predict"`, `"fitted"`, or `"loglik"`.
+#' @param rate,dpar,arma,scale See `pp_eval()`. `arma` is logical.
+#' @return A list with `value`, a rows x draws matrix of the requested `type`, and `dpars`,
+#'   the rows x draws distributional parameters on the response scale.
 #' @noRd
-evaluate_model_dpars = function(fit, args, pred_pars) {
-  inputs = list2env(args, parent = topenv())
-  inputs$rhs_matrix_ = do.call(cbind, args[pred_pars])  # Design columns in model-matrix order
-  inputs$cp_0 = -Inf  # Outer segments extend beyond the data in R
-  assign(paste0("cp_", length(fit$model)), Inf, envir = inputs)  # e.g., cp_3 = Inf
+simulate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
+                          rate = FALSE, dpar = "epred", arma = TRUE, scale = "response") {
+  family = fit$family
+  links = evaluate_formula(fit, data, pars, n_draws)
 
-  # Evaluate model in environment
-  out = new.env(parent = inputs)
-  eval(str2expression(get_formula_r(fit$.internal$formula_jags)), envir = out)
+  # Distributional parameters on the response scale, with numerical floors as in the JAGS code
+  dpars = lapply(stats::setNames(nm = family$dpars), function(name) {
+    spec = get_dpar_spec(family, name)
+    value = get_link_function(spec$link, inverse = TRUE)(links[[name]])
+    if (!is.na(spec$floor))
+      value[] = pmax(spec$floor, value)
+    value
+  })
 
-  out %>%
-    as.list() %>%
-    as.data.frame() %>%
-    dplyr::select(-dplyr::starts_with("x_local_"))
+  # Dpars other than the expected response, e.g., sigma or ar1, do not depend on AR/MA terms
+  if (type == "fitted" && dpar %notin% c("epred", "mu")) {
+    value = if (scale == "response" && dpar %in% names(dpars)) dpars[[dpar]] else links[[dpar]]
+    return(list(value = value, dpars = dpars))
+  }
+
+  # AR/MA terms act on the link scale, conditional on `y` or generating fresh series
+  generated = NULL
+  if (arma && is_arma(fit)) {
+    if (is.null(y) && type != "predict")
+      stop("The response is required to evaluate GARMA terms.")
+    threshold = unique(stats::na.omit(get_fit_model_tables(fit)$predictors$threshold))
+    garma = simulate_garma(
+      links$mu, get_lags(links, "ar"), get_lags(links, "ma"), threshold, family, dpars,
+      data = data$response, y = y, series = data$series
+    )
+    links$mu = garma$link_mu
+    dpars$mu = family$linkinv(garma$link_mu)
+    if (is.null(y))
+      generated = garma$y
+  }
+
+  value = switch(type,
+    fitted = if (scale == "linear") links$mu else if (dpar == "mu") dpars$mu else family$r$epred(dpars, data$response, rate = rate),
+    loglik = family$r$log_lik(y, dpars, data$response),
+    predict = if (is.null(generated)) {
+      family$r$rng(length(dpars$mu), dpars, data$response, rate = rate)
+    } else {
+      family$response$observed(generated, data$response, rate)
+    }
+  )
+  list(value = matrix(value, nrow(links$mu), n_draws), dpars = dpars)
 }
 
 
@@ -154,162 +175,16 @@ simulate_truncated_normal = function(mean, sd, lower, upper) {
 }
 
 
-# Transform link-scale predictors to distribution-scale parameters
-#
-# Mirrors the deterministic dpar transformations in generated JAGS code. Both
-# representations are kept only during R-side evaluation; neither
-# observation-level vector is monitored in JAGS.
-add_response_dpars = function(dpar_values, family) {
-  for (dpar in family$dpar_specs$dpar) {
-    spec = get_dpar_spec(family, dpar)
-    link_name = paste0("link_", dpar, "_")
-    response_name = paste0(dpar, "_")
-
-    if (link_name %notin% names(dpar_values))
-      stop_github("Missing link-scale values for dpar '", dpar, "'.")
-
-    response = get_link_function(spec$link, inverse = TRUE)(dpar_values[[link_name]])
-    if (!is.na(spec$floor))
-      response = pmax(spec$floor, response)
-    dpar_values[[response_name]] = response
-  }
-
-  dpar_values
-}
-
-
-#' Vectorized R-side run of the full model.
+#' Simulate the model for parameter values: the body of `fit$simulate()`
 #'
-#' Used internally in mcp.
-#' Parameters not documented here are documented in `pp_eval` (without dot prefix).
-#'
-#' @inheritParams mcp
-#' @param ... Parameter names (e.g., `cp_1 = c(4.3, 4.5, 6.2), Intercept_1 = c(11.2, 12.1, 10.9)`, etc.)
-#'   and columns from `predictors$matrix_data` prefixed with ".pred_" (e.g.,
-#'   `.pred_Intercept_1 = c(1, 1, 1)`).
-#' @return Vector with same length as inputs.
-#' @noRd
-simulate_vectorized = function(fit, ..., .type = "predict", .rate = FALSE, .dpar = "epred", .arma = TRUE, .scale = "response", .return_fitted = FALSE) {
-  ###########
-  # ASSERTS #
-  ###########
-  checkmate::assert_class(fit, "mcpfit")
-  model_tables = get_fit_model_tables(fit)
-  data_columns = mcp_columns(fit)
-  pred_pars = paste0(".pred_", get_predictor_design_names(model_tables$predictors, model_tables$group_effects))
-  has_arma_terms = is_arma(fit)
-  args = list(...)
-
-  assert_typescale(.type, .scale)
-  checkmate::assert_flag(.rate)
-  if (.rate && !fit$family$response$has_rate)
-    stop(
-      "`rate = TRUE` is not supported for family = ", fit$family$family, "(). It only applies to families with trials, such as binomial(). ",
-      "For rates per unit of exposure in models with `offset(log(exposure))`, set `exposure = 1` in `newdata`.",
-      call. = FALSE
-    )
-
-  .dpar = assert_dpar(.dpar, fit = fit, type = .type)
-  checkmate::assert_flag(.arma)
-  checkmate::assert_flag(.return_fitted)
-  if (.return_fitted && .type != "predict")
-    stop_github("`.return_fitted` requires `.type = 'predict'`.")
-
-
-  ##################################################
-  # EVALUATE MODEL AND RETURN VIA FAMILY AND .TYPE #
-  ##################################################
-  dpar_values = evaluate_model_dpars(fit, args, pred_pars)
-  dpar_values = add_response_dpars(dpar_values, fit$family)
-
-  # Prepare for stuff needing .ydata
-  has_ydata = is.null(args[[data_columns$response]]) == FALSE
-  if (has_ydata)
-    dpar_values$.ydata = args[[data_columns$response]]
-  if (.type == "loglik" && has_ydata == FALSE)
-    stop(".ydata must be non-NULL for .type = 'loglik'.")
-  .dpar = paste0(.dpar, "_")
-
-  response_data = get_family_response_data(fit$family, model_tables$segments, args)
-  dpars = stats::setNames(lapply(fit$family$dpars, function(dpar) {
-    dpar_values[[paste0(dpar, "_")]]
-  }), fit$family$dpars)
-
-  # Simply return for fitted dpars
-  if (.dpar %notin% c("epred_", "mu_") && .type == "fitted") {
-    link_dpar = paste0("link_", .dpar)
-    if (.scale == "linear" && link_dpar %in% names(dpar_values))
-      return(dpar_values[[link_dpar]])
-    return(dpar_values[[.dpar]])
-  }
-
-  # GARMA is defined on the link scale. The observed response is clipped only
-  # where needed to keep log and logit transformations finite.
-  if (has_arma_terms && .arma == TRUE) {
-    base_link_mu = dpar_values$link_mu_
-    ar_list = dplyr::select(dpar_values, dplyr::matches("^ar[0-9]+_$"))
-    ma_list = dplyr::select(dpar_values, dplyr::matches("^ma[0-9]+_$"))
-    threshold = dpar_values$garma_threshold_
-    if (!has_ydata && .type != "predict")
-      stop("The response is required to evaluate GARMA terms.")
-
-    series_id = args[[".draw"]]
-    if (!is.null(data_columns$series)) {
-      if (is.null(series_id))
-        series_id = rep(1, length(args[[data_columns$series]]))
-      series_id = interaction(series_id, args[[data_columns$series]], drop = TRUE)
-    }
-
-    garma_result = simulate_garma(
-      base_link_mu, ar_list, ma_list, threshold, fit$family,
-      dpars = dpars, data = response_data,
-      y = if (has_ydata) dpar_values$.ydata else NULL,
-      series_id = series_id
-    )
-    dpar_values$link_mu_ = garma_result$link_mu
-    dpar_values$mu_ = garma_result$mu
-    dpars$mu = garma_result$mu
-  }
-
-  if (.type == "fitted" && .scale == "linear")
-    return(dpar_values$link_mu_)
-
-  if (.type == "fitted") {
-    if (.dpar == "mu_")
-      return(dpar_values$mu_)
-    return(fit$family$r$epred(dpars, response_data, rate = .rate))
-  }
-  if (.type == "loglik")
-    return(fit$family$r$log_lik(dpar_values$.ydata, dpars, response_data))
-  if (.type == "predict") {
-    # Fresh GARMA series are generated by the recurrence, with mu conditional on the generated history
-    predicted = if (has_arma_terms && .arma && !has_ydata) {
-      fit$family$response$observed(garma_result$y, response_data, .rate)
-    } else {
-      fit$family$r$rng(length(dpars$mu), dpars, response_data, rate = .rate)
-    }
-    if (.return_fitted)
-      attr(predicted, "fitted") = fit$family$r$epred(dpars, response_data, rate = .rate)
-    attr(predicted, "dpars") = dpars
-    attr(predicted, "response_data") = response_data
-    return(predicted)
-  }
-}
-
-
-#' User-friendly interface to simulate_vectorized
-#'
-#' Does the following:
-#'  * Converts factors in `newdata` to dummies with correct levels.
-#'  * Checks and binds parameter values (`...`)
-#'  * Call `simulate_vectorized`
-#'  * Add "simulated" attribute and returns
+#' Checks the parameter values, simulates group-level deviations from their SDs, and
+#' evaluates the model with `simulate_model()`.
 #'
 #' Parameters not documented here are documented in `pp_eval` (without dot prefix).
 #'
 #' @inheritParams mcp
 #' @param newdata A data.frame or tibble that should contain the same columns as `fit$data`
-#' @param ... Parameter values of length 1, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
+#' @param ... Parameter values of length 1 or `nrow(newdata)`, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
 #' @return Numeric vector with attribute "simulated".
 #' @noRd
 simulate_atomic = function(fit,
@@ -321,17 +196,20 @@ simulate_atomic = function(fit,
                         .arma = TRUE,
                         .scale = "response") {
 
-  # Check some inputs.
-  # Remaining values are asserted in simulate_vectorized()
+  # Check inputs
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_data_frame(newdata)
+  .type = rlang::arg_match0(.type, c("predict", "fitted"))
+  assert_typescale(.type, .scale)
+  assert_rate(.rate, fit)
+  .dpar = assert_dpar(.dpar, fit = fit, type = .type)
+  checkmate::assert_flag(.arma)
   data_columns = mcp_columns(fit)
   if (uses_garma(fit, .arma, .type, .dpar))
     assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
   model_group_definitions = definition_rows(model_tables$group_effects)
-  model_predictors = model_tables$predictors
   model_group_effects = model_tables$group_effects
   assert_model_data(
     newdata, data_columns$par_x,
@@ -422,24 +300,14 @@ simulate_atomic = function(fit,
     args[[effect$sd_name]] = NULL
   }
 
-  # Get permutations
-  predictor_data = add_rhs_predictors(newdata, fit)
-  pred_param_grid = cbind(predictor_data, args)  # Parameters are scalars or one value per row
-  if (.type == "predict" && .arma && is_arma(fit)) {
-    values = evaluate_model_dpars(
-      fit, as.list(pred_param_grid),
-      paste0(
-        ".pred_",
-        get_predictor_design_names(model_predictors, model_group_effects)
-      )
-    )
-    warn_arma_simulation(values)
-  }
-
-  # Get y. Internal attributes (e.g., dpars) are not returned to the user.
-  simulated_y = rlang::exec(simulate_vectorized, fit, !!!pred_param_grid,
-    .type = .type, .rate = .rate, .dpar = .dpar, .arma = .arma, .scale = .scale)
-  attributes(simulated_y) = NULL
+  # Evaluate one draw. Parameter values per row are a one-column matrix.
+  data = get_model_data(fit, newdata)
+  pars = lapply(args, function(value) if (length(value) == 1) value else matrix(value))
+  if (.type == "predict" && .arma && is_arma(fit))
+    warn_arma_simulation(evaluate_formula(fit, data, pars, n_draws = 1))
+  simulated_y = as.vector(simulate_model(
+    fit, data, pars, n_draws = 1, type = .type, rate = .rate, dpar = .dpar, arma = .arma, scale = .scale
+  )$value)
 
   # add_simulated etc. and return
   attr(simulated_y, "simulated") = simulated  # Set as attribute

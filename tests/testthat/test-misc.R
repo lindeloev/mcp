@@ -1,17 +1,6 @@
 # Link functions
 test_that("Link functions", {
-  expect_equal(mcp:::ilogit(1), 0.73105858)
-  expect_equal(mcp:::logit(0.7), 0.84729786)
-  expect_equal(mcp:::phi(1), 0.84134475)
-  expect_equal(mcp:::probit(0.7), 0.52440051)
-  expect_false(any(c("ilogit", "logit", "phi", "probit") %in% getNamespaceExports("mcp")))
-
   # Do not clamp extreme values (matching JAGS ilogit, phi, exp)
-  expect_equal(mcp:::ilogit(-40), stats::plogis(-40))
-  expect_equal(mcp:::phi(-10), stats::pnorm(-10))
-  expect_lt(mcp:::ilogit(-40), 1e-17)
-  expect_lt(mcp:::phi(-10), 1e-23)
-
   fam_b = bernoulli("logit")
   expect_equal(fam_b$linkinv(-40), stats::plogis(-40))
   fam_p = bernoulli("probit")

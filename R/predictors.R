@@ -645,9 +645,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   if (check_rank) {
     coefficients = result[result$par_type != "offset", , drop = FALSE]
     matrix = do.call(cbind, lapply(seq_len(nrow(coefficients)), function(i) {
-      degree = if (coefficients$x_factor[i] == "1") 0 else
-        if (coefficients$x_factor[i] == "x") 1 else as.numeric(sub("x^", "", coefficients$x_factor[i], fixed = TRUE))
-      coefficients$matrix_data[[i]] * data[[par_x]]^degree
+      coefficients$matrix_data[[i]] * data[[par_x]]^x_degree(coefficients$x_factor[i])
     }))
     colnames(matrix) = coefficients$matrix_name
     assert_rank(matrix, segment, dpar)

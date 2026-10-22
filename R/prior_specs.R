@@ -79,7 +79,7 @@ default_predictor_scale = function(matrix_data, x_factor) {
 
   parts = character()
   if (x_factor != "1") {
-    degree = if (x_factor == "x") 1 else as.numeric(sub("x^", "", x_factor, fixed = TRUE))
+    degree = x_degree(x_factor)
     parts = if (degree == 1) "sd(.x)" else paste0("sd((.x - min(.x))^", degree, ")")
   }
   if (data_scale != 1)
@@ -230,7 +230,13 @@ default_group_specs = function(group_effects, family) {
 # Truncation keeping group-level change point j between the previous realized change point
 # (or `x_min`) and the next population-level change point (or `x_max`), as deviations from cp_j.
 group_cp_truncation = function(cps, j, x_min, x_max) {
-  previous_cp = if (j == 1) x_min else sub("CP_[0-9]+_INDEX", paste0("[", cps$group_col[j], "_]"), cps$code[j - 1])
+  previous_cp = if (j == 1) {
+    x_min
+  } else if (is.na(cps$group_name[j - 1])) {
+    cps$name[j - 1]
+  } else {
+    paste0("(", cps$name[j - 1], " + ", cps$group_name[j - 1], "[", cps$group_col[j], "_])")
+  }
   later_population = which(seq_len(nrow(cps)) > j & is.na(cps$group_col))
   next_cp = if (length(later_population) == 0) x_max else cps$name[later_population[1]]
   paste0("T(", previous_cp, " - ", cps$name[j], ", ", next_cp, " - ", cps$name[j], ")")
