@@ -61,18 +61,17 @@ test_runs = function(model,
   testthat::expect_identical(plain$prior, empty$prior, label = model)
   testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)
 
-  # Passing fit$prior back gives the same model, including reparameterizations of default priors
-  refit = mcp(model = model, data = data, prior = empty$prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE)
+  # Passing fit$prior back gives the same model, including reparameterizations of default priors.
+  # A tibble also gives the same model.
+  refit = mcp(model = model, data = tibble::as_tibble(data), prior = empty$prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE)
   strip_comments = function(code) gsub("  #[^\n]*", "", code)
+  testthat::expect_identical(refit$data, empty$data, label = model)
   testthat::expect_identical(strip_comments(refit$jags_code), strip_comments(empty$jags_code), label = model)
   testthat::expect_identical(refit$.internal$prior_table$source, empty$.internal$prior_table$source, label = model)
 
   level = get_mcp_test_level()
 
   if (sample) {
-    if (rbinom(1, 1, 0.5) == 1)
-      data = tibble::as_tibble(data)
-
     warnings = messages = character()
     fit = withCallingHandlers(
       with_dpar_nodes(mcp(
@@ -554,7 +553,7 @@ test_pp_eval = function(fit, prior = FALSE) {
     testthat::expect_error(plot(fit, rate = TRUE, prior = prior), "`rate = TRUE` is not supported", fixed = TRUE)
   }
 
-  # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
+  # Test the other arguments
   result_more = try(fitted(
     fit,
     newdata = fit$data[sample(nrow(fit$data), 3), ],
@@ -567,7 +566,9 @@ test_pp_eval = function(fit, prior = FALSE) {
     arma = FALSE
   ), silent = TRUE)
 
-  if (is.data.frame(result_more)) {
+  if (inherits(result_more, "try-error")) {
+    testthat::fail(as.character(result_more))
+  } else {
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
     group_effects = get_fit_model_tables(fit)$group_effects

@@ -62,13 +62,6 @@ get_segment_tables = function(model, data, family, par_x) {
     message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
   }
 
-  # Check grouping factors
-  for (group_col in cp_group_cols) {
-    group_data = data[, group_col]
-    if (is.numeric(group_data) && any(group_data != floor(group_data)))
-      stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
-  }
-
   assert_response_data(family, segments, data)
 
 
@@ -96,8 +89,8 @@ get_segment_tables = function(model, data, family, par_x) {
     )
   }
 
-  # `segments`: one row per segment, shared metadata only.
-  segments = dplyr::select(segments, "segment", "form", "form_env", "y", "trials", "weights", "x")
+  # `segments`: one row per segment, shared metadata only, including all response auxiliaries.
+  segments = dplyr::select(segments, -"cp_group_col")
 
   list(segments = segments, cps = cps)
 }

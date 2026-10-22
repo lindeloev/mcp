@@ -50,6 +50,16 @@ is_cp_call = function(expr) {
 }
 
 
+# Names of functions called in an expression, except namespaced calls like splines::ns(x)
+called_functions = function(expr) {
+  if (!is.call(expr))
+    return(character())
+  head = expr[[1]]
+  is_namespaced = is.call(head) && deparse1(head[[1]]) %in% c("::", ":::")
+  c(if (is.symbol(head) && !is_namespaced) as.character(head), unlist(lapply(as.list(expr)[-1], called_functions)))
+}
+
+
 # Recursively check whether an expression contains any call to cp()
 contains_cp_call = function(expr) {
   if (is_cp_call(expr))

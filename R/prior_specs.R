@@ -472,10 +472,11 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 get_x_partners = function(predictors, name) {
   i = match(name, predictors$name)
   own = predictors$matrix_data[[i]]
-  is_partner = vapply(predictors$matrix_data, function(values) {
-    isTRUE(all.equal(values, own)) || (predictors$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE))
+  candidates = predictors[predictors$segment == 1 & predictors$dpar == predictors$dpar[i] & predictors$x_factor != "1", ]
+  is_partner = vapply(candidates$matrix_data, function(values) {
+    (predictors$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE)) || isTRUE(all.equal(values, own))
   }, logical(1))
-  predictors[predictors$segment == 1 & predictors$dpar == predictors$dpar[i] & predictors$x_factor != "1" & is_partner, ]
+  candidates[is_partner, ]
 }
 
 

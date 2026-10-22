@@ -232,6 +232,10 @@ mcp = function(
   model_vars = unique(c(unlist(lapply(model, all.vars)), par_x, series))  # In formula order
   assert_model_data(data, par_x, unlist(vars[c("predictor", "group", "offset", "series")]))
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
+  for (col in vars$group) {
+    if (is.numeric(data[[col]]) && any(data[[col]] != floor(data[[col]])))
+      stop("Grouping factor '", col, "' must be integer, character, or factor.")
+  }
   data = data[, model_vars]  # Remove unused data
   for (col in vars$response) {
     if (is.logical(data[[col]]))
@@ -289,7 +293,6 @@ mcp = function(
   # Pass the same canonical segment formulas to all model-building consumers
   model = Map(stats::as.formula, segments$form, env = segments$form_env)
   segments$form_env = NULL
-  assert_model_data(data, par_x, group_cols = stats::na.omit(cps$group_col))
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictor_occurrences = predictor_tables$predictors
   group_occurrences = get_group_effects(cps, predictor_tables$group_effects)
@@ -326,9 +329,20 @@ mcp = function(
     parameters = parameters,
     design_specs = lapply(predictor_tables$design_specs, function(spec) {
       spec$offset_data = NULL
+      environment(spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
       spec
     })
   )
+
+  # Fitted-model methods evaluate the designs from .GlobalEnv, so formula functions must be reachable from there
+  formula_functions = unique(unlist(lapply(model_tables$design_specs, function(spec) called_functions(attr(spec$terms, "predvars")))))
+  unreachable = formula_functions[!vapply(formula_functions, exists, logical(1), envir = globalenv(), mode = "function")]
+  if (length(unreachable) > 0)
+    stop(
+      "Function(s) used in the formulas are not available from the global environment: ", and_collapse(paste0("`", unreachable, "`")),
+      ". Define them at the top level, or add the transformed column(s) to `data`.",
+      call. = FALSE
+    )
 
   has_arma = any(predictor_definitions$dpar %in% c("ar", "ma"))
   if (has_arma) {

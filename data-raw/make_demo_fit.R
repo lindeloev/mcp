@@ -8,7 +8,6 @@ make_demo_fit = function() {
 
     # Demo fit!
     empty = mcp_example("demo", sample = "none")
-    for (i in seq_along(empty$model)) environment(empty$model[[i]]) = globalenv()  # Do not include environment
     demo_fit = mcp(
         empty$model, data = empty$data,
         warmup = 2000, iter = 6000, chains = 2,

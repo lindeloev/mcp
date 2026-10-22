@@ -454,27 +454,28 @@ test_that("data-derived bases reuse their fitted specification", {
 })
 
 
-test_that("model formulas use .GlobalEnv while fitted designs preserve local transformations", {
+test_that("fits do not include the calling environment, so formula functions must be reachable from .GlobalEnv", {
   data = data.frame(
     x = 1:8,
     y = c(1, 2, 1, 2, 5, 6, 5, 6),
     id = rep(c("a", "b"), 4)
   )
-  local_fits = function(data) {
+  local_fit = function(formula) {
     sq_local = function(x) x^2
-    list(
-      mu = mcp(list(y ~ sq_local(x)), data, par_x = "x", sample = FALSE, quiet = TRUE),
-      sigma = mcp(list(y ~ 1 + sigma(sq_local(x))), data, par_x = "x", sample = FALSE, quiet = TRUE),
-      group = mcp(list(y ~ 1 + (sq_local(x) || id)), data, par_x = "x", sample = FALSE, quiet = TRUE),
-      ar = mcp(list(y ~ 1 + ar(1, sq_local(x))), data, par_x = "x", sample = FALSE, quiet = TRUE)
-    )
+    big_local = numeric(1e6)
+    mcp(list(stats::as.formula(formula, env = environment())), data, par_x = "x", sample = FALSE, quiet = TRUE)
   }
 
-  fits = local_fits(data)
-  expect_true(all(vapply(fits, function(fit) {
-    identical(environment(fit$model[[1]]), globalenv())
-  }, logical(1))))
-  expect_equal(as.numeric(design_columns(fits$mu, data.frame(x = 9:10), "sq_localx_1")), c(81, 100))
+  # Locally defined functions err early in mcp(), not later in fitted() etc.
+  for (formula in c("y ~ sq_local(x)", "y ~ 1 + sigma(sq_local(x))", "y ~ 1 + (sq_local(x) || id)", "y ~ 1 + ar(1, sq_local(x))"))
+    expect_error(local_fit(formula), "not available from the global environment: `sq_local`")
+
+  # Base and namespaced functions work, and the calling environment is not included
+  fit = local_fit("y ~ log(x) + splines::ns(x, 2)")
+  expect_true(identical(environment(fit$model[[1]]), globalenv()))
+  expect_true(all(vapply(get_fit_model_tables(fit)$design_specs, function(spec) identical(environment(spec$terms), globalenv()), logical(1))))
+  expect_lt(length(serialize(fit, NULL)), 1e6)
+  expect_equal(as.numeric(design_columns(fit, data.frame(x = 9:10), "logx_1")), log(9:10))
 })
 
 

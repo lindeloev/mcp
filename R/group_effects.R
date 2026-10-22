@@ -50,12 +50,6 @@ parse_predictor_group_term = function(
       paste(deparse(group_expr), collapse = ""), "` in segment ", segment, "."
     )
   group_col = as.character(group_expr)
-  if (group_col %notin% names(data))
-    stop("Grouping factor '", group_col, "' was not found in data.")
-  if (anyNA(data[[group_col]]))
-    stop("Grouping factor '", group_col, "' contains missing values.")
-  if (is.numeric(data[[group_col]]) && any(data[[group_col]] != floor(data[[group_col]])))
-    stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
 
   # Group-level coefficient terms inherit the environment of their source formula.
   coefficient_form = stats::as.formula(call("~", expr[[2]]), env = env)

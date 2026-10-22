@@ -255,8 +255,6 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
 - Fixed `cores = "all"` failed. Thanks for reporting, @m-r-munroe!
 
-- Formula environments are now preserved, so locally defined transformations work in `mcp()` formulas and when applying fitted predictors to new data.
-
 ## Behind the scenes
 
 In general, every effort has been made to anticipate future developments and build the structure needed for that.
