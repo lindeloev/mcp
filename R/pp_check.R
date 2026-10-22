@@ -88,8 +88,8 @@ pp_check.mcpfit = function(
   if (is_loo && (!isTRUE(group_effects) || !isTRUE(arma)))
     stop("LOO predictive checks evaluate the fitted model; `group_effects = TRUE` and `arma = TRUE` are required.")
 
-  # Get tidy draws to preserve group and draw identifiers
-  draws = pp_eval(
+  # Draws-by-rows matrix with one column per row in `eval_data`
+  yrep_all = pp_eval(
     fit,
     newdata = newdata,
     summary = FALSE,
@@ -104,14 +104,14 @@ pp_check.mcpfit = function(
     # intact; bayesplot's `samples` argument controls plot sampling where
     # supported.
     ndraws = if (is_loo) NULL else ndraws,
-    draws_format = "tidy"
+    draws_format = "matrix"
   )
 
   # LOO weights are computed once for all observed rows and subset per plot below.
   if (is_loo) {
     message("Computing `loo(fit, save_psis = TRUE)`...")
     psis_object = loo(fit, save_psis = TRUE)$psis_object
-    if (nrow(psis_object$log_weights) != length(unique(draws$.draw)))
+    if (nrow(psis_object$log_weights) != nrow(yrep_all))
       stop_github("Could not align PPC draws with the LOO weights.")
   }
   get_psis_object = function(observations) {
@@ -121,7 +121,7 @@ pp_check.mcpfit = function(
   # Return plot with or without facets
   if (is.null(facet_by)) {
     y = y_all[observed_rows]
-    yrep = tidy_to_matrix(draws, type = ".prediction", data_rows = observed_rows)
+    yrep = yrep_all[, observed_rows, drop = FALSE]
     plot_return = get_ppc_plot(type, y, yrep, ndraws, get_psis_object(observed_rows), ...)
     return(plot_return)
   } else {
@@ -131,7 +131,7 @@ pp_check.mcpfit = function(
       # Compute/extract y and yrep for this facet level
       observations_this = observed_rows[facet_data[observed_rows] == facet_level]
       y_this = y_all[observations_this]
-      yrep_this = tidy_to_matrix(draws, type = ".prediction", data_rows = observations_this)
+      yrep_this = yrep_all[, observations_this, drop = FALSE]
 
       # Add plot to list
       all_plots[[as.character(facet_level)]] = get_ppc_plot(

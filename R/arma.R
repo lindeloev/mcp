@@ -244,30 +244,17 @@ assert_loglik_garma_history = function(fit, data = fit$data, arma = TRUE,
 }
 
 
-# Match retained JAGS imputations to expanded posterior evaluation rows
+# Match retained JAGS imputations to expanded posterior evaluation rows.
+# Returns NA for rows without retained imputations.
 get_imputed_response_draws = function(fit, draws) {
-  # Initialize one optional imputation for each expanded evaluation row
-  imputed = fit$.internal$imputed_response
   rows = fit$.internal$imputed_response_rows
-  values = rep(NA_real_, nrow(draws))
+  if (is.null(fit$.internal$imputed_response) || length(rows) == 0)
+    return(rep(NA_real_, nrow(draws)))
 
-  # Return missing values when the fit contains no retained imputations
-  if (is.null(imputed) || length(rows) == 0)
-    return(values)
-
-  # Convert stored chains and align them with the requested posterior draws
-  imputed = posterior::as_draws_df(posterior::as_draws_array(imputed))
-  draw_index = match(draws$.draw, imputed$.draw)
-  response = mcp_columns(fit)$response
-
-  # Copy each monitored response node to its matching data row and draw
-  for (row in rows) {
-    use = draws$.row == row
-    node = paste0(response, "[", row, "]")
-    values[use] = imputed[[node]][draw_index[use]]
-  }
-
-  values
+  # A draws-by-rows matrix. Stacked chains match the `.draw` index of as_draws_df().
+  nodes = paste0(mcp_columns(fit)$response, "[", rows, "]")
+  imputed = as.matrix(fit$.internal$imputed_response)[, nodes, drop = FALSE]
+  imputed[cbind(draws$.draw, match(draws$.row, rows))]
 }
 
 

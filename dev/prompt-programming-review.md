@@ -21,6 +21,9 @@ In the future, mcp aims to support the following. Suggest steps towards making t
  * NIMBLE as an alternative backend to JAGS for sampling. Will be selected using `mcp(..., backend = "nimble")`.
  * Custom `mcpfamily` and a larger set of included families and link functions.
 
+# Performance
+Functions like `pp_check()` works with many draws. Check it and the rest of the package for potential performance issues or performance improvements - both in terms of speed and in terms of memory peak usage. This would typically be challenged by larger datasets and many model parameters (e.g., many group-level effects).
+
 # Focus
 * For now, only focus on the code, the associated roxygen documentation, and the test suite - not README.md nor vignettes/pkgdown. You also have good statistical knowledge in this respect and can communicate at the right level to applied statisticians and programmers.
 * Do not highlight stuff that is already included in dev/DECISIONS.md, unless you see a very simple and "obvious" solution that would not increase code length/complexity. 

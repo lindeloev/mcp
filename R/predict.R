@@ -197,6 +197,7 @@ pp_eval = function(
   # Summaries and matrices only need the evaluated values from each block.
   draw_ids = unique(param_draws$.draw)
   block_size = max(1, floor(.max_cells / nrow(newdata)))
+  keep_dpars = .return_dpars || (summary && type == "predict" && !isFALSE(width))  # For exact predictive quantiles
   blocks = list()
   for (block_ids in split(draw_ids, ceiling(seq_along(draw_ids) / block_size))) {
     block_draws = param_draws[param_draws$.draw %in% block_ids, ]
@@ -227,8 +228,8 @@ pp_eval = function(
     evaluated = if (replicate_garma) suppressMessages(evaluate()) else evaluate()
 
     fitted_values = attr(evaluated, "fitted")
-    dpars_values = attr(evaluated, "dpars")
-    response_data_values = attr(evaluated, "response_data")
+    dpars_values = if (keep_dpars) attr(evaluated, "dpars")
+    response_data_values = if (keep_dpars) attr(evaluated, "response_data")
     attributes(evaluated) = NULL
 
     if (evaluating_arma) {
