@@ -368,7 +368,7 @@ get_plot = function(x,
 #'   * `"predict"`: Posterior predictive interval, as in `predict()`. Green lines.
 #'   * `c("fitted", "predict")`: Both. `plot_dpar()` supports only `"none"` and `"fitted"`.
 #'
-#'   For other quantiles, see [the plotting article](https://lindeloev.github.io/mcp/articles/plotting.html#other-quantiles) for computing them from
+#'   For other quantiles, see [the plotting article](https://lindeloev.github.io/mcp/articles/plotting.html#making-your-own-plots) for computing them from
 #'   `fitted(..., summary = FALSE)` or `predict(..., summary = FALSE)` and adding them as a ggplot2 layer.
 #' @param width Width of the central interval(s) given in `interval` (strictly between 0 and 1).
 #'   For example, `width = 0.8` plots the 10% and 90% quantiles.
@@ -544,7 +544,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 
   # Get draws in long format
   draws = mcp_draws(fit, population = population, group = group, absolute = TRUE, prior = prior) %>%
-    tidyr::pivot_longer(cols = tidyselect::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
+    tidyr::pivot_longer(cols = dplyr::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
 
     # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
     dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) %>%
