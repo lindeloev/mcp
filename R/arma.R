@@ -480,7 +480,7 @@ simulate_garma = function(base_link_mu, ar_list, ma_list, threshold, family,
     series_id = rep(1, length(base_link_mu))
   if (length(series_id) != length(base_link_mu) || anyNA(series_id))
     stop_github("series_id must have one non-missing value per observation.")
-  series_runs = rle(as.character(series_id))
+  series_runs = rle(if (is.factor(series_id)) as.integer(series_id) else series_id)  # rle() rejects factors
   if (anyDuplicated(series_runs$values))
     stop_github("Rows belonging to each series_id must be contiguous.")
 
