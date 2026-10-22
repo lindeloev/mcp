@@ -16,7 +16,7 @@ garma_test_fit = function(family, model, data, intercept, phi = 0.5, theta = 0.2
 
 evaluate_garma_test_fit = function(built, data, ...) {
   model_data = get_model_data(built$fit, data)
-  simulate_model(built$fit, model_data, built$args, n_draws = 1, y = data$y, ...)$value
+  evaluate_model(built$fit, model_data, built$args, n_draws = 1, y = data$y, ...)$value
 }
 
 

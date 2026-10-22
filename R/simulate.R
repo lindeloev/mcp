@@ -103,6 +103,7 @@ get_model_data = function(fit, newdata) {
 #' Underlies `pp_eval()` and `fit$simulate()`.
 #'
 #' @inheritParams evaluate_formula
+#' @param fit An `mcpfit` object.
 #' @param y The response, one value per row or a rows x draws matrix. AR/MA terms are
 #'   conditional on it. `NULL` generates fresh AR/MA series when `type = "predict"`.
 #' @param type One of `"predict"`, `"fitted"`, or `"loglik"`.
@@ -110,10 +111,11 @@ get_model_data = function(fit, newdata) {
 #' @return A list with `value`, a rows x draws matrix of the requested `type`, and `dpars`,
 #'   the rows x draws distributional parameters on the response scale.
 #' @noRd
-simulate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
+evaluate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
                           rate = FALSE, dpar = "epred", arma = TRUE, scale = "response") {
   family = fit$family
-  links = evaluate_formula(fit, data, pars, n_draws)
+  tables = get_fit_model_tables(fit)
+  links = evaluate_formula(tables, family, data, pars, n_draws)
 
   # Distributional parameters on the response scale, with numerical floors as in the JAGS code
   dpars = lapply(stats::setNames(nm = family$dpars), function(name) {
@@ -135,7 +137,7 @@ simulate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
   if (arma && is_arma(fit)) {
     if (is.null(y) && type != "predict")
       stop("The response is required to evaluate GARMA terms.")
-    threshold = unique(stats::na.omit(get_fit_model_tables(fit)$predictors$threshold))
+    threshold = unique(stats::na.omit(tables$predictors$threshold))
     garma = simulate_garma(
       links$mu, get_lags(links, "ar"), get_lags(links, "ma"), threshold, family, dpars,
       data = data$response, y = y, series = data$series
@@ -178,7 +180,7 @@ simulate_truncated_normal = function(mean, sd, lower, upper) {
 #' Simulate the model for parameter values: the body of `fit$simulate()`
 #'
 #' Checks the parameter values, simulates group-level deviations from their SDs, and
-#' evaluates the model with `simulate_model()`.
+#' evaluates the model with `evaluate_model()`.
 #'
 #' Parameters not documented here are documented in `pp_eval` (without dot prefix).
 #'
@@ -187,7 +189,7 @@ simulate_truncated_normal = function(mean, sd, lower, upper) {
 #' @param ... Parameter values of length 1 or `nrow(newdata)`, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
 #' @return Numeric vector with attribute "simulated".
 #' @noRd
-simulate_atomic = function(fit,
+fit_simulate = function(fit,
                         newdata,
                         ...,
                         .type = "predict",
@@ -304,8 +306,8 @@ simulate_atomic = function(fit,
   data = get_model_data(fit, newdata)
   pars = lapply(args, function(value) if (length(value) == 1) value else matrix(value))
   if (.type == "predict" && .arma && is_arma(fit))
-    warn_arma_simulation(evaluate_formula(fit, data, pars, n_draws = 1))
-  simulated_y = as.vector(simulate_model(
+    warn_arma_simulation(evaluate_formula(model_tables, fit$family, data, pars, n_draws = 1))
+  simulated_y = as.vector(evaluate_model(
     fit, data, pars, n_draws = 1, type = .type, rate = .rate, dpar = .dpar, arma = .arma, scale = .scale
   )$value)
 
@@ -316,7 +318,7 @@ simulate_atomic = function(fit,
 }
 
 
-# Make `fit$simulate()`: a wrapper for `simulate_atomic()` with the model parameters as named
+# Make `fit$simulate()`: a wrapper for `fit_simulate()` with the model parameters as named
 # arguments, so they auto-complete in, e.g., RStudio.
 # - parameters: Output of `get_pars_table()`.
 get_fitsimulate = function(parameters) {
@@ -344,7 +346,7 @@ get_fitsimulate = function(parameters) {
     warn_custom_jags_code(fit)
 
     lapply(args_required, get, envir = environment(), inherits = FALSE)
-    do.call(simulate_atomic, as.list(environment(), all.names = TRUE))
+    do.call(fit_simulate, as.list(environment(), all.names = TRUE))
   }
 
   formals(sim_fn) = as.pairlist(args_formals)

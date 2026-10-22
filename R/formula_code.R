@@ -113,15 +113,15 @@ get_formula_jags = function(tables, family, locations) {
 #' The R counterpart of `get_formula_jags()`, evaluated for all rows of data and draws of
 #' parameter values at once.
 #'
-#' @param fit An `mcpfit` object.
+#' @param tables Model tables, as in `get_fit_model_tables(fit)`.
+#' @param family An mcpfamily object.
 #' @param data Model data from `get_model_data()`.
 #' @param pars Named list of parameter values. Each is one value per draw (a vector) or one
 #'   value per row and draw (a rows x draws matrix), e.g., group-level deviations.
 #' @param n_draws Number of draws.
 #' @return A named list of rows x draws matrices: one for each dpar, e.g., `mu`, `sigma`, and `ar1`.
 #' @noRd
-evaluate_formula = function(fit, data, pars, n_draws) {
-  tables = get_fit_model_tables(fit)
+evaluate_formula = function(tables, family, data, pars, n_draws) {
   terms = get_formula_terms(tables)
   x = data$x
   n_rows = length(x)
@@ -145,7 +145,7 @@ evaluate_formula = function(fit, data, pars, n_draws) {
 
   # Sum the terms of each dpar. As in the JAGS code, terms sharing a segment, end, and x-factor
   # are summed before multiplying by x and by where they apply. Dpars without terms are zero.
-  dpars = unique(c(terms$dpar, fit$family$dpars))
+  dpars = unique(c(terms$dpar, family$dpars))
   lapply(stats::setNames(nm = dpars), function(dpar) {
     link = matrix(0, n_rows, n_draws)
     dpar_terms = terms[terms$dpar == dpar, ]

@@ -170,7 +170,7 @@ pp_eval = function(
   evaluated = lapply(blocks, function(block) {
     block_y = if (impute_response) get_imputed_response(fit, y, draws$.draw[block]) else y
     pars = draws_to_pars(draws[block, ], newdata, groups)
-    result = simulate_model(
+    result = evaluate_model(
       fit, data, pars, length(block), block_y,
       type = if (type == "residuals") "fitted" else type, rate = rate, dpar = dpar, arma = arma, scale = scale
     )

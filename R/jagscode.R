@@ -200,7 +200,7 @@ get_jags_code = function(tables, prior, prior_table, family) {
       link_code,
       paste0(linkinv_str, "(", link_code, ")")
     )
-    if (!is.na(spec$floor))  # Numerical floor, as in simulate_model()
+    if (!is.na(spec$floor))  # Numerical floor, as in evaluate_model()
       response_code = paste0("max(", format(spec$floor, scientific = TRUE), ", ", response_code, ")")
 
     mm = paste0(mm, dpar, "_[i_] = ", response_code, "\n    ")

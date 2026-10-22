@@ -336,7 +336,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   draws = mcp_draws(smoke_fit, population = TRUE, group = TRUE, pivot = FALSE)
   effects = unpack_group_effects(fit, pars = TRUE)$effects
   pars = draws_to_pars(draws, newdata, split(effects$name, effects$group_col))
-  links = evaluate_formula(fit, get_model_data(fit, newdata), pars, nrow(draws))
+  links = evaluate_formula(get_fit_model_tables(fit), fit$family, get_model_data(fit, newdata), pars, nrow(draws))
 
   # Maximum violation rate across rows
   probabilities = vapply(components, function(component) {
