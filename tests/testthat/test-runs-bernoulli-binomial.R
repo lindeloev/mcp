@@ -166,10 +166,11 @@ test_that("Binomial JAGS weights implement a likelihood power and sample on ordi
   expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(y[i_] + 1) + loggam(N[i_] - y[i_] + 1) - loggam(N[i_] + 1) - y[i_] * log(mu_[i_]) - (N[i_] - y[i_]) * log(1 - mu_[i_]))", fixed = TRUE)
   expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
-  # Check that package R-side log_lik applies the weights directly
+  # Check that R-side log_lik() applies the weights directly
+  draws = as.data.frame(fit)
   expect_equal(
-    fit$family$r$log_lik(df_bin$y, list(mu = rep(0.5, 5)), list(trials = df_bin$N, weights = df_bin$w)),
-    df_bin$w * stats::dbinom(df_bin$y, size = df_bin$N, prob = 0.5, log = TRUE)
+    unname(log_lik(fit, summary = FALSE)),
+    outer(stats::plogis(draws$Intercept_1), df_bin$y, function(mu, y) 2 * stats::dbinom(y, size = 2000, prob = mu, log = TRUE))
   )
 })
 

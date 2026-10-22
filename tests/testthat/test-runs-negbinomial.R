@@ -52,10 +52,11 @@ test_that("Negative-binomial JAGS weights implement a likelihood power and sampl
   expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(shape_[i_]) + loggam(y[i_] + 1) - loggam(y[i_] + shape_[i_]) - shape_[i_] * log(nb_prob_[i_]) - y[i_] * log(1 - nb_prob_[i_]))", fixed = TRUE)
   expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
-  # Check that package R-side log_lik applies the weights directly
+  # Check that R-side log_lik() applies the weights directly
+  draws = as.data.frame(fit)
   expect_equal(
-    fit$family$r$log_lik(df_nb$y, list(mu = rep(200, 5), shape = 10), list(weights = df_nb$w)),
-    df_nb$w * stats::dnbinom(df_nb$y, mu = 200, size = 10, log = TRUE)
+    unname(log_lik(fit, summary = FALSE)),
+    2 * stats::dnbinom(matrix(df_nb$y, nrow(draws), 5, byrow = TRUE), mu = exp(draws$Intercept_1), size = draws$shape_1, log = TRUE)
   )
 })
 

@@ -111,12 +111,6 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   missing_aux = setdiff(names(response_defaults$auxiliary), names(response$auxiliary))
   response$auxiliary[missing_aux] = response_defaults$auxiliary[missing_aux]
 
-  # Each family will define a validate(); this applies that.
-  response$validate = make_weighted_validate(response$validate)
-
-  # R-side log-likelihood. Weights are defined as applying directly here
-  r$log_lik = make_weighted_log_lik(r$log_lik)
-
   family$dpar_specs = dpar_specs
   family$default_prior = standardize_family_default_priors(default_prior)
   family$response = response
@@ -131,32 +125,6 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   class(family) = c("mcpfamily", "family")
   assert_mcpfamily(family)
   family
-}
-
-
-# Wrap family response validation to enforce positive, finite observation weights
-make_weighted_validate = function(family_validate) {
-  force(family_validate)
-  function(y, data, response_columns) {
-    # Check weights if present
-    if (!is.null(data$weights)) {
-      if (!is.numeric(data$weights) || anyNA(data$weights) || any(data$weights <= 0))
-        stop("All weights must be numeric and greater than zero.")
-    }
-
-    # Apply the family-specific validation
-    family_validate(y, data, response_columns)
-  }
-}
-
-
-# Wrap family log-likelihood to apply observation weights and isolate closure state
-make_weighted_log_lik = function(family_log_lik) {
-  force(family_log_lik)
-  function(y, dpars, data) {
-    weights = if (is.null(data$weights)) 1 else data$weights
-    weights * family_log_lik(y, dpars, data)
-  }
 }
 
 

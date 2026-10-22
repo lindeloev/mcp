@@ -166,6 +166,11 @@ assert_response_data = function(family, segments, data, response_required = TRUE
     }
   }
 
+  # Weights apply to all families
+  weights = response_data$weights
+  if (!is.null(weights) && (!is.numeric(weights) || anyNA(weights) || any(weights <= 0)))
+    stop("All weights must be numeric and greater than zero.")
+
   y = if (response_required && segments$y[1] %in% names(data)) data[[segments$y[1]]] else rep(NA_real_, nrow(data))
   family$response$validate(y, response_data, response_columns)
 
