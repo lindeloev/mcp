@@ -151,8 +151,9 @@ pp_eval = function(
   predictors = tibble::as_tibble(add_rhs_predictors(newdata, fit))
   param_draws = tibble::as_tibble(mcp_draws(
     fit, population = TRUE, group = group_effects, prior = prior, ndraws = ndraws,
-    newdata = if (length(group_info$cols) > 0) newdata
+    newdata = if (length(group_info$cols) > 0) newdata, pivot = FALSE
   ))
+  groups = split(group_info$effects$name, group_info$effects$group_col)
 
   # Complete the conditional history, keeping imputations out of prediction output.
   impute_response = conditional_garma && anyNA(predictors[[data_columns$response]])
@@ -201,9 +202,9 @@ pp_eval = function(
   blocks = list()
   for (block_ids in split(draw_ids, ceiling(seq_along(draw_ids) / block_size))) {
     block_draws = param_draws[param_draws$.draw %in% block_ids, ]
-    if (length(group_info$cols) > 0) {
+    if (length(groups) > 0) {
       # Match group-level draws to each row of data.
-      draws = dplyr::left_join(predictors, block_draws, by = unique(group_info$cols), relationship = "many-to-many")
+      draws = join_draws(predictors, block_draws, groups)
     } else {
       # Without group-level effects, use all draws for each row of data.
       draws = dplyr::cross_join(block_draws, predictors)

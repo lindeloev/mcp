@@ -332,18 +332,10 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
-  draws = mcp_draws(
-    smoke_fit, population = TRUE, group = length(group_info$cols) > 0
-  )
+  draws = mcp_draws(smoke_fit, population = TRUE, group = TRUE, pivot = FALSE)
   predictor_data = add_rhs_predictors(newdata, fit)
-  if (length(group_info$cols) > 0) {
-    draws_predictors = dplyr::left_join(
-      predictor_data, draws, by = unique(group_info$cols),
-      relationship = "many-to-many"
-    )
-  } else {
-    draws_predictors = tidyr::expand_grid(draws, predictor_data)
-  }
+  groups = split(group_info$effects$name, group_info$effects$group_col)
+  draws_predictors = join_draws(predictor_data, draws, groups)
 
   values = evaluate_model_dpars(
     fit, as.list(draws_predictors),
