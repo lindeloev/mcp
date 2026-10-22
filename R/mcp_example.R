@@ -386,7 +386,8 @@ if (plot) {
   name = rlang::arg_match0(name, names(examples))
   eval(str2expression(examples[[name]]))
 
-  fit$example_code = examples[[name]]
+  # Prepend the arguments so the code runs standalone
+  fit$example_code = paste0("# mcp_example() arguments\nsample = ", deparse(sample), "\nplot = ", plot, "\n\n", examples[[name]])
   class(fit$example_code) = c("mcptext", "character")
   fit
 }

@@ -356,6 +356,13 @@ test_that("binomial example can be constructed without sampling", {
   expect_true(all(fit$data$y <= fit$data$N))
 })
 
+test_that("example_code runs standalone", {
+  fit = mcp_example("demo", sample = "none", plot = FALSE)
+  env = new.env(parent = globalenv())
+  eval(str2expression(fit$example_code), envir = env)
+  expect_equal(env$fit$data, fit$data)
+})
+
 test_that("group_mu example contains independent factor effects", {
   fit = mcp_example("group_mu", sample = "none", plot = FALSE)
   expect_s3_class(fit, "mcpfit")
