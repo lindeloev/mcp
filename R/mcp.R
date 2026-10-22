@@ -339,7 +339,7 @@ mcp = function(
   # Make jags code if it is not provided by the user
   if (!custom_jags_code) {
     jags_code = get_jags_code(model_tables, prior, prior_table, family)
-    assert_inits(inits, parameters$parameter, jags_code)
+    assert_inits(inits, prior_table$parameter[is_sampled_par(prior_table, parameters)])
   }
 
 
@@ -361,14 +361,14 @@ mcp = function(
   sample_draws = function(pars, sample) {
     draws = run_jags(
       jags_code = jags_code,
-      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, jags_code, segments$y[1], custom_jags_code) else jags_data,
+      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, segments) else jags_data,
       pars = pars,
       sample = sample,
       n.chains = chains,
       n.iter = iter,
       n.adapt = warmup,
       inits = inits,
-      cp_inits = get_cp_inits(prior, range(data[[par_x]], na.rm = TRUE), if (!is.list(inits[[1]])) inits),  # Ignores chain-specific inits
+      default_inits = get_default_inits(prior_table, parameters, range(data[[par_x]], na.rm = TRUE), inits, if (custom_jags_code) jags_code),
       seed = seed,
       quiet = quiet,
       use_glm = use_jags_glm(family, group_definitions)

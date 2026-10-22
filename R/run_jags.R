@@ -10,7 +10,7 @@
 #' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
 #' @param pars Character vector of parameters to save/monitor.
-#' @param cp_inits Named list. Default initial values for change points, from `get_cp_inits()`.
+#' @param default_inits Named list. Initial values for parameters not in `inits`, e.g., from `get_cp_inits()`.
 #' @param use_glm Logical. Load the JAGS glm module, which block-samples
 #'   coefficients that enter the linear predictor jointly.
 #' @return `mcmc.list`
@@ -23,7 +23,7 @@ run_jags = function(jags_code,
                     n.iter,
                     n.adapt,
                     inits,
-                    cp_inits = list(),
+                    default_inits = list(),
                     seed,
                     quiet,
                     use_glm = FALSE
@@ -91,14 +91,7 @@ run_jags = function(jags_code,
   if (is.null(seed))
     seed = sample.int(.Machine$integer.max, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
-
-  # Default inits where users supplied none: ordered change points (see get_cp_inits()) and
-  # prior medians for other nodes, e.g., SDs away from zero.
-  # Custom JAGS code may define change points differently, so only initialize sampled nodes.
-  is_sampled = vapply(names(cp_inits), function(name) grepl(paste0("\\n\\s*", name, " ~"), jags_code), logical(1))
-  defaults = c(cp_inits[is_sampled], get_jags_median_inits(jags_code))
-  defaults = defaults[!duplicated(names(defaults))]
-  inits = lapply(inits, function(ch) c(ch, defaults[setdiff(names(defaults), names(ch))]))
+  inits = lapply(inits, function(ch) c(ch, default_inits[setdiff(names(default_inits), names(ch))]))
 
   if (n_workers == 1) {
     draws = do_sampling(
@@ -137,14 +130,11 @@ use_jags_glm = function(family, group_effects) {
 }
 
 
-# JAGS data for sampling the prior. Stochastic response nodes are set to NA, except for weighted
-# discrete likelihoods, which use the response in a zeros trick that `response_observed_ = 0` turns off.
-get_jags_prior_data = function(jags_data, jags_code, response, custom_jags_code) {
-  response_is_stochastic = if (custom_jags_code)
-    !grepl("likelihood_phi_", jags_code, fixed = TRUE) else
-    grepl(paste0(response, "[i_] ~"), jags_code, fixed = TRUE)
-  if (response_is_stochastic)
-    jags_data[[response]][] = NA
+# JAGS data for sampling the prior. The response is set to NA, except for weighted discrete
+# likelihoods, which use the response in a zeros trick that `response_observed_ = 0` turns off.
+get_jags_prior_data = function(jags_data, family, segments) {
+  if (all(is.na(segments$weights)) || !isTRUE(family$response$is_discrete))
+    jags_data[[segments$y[1]]][] = NA
   if (!is.null(jags_data$response_observed_))
     jags_data$response_observed_[] = 0L
   jags_data
@@ -174,42 +164,51 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
 }
 
 
-# Check that `inits` only set parameters that are sampled directly
-assert_inits = function(inits, pars, jags_code) {
-  is_sampled = vapply(pars, function(name) grepl(paste0("\\n\\s*", name, "(\\[[^]]*\\])? ~"), jags_code), logical(1))
-  invalid = setdiff(unlist(lapply(if (is.list(inits[[1]])) inits else list(inits), names)), pars[is_sampled])
+# Check that `inits` only set parameters that are sampled directly (see is_sampled_par())
+assert_inits = function(inits, pars) {
+  invalid = setdiff(unlist(lapply(if (is.list(inits[[1]])) inits else list(inits), names)), pars)
   if (length(invalid) > 0)
-    stop("`inits` can only set these parameters of this model: `", paste0(pars[is_sampled], collapse = "`, `"), "`. Got `", paste0(unique(invalid), collapse = "`, `"),
+    stop("`inits` can only set these parameters of this model: `", paste0(pars, collapse = "`, `"), "`. Got `", paste0(unique(invalid), collapse = "`, `"),
          "`. Parameters with constant priors and parameters that are reparameterized for faster sampling (see `mcp_reparam` in ?mcp-package) cannot be initialized.", call. = FALSE)
 }
 
 
-# Initial values at the prior medians. Covers scalar stochastic nodes in JAGS code whose prior
-# arguments and truncation bounds are numbers. JAGS initializes the remaining nodes.
-get_jags_median_inits = function(jags_code) {
-  nodes = stringr::str_match_all(jags_code, "\\n\\s*([A-Za-z0-9_.]+) ~ ([^\\n#]+)")[[1]]
+# Initial values where users supplied none: ordered change points (see get_cp_inits()) and prior medians of
+# other population-level parameters, e.g., SDs away from zero. Custom JAGS code may define parameters differently.
+get_default_inits = function(prior_table, parameters, x_range, inits, custom_jags_code = NULL) {
+  prior = stats::setNames(as.list(prior_table$value), prior_table$parameter)
+  is_median = (is_sampled_par(prior_table, parameters) | grepl("^dinvgamma\\(", prior_table$value)) &
+    prior_table$parameter %in% parameters$parameter[parameters$scope == "population" & parameters$role != "change_point"]
+  defaults = c(get_cp_inits(prior, x_range, if (!is.list(inits[[1]])) inits), get_median_inits(prior[is_median]))  # Ignores chain-specific inits
+  if (is.null(custom_jags_code)) defaults else
+    defaults[vapply(names(defaults), function(name) grepl(paste0("\\n\\s*", name, " ~"), custom_jags_code), logical(1))]
+}
+
+
+# Initial values at the prior medians. Covers priors whose arguments and truncation bounds are numbers.
+# dinvgamma() is sampled as `<name>_inverse ~ dgamma()` (see get_prior_str()).
+get_median_inits = function(prior) {
   as_number = function(x) tryCatch(as.numeric(eval(str2lang(x), baseenv())), error = function(e) NA_real_)
 
   inits = list()
-  for (i in seq_len(nrow(nodes))) {
-    parts = split_prior_truncation(nodes[i, 3])
+  for (name in names(prior)) {
+    parts = split_prior_truncation(prior[[name]])
     call = parse_prior_call(parts$distribution)
     if (is.null(call))
       next
+    if (call$name == "dinvgamma") {
+      name = paste0(name, "_inverse")
+      call$name = "dgamma"
+    }
 
-    # Numeric arguments with JAGS precision converted back to scale
     a = vapply(call$args, as_number, numeric(1), USE.NAMES = FALSE)
-    exponent = jags_scale_exponent(call$name)
-    if (!is.null(exponent))
-      a[2] = a[2]^(-1 / exponent)
-
     bounds = c(-Inf, Inf)
     if (!is.null(parts$truncation)) {
       trunc_args = parse_prior_call(parts$truncation)$args
       bounds[nzchar(trunc_args)] = vapply(trunc_args[nzchar(trunc_args)], as_number, numeric(1), USE.NAMES = FALSE)
     }
     if (!anyNA(a) && !anyNA(bounds))
-      inits[[nodes[i, 2]]] = prior_quantile(call$name, a, bounds, 0.5)
+      inits[[name]] = prior_quantile(call$name, a, bounds, 0.5)
   }
   inits
 }
@@ -372,10 +371,10 @@ get_jags_data = function(data, family, segments, predictors, group_effects, jags
   context = prior_context(data, segments, design_specs)
   jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
 
-  if (generated && grepl("response_observed_", jags_code, fixed = TRUE))
+  if (generated && any(!is.na(segments$weights))) {  # Zeros trick (see jags_weighted_likelihood())
     jags_data$response_observed_ = as.integer(!is.na(data[[segments$y[1]]]))
-  if (generated && grepl("likelihood_zero_", jags_code, fixed = TRUE))
     jags_data$likelihood_zero_ = numeric(nrow(data))
+  }
 
   # Observed nodes that restrict the change point priors, also in custom code copied from fit$jags_code
   if (grepl("cp_order_ ~", jags_code, fixed = TRUE))

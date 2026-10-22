@@ -8,6 +8,7 @@ release_questions = function() {
     "TEST: Have you manually reviewed all mcp_example() plots?",
 
     "DOC: Have you re-built the site using pkgdown::build_site(lazy=FALSE) and checked it locally?",
+    "DOC: Have you updated the date in DESCRIPTION?",
     
 
     # Do before merging into main-branch:

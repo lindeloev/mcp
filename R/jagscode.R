@@ -246,11 +246,21 @@ is_cp_location = function(prior) {
 }
 
 
+# Directly sampled parameters in `prior_table`, i.e., not constant, reparameterized (see add_reparams()),
+# or sampled via a `_location` or `_inverse` node. Must agree with get_prior_str().
+is_sampled_par = function(prior_table, parameters) {
+  group_cps = parameters$parameter[parameters$part == "cp" & parameters$scope == "group"]
+  is_location = prior_table$parameter %in% group_cps & vapply(prior_table$value, is_cp_location, logical(1))
+  prior_table$kind == "distribution" & is.na(prior_table$aux_suffix) & !is_location & !grepl("^dinvgamma\\(", prior_table$value)
+}
+
+
 # Get the JAGS code (one or more lines) for the prior on `prior[[i]]`.
 # - group_col: NULL for population-level priors. Otherwise the grouping column, and
 #   the prior is written in a loop over its levels.
 # - population_name: for group-level change points, the population change point, e.g., "cp_1".
 # - description: comment to add in the JAGS code. kind: see prior_kind().
+# Parameters sampled via another node must be excluded in is_sampled_par().
 get_prior_str = function(prior, i, group_col = NULL, population_name = NULL,
                           description = "Prior", kind = NULL) {
   # Helpers
