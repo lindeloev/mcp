@@ -337,6 +337,19 @@ test_that("missing GARMA responses stay paired with posterior draws", {
 })
 
 
+test_that("R evaluation equals the JAGS nodes with missing GARMA histories and group-level change points", {
+  set.seed(3)
+  data = data.frame(x = 1:80, id = rep(letters[1:4], 20))
+  data$y = stats::rnorm(80, ifelse(data$x > 40, 5, 0))
+  data$y[c(5, 50)] = NA  # Imputed in the AR/MA history of later responses
+  fit = suppressMessages(suppressWarnings(with_dpar_nodes(mcp(
+    list(y ~ 1 + x + sigma(1 + x) + ar(1), ~ cp(1 + (1 | id)) + 0 + x + (1 | id) + ma(1)),
+    data, par_x = "x", warmup = 6, iter = 18, chains = 2, quiet = TRUE, seed = 42
+  ))))
+  expect_jags_coherence(fit)
+})
+
+
 test_that("one GARMA recurrence handles generated and supplied histories", {
   # Unequal lengths exercise series starts and unavailable higher-order lags.
   # Row-varying coefficients and segment transitions represent segment/group changes.

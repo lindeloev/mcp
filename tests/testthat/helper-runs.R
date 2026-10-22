@@ -75,7 +75,7 @@ test_runs = function(model,
 
     warnings = messages = character()
     fit = withCallingHandlers(
-      mcp(
+      with_dpar_nodes(mcp(
         model = model,
         data = data,
         family = family,
@@ -86,7 +86,7 @@ test_runs = function(model,
         iter = 18,  # Keep enough draws for the minimum supported loo version.
         chains = 2,  # run sequentially under the default future plan
         quiet = TRUE
-      ),
+      )),
       warning = function(condition) {
         warnings <<- c(warnings, conditionMessage(condition))
         invokeRestart("muffleWarning")
@@ -134,12 +134,50 @@ test_runs = function(model,
       }
     }
 
+    expect_jags_coherence(fit, model)
     if (is_arma(fit))
       test_arma_simulation(fit)
 
     if (test_s3 || level == "release") {
       test_s3_methods(fit)
     }
+  }
+}
+
+
+# Evaluate `code`, a call to mcp(), while also monitoring the JAGS node of each dpar for each
+# observation, e.g., `mu_[i_]`, `sigma_[i_]`, and `ar1_[i_]`. Returns the fit with their
+# posterior draws in `attr(fit, "dpar_nodes")` (draws x nodes). Monitoring does not change the draws.
+with_dpar_nodes = function(code) {
+  run_jags = get("run_jags", envir = asNamespace("mcp"))
+  nodes = NULL
+  fit = testthat::with_mocked_bindings(
+    code,
+    run_jags = function(jags_code, jags_data, pars, sample, ...) {
+      if (sample != "post")
+        return(run_jags(jags_code, jags_data, pars, sample, ...))
+      dpar_nodes = paste0(unique(stringr::str_match_all(jags_code, "\n\\s*([a-z]+[0-9]*)_\\[i_\\] =")[[1]][, 2]), "_")
+      draws = run_jags(jags_code, jags_data, c(pars, dpar_nodes), sample, ...)
+      is_node = sub("\\[.*", "", coda::varnames(draws)) %in% dpar_nodes
+      nodes <<- as.matrix(draws[, is_node, drop = FALSE])
+      draws[, !is_node, drop = FALSE]
+    },
+    .package = "mcp"
+  )
+  attr(fit, "dpar_nodes") = nodes
+  fit
+}
+
+
+# R-side evaluation equals the JAGS model, draw by draw: `fitted(fit, dpar = dpar)` equals the
+# JAGS node `<dpar>_[i_]` for all dpars, including AR/MA lags. Requires `with_dpar_nodes()`.
+expect_jags_coherence = function(fit, label = NULL) {
+  nodes = attr(fit, "dpar_nodes")
+  testthat::expect_false(is.null(nodes), label = label)
+  for (dpar in unique(sub("_\\[.*", "", colnames(nodes)))) {
+    r_values = fitted(fit, dpar = dpar, summary = FALSE, draws_format = "matrix")
+    jags_values = nodes[, paste0(dpar, "_[", seq_len(nrow(fit$data)), "]"), drop = FALSE]
+    testthat::expect_equal(unname(r_values), unname(jags_values), tolerance = 1e-8, label = paste(paste(label, collapse = " "), dpar))
   }
 }
 
