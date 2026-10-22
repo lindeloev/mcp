@@ -187,7 +187,7 @@ It seems that `mcp` recovered the group-specific change points well. There is a 
 mcp::ranef(fit)
 ```
 
-Inspecting the `sim` and `match` columns, we see that the simulated deviations lie within the intervals. However, the intervals are wide because the deviations trade off against the population-level `cp_1`, which is informed by only six groups. 
+Inspecting the `sim` and `match` columns, we see that the simulated deviations lie within the intervals. However, the intervals are wide because the deviations trade off against the population-level `cp_1`, which is informed by only six groups. In this case, the simulated deviations happen to be mostly positive, so the model attributes their shared shift to `cp_1`, and all estimated deviations sit below their simulated values by a similar amount.
 
 The group-specific change points (`cp_1 + cp_1_id[g]`) are much more precise, as seen in the plot above. Get them using `coef(fit)`, which adds the population-level parameter to each deviation, as in `lme4` and `brms`:
 

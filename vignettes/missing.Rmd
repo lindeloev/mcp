@@ -36,14 +36,14 @@ library(ggplot2)
 Sometimes the interest is not in recovering individual missing responses, but in how gaps in the data affect inference about the change points. To demonstrate this, `mcp_example("void")` takes the data from `mcp_example("demo")` and sets the responses near both change points to `NA` (`25 < time < 42` and `70 < time < 80`). The top panel shows the fit to the full data and the bottom panel the fit with the voids:
 
 ```{r, fig.height = 7}
-fit_void = mcp_example("void")
+fit_void = mcp_example("void", sample = "both")
 ```
 
 Notice that `mcp` can infer change points in regions with no observed data. The first change point joins a plateau to a slope. Its location in the void is mostly informed by extrapolating the two segments until they meet, and the uncertainty is greater than in the full data because fewer data inform these trends. In principle, it could be known to great precision if the segments' trends were very well defined.
 
 The second change point is different because segment 3 is disjoined from segment 2. There is nothing in the void that tells where the jump happened, so the change point posterior is roughly uniform across the void. This is true for any gap between data: the narrow gap between two neighboring data points (top panel) also yields a uniform-like posterior, just on a much smaller range.
 
-We can quantify how much of each change point posterior is within its void using `hypothesis()`:
+We can quantify how much of each change point posterior is within its void using `hypothesis()`. Because we sampled the prior too (`sample = "both"`), it also returns a Bayes factor (`BF`) for each interval, i.e., how much the data shifted the odds of the change point being in the void:
 
 ```{r, R.options = list(width = 9999)}
 hypothesis(fit_void, c(
