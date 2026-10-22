@@ -12,7 +12,7 @@ test_that("hypothesis()", {
   directional = paste0("cp_1 > ", threshold_text)
 
   # Directional hypothesis on posterior-only fit returns posterior probability with BF = NA
-  res_post_only = hypothesis(fit_post_only, directional)
+  expect_message(res_post_only <- hypothesis(fit_post_only, directional), "need prior draws, so `BF` is NA", fixed = TRUE)
   expect_true("prob" %in% names(res_post_only))
   expect_equal(res_post_only$prob, mean(cp_draws > threshold))
   expect_true(is.na(res_post_only$BF))
