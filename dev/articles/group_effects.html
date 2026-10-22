@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-10-21</h4>
+            <h4 data-toc-skip class="date">2026-10-22</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -346,7 +346,10 @@ effects), use:</p>
 see that the simulated deviations lie within the intervals. However, the
 intervals are wide because the deviations trade off against the
 population-level <code>cp_1</code>, which is informed by only six
-groups.</p>
+groups. In this case, the simulated deviations happen to be mostly
+positive, so the model attributes their shared shift to
+<code>cp_1</code>, and all estimated deviations sit below their
+simulated values by a similar amount.</p>
 <p>The group-specific change points (<code>cp_1 + cp_1_id[g]</code>) are
 much more precise, as seen in the plot above. Get them using
 <code>coef(fit)</code>, which adds the population-level parameter to
@@ -456,13 +459,13 @@ priors on group-level effects</a>.</p>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
 <span><span class="co">##     # x measured from each segment's change point</span></span>
-<span><span class="co">##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id_index_[i_]]))</span></span>
-<span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id_index_[i_]])</span></span>
+<span><span class="co">##     x_local_1_[i_] = min(x[i_], cp_1_id_location[id_index_[i_]])</span></span>
+<span><span class="co">##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1_id_location[id_index_[i_]]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for mu</span></span>
 <span><span class="co">##     link_mu_[i_] =</span></span>
 <span><span class="co">##       (x[i_] &gt;= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + </span></span>
-<span><span class="co">##       (x[i_] &gt;= (cp_1_id_location[id_index_[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]</span></span>
+<span><span class="co">##       (x[i_] &gt;= cp_1_id_location[id_index_[i_]]) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     # Formula for sigma</span></span>
 <span><span class="co">##     link_sigma_[i_] =</span></span>

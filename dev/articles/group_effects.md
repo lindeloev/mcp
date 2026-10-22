@@ -288,7 +288,10 @@ mcp::ranef(fit)
 Inspecting the `sim` and `match` columns, we see that the simulated
 deviations lie within the intervals. However, the intervals are wide
 because the deviations trade off against the population-level `cp_1`,
-which is informed by only six groups.
+which is informed by only six groups. In this case, the simulated
+deviations happen to be mostly positive, so the model attributes their
+shared shift to `cp_1`, and all estimated deviations sit below their
+simulated values by a similar amount.
 
 The group-specific change points (`cp_1 + cp_1_id[g]`) are much more
 precise, as seen in the plot above. Get them using `coef(fit)`, which
@@ -423,13 +426,13 @@ fit$jags_code
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
     ##     # x measured from each segment's change point
-    ##     x_local_1_[i_] = min(x[i_], (cp_1_id_location[id_index_[i_]]))
-    ##     x_local_2_[i_] = min(x[i_], cp_2) - (cp_1_id_location[id_index_[i_]])
+    ##     x_local_1_[i_] = min(x[i_], cp_1_id_location[id_index_[i_]])
+    ##     x_local_2_[i_] = min(x[i_], cp_2) - cp_1_id_location[id_index_[i_]]
     ##     
     ##     # Formula for mu
     ##     link_mu_[i_] =
     ##       (x[i_] >= cp_0) * inprod(rhs_matrix_[i_, c(1)], c(Intercept_1)) * 1 + 
-    ##       (x[i_] >= (cp_1_id_location[id_index_[i_]])) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
+    ##       (x[i_] >= cp_1_id_location[id_index_[i_]]) * inprod(rhs_matrix_[i_, c(2)], c(x_2)) * x_local_2_[i_]
     ##     
     ##     # Formula for sigma
     ##     link_sigma_[i_] =

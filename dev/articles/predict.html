@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Fits and predictions</h1>
             
-            <h4 data-toc-skip class="date">2026-10-21</h4>
+            <h4 data-toc-skip class="date">2026-10-22</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/predict.Rmd" class="external-link"><code>vignettes/predict.Rmd</code></a></small>
       <div class="d-none name"><code>predict.Rmd</code></div>
@@ -278,12 +278,12 @@ predictive interval):</p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.8  4.02   7.76   18.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9  4.00   7.76   18.0</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4  3.94   6.39   16.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5  3.97  20.4    30.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.1  4.05   8.05   18.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.8  3.95   5.92   16.0</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  3.91   9.46   19.5</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.4  3.97  20.4    30.5</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2  4.02   8.05   18.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9  3.94   5.92   16.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  3.93   9.46   19.5</span></span></code></pre>
 <p>Note that <code><a href="../reference/execute-mcp-model.html">predict()</a></code> uses random sampling under the hood,
 so these values will differ slightly from call to call. You can make it
 replicable using <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> as above. In general, the more
@@ -384,7 +384,7 @@ from the data, so this sampling trick causes poor mixing.</em></p>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
 <span><span class="co">##    time .mean   .sd .lower .upper</span></span>
 <span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.63  5.48 0.092<span style="text-decoration: underline;">5</span>   14.1</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.64  5.48 0.092<span style="text-decoration: underline;">5</span>   14.1</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. <code><a href="../reference/plot.mcpfit.html">plot()</a></code> shows only the observed range
 of <code>time</code>, so we make the plot ourselves:</p>

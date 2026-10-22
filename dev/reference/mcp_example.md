@@ -82,11 +82,15 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 fit = mcp_example("multiple")
 
 print(fit$example_code) # See how the data was simulated
+#> # mcp_example() arguments
+#> sample = "post"
+#> plot = TRUE
+#> 
 #> # Define model
 #> model = list(
-#>   y ~ 1 + x:state + z,
-#>   ~ 1 + x + state,
-#>   ~ 0 + I(x^2) + same(state)
+#>   y ~ 1 + x:state + z,        # Intercept_1, by-state slopes (x.stateA_1, ...), z_1
+#>   ~ 1 + x + state,            # At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included
+#>   ~ 0 + I(x^2) + same(state)  # At cp_2: Joined quadratic (xE2_3); reuse stateB_2, ...
 #> )
 #> 
 #> # Simulate data
@@ -141,11 +145,15 @@ print(empty)
 #> 
 #> No posterior draws. Nothing to summarise.
 print(empty$example_code)
+#> # mcp_example() arguments
+#> sample = "none"
+#> plot = FALSE
+#> 
 #> # Define model
 #> model = list(
-#>   y | trials(N) ~ 1,  # constant success probability
-#>   ~ 0 + x,  # joined changing success probability
-#>   ~ 1 + x  # disjoined changing success probability
+#>   y | trials(N) ~ 1,  # Plateau (Intercept_1): constant success probability
+#>   ~ 0 + x,            # At cp_1: Joined slope (x_2) on the logit scale
+#>   ~ 1 + x             # At cp_2: Disjoined slope (Intercept_3, x_3)
 #> )
 #> 
 #> # Simulate data

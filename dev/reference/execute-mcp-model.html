@@ -293,7 +293,9 @@ trends are modeled.</p></li>
 posterior predictive SD for <code>predict()</code> and the posterior SD of the
 evaluated quantity otherwise.</p></li>
 <li><p><code>.lower</code> and <code>.upper</code>: The lower and upper ends of the central interval given in <code>width</code>.</p></li>
-</ul><p>With <code>prior = TRUE</code>, these are the analogous prior summaries. mcp's own
+</ul><p>For <code>predict()</code> with built-in families, these are the exact moments and quantiles of the
+posterior predictive distribution (the mixture over posterior draws), so they do not vary with the seed.</p>
+<p>With <code>prior = TRUE</code>, these are the analogous prior summaries. mcp's own
 columns are dot-prefixed to avoid collisions with data columns.</p></li>
 <li><p>If <code>summary = FALSE</code> and <code>draws_format = "tidy"</code>: A <code>tidybayes</code> <code>tibble</code> with all the posterior
 draws (<code>Nd</code>) evaluated at each row in <code>newdata</code> (<code>Nn</code>), i.e., with <code>Nd x Nn</code> rows, ordered by
@@ -484,12 +486,12 @@ retained JAGS imputations supply the history used for later fitted and predicted
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       y     x state .mean   .sd .lower .upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    <span style="color: #BB0000;">NA</span>     8 B      35.4  4.40  26.7    44.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>    <span style="color: #BB0000;">NA</span>    19 A      15.5  4.37   6.96   24.1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>    <span style="color: #BB0000;">NA</span>    27 A      17.0  4.38   8.57   25.6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>    <span style="color: #BB0000;">NA</span>    28 B      39.4  4.30  30.9    47.9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>    <span style="color: #BB0000;">NA</span>    29 A      17.5  4.32   8.97   26.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    <span style="color: #BB0000;">NA</span>    30 B      39.7  4.36  31.2    48.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    <span style="color: #BB0000;">NA</span>     8 B      35.4  4.41  26.7    44.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>    <span style="color: #BB0000;">NA</span>    19 A      15.5  4.35   6.96   24.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>    <span style="color: #BB0000;">NA</span>    27 A      17.1  4.34   8.57   25.6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>    <span style="color: #BB0000;">NA</span>    28 B      39.4  4.34  30.9    47.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>    <span style="color: #BB0000;">NA</span>    29 A      17.5  4.34   8.97   26.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>    <span style="color: #BB0000;">NA</span>    30 B      39.8  4.34  31.2    48.3</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

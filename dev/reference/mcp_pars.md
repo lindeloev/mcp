@@ -49,7 +49,7 @@ parameters.
 
 ``` r
 # Show every parameter in the model
-mcp_pars(demo_fit)
+print(mcp_pars(demo_fit), width = Inf)
 #> # A tibble: 7 × 8
 #>   parameter   part      scope      role         segment dpar  group_col population_parameter
 #>   <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
@@ -62,13 +62,6 @@ mcp_pars(demo_fit)
 #> 7 sigma_1     predictor population coefficient        1 sigma NA        NA                  
 
 # Select population-level coefficients
-mcp_pars(demo_fit, scope = "population", role = "coefficient")
-#> # A tibble: 5 × 8
-#>   parameter   part      scope      role        segment dpar  group_col population_parameter
-#>   <chr>       <chr>     <chr>      <chr>         <int> <chr> <chr>     <chr>               
-#> 1 Intercept_1 predictor population coefficient       1 mu    NA        NA                  
-#> 2 time_2      predictor population coefficient       2 mu    NA        NA                  
-#> 3 Intercept_3 predictor population coefficient       3 mu    NA        NA                  
-#> 4 time_3      predictor population coefficient       3 mu    NA        NA                  
-#> 5 sigma_1     predictor population coefficient       1 sigma NA        NA                  
+mcp_pars(demo_fit, scope = "population", role = "coefficient")$parameter
+#> [1] "Intercept_1" "time_2"      "Intercept_3" "time_3"      "sigma_1"    
 ```

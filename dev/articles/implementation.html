@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>From formulas to sampler code</h1>
             
-            <h4 data-toc-skip class="date">2026-10-21</h4>
+            <h4 data-toc-skip class="date">2026-10-22</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/implementation.Rmd" class="external-link"><code>vignettes/implementation.Rmd</code></a></small>
       <div class="d-none name"><code>implementation.Rmd</code></div>
@@ -115,7 +115,8 @@
 mcp formulas</a>. The actual implementation is equivalent, but quite
 different in form. This article shows how <code>mcp</code> turns the
 segment formulas into code for the sampler, currently JAGS. You can see
-it as JAGS code in <code>fit$jags_code</code> and as R code <a href="#the-model-in-r">below</a>.</p>
+it as JAGS code in <code>fit$jags_code</code> and evaluate it in R using
+<code>fit$simulate()</code> (<a href="#the-model-in-r">below</a>).</p>
 <div class="section level2">
 <h2 id="modeling-changes-in-intercept">Modeling changes in intercept<a class="anchor" aria-label="anchor" href="#modeling-changes-in-intercept"></a>
 </h2>
@@ -584,37 +585,19 @@ differ between groups.</p>
 <h2 id="the-model-in-r">The model in R<a class="anchor" aria-label="anchor" href="#the-model-in-r"></a>
 </h2>
 <p><code><a href="../reference/execute-mcp-model.html">fitted()</a></code>, <code><a href="../reference/execute-mcp-model.html">predict()</a></code>,
-<code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, <code><a href="../reference/plot.mcpfit.html">plot()</a></code>, and
-<code>fit$simulate()</code> evaluate the model in R. The R code is
-translated from the formula in <code>fit$jags_code</code>, so the two
-always agree. The translation drops the <code>[i_]</code> loop index
-because R evaluates all rows at once:</p>
+<code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, and <code><a href="../reference/plot.mcpfit.html">plot()</a></code>
+evaluate the same model in R. Internally, the formula in
+<code>fit$jags_code</code> and the R evaluation are written from the
+same table of terms, so the two always agree. To evaluate the model for
+chosen parameter values, use <code>fit$simulate()</code>. For the <a href="#how-mcp-implements-slope-changes-in-jags-using-indicators">joined
+slopes above</a>, it reproduces the indicator version:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">mcp</span><span class="fu">:::</span><span class="fu">get_formula_r</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">.internal</span><span class="op">$</span><span class="va">formula_jags</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## </span></span>
-<span><span class="co">## # x measured from each segment's change point</span></span>
-<span><span class="co">## x_local_1_ = pmin(x, cp_1)</span></span>
-<span><span class="co">## x_local_2_ = pmin(x, cp_2) - cp_1</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## # Formula for mu</span></span>
-<span><span class="co">## link_mu_ =</span></span>
-<span><span class="co">##   (x &gt;= cp_0) * inprod(rhs_matrix_[, c(1), drop = FALSE], cbind(x_1)) * x_local_1_ + </span></span>
-<span><span class="co">##   (x &gt;= cp_1) * inprod(rhs_matrix_[, c(2), drop = FALSE], cbind(x_2)) * x_local_2_</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## # Formula for sigma</span></span>
-<span><span class="co">## link_sigma_ =</span></span>
-<span><span class="co">##   (x &gt;= cp_0) * inprod(rhs_matrix_[, c(3), drop = FALSE], cbind(sigma_1)) * 1</span></span></code></pre>
-<p>The priors and reparameterizations are not part of it. Neither is the
-likelihood, which is in <code>fit$family$r</code>, e.g.,
-<code>fit$family$r$log_lik</code> and <code>fit$family$r$rng</code>. To
-step through the R-side evaluation of a sampled fit, run:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/debug.html" class="external-link">debugonce</a></span><span class="op">(</span><span class="fu">mcp</span><span class="fu">:::</span><span class="va">evaluate_model_dpars</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
-<p><code>get_formula_r()</code> and <code>evaluate_model_dpars()</code>
-are internal functions, as are the contents of
-<code>fit$.internal</code>. They may change in future versions of
-<code>mcp</code> without notice.</p>
+<code class="sourceCode R"><span><span class="va">y_mcp</span> <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span><span class="va">fit</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span>, cp_1 <span class="op">=</span> <span class="fl">12</span>, x_1 <span class="op">=</span> <span class="fl">2</span>, x_2 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, sigma_1 <span class="op">=</span> <span class="fl">1</span>, .type <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">y_mcp</span><span class="op">)</span>, <span class="va">y_local</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] TRUE</span></span></code></pre>
+<p>The priors and reparameterizations are not part of the R evaluation.
+The likelihood is in <code>fit$family$r</code>, e.g.,
+<code>fit$family$r$log_lik</code> and <code>fit$family$r$rng</code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -172,7 +172,7 @@
 <li>
 <p><strong>Plotting and examples:</strong></p>
 <ul><li><p>Default <code>plot(fit)</code> style has been updated in many ways to accommodate multiple regression and group-effects.</p></li>
-<li><p>Predictive intervals (<code>plot(fit, q_predict = TRUE)</code> and <code>predict(fit, summary = TRUE)</code>) are now precise and faster. They used to be estimated from posterior parameter draws, which has MC error.</p></li>
+<li><p>Predictive summaries are now exact and faster. The intervals (<code>plot(fit, interval = "predict")</code> and <code>predict(fit)$.lower</code>/<code>$.upper</code>) and moments (<code>predict(fit)$.mean</code>/<code>$.sd</code>) are computed from the posterior predictive distribution instead of from random predictions.</p></li>
 <li><p>Added <code>interpolate_newdata(fit, by = NULL)</code> which generates a data.frame with all combinations of categorical predictors along with interpolated continuous predictors. Use <code>by</code> to include grouping factors. The documentation shows how this can be useful for generating <a href="https://lindeloev.github.io/mcp/articles/plotting.html#making-your-own-plots">custom plots</a> when simple tweaking <code><a href="../reference/plot.mcpfit.html">plot()</a></code> is not enough.</p></li>
 <li><p><code>mcp_example(...)</code> now shows an illustrative plot of the fitted example by default. Disable using <code>plot = FALSE</code>.</p></li>
 <li><p>New help topics <code>?mcp-formula</code> (model formulas and the underlying model) and <code>?mcp-priors</code> (prior syntax), split out from <code><a href="../reference/mcp.html">?mcp</a></code>.</p></li>
@@ -234,7 +234,6 @@
 <li><p>Explicitly setting <code>dpar = "mu"</code> now returns the success probability parameter <span class="math inline">\mu</span> regardless of <code>rate</code>. <code>rate</code> only affects <code>"epred"</code> and predictions, where the default <code>rate = FALSE</code> returns counts (e.g., in <code><a href="../reference/execute-mcp-model.html">fitted()</a></code>, <code><a href="../reference/execute-mcp-model.html">predict()</a></code>, and <code><a href="../reference/posterior_epred.mcpfit.html">posterior_epred()</a></code>).</p></li>
 <li><p>Now works for 200+ characters formulas too.</p></li>
 <li><p>Fixed <code>cores = "all"</code> failed. Thanks for reporting, <a href="https://github.com/m-r-munroe" class="external-link">@m-r-munroe</a>!</p></li>
-<li><p>Formula environments are now preserved, so locally defined transformations work in <code><a href="../reference/mcp.html">mcp()</a></code> formulas and when applying fitted predictors to new data.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="behind-the-scenes-0-4-0">Behind the scenes<a class="anchor" aria-label="anchor" href="#behind-the-scenes-0-4-0"></a></h3>

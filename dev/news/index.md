@@ -615,10 +615,11 @@ been added until we reach 1.0.
   - Default `plot(fit)` style has been updated in many ways to
     accommodate multiple regression and group-effects.
 
-  - Predictive intervals (`plot(fit, q_predict = TRUE)` and
-    `predict(fit, summary = TRUE)`) are now precise and faster. They
-    used to be estimated from posterior parameter draws, which has MC
-    error.
+  - Predictive summaries are now exact and faster. The intervals
+    (`plot(fit, interval = "predict")` and
+    `predict(fit)$.lower`/`$.upper`) and moments
+    (`predict(fit)$.mean`/`$.sd`) are computed from the posterior
+    predictive distribution instead of from random predictions.
 
   - Added `interpolate_newdata(fit, by = NULL)` which generates a
     data.frame with all combinations of categorical predictors along
@@ -911,11 +912,6 @@ been added until we reach 1.0.
 
 - Fixed `cores = "all"` failed. Thanks for reporting,
   [@m-r-munroe](https://github.com/m-r-munroe)!
-
-- Formula environments are now preserved, so locally defined
-  transformations work in
-  [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md)
-  formulas and when applying fitted predictors to new data.
 
 ### Behind the scenes
 

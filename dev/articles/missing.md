@@ -30,7 +30,7 @@ fit to the full data and the bottom panel the fit with the voids:
 
 ``` r
 
-fit_void = mcp_example("void")
+fit_void = mcp_example("void", sample = "both")
 ```
 
     ## NA values detected in 'response'. JAGS will treat them as latent responses and impute them during sampling.
@@ -53,7 +53,10 @@ posterior, just on a much smaller range.
 
 We can quantify how much of each change point posterior is within its
 void using
-[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md):
+[`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md).
+Because we sampled the prior too (`sample = "both"`), it also returns a
+Bayes factor (`BF`) for each interval, i.e., how much the data shifted
+the odds of the change point being in the void:
 
 ``` r
 
@@ -63,13 +66,11 @@ hypothesis(fit_void, c(
 ))
 ```
 
-    ## Bayes factors for directional hypotheses need prior draws, so `BF` is NA. Run mcp(..., sample = 'both') to compute them.
-
     ## # A tibble: 2 × 7
     ##   hypothesis             mean    sd lower upper  prob    BF
     ##   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.935    NA
-    ## 2 cp_2 > 70 & cp_2 < 80    NA    NA    NA    NA 0.840    NA
+    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.935  46.6
+    ## 2 cp_2 > 70 & cp_2 < 80    NA    NA    NA    NA 0.840  28.3
 
 ## Imputing missing responses
 
@@ -131,16 +132,16 @@ imputed
     ## # A tibble: 10 × 7
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.5  4.37  29.8    41.0
-    ##  2    NA    19 A      15.4  4.39   9.95   21.1
-    ##  3    NA    27 A      17.1  4.29  11.6    22.6
-    ##  4    NA    28 B      39.3  4.34  33.8    44.9
-    ##  5    NA    29 A      17.5  4.33  12.0    23.0
-    ##  6    NA    30 B      39.9  4.32  34.2    45.3
-    ##  7    NA    31 A      17.8  4.35  12.4    23.4
+    ##  1    NA     8 B      35.4  4.41  29.8    41.0
+    ##  2    NA    19 A      15.5  4.35   9.95   21.1
+    ##  3    NA    27 A      17.1  4.34  11.6    22.6
+    ##  4    NA    28 B      39.4  4.34  33.8    44.9
+    ##  5    NA    29 A      17.5  4.34  12.0    23.0
+    ##  6    NA    30 B      39.8  4.34  34.2    45.3
+    ##  7    NA    31 A      17.9  4.34  12.4    23.4
     ##  8    NA    68 B      41.3  4.44  35.6    46.9
-    ##  9    NA    84 B      34.6  4.31  29.0    40.1
-    ## 10    NA    96 B      29.5  4.45  23.9    35.2
+    ##  9    NA    84 B      34.6  4.36  29.0    40.1
+    ## 10    NA    96 B      29.5  4.46  23.9    35.2
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 has the same syntax as
@@ -358,5 +359,5 @@ predict(fit, newdata = newdata, width = 0.8)
     ## # A tibble: 2 × 6
     ##       x state .mean   .sd .lower .upper
     ##   <dbl> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    20 A      15.8  4.38   10.2   21.3
-    ## 2    80 B      36.3  4.38   30.7   41.8
+    ## 1    20 A      15.7  4.35   10.2   21.3
+    ## 2    80 B      36.3  4.36   30.7   41.8

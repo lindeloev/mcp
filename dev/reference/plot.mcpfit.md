@@ -71,7 +71,7 @@ plot_dpar(
     and `"fitted"`.
 
   For other quantiles, see [the plotting
-  article](https://lindeloev.github.io/mcp/articles/plotting.html#other-quantiles)
+  article](https://lindeloev.github.io/mcp/articles/plotting.html#making-your-own-plots)
   for computing them from `fitted(..., summary = FALSE)` or
   `predict(..., summary = FALSE)` and adding them as a ggplot2 layer.
 

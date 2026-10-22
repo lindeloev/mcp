@@ -41,10 +41,6 @@ Without `shape()`, `shape_1` is the shape itself with a
 # Fit an overdispersed count model with the default log links
 data = data.frame(time = 1:6, count = c(1, 2, 8, 3, 12, 5))
 fit = mcp(list(count ~ 1), data, family = negbinomial(), par_x = "time", sample = FALSE)
-mcp_pars(fit)  # Show the mean and shape parameters
-#> # A tibble: 2 × 8
-#>   parameter   part      scope      role        segment dpar  group_col population_parameter
-#>   <chr>       <chr>     <chr>      <chr>         <int> <chr> <chr>     <chr>               
-#> 1 Intercept_1 predictor population coefficient       1 mu    NA        NA                  
-#> 2 shape_1     predictor population coefficient       1 shape NA        NA                  
+mcp_pars(fit)$parameter  # Show the mean and shape parameters
+#> [1] "Intercept_1" "shape_1"    
 ```

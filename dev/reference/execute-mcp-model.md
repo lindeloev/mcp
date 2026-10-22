@@ -266,6 +266,10 @@ residuals(
   - `.lower` and `.upper`: The lower and upper ends of the central
     interval given in `width`.
 
+  For `predict()` with built-in families, these are the exact moments
+  and quantiles of the posterior predictive distribution (the mixture
+  over posterior draws), so they do not vary with the seed.
+
   With `prior = TRUE`, these are the analogous prior summaries. mcp's
   own columns are dot-prefixed to avoid collisions with data columns.
 
@@ -485,11 +489,11 @@ predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictiv
 #> # A tibble: 6 × 7
 #>       y     x state .mean   .sd .lower .upper
 #>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    NA     8 B      35.4  4.40  26.7    44.1
-#> 2    NA    19 A      15.5  4.37   6.96   24.1
-#> 3    NA    27 A      17.0  4.38   8.57   25.6
-#> 4    NA    28 B      39.4  4.30  30.9    47.9
-#> 5    NA    29 A      17.5  4.32   8.97   26.0
-#> 6    NA    30 B      39.7  4.36  31.2    48.3
+#> 1    NA     8 B      35.4  4.41  26.7    44.1
+#> 2    NA    19 A      15.5  4.35   6.96   24.1
+#> 3    NA    27 A      17.1  4.34   8.57   25.6
+#> 4    NA    28 B      39.4  4.34  30.9    47.9
+#> 5    NA    29 A      17.5  4.34   8.97   26.0
+#> 6    NA    30 B      39.8  4.34  31.2    48.3
 # }
 ```

@@ -5,7 +5,8 @@ formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.html#modeling-sl
 The actual implementation is equivalent, but quite different in form.
 This article shows how `mcp` turns the segment formulas into code for
 the sampler, currently JAGS. You can see it as JAGS code in
-`fit$jags_code` and as R code [below](#the-model-in-r).
+`fit$jags_code` and evaluate it in R using `fit$simulate()`
+([below](#the-model-in-r)).
 
 ## Modeling changes in intercept
 
@@ -471,42 +472,23 @@ differ between groups.
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
-[`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
-and `fit$simulate()` evaluate the model in R. The R code is translated
-from the formula in `fit$jags_code`, so the two always agree. The
-translation drops the `[i_]` loop index because R evaluates all rows at
-once:
+and
+[`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
+evaluate the same model in R. Internally, the formula in `fit$jags_code`
+and the R evaluation are written from the same table of terms, so the
+two always agree. To evaluate the model for chosen parameter values, use
+`fit$simulate()`. For the [joined slopes
+above](#how-mcp-implements-slope-changes-in-jags-using-indicators), it
+reproduces the indicator version:
 
 ``` r
 
-mcp:::get_formula_r(fit$.internal$formula_jags)
+y_mcp = fit$simulate(fit, data.frame(x = 1:20), cp_1 = 12, x_1 = 2, x_2 = -1, sigma_1 = 1, .type = "fitted")
+all.equal(as.numeric(y_mcp), y_local)
 ```
 
-    ## 
-    ## # x measured from each segment's change point
-    ## x_local_1_ = pmin(x, cp_1)
-    ## x_local_2_ = pmin(x, cp_2) - cp_1
-    ## 
-    ## # Formula for mu
-    ## link_mu_ =
-    ##   (x >= cp_0) * inprod(rhs_matrix_[, c(1), drop = FALSE], cbind(x_1)) * x_local_1_ + 
-    ##   (x >= cp_1) * inprod(rhs_matrix_[, c(2), drop = FALSE], cbind(x_2)) * x_local_2_
-    ## 
-    ## # Formula for sigma
-    ## link_sigma_ =
-    ##   (x >= cp_0) * inprod(rhs_matrix_[, c(3), drop = FALSE], cbind(sigma_1)) * 1
+    ## [1] TRUE
 
-The priors and reparameterizations are not part of it. Neither is the
-likelihood, which is in `fit$family$r`, e.g., `fit$family$r$log_lik` and
-`fit$family$r$rng`. To step through the R-side evaluation of a sampled
-fit, run:
-
-``` r
-
-debugonce(mcp:::evaluate_model_dpars)
-fitted(fit)
-```
-
-`get_formula_r()` and `evaluate_model_dpars()` are internal functions,
-as are the contents of `fit$.internal`. They may change in future
-versions of `mcp` without notice.
+The priors and reparameterizations are not part of the R evaluation. The
+likelihood is in `fit$family$r`, e.g., `fit$family$r$log_lik` and
+`fit$family$r$rng`.

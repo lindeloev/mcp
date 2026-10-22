@@ -203,12 +203,12 @@ head(predict(fit, width = 0.8))
     ## # A tibble: 6 × 6
     ##   response  time .mean   .sd .lower .upper
     ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    12.2   76.3  12.8  4.02   7.76   18.0
+    ## 1    12.2   76.3  12.9  4.00   7.76   18.0
     ## 2     6.35  83.5  11.4  3.94   6.39   16.5
-    ## 3    28.0   60.2  25.5  3.97  20.4    30.5
-    ## 4    15.7   74.7  13.1  4.05   8.05   18.3
-    ## 5    16.2   85.9  10.8  3.95   5.92   16.0
-    ## 6    22.3   40.1  14.5  3.91   9.46   19.5
+    ## 3    28.0   60.2  25.4  3.97  20.4    30.5
+    ## 4    15.7   74.7  13.2  4.02   8.05   18.3
+    ## 5    16.2   85.9  10.9  3.94   5.92   16.0
+    ## 6    22.3   40.1  14.5  3.93   9.46   19.5
 
 Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -332,7 +332,7 @@ predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
     ## # A tibble: 1 × 5
     ##    time .mean   .sd .lower .upper
     ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1   125  7.63  5.48 0.0925   14.1
+    ## 1   125  7.64  5.48 0.0925   14.1
 
 To really understand what’s going on here, it may be helpful to
 visualize the model.
