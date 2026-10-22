@@ -53,7 +53,7 @@ empty = mcp(model, data = df, family = binomial(), sample = FALSE)
 
 Now we can simulate. First, let us see the model parameters.
 
-```{r}
+```{r, R.options = list(width = 9999)}
 mcp_pars(empty)
 ```
 

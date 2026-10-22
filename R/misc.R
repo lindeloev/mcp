@@ -423,6 +423,6 @@ print.mcplist = function(x, ...) {
 print.mcptext = function(x, ...) {
   checkmate::assert_string(x)
   rlang::check_dots_empty()
-  cat(x)
+  cat(x, "\n", sep = "")
   invisible(x)
 }

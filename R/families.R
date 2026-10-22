@@ -12,7 +12,7 @@
 #' # Fit a binary-response model with a probit link
 #' data = data.frame(time = 1:6, y = c(0, 0, 0, 1, 1, 1))
 #' fit = mcp(list(y ~ 1), data, family = bernoulli(link = "probit"), par_x = "time", sample = FALSE)
-#' mcp_pars(fit)  # Show the parameters of the fitted Bernoulli model
+#' mcp_pars(fit)$parameter  # Show the parameters of the fitted Bernoulli model
 bernoulli = function(link = "logit") {
   link = rlang::arg_match0(link, c("identity", "logit", "probit"))
 
@@ -44,7 +44,7 @@ bernoulli = function(link = "logit") {
 #' # Fit an overdispersed count model with the default log links
 #' data = data.frame(time = 1:6, count = c(1, 2, 8, 3, 12, 5))
 #' fit = mcp(list(count ~ 1), data, family = negbinomial(), par_x = "time", sample = FALSE)
-#' mcp_pars(fit)  # Show the mean and shape parameters
+#' mcp_pars(fit)$parameter  # Show the mean and shape parameters
 negbinomial = function(link = "log", link_shape = "log") {
   link = rlang::arg_match0(link, "log")
   link_shape = rlang::arg_match0(link_shape, "log")

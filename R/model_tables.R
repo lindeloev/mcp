@@ -194,10 +194,10 @@ get_pars_table = function(predictors, cps, group_effects, family) {
 #' @export
 #' @examples
 #' # Show every parameter in the model
-#' mcp_pars(demo_fit)
+#' print(mcp_pars(demo_fit), width = Inf)
 #'
 #' # Select population-level coefficients
-#' mcp_pars(demo_fit, scope = "population", role = "coefficient")
+#' mcp_pars(demo_fit, scope = "population", role = "coefficient")$parameter
 mcp_pars = function(fit, scope = NULL, role = NULL) {
   checkmate::assert_class(fit, "mcpfit")
   if (!is.null(scope))
