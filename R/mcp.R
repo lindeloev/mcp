@@ -460,7 +460,8 @@ mcp = function(
       mcp = utils::packageVersion("mcp"),
       R = getRversion(),
       rjags = if (sample %in% c("post", "prior", "both")) utils::packageVersion("rjags"),
-      jags = if (sample %in% c("post", "prior", "both")) rjags::jags.version()
+      # rjags 5-3 jags.version() errors on official macOS JAGS 5 builds. Update once rjags 5 is on CRAN.
+      jags = if (sample %in% c("post", "prior", "both") && utils::packageVersion("rjags") < "5") rjags::jags.version()
     ),
 
     # Pass info to *.mcpfit() functions.

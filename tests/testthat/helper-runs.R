@@ -146,7 +146,8 @@ test_runs = function(model,
 
 test_s3_methods = function(fit) {
   testthat::expect_identical(fit$version$mcp, utils::packageVersion("mcp"))
-  testthat::expect_s3_class(fit$version$jags, "package_version")
+  if (utils::packageVersion("rjags") < "5")  # See fit$version$jags in mcp(). Update once rjags 5 is on CRAN.
+    testthat::expect_s3_class(fit$version$jags, "package_version")
 
   # Test criterions. Will warn about very few samples
   if (!is.null(.subset2(fit, "mcmc_post"))) {
