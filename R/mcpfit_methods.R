@@ -52,12 +52,12 @@ get_simulated_values = function(fit) {
     return(NULL)
 
   # Use one value for each level of group-level deviations
-  for (this_group_effect in mcp_pars(fit, scope = "group")$parameter) {
+  group_pars = mcp_pars(fit, scope = "group")
+  for (this_group_effect in group_pars$parameter) {
     if (!is.null(simulated[[this_group_effect]])) {
       # Find the needed values and labels
       value = simulated[[this_group_effect]]  # Extract simulation values
-      group_effects = definition_rows(get_fit_model_tables(fit)$group_effects)
-      label_col = group_effects$group_col[group_effects$name == this_group_effect]
+      label_col = group_pars$group_col[group_pars$parameter == this_group_effect]
       labs = fit$data[[label_col]]  # Find the labels. Same length as `value`
       if (length(value) != length(labs)) {
         warning("This is simulated data, but the labels for group-level effect '", label_col, "' in data do not have the same length as the numeric parameters used for simulation.")

@@ -32,7 +32,7 @@ get_jags_family_context = function(segments) {
 #' @noRd
 get_jags_code = function(tables, prior_table, family) {
   segments = tables$segments
-  group_effects = definition_rows(tables$group_effects)
+  group_predictors = definition_rows(tables$group_predictors)
   par_x = tables$data_columns$par_x
   ar_order = get_arma_order(tables$predictors, "ar")
   ma_order = get_arma_order(tables$predictors, "ma")
@@ -80,7 +80,7 @@ get_jags_code = function(tables, prior_table, family) {
   ################
   # Split scalar/population priors from group-indexed coefficient priors.
   is_cp = prior_table$parameter %in% c(cps$name, cps$sd_name, cps$group_name)
-  group_cols = stats::setNames(group_effects$group_col, group_effects$name)
+  group_cols = stats::setNames(group_predictors$group_col, group_predictors$name)
   is_group = prior_table$parameter %in% names(group_cols)
   for (i in which(!is_cp & !is_group))
     mm = paste0(mm, get_prior_str(prior_table[i, ]))

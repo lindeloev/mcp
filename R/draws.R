@@ -220,7 +220,7 @@ mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = 
   checkmate::assert_class(fit, "mcpfit")
   checkmate::assert_flag(prior)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-  groups = with(unpack_group_effects(fit, pars = group)$effects, split(name, group_col))
+  groups = unpack_group_effects(fit, pars = group)$groups
   if (!is.null(newdata))
     assert_data_cols(newdata, names(groups))
 

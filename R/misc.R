@@ -144,10 +144,9 @@ warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = cha
 }
 
 
-# Design matrix with one column per coefficient in `predictors` and predictor `group_effects`,
+# Design matrix with one column per coefficient in `predictors` and `group_predictors`,
 # ordered by `matrix_col`. The columns are in their `matrix_data`.
-get_predictor_matrix = function(predictors, group_effects = NULL) {
-  group_predictors = group_effects[group_effects$part == "predictor", ]
+get_predictor_matrix = function(predictors, group_predictors = NULL) {
   columns = c(predictors$matrix_data, group_predictors$matrix_data)
   do.call(cbind, columns[order(c(predictors$matrix_col, group_predictors$matrix_col))])
 }

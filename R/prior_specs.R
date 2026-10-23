@@ -178,14 +178,12 @@ default_predictor_specs = function(predictors, family, context) {
 }
 
 
-default_group_specs = function(group_effects, family) {
-  effects = group_effects %>%
-    dplyr::filter(.data$part == "predictor")
-  if (nrow(effects) == 0)
+default_group_specs = function(group_predictors, family) {
+  if (nrow(group_predictors) == 0)
     return(empty_prior_specs())
 
   defaults = filter_default_conditions(family$default_prior, family)
-  joined = effects %>%
+  joined = group_predictors %>%
     dplyr::left_join(
       dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
       by = c("dpar", "par_type")
@@ -325,8 +323,8 @@ truncate_lower_prior = function(parsed, lower, name = NULL) {
 
 
 # Check that priors are set on the original parameter, not on names that same() replaced.
-# - predictors, group_effects: occurrence tables, i.e., including rows reused by same().
-assert_prior_not_shared = function(prior, predictors, group_effects) {
+# - predictors, group_predictors: occurrence tables, i.e., including rows reused by same().
+assert_prior_not_shared = function(prior, predictors, group_predictors) {
   shared = dplyr::bind_rows(
     dplyr::transmute(
       dplyr::filter(predictors, .data$segment != .data$definition_segment),
@@ -334,7 +332,7 @@ assert_prior_not_shared = function(prior, predictors, group_effects) {
       original = .data$name
     ),
     dplyr::transmute(
-      dplyr::filter(group_effects, .data$segment != .data$definition_segment),
+      dplyr::filter(group_predictors, .data$segment != .data$definition_segment),
       replaced = stringr::str_replace(.data$sd_name, paste0("_", .data$definition_segment, "_"), paste0("_", .data$segment, "_")),
       original = .data$sd_name
     )

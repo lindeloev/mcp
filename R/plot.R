@@ -93,7 +93,7 @@ get_plot = function(x,
   model_tables = get_fit_model_tables(fit)
   data_columns = mcp_columns(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
-  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
+  group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
   categorical_cols = intersect(all_categorical_cols, get_predictor_cols(fit))
   check_unmapped = !is.null(color_by)  # `color_by = NULL` allows unidentified curves
   if (identical(color_by, "auto"))

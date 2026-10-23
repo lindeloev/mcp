@@ -161,8 +161,8 @@ get_predictor_group_definitions_segment = function(
 
 # Get information about group-level parameters
 #
-# Returns parameters, data columns, and effect metadata given parameter
-# name(s), model part(s), or column(s).
+# Returns parameters and data columns given parameter name(s), model part(s),
+# or column(s).
 #
 # - pars: `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
 #   containing `"cp"`, `"predictor"`, exact group-level parameter names, or
@@ -174,8 +174,7 @@ get_predictor_group_definitions_segment = function(
 # Returns a list with
 # * `pars`: Character vector of parameter names, or `NULL` if empty.
 # * `cols`: Character vector of data column names, or `NULL` if empty.
-# * `indices`: Logical vector indexing the group-effects table.
-# * `effects`: The selected rows of the group-effects table.
+# * `groups`: The selected parameter names, split by data column.
 unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
   checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
@@ -183,8 +182,8 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
     checkmate::assert_flag(pars)
   if (is.logical(cols))
     checkmate::assert_flag(cols)
-  group_effects = definition_rows(get_fit_model_tables(fit)$group_effects)
-  use_group = rep(FALSE, nrow(group_effects))
+  group_pars = mcp_pars(fit, scope = "group")
+  use_group = rep(FALSE, nrow(group_pars))
 
   if (!is.null(pars) && !is.null(cols)) {
     stop("One of `pars` and `cols` must be NULL.")
@@ -201,56 +200,55 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
     } else if (is.character(pars)) {
       # `*` is a wildcard, e.g., "cp_*" or "state*_1_id"
       is_glob = grepl("*", pars, fixed = TRUE)
-      glob_matches = lapply(pars[is_glob], function(glob) grepl(utils::glob2rx(glob), group_effects$name))
-      known = pars %in% c("cp", "predictor", group_effects$name)
+      glob_matches = lapply(pars[is_glob], function(glob) grepl(utils::glob2rx(glob), group_pars$parameter))
+      known = pars %in% c("cp", "predictor", group_pars$parameter)
       known[is_glob] = vapply(glob_matches, any, logical(1))
       unknown = pars[!known]
       if (length(unknown) > 0)
         stop(
           "Unknown group-effect selection: ", and_collapse(unknown), ". ",
           "Use TRUE, FALSE, \"cp\", \"predictor\", group-level parameter names, or `*` wildcards. ",
-          "Available group-level parameters: ", paste0(group_effects$name, collapse = ", "), "."
+          "Available group-level parameters: ", paste0(group_pars$parameter, collapse = ", "), "."
         )
-      use_group = group_effects$part %in% pars | group_effects$name %in% pars
+      use_group = group_pars$part %in% pars | group_pars$parameter %in% pars
       use_group = Reduce(`|`, glob_matches, init = use_group)
     }
   } else if (!is.null(cols)) {
     if (all(cols == TRUE)) {
       use_group[] = TRUE
     } else if (!all(cols == FALSE)) {
-      use_group = group_effects$group_col %in% cols
+      use_group = group_pars$group_col %in% cols
     }
   }
 
   # Return
   list(
-    pars = logical0_to_null(group_effects$name[use_group]),
-    cols = logical0_to_null(group_effects$group_col[use_group]),
-    indices = use_group,
-    effects = group_effects[use_group, , drop = FALSE]
+    pars = logical0_to_null(group_pars$parameter[use_group]),
+    cols = logical0_to_null(group_pars$group_col[use_group]),
+    groups = split(group_pars$parameter[use_group], group_pars$group_col[use_group])
   )
 }
 
 
 # Check the hierarchy before drawing a group effect. Change-point deviations are
 # drawn from their default bounded normal, so user-specified priors are not supported.
-assert_generatable_group_prior = function(fit, effect) {
+assert_generatable_group_prior = function(fit, name, sd_name) {
   table = fit$.internal$prior_table
-  row = match(effect$name, table$parameter)
+  row = match(name, table$parameter)
   prior = table$value[row]
-  if (effect$part == "cp") {
+  if (name %in% get_fit_model_tables(fit)$cps$group_name) {
     if (table$source[row] == "user")
       stop(
-        "Cannot generate group-level change point '", effect$name, "' from the user-specified prior '", table$rule[row],
-        "'. `fit$simulate()` supports only the default prior here. Remove '", effect$name, "' from `mcp(prior = ...)` to simulate.",
+        "Cannot generate group-level change point '", name, "' from the user-specified prior '", table$rule[row],
+        "'. `fit$simulate()` supports only the default prior here. Remove '", name, "' from `mcp(prior = ...)` to simulate.",
         call. = FALSE
       )
     return(invisible(NULL))
   }
-  expected = paste0("dnorm(0, ", effect$sd_name, ")")
+  expected = paste0("dnorm(0, ", sd_name, ")")
   if (!identical(prior, expected))
     stop(
-      "Cannot generate group effect '", effect$name, "' from prior '", prior,
+      "Cannot generate group effect '", name, "' from prior '", prior,
       "'. This generator supports only '", expected, "' here.",
       call. = FALSE
     )

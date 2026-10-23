@@ -227,7 +227,7 @@ test_s3_methods = function(fit) {
     testthat::expect_true(all(mcp_pars(fit_to_test, scope = "population")$parameter %in% colnames(samples_col[[1]])))
 
     # Test mcpfit functions
-    group_cols = na.omit(get_fit_model_tables(fit_to_test)$group_effects$group_col)
+    group_cols = na.omit(mcp_pars(fit_to_test, scope = "group")$group_col)
     test_summary(fit_to_test, group_cols, prior = use_prior)
     test_plot_pars(fit_to_test, prior = use_prior)
     test_pp_eval(fit_to_test, prior = use_prior)
@@ -308,7 +308,7 @@ test_summary = function(fit, group_cols, prior = FALSE) {
     testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
     testthat::expect_equal(nlme::ranef(fit, prior = prior, verbose = TRUE), ranef(fit, prior = prior, verbose = TRUE))
 
-    effects = get_fit_model_tables(fit)$group_effects
+    effects = get_fit_model_tables(fit)$group_predictors
     group_level_counts = lapply(
       effects$group_col,
       function(col) length(unique(fit$data[[col]]))
@@ -393,9 +393,7 @@ test_hypothesis = function(fit, prior) {
 test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Settings
   columns = mcp_columns(fit)
-  group_cols = na.omit(unique(
-    get_fit_model_tables(fit)$group_effects$group_col
-  ))
+  group_cols = na.omit(unique(mcp_pars(fit, scope = "group")$group_col))
   rhs_cols = intersect(
     setdiff(unlist(get_formula_vars(fit$model)[c("predictor", "group", "offset", "series")]), group_cols),
     colnames(fit$data)
@@ -571,8 +569,7 @@ test_pp_eval = function(fit, prior = FALSE) {
   } else {
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
-    group_effects = get_fit_model_tables(fit)$group_effects
-    all_group_cols = unique(stats::na.omit(group_effects$group_col))
+    all_group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
     selected_cp = unpack_group_effects(fit, pars = "cp")
     rhs_cols = intersect(
       setdiff(unlist(get_formula_vars(fit$model)[c("predictor", "group", "offset", "series")]), all_group_cols),
@@ -602,7 +599,7 @@ test_pp_eval = function(fit, prior = FALSE) {
 
   # Population-only evaluation should not require any grouping columns.
   if (length(group_pars) > 0) {
-    group_cols = stats::na.omit(unique(get_fit_model_tables(fit)$group_effects$group_col))
+    group_cols = stats::na.omit(unique(mcp_pars(fit, scope = "group")$group_col))
     population_newdata = fit$data[, colnames(fit$data) %notin%
       c(columns$response, group_cols), drop = FALSE]
     population_result = fitted(
@@ -626,7 +623,7 @@ test_pp_eval = function(fit, prior = FALSE) {
 
   # Test pp_check
   if (length(group_pars) > 0) {
-    group_col = na.omit(get_fit_model_tables(fit)$group_effects$group_col)[1]  # Just use the first column
+    group_col = na.omit(mcp_pars(fit, scope = "group")$group_col)[1]  # Just use the first column
     pp_default = try(suppressWarnings(pp_check(fit, facet_by = group_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {
     pp_default = try(suppressWarnings(pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)

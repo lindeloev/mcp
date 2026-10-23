@@ -32,7 +32,7 @@ validate_prior_v1 = function(prior) {
 }
 
 # The prior table: resolved priors and metadata for all parameters in the model
-get_prior_table = function(segments, cps, predictors, group_effects, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
+get_prior_table = function(segments, cps, predictors, group_predictors, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
   checkmate::assert_class(family, "mcpfamily")
   context = prior_context(data, segments, design_specs)
   context$cp_names = cps$name
@@ -54,7 +54,7 @@ get_prior_table = function(segments, cps, predictors, group_effects, family, pri
   specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
     default_predictor_specs(predictors, family, context),
-    default_group_specs(group_effects, family)
+    default_group_specs(group_predictors, family)
   )
 
   # Parse default and specified priors once. A constant response (e.g., a placeholder before
@@ -84,7 +84,7 @@ get_prior_table = function(segments, cps, predictors, group_effects, family, pri
   }
 
   # How each parameter is sampled
-  prior_table = add_nodes(prior_table, cps, group_effects$name)
+  prior_table = add_nodes(prior_table, cps, c(cps$group_name, group_predictors$name))
   add_reparams(prior_table, predictors, cps, context, reparam)
 }
 

@@ -25,8 +25,7 @@ test_that("predictor group intercepts apply only where included, replace, and tu
     par_x = "x",
     sample = FALSE
   )
-  effect = get_fit_model_tables(fit)$group_effects %>%
-    dplyr::filter(.data$part == "predictor")
+  effect = get_fit_model_tables(fit)$group_predictors
 
   expect_equal(effect$name, "Intercept_1_id")
   expect_equal(effect$population_name, "Intercept_1")
@@ -61,8 +60,7 @@ test_that("predictor group intercepts apply only where included, replace, and tu
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(replacement)$group_effects %>%
-    dplyr::filter(.data$part == "predictor")
+  effects = get_fit_model_tables(replacement)$group_predictors
   expect_equal(effects$name, c("Intercept_1_id", "Intercept_2_id"))
   expect_equal(effects$next_segment, c(2L, NA_integer_))
 })
@@ -75,7 +73,7 @@ test_that("predictor group intercepts work for family dpars and group-only formu
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_effects
+  effects = get_fit_model_tables(fit)$group_predictors
 
   expect_equal(effects$name, c("Intercept_1_id", "sigma_Intercept_1_id"))
   expect_true(all(is.na(effects$population_name)))
@@ -130,8 +128,7 @@ test_that("double-bar terms expand into independent group coefficients", {
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_effects %>%
-    dplyr::filter(.data$part == "predictor")
+  effects = get_fit_model_tables(fit)$group_predictors
 
   expect_equal(
     effects$name,
@@ -201,7 +198,7 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
     par_x = "x",
     sample = FALSE
   )
-  factor_effects = get_fit_model_tables(factor_fit)$group_effects
+  factor_effects = get_fit_model_tables(factor_fit)$group_predictors
   expect_equal(
     factor_effects$name,
     c("stateA_1_id", "stateB_1_id", "stateC_1_id")
@@ -215,7 +212,7 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
     par_x = "x",
     sample = FALSE
   )
-  slope_effect = get_fit_model_tables(slope_fit)$group_effects
+  slope_effect = get_fit_model_tables(slope_fit)$group_predictors
   expect_equal(slope_effect$name, "z_1_id")
   expect_equal(slope_effect$par_type, "slope")
   expect_true(is.na(slope_effect$population_name))
@@ -241,7 +238,7 @@ test_that("local group slopes retain joined endpoints until an intercept or zero
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_effects
+  effects = get_fit_model_tables(fit)$group_predictors
   expect_equal(effects$name, c("x_1_id", "x_3_id", "Intercept_4_id"))
   expect_equal(effects$next_segment, c(4L, 4L, 5L))
 
@@ -287,7 +284,7 @@ test_that("population intercepts end local group slopes of the same dpar", {
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_effects
+  effects = get_fit_model_tables(fit)$group_predictors
   expect_equal(effects$name, "x_1_id")
   expect_equal(effects$next_segment, 3L)
 
@@ -316,7 +313,7 @@ test_that("double-bar coefficient blocks are replaced together", {
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_effects
+  effects = get_fit_model_tables(fit)$group_predictors
 
   expect_equal(
     effects$name,
@@ -510,9 +507,9 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
   # Check mcp_draws selects the exact draw columns of all levels
   draws = mcp_draws(fit, ndraws = 2)
   raw = as_draws_df(fit)
-  effects = unpack_group_effects(fit, pars = TRUE)$effects
+  effects = mcp_pars(fit, scope = "group")
   for (i in seq_len(nrow(effects))) {
-    nodes = paste0(effects$name[i], "[", unique(opaque_data[[effects$group_col[i]]]), "]")
+    nodes = paste0(effects$parameter[i], "[", unique(opaque_data[[effects$group_col[i]]]), "]")
     expect_equal(unname(as.matrix(draws[nodes])), unname(as.matrix(raw[match(draws$.draw, raw$.draw), nodes])))
   }
   expect_equal(nrow(draws), 2)

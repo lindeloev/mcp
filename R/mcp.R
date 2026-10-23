@@ -290,17 +290,18 @@ mcp = function(
   segment_tables = get_segment_tables(model, data, family, par_x)
   segments = segment_tables$segments
   cps = segment_tables$cps
+  
   # Pass the same canonical segment formulas to all model-building consumers
   model = Map(stats::as.formula, segments$form, env = segments$form_env)
   segments$form_env = NULL
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictor_occurrences = predictor_tables$predictors
-  group_occurrences = get_group_effects(cps, predictor_tables$group_effects)
+  group_occurrences = predictor_tables$group_predictors
   predictor_definitions = definition_rows(predictor_occurrences)
   group_definitions = definition_rows(group_occurrences)
   family = resolve_dpar_specs(family, predictor_tables$components)
-
-  if (nrow(cps) == 0 && nrow(predictor_definitions) == 0 && nrow(group_definitions) == 0)
+  parameters = get_pars_table(predictor_definitions, cps, group_definitions, family)
+  if (nrow(parameters) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
   # Make prior
@@ -309,7 +310,6 @@ mcp = function(
   assert_fixed_dpars(prior_table, predictor_definitions, family)
 
   # Assemble model metadata used by fitted-model methods
-  parameters = get_pars_table(predictor_definitions, cps, group_definitions, family)
   data_columns = c(
     list(par_x = par_x, response = unique(segments$y), series = series),
     lapply(get_family_aux_columns(family, segments), function(column) {
@@ -323,7 +323,7 @@ mcp = function(
     segments = segments,
     cps = cps,
     predictors = dplyr::select(predictor_occurrences, -"matrix_data"),
-    group_effects = dplyr::select(group_occurrences, -"matrix_data"),
+    group_predictors = dplyr::select(group_occurrences, -"matrix_data"),
     parameters = parameters,
     design_specs = lapply(predictor_tables$design_specs, function(spec) {
       spec$offset_data = NULL
@@ -359,7 +359,7 @@ mcp = function(
   # SAMPLE #
   ##########
   jags_data = get_jags_data(
-    data, family, segments, predictor_occurrences, group_occurrences, jags_code, series,
+    data, family, segments, predictor_occurrences, group_occurrences, parameters, jags_code, series,
     generated = !custom_jags_code,
     design_specs = predictor_tables$design_specs
   )
@@ -385,7 +385,7 @@ mcp = function(
       quiet = quiet,
       use_glm = use_jags_glm(family, group_definitions)
     ) %>%
-      recover_levels(data, group_definitions)
+      recover_levels(data, parameters[parameters$scope == "group", ])
 
     class(draws) = "mcmc.list"
 

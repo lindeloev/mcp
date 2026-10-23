@@ -171,7 +171,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
 
   # Get unique predictors
   data_columns = mcp_columns(fit)
-  group_cols = unique(stats::na.omit(get_fit_model_tables(fit)$group_effects$group_col))
+  group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
   series_col = data_columns$series
   categorical_cols = intersect(
     names(get_categorical_levels(fit$data)),

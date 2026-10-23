@@ -819,11 +819,11 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
         data, par_x, check_rank, previous = definitions))
   }
 
-  predictor_group_effects = definitions
+  group_predictors = definitions
   if (nrow(definitions) > 0) {
     # Rows without coefficients are `(0 | group)` turn-offs, which only mark resets below.
     # Link each coefficient to its population counterpart, if there is one.
-    predictor_group_effects = definitions %>%
+    group_predictors = definitions %>%
       dplyr::filter(.data$has_coefficients) %>%
       dplyr::mutate(
         population_name = dplyr::if_else(
@@ -831,11 +831,10 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
           .data$population_name,
           NA_character_
         ),
-        part = "predictor",
         matrix_col = nrow(predictors) + dplyr::row_number()
       ) %>%
       dplyr::select(
-        "population_name", "name", "part", "group_col", "segment", "dpar",
+        "population_name", "name", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "order",
         "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
         "design_spec", "definition_segment"
@@ -852,9 +851,9 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       tibble::tibble(key = group_key(definitions)[is_reset], segment = definitions$segment[is_reset]),
       tibble::tibble(key = group_key(disjoined), segment = disjoined$segment)
     )
-    predictor_group_effects$next_segment = get_next_segment(
-      group_key(predictor_group_effects), predictor_group_effects$segment,
-      joins = predictor_group_effects$x_factor != "1", group_resets, n_segments
+    group_predictors$next_segment = get_next_segment(
+      group_key(group_predictors), group_predictors$segment,
+      joins = group_predictors$x_factor != "1", group_resets, n_segments
     )
   }
 
@@ -862,16 +861,20 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   design_specs = collect_design_specs(parsed_predictors, definitions)
   predictors = predictors %>%
     dplyr::select(-"design_spec")
-  if ("design_spec" %in% names(predictor_group_effects))
-    predictor_group_effects = dplyr::select(predictor_group_effects, -"design_spec")
-  if ("name" %notin% names(predictor_group_effects))
-    predictor_group_effects = tibble::tibble(name = character(), segment = integer(),
-      definition_segment = integer())
+  if ("design_spec" %in% names(group_predictors))
+    group_predictors = dplyr::select(group_predictors, -"design_spec")
+  if ("name" %notin% names(group_predictors))
+    group_predictors = tibble::tibble(
+      population_name = character(), name = character(), group_col = character(), segment = integer(),
+      dpar = character(), sd_name = character(), par_type = character(), matrix_name = character(),
+      order = integer(), x_factor = character(), design_id = character(), design_col = integer(),
+      matrix_col = integer(), matrix_data = list(), definition_segment = integer(), next_segment = integer()
+    )
 
   list(
     components = components,
     predictors = predictors,
-    group_effects = predictor_group_effects,
+    group_predictors = group_predictors,
     design_specs = design_specs
   )
 }

@@ -12,7 +12,6 @@
 # - tables: Model tables, as in `get_fit_model_tables(fit)`.
 get_formula_terms = function(tables) {
   columns = c("dpar", "order", "segment", "next_segment", "x_factor", "matrix_col", "name")
-  group_effects = tables$group_effects[tables$group_effects$part == "predictor", ]
 
   # Offsets apply in their own segment only
   offsets = Filter(function(spec) isTRUE(spec$has_offset), tables$design_specs)
@@ -27,7 +26,7 @@ get_formula_terms = function(tables) {
     offset = field("offset_name", character(1))
   )
 
-  terms = dplyr::bind_rows(tables$predictors[columns], group_effects[c(columns, "group_col")], offsets)
+  terms = dplyr::bind_rows(tables$predictors[columns], tables$group_predictors[c(columns, "group_col")], offsets)
   terms$dpar = paste0(terms$dpar, tidyr::replace_na(as.character(terms$order), ""))
   terms$start = terms$segment - 1L
   terms$end = terms$next_segment - 1L

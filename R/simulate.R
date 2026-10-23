@@ -41,7 +41,7 @@ relevel_newdata = function(newdata, fit) {
 }
 
 
-# Populate matrix data columns in a predictor or group-effects table.
+# Populate matrix data columns in a `predictors` or `group_predictors` table.
 populate_design_columns = function(table, evaluated_designs) {
   table$matrix_data = vector("list", nrow(table))
   for (design_id in unique(stats::na.omit(table$design_id))) {
@@ -86,7 +86,7 @@ get_model_data = function(fit, newdata) {
     x = newdata[[columns$par_x]],
     matrix = get_predictor_matrix(
       populate_design_columns(tables$predictors, designs),
-      populate_design_columns(tables$group_effects, designs)
+      populate_design_columns(tables$group_predictors, designs)
     ),
     offsets = stats::setNames(
       lapply(names(offset_specs), function(id) as.numeric(designs[[id]]$offset)),
@@ -211,12 +211,10 @@ fit_simulate = function(fit,
     assert_arma_series(newdata, data_columns$series)
   args = list(...)
   model_tables = get_fit_model_tables(fit)
-  model_group_definitions = definition_rows(model_tables$group_effects)
   prior_table = fit$.internal$prior_table
-  model_group_effects = model_tables$group_effects
   assert_model_data(
     newdata, data_columns$par_x,
-    group_cols = stats::na.omit(model_group_effects$group_col)
+    group_cols = stats::na.omit(mcp_pars(fit, scope = "group")$group_col)
   )
   assert_response_data(fit$family, model_tables$segments, newdata)
   if (is.null(names(args)) || any(names(args) == ""))
@@ -229,7 +227,7 @@ fit_simulate = function(fit,
   lapply(args, checkmate::assert_numeric, any.missing = FALSE)
   lapply(args, function(x) stopifnot(length(x) == 1 | length(x) == nrow(newdata)))
   assert_ordered_population_cps(model_tables$cps, args)
-  for (sd_name in model_group_definitions$sd_name)
+  for (sd_name in mcp_pars(fit, role = "group_sd")$parameter)
     checkmate::assert_number(args[[sd_name]], lower = 0, .var.name = sd_name)
 
   # Remove response column if present - it is to be simulated
@@ -237,12 +235,12 @@ fit_simulate = function(fit,
     newdata = dplyr::select(newdata, -dplyr::all_of(data_columns$response))
 
   simulated = args
-  cp_effects = model_group_definitions[model_group_definitions$part == "cp", , drop = FALSE]
+  cps = model_tables$cps
+  group_cps = which(!is.na(cps$group_col))
 
   # All group-level CPs share one grouping factor. Set up its level mapping once.
-  if (nrow(cp_effects) > 0) {
-    cps = model_tables$cps
-    group = newdata[[cp_effects$group_col[1]]]
+  if (length(group_cps) > 0) {
+    group = newdata[[cps$group_col[group_cps[1]]]]
     group_levels = unique(group)
     group_rows = match(group_levels, group)
     group_index = match(group, group_levels)
@@ -254,11 +252,10 @@ fit_simulate = function(fit,
     # predecessor as the next lower bound and the next fixed CP as upper anchor.
     x_range = range(fit$data[[data_columns$par_x]], na.rm = TRUE)
     cp_locations = list()
-    for (i in seq_len(nrow(cp_effects))) {
-      effect = cp_effects[i, ]
-      assert_generatable_group_prior(fit, effect)
-      j = match(effect$population_name, cps$name)
-      population = cp_values[[effect$population_name]]
+    for (j in group_cps) {
+      cp = cps[j, ]
+      assert_generatable_group_prior(fit, cp$group_name, cp$sd_name)
+      population = cp_values[[cp$name]]
 
       lower = if (j == 1) {
         x_range[1]
@@ -274,16 +271,16 @@ fit_simulate = function(fit,
         cp_values[[cps$name[next_fixed]]]
       }
 
-      location = simulate_truncated_normal(population, args[[effect$sd_name]], lower, upper)
-      cp_locations[[effect$name]] = location
-      args[[effect$name]] = (location - population)[group_index]
-      simulated[[effect$name]] = args[[effect$name]]
-      args[[effect$sd_name]] = NULL
+      location = simulate_truncated_normal(population, args[[cp$sd_name]], lower, upper)
+      cp_locations[[cp$group_name]] = location
+      args[[cp$group_name]] = (location - population)[group_index]
+      simulated[[cp$group_name]] = args[[cp$group_name]]
+      args[[cp$sd_name]] = NULL
     }
   }
 
   # Predictor group-level effects keep the ordinary independent normal hierarchy.
-  predictor_effects = model_group_definitions[model_group_definitions$part != "cp", , drop = FALSE]
+  predictor_effects = definition_rows(model_tables$group_predictors)
   for (i in seq_len(nrow(predictor_effects))) {
     effect = predictor_effects[i, ]
     assert_data_cols(newdata, effect$group_col)
@@ -295,7 +292,7 @@ fit_simulate = function(fit,
     if (target %in% names(args)) {
       args[[effect$name]] = args[[target]]
     } else {
-      assert_generatable_group_prior(fit, effect)
+      assert_generatable_group_prior(fit, effect$name, effect$sd_name)
       group_deviations = stats::rnorm(length(group_levels), 0, args[[effect$sd_name]])
       args[[effect$name]] = group_deviations[match(group, group_levels)]
     }

@@ -76,7 +76,7 @@ pp_eval = function(
   # Identify grouping columns to exclude based on the `group_effects` argument
   group_info = unpack_group_effects(fit, pars = group_effects)
   model_tables = get_fit_model_tables(fit)
-  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
+  group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, if (evaluating_arma) data_columns$series, get_predictor_cols(fit)))
 
   # Determine which auxiliary columns are needed for this operation
@@ -134,7 +134,7 @@ pp_eval = function(
     fit, group = group_effects, prior = prior, ndraws = ndraws,
     newdata = if (length(group_info$cols) > 0) newdata
   )
-  groups = split(group_info$effects$name, group_info$effects$group_col)
+  groups = group_info$groups
   y = if (!replicate_garma) newdata[[data_columns$response]]  # NULL generates fresh AR/MA series
 
   # Complete the conditional history using the retained JAGS imputations
@@ -142,7 +142,7 @@ pp_eval = function(
   if (impute_response) {
     if (prior)
       stop("Missing GARMA histories require posterior draws. Use `arma = \"replicate\"` for prior prediction.", call. = FALSE)
-    if (!all(model_tables$group_effects$name %in% group_info$pars))
+    if (!all(mcp_pars(fit, scope = "group")$parameter %in% group_info$pars))
       stop(
         "This model has group-level effects, and its retained missing-response ",
         "histories are conditional on all of them. GARMA evaluation with missing ",

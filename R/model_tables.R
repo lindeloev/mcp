@@ -106,15 +106,14 @@ get_segment_tables = function(model, data, family, par_x) {
 #'
 #' @param predictors The `predictors` table from `get_predictor_tables()`.
 #' @param cps A table of change points from `get_segment_tables()`.
-#' @param group_effects A table from `get_group_effects()`.
+#' @param group_predictors The `group_predictors` table from `get_predictor_tables()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and group),
 #'   with columns `parameter`, `part`, `scope`, `role`, `segment`, `dpar`,
 #'   `group_col`, and `population_parameter`.
 #' @noRd
-get_pars_table = function(predictors, cps, group_effects, family) {
+get_pars_table = function(predictors, cps, group_predictors, family) {
   group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
-  group_preds = group_effects[group_effects$part == "predictor", , drop = FALSE]
 
   # One tibble per kind of parameter. Zero-row tables recycle to zero rows. `.tie` orders each
   # change point and coefficient (by model-matrix column) before its group-level SD and deviations.
@@ -127,12 +126,12 @@ get_pars_table = function(predictors, cps, group_effects, family) {
       dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2),
     tibble::tibble(parameter = predictors$name, part = "predictor", scope = "population", role = "coefficient", segment = predictors$segment,
       dpar = predictors$dpar, order = predictors$order, .tie = predictors$matrix_col),
-    tibble::tibble(parameter = group_preds$sd_name, part = "predictor", scope = "population", role = "group_sd", segment = group_preds$segment,
-      dpar = group_preds$dpar, order = group_preds$order, group_col = group_preds$group_col,
-      population_parameter = group_preds$population_name, .tie = group_preds$matrix_col + 0.1),
-    tibble::tibble(parameter = group_preds$name, part = "predictor", scope = "group", role = "coefficient", segment = group_preds$segment,
-      dpar = group_preds$dpar, order = group_preds$order, group_col = group_preds$group_col,
-      population_parameter = group_preds$population_name, .tie = group_preds$matrix_col + 0.2)
+    tibble::tibble(parameter = group_predictors$sd_name, part = "predictor", scope = "population", role = "group_sd", segment = group_predictors$segment,
+      dpar = group_predictors$dpar, order = group_predictors$order, group_col = group_predictors$group_col,
+      population_parameter = group_predictors$population_name, .tie = group_predictors$matrix_col + 0.1),
+    tibble::tibble(parameter = group_predictors$name, part = "predictor", scope = "group", role = "coefficient", segment = group_predictors$segment,
+      dpar = group_predictors$dpar, order = group_predictors$order, group_col = group_predictors$group_col,
+      population_parameter = group_predictors$population_name, .tie = group_predictors$matrix_col + 0.2)
   )
 
   # Canonical group order: cp, mu, other family dpars (family order), then
@@ -225,53 +224,6 @@ get_predictor_cols = function(fit) {
 }
 
 
-#' Build the table of group-level effects
-#'
-#' @param cps A table from `get_segment_tables()`.
-#' @param predictor_group_effects Predictor-side rows returned by
-#'   `get_predictor_tables()`.
-#' @return A tibble with one row per group-level effect.
-#' @noRd
-get_group_effects = function(cps, predictor_group_effects = NULL) {
-  if (is.null(predictor_group_effects) || nrow(predictor_group_effects) == 0) {
-    predictor_group_effects = tibble::tibble(
-      population_name = character(),
-      name = character(),
-      part = character(),
-      group_col = character(),
-      segment = integer(),
-      dpar = character(),
-      sd_name = character(),
-      par_type = character(),
-      matrix_name = character(),
-      order = integer(),
-      x_factor = character(),
-      design_id = character(),
-      design_col = integer(),
-      matrix_col = integer(),
-      matrix_data = list(),
-      next_segment = integer(),
-      definition_segment = integer()
-    )
-  }
-
-  cp_group_effects = cps %>%
-    dplyr::filter(!is.na(.data$group_col)) %>%
-    dplyr::transmute(
-      population_name = as.character(.data$name),
-      name = as.character(.data$group_name),
-      part = "cp",
-      group_col = as.character(.data$group_col),
-      segment = .data$segment,
-      dpar = "cp",
-      sd_name = as.character(.data$sd_name),
-      definition_segment = .data$segment
-    )
-
-  dplyr::bind_rows(cp_group_effects, predictor_group_effects)
-}
-
-
 # Rows that define parameters (and priors). Coefficients shared via same() also
 # occur in later segments, where `segment != definition_segment`.
 definition_rows = function(table) {
@@ -284,7 +236,7 @@ definition_rows = function(table) {
 # change points.
 get_disjoined_cps = function(fit) {
   tables = get_fit_model_tables(fit)
-  terms = dplyr::bind_rows(tables$predictors, tables$group_effects[tables$group_effects$part != "cp", ])
+  terms = dplyr::bind_rows(tables$predictors, tables$group_predictors)
   cps = tables$cps[is.na(tables$cps$group_col), ]
   is_disjoined = vapply(cps$segment, function(segment) {
     this = terms[terms$segment == segment, ]
