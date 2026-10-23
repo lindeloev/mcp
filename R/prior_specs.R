@@ -276,51 +276,51 @@ get_min_segment_length = function(bounds, j, cp_names) {
 # User priors on change points are used unchanged, restricted to ordered change points (see
 # get_jags_code()). Priors without dunif() or T() are truncated to the observed range of x.
 # An empty upper bound next to a minimum segment length, e.g., T(cp_1 + 20, ), is also max(x).
-truncate_cp_prior = function(cps, j, p, context) {
-  if (is.na(p$dist) || p$dist == "dirichlet")
-    return(p)
+truncate_cp_prior = function(cps, j, parsed, context) {
+  if (is.na(parsed$dist) || parsed$dist == "dirichlet")
+    return(parsed)
 
   x_range = paste0(c("min(", "max("), context$x_display, ")")
-  bounds = get_prior_bounds(p)
+  bounds = get_prior_bounds(parsed)
   if (!any(nzchar(bounds)))
-    return(set_prior_bounds(p, x_range))
+    return(set_prior_bounds(parsed, x_range))
 
   min_length = get_min_segment_length(bounds, j, cps$name)
   if (identical(min_length, "0")) {
     warning(
-      "`", cps$name[j], "` = \"", format_prior(p), "\": `", cps$name[j - 1], "` as the lower bound is already embodied in the mcp model and hence not needed. ",
+      "`", cps$name[j], "` = \"", format_prior(parsed), "\": `", cps$name[j - 1], "` as the lower bound is already embodied in the mcp model and hence not needed. ",
       "Each change point keeps its specified prior, restricted to ordered change points. ",
       "To set a minimum segment length, use e.g. `", cps$name[j - 1], " + 20` as the lower bound.",
       call. = FALSE
     )
   }
   if (!is.null(min_length) && !nzchar(bounds[2]))
-    return(set_prior_bounds(p, c(bounds[1], x_range[2])))
-  p
+    return(set_prior_bounds(parsed, c(bounds[1], x_range[2])))
+  parsed
 }
 
 
 # Bound a parsed prior below at `lower` unless it is already bounded.
-truncate_lower_prior = function(p, lower, name = NULL) {
+truncate_lower_prior = function(parsed, lower, name = NULL) {
   # Only stochastic distributions without existing truncation need bounding.
   # dinvgamma() is positive and written as a transformed dgamma(), which cannot take T().
-  if (is.na(p$dist) || any(nzchar(p$trunc)) || p$dist == "dinvgamma")
-    return(p)
+  if (is.na(parsed$dist) || any(nzchar(parsed$trunc)) || parsed$dist == "dinvgamma")
+    return(parsed)
 
   # dunif cannot take T() in JAGS; bound through its lower parameter instead
-  if (p$dist == "dunif" && length(p$args) == 2) {
-    lower_val = suppressWarnings(as.numeric(p$args[1]))
-    upper_val = suppressWarnings(as.numeric(p$args[2]))
+  if (parsed$dist == "dunif" && length(parsed$args) == 2) {
+    lower_val = suppressWarnings(as.numeric(parsed$args[1]))
+    upper_val = suppressWarnings(as.numeric(parsed$args[2]))
     if (!is.na(upper_val) && upper_val <= lower)
       stop("Prior", if (!is.null(name)) paste0(" for '", name, "'"), " must allow values above ", lower, ".")
     if (!is.na(lower_val) && lower_val < lower)
-      p$args[1] = format_prior_number(lower)
-    return(p)
+      parsed$args[1] = format_prior_number(lower)
+    return(parsed)
   }
 
   # Truncate unbounded distributions at the lower bound
-  p$trunc = c(format_prior_number(lower), "")
-  p
+  parsed$trunc = c(format_prior_number(lower), "")
+  parsed
 }
 
 
@@ -364,7 +364,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 
   # dirichlet(alpha) applies to all change points, so propagate it to unassigned change points
   user_cp_names = intersect(names(prior), cps$name)
-  user_cp_is_dirichlet = vapply(prior[user_cp_names], function(p) p$dist %in% "dirichlet", logical(1))  # %in% is FALSE for dist = NA
+  user_cp_is_dirichlet = vapply(prior[user_cp_names], function(parsed) parsed$dist %in% "dirichlet", logical(1))  # %in% is FALSE for dist = NA
   if (any(user_cp_is_dirichlet)) {
     if (!all(user_cp_is_dirichlet))
       stop("All or none of the change point priors must be `dirichlet(alpha)`.")
@@ -389,8 +389,8 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 
     group_name = cps$group_name[j]
     if (!is.na(cps$group_col[j]) && group_name %in% names(prior)) {
-      p = prior[[group_name]]
-      if (!is.na(p$dist) && !any(nzchar(get_prior_bounds(p)))) {
+      parsed = prior[[group_name]]
+      if (!is.na(parsed$dist) && !any(nzchar(get_prior_bounds(parsed)))) {
         x_display = context$x_display
         prior[[group_name]]$trunc = group_cp_truncation(cps, j, paste0("min(", x_display, ")"), paste0("max(", x_display, ")"))
         auto_truncated = c(auto_truncated, group_name)
@@ -423,7 +423,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 
   # Change points with a prior distribution are ordered (see get_jags_code())
   if (nrow(cps) > 1) {
-    is_ordered = specs$parameter %in% cps$name & vapply(specs$parsed, function(p) !is.na(p$dist), logical(1))
+    is_ordered = specs$parameter %in% cps$name & vapply(specs$parsed, function(parsed) !is.na(parsed$dist), logical(1))
     description = dplyr::coalesce(specs$description[is_ordered], "User-specified prior")
     specs$description[is_ordered] = paste0(description, ", restricted to ordered change points")
     if (length(user_cp_names) == 0)
@@ -461,8 +461,8 @@ add_intercept_references = function(specs, predictors, context) {
     row = match(coefs$name[i], specs$parameter)
     if (is.na(row) || specs$source[row] != "default")
       next
-    p = specs$parsed[[row]]
-    if (p$dist %notin% c("dnorm", "dt", "dunif"))
+    parsed = specs$parsed[[row]]
+    if (parsed$dist %notin% c("dnorm", "dt", "dunif"))
       next
 
     terms = get_x_partners(predictors, coefs$name[i])
@@ -472,7 +472,7 @@ add_intercept_references = function(specs, predictors, context) {
     # Subtract the x-terms at min(x) from the location and the truncation bounds
     power = ifelse(terms$x_factor == "x", "", sub("x", "", terms$x_factor, fixed = TRUE))
     reference = paste0(" - ", terms$name, " * min(", context$x_display, ")", power, collapse = "")
-    specs$parsed[[row]] = shift_prior(p, function(arg) if (arg == "0") reference else paste0(arg, reference))
+    specs$parsed[[row]] = shift_prior(parsed, function(arg) if (arg == "0") reference else paste0(arg, reference))
     what = if (coefs$prior_type[i] == "Intercept") "value" else "difference"
     specs$description[row] = paste0(specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
   }

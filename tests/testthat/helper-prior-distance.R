@@ -16,11 +16,11 @@ prior_distance = function(fit, values) {
     prior = fit$prior[[name]]
     if (!is.character(prior) || length(values[[name]]) != 1)
       return(NULL)
-    p = parse_prior(prior)
-    if (p$dist %notin% c("dt", "dnorm"))
+    parsed = parse_prior(prior)
+    if (parsed$dist %notin% c("dt", "dnorm"))
       return(NULL)
-    location = suppressWarnings(as.numeric(p$args[1]))
-    scale = suppressWarnings(as.numeric(p$args[2]))
+    location = suppressWarnings(as.numeric(parsed$args[1]))
+    scale = suppressWarnings(as.numeric(parsed$args[2]))
     if (is.na(location) || is.na(scale))
       return(NULL)
     value = values[[name]]

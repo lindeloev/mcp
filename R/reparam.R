@@ -6,9 +6,8 @@
 
 # Sampling scales for population-level coefficients
 #
-# Adds the columns `aux_suffix`, `aux_shift`, `aux_width`, and `aux_derive` to the
-# prior table. Where `aux_suffix` is not NA, the parameter is sampled via an
-# auxiliary node (see get_aux_prior_str()):
+# Fills the `node` columns of the prior table (see add_nodes()) where a parameter is
+# sampled via an auxiliary node:
 #
 #   <name>_<suffix>_ ~ dist(location * width + shift, scale * width)
 #   <name> = (<name>_<suffix>_ - derive) / width
@@ -27,22 +26,42 @@
 # that the segment-1 intercept may also have a truncated or dunif() prior.
 # Segments bounded by group-level change points are skipped because their data use
 # group-specific widths.
-add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
-  # Empty columns, filled by set_aux() for reparameterized parameters
-  aux_cols = c("aux_suffix", "aux_shift", "aux_width", "aux_derive")
-  table[aux_cols] = NA_character_
+add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
+  # Sample `name` via the auxiliary node <name>_<suffix>_ (see the formulas above)
+  sampled_as = c(
+    mid = "the value at the expected midpoint of segment 1",
+    end = "the value at the segment end",
+    rise = "the rise over the segment"
+  )
   set_aux = function(name, suffix, shift = NA, width = NA, derive = shift) {
-    table[match(name, table$parameter), aux_cols] <<- list(suffix, shift, width, derive)
+    row = match(name, prior_table$parameter)
+    node = paste0(name, "_", suffix, "_")
+    parsed = prior_table$parsed[[row]]
+    if (!is.na(width)) {
+      parsed$args[1] = if (parsed$args[1] == "0") "0" else paste0(parsed$args[1], " * ", width)
+      parsed$args[2] = paste0(parsed$args[2], " * ", width)
+    }
+    # Bounded priors are only shifted (see is_reparam_prior())
+    if (!is.na(shift))
+      parsed = shift_prior(parsed, function(x) if (x == "0") shift else paste0(x, " + ", shift))
+    value = if (is.na(derive)) node else paste0(node, " - (", derive, ")")
+    if (!is.na(width))
+      value = paste0(if (is.na(derive)) value else paste0("(", value, ")"), " / ", width)
+
+    prior_table$node[row] <<- node
+    prior_table$node_prior[[row]] <<- parsed
+    prior_table$derive[row] <<- value
+    prior_table$sampled_as[row] <<- sampled_as[[suffix]]
   }
 
   # Only default location-scale priors can be shifted and scaled exactly. The segment-1
   # intercept is shifted without change points, so bounded priors (truncation or dunif) work too.
   is_reparam_prior = function(name, segment_1 = FALSE) {
-    row = match(name, table$parameter)
+    row = match(name, prior_table$parameter)
     if (!reparam || is.na(row))
       return(FALSE)
-    p = table$parsed[[row]]
-    table$source[row] == "default" && p$dist %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !any(nzchar(p$trunc)))
+    parsed = prior_table$parsed[[row]]
+    prior_table$source[row] == "default" && parsed$dist %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !any(nzchar(parsed$trunc)))
   }
   # Terms without other variables (a model-matrix column of ones)
   is_pure = vapply(predictors$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
@@ -100,7 +119,7 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
       }
     }
   }
-  table
+  prior_table
 }
 
 
@@ -122,34 +141,4 @@ get_value_at_cp = function(own, own_pure, k) {
   power = ifelse(rows$x_factor %in% c("1", "x"), "", sub("x", "", rows$x_factor, fixed = TRUE))
   terms = ifelse(rows$x_factor == "1", rows$name, paste0(rows$name, " * ", width, power))
   paste(terms, collapse = " + ")
-}
-
-
-# JAGS code for a parameter sampled via an auxiliary node (see add_reparams()).
-# `p` is the parsed prior and `aux` is the parameter's row in the prior table.
-get_aux_prior_str = function(name, p, description, aux) {
-  # Prior on the auxiliary node: dist(location * width + shift, scale * width)
-  aux_name = paste0(name, "_", aux$aux_suffix, "_")
-  if (!is.na(aux$aux_width)) {
-    p$args[1] = if (p$args[1] == "0") "0" else paste0(p$args[1], " * ", aux$aux_width)
-    p$args[2] = paste0(p$args[2], " * ", aux$aux_width)
-  }
-  # Bounded priors are only shifted (see is_reparam_prior())
-  if (!is.na(aux$aux_shift))
-    p = shift_prior(p, function(x) if (x == "0") aux$aux_shift else paste0(x, " + ", aux$aux_shift))
-
-  # The parameter derived from the auxiliary node: (aux - derive) / width
-  derive = if (is.na(aux$aux_derive)) aux_name else paste0(aux_name, " - (", aux$aux_derive, ")")
-  if (!is.na(aux$aux_width))
-    derive = paste0(if (is.na(aux$aux_derive)) derive else paste0("(", derive, ")"), " / ", aux$aux_width)
-  # JAGS comment and code
-  sampled_as = c(
-    mid = "; sampled as the value at the expected midpoint of segment 1",
-    end = "; sampled as the value at the segment end",
-    rise = "; sampled as the rise over the segment"
-  )
-  paste0(
-    "  ", aux_name, " ~ ", format_prior(prior_to_jags(p)), "  # ", description, sampled_as[[aux$aux_suffix]], "\n",
-    "  ", name, " = ", derive, "\n"
-  )
 }

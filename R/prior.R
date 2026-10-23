@@ -70,21 +70,22 @@ get_prior_table = function(segments, cps, predictors, group_effects, family, pri
     specs = add_intercept_references(specs, predictors, context)
     compile_prior_specs(specs, specs$parameter, context)
   }
-  table = compile(prior)
+  prior_table = compile(prior)
 
   # Specified priors that resolve to the default, e.g., from `mcp(..., prior = fit$prior)`, 
   # are treated as defaults (not specified). This ensures default optimizations remain active.
   # Compare at 15 digits because R's parser can be 1 ulp off for 17-digit numbers on some platforms (macOS arm64).
   if (length(prior) > 0) {
     defaults = compile(list())
-    value = function(table) format_prior_display(table$value[match(names(prior), table$parameter)], digits = 15)
-    is_default = value(table) == value(defaults)
+    value = function(prior_table) format_prior_display(prior_table$value[match(names(prior), prior_table$parameter)], digits = 15)
+    is_default = value(prior_table) == value(defaults)
     if (any(is_default))
-      table = compile(prior[!is_default])
+      prior_table = compile(prior[!is_default])
   }
 
-  # Reparam and return
-  add_reparams(table, predictors, cps, context, reparam)
+  # How each parameter is sampled
+  prior_table = add_nodes(prior_table, cps, group_effects$name)
+  add_reparams(prior_table, predictors, cps, context, reparam)
 }
 
 
@@ -133,16 +134,16 @@ prior_summary.mcpfit = function(object, verbose = FALSE, ...) {
   rlang::check_dots_empty()
   fit = object  # Standard name in mcp
   checkmate::assert_flag(verbose)
-  table = fit$.internal$prior_table
+  prior_table = fit$.internal$prior_table
 
   pars = mcp_pars(fit)
-  match_idx = match(table$parameter, pars$parameter)
-  table$segment = pars$segment[match_idx]
-  table$dpar = pars$dpar[match_idx]
-  table = table[order(match_idx), ]
+  match_idx = match(prior_table$parameter, pars$parameter)
+  prior_table$segment = pars$segment[match_idx]
+  prior_table$dpar = pars$dpar[match_idx]
+  prior_table = prior_table[order(match_idx), ]
 
   public = c("parameter", "segment", "dpar", "prior", "bounds")
   if (verbose)
     public = c(public, "rule", "description", "source", "kind")
-  table[, public, drop = FALSE]
+  prior_table[, public, drop = FALSE]
 }

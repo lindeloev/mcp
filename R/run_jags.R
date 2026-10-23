@@ -164,7 +164,7 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
 }
 
 
-# Check that `inits` only set parameters that are sampled directly (see is_sampled_par())
+# Check that `inits` only set parameters that are sampled directly (see add_nodes())
 assert_inits = function(inits, pars) {
   invalid = setdiff(unlist(lapply(if (is.list(inits[[1]])) inits else list(inits), names)), pars)
   if (length(invalid) > 0)
@@ -176,37 +176,30 @@ assert_inits = function(inits, pars) {
 # Initial values where users supplied none: ordered change points (see get_cp_inits()) and prior medians of
 # other population-level parameters, e.g., SDs away from zero. Custom JAGS code may define parameters differently.
 get_default_inits = function(prior_table, parameters, x_range, inits, custom_jags_code = NULL) {
-  prior = stats::setNames(prior_table$parsed, prior_table$parameter)
-  is_inverse = vapply(prior, function(p) p$dist %in% "dinvgamma", logical(1))  # %in% is FALSE for dist = NA
-  is_median = (is_sampled_par(prior_table, parameters) | is_inverse) &
-    prior_table$parameter %in% parameters$parameter[parameters$scope == "population" & parameters$role != "change_point"]
-  defaults = c(get_cp_inits(prior, x_range, if (!is.list(inits[[1]])) inits), get_median_inits(prior[is_median]))  # Ignores chain-specific inits
+  is_cp = parameters$scope == "population" & parameters$role == "change_point"
+  cp_rows = prior_table[match(parameters$parameter[is_cp], prior_table$parameter), ]
+  is_median = !is.na(prior_table$node) & prior_table$parameter %in% parameters$parameter[parameters$scope == "population" & !is_cp]
+  node_priors = stats::setNames(prior_table$node_prior[is_median], prior_table$node[is_median])
+  defaults = c(get_cp_inits(cp_rows, x_range, if (!is.list(inits[[1]])) inits), get_median_inits(node_priors))  # Ignores chain-specific inits
   if (is.null(custom_jags_code)) defaults else
     defaults[vapply(names(defaults), function(name) grepl(paste0("\\n\\s*", name, " ~"), custom_jags_code), logical(1))]
 }
 
 
-# Initial values at the prior medians. Covers priors whose arguments and truncation bounds are numbers.
-# dinvgamma() is sampled as `<name>_inverse ~ dgamma()` (see get_prior_str()).
+# Initial values at the prior medians of nodes. Covers priors whose arguments and truncation bounds are numbers.
+# - prior: Named list of parsed priors, e.g., `prior_table$node_prior` named by `prior_table$node`.
 get_median_inits = function(prior) {
   as_number = function(x) tryCatch(as.numeric(eval(str2lang(x), baseenv())), error = function(e) NA_real_)
 
   inits = list()
   for (name in names(prior)) {
-    p = prior[[name]]
-    if (is.na(p$dist))
-      next
-    if (p$dist == "dinvgamma") {
-      name = paste0(name, "_inverse")
-      p$dist = "dgamma"
-    }
-
-    a = vapply(p$args, as_number, numeric(1), USE.NAMES = FALSE)
+    parsed = prior[[name]]
+    a = vapply(parsed$args, as_number, numeric(1), USE.NAMES = FALSE)
     bounds = c(-Inf, Inf)
-    is_bounded = nzchar(p$trunc)
-    bounds[is_bounded] = vapply(p$trunc[is_bounded], as_number, numeric(1), USE.NAMES = FALSE)
+    is_bounded = nzchar(parsed$trunc)
+    bounds[is_bounded] = vapply(parsed$trunc[is_bounded], as_number, numeric(1), USE.NAMES = FALSE)
     if (!anyNA(a) && !anyNA(bounds))
-      inits[[name]] = prior_quantile(p$dist, a, bounds, 0.5)
+      inits[[name]] = prior_quantile(parsed$dist, a, bounds, 0.5)
   }
   inits
 }
@@ -217,27 +210,22 @@ get_median_inits = function(prior) {
 # possible to be within the lower and upper bounds of their priors and ordered. Fixed change points and the
 # user's initial values stay where they are. Sampler fails at init if impossible values are chosen because
 # it is incompatible with the 1 ~ dbern(...) ordering node.
-# - prior: Named list of parsed priors, as in `prior_table$parsed` (with cp_0 and cp_K).
-get_cp_inits = function(prior, x_range, user_inits = list()) {
-  cps = prior[grepl("^cp_[0-9]+$", names(prior))]
-  n = length(cps)
+# - cp_rows: Rows of the prior table for the population-level change points, in order.
+get_cp_inits = function(cp_rows, x_range, user_inits = list()) {
+  n = nrow(cp_rows)
   if (n == 0)
     return(list())
 
-  # Lower and upper bounds (dunif() or T()) and minimum segment length.
+  # Lower and upper bounds (dunif() or T()) and minimum segment length (see add_nodes()).
   # Fixed change points and user-supplied initial values are bounded by themselves.
   env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n + 1)))
   evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
-  is_free = vapply(cps, function(p) !is.na(p$dist), logical(1))
+  is_free = !is.na(cp_rows$node)
   lower = upper = min_lengths = numeric(n)
   for (i in seq_len(n)) {
-    p = cps[[i]]
-    fixed = c(user_inits[[names(cps)[i]]], if (is_free[i]) NA else suppressWarnings(as.numeric(p$args)))[1]
-    bounds = if (is_free[i] && p$dist != "dirichlet") get_prior_bounds(p)
-    min_length = if (!is.null(bounds)) get_min_segment_length(bounds, i, names(cps))
-    if (!is.null(min_length))
-      bounds[1] = "cp_0"
-    min_lengths[i] = evaluate(min_length, 0)
+    fixed = c(user_inits[[cp_rows$parameter[i]]], if (cp_rows$kind[i] == "constant") as.numeric(cp_rows$value[i]), NA)[1]
+    bounds = if (is_free[i]) get_prior_bounds(cp_rows$node_prior[[i]])
+    min_lengths[i] = evaluate(cp_rows$min_length[i], 0)
     lower[i] = if (!is.na(fixed)) fixed else evaluate(bounds[1], -Inf)
     upper[i] = if (!is.na(fixed)) fixed else evaluate(bounds[2], Inf)
   }
@@ -257,8 +245,8 @@ get_cp_inits = function(prior, x_range, user_inits = list()) {
     stop("The change point priors (and initial values) leave no room for ordered change points. Check the lower and upper bounds (in dunif() or T()), minimum segment lengths, and initial values of the change points.", call. = FALSE)
 
   target = x_range[1] + cumsum(min_lengths) + max((diff(x_range) - sum(min_lengths)) / (n + 1), 0) * seq_len(n)
-  inits = stats::setNames(as.list(pmin(pmax(target, lower), upper)), names(cps))
-  inits[is_free & names(cps) %notin% names(user_inits)]
+  inits = stats::setNames(as.list(pmin(pmax(target, lower), upper)), cp_rows$parameter)
+  inits[is_free & cp_rows$parameter %notin% names(user_inits)]
 }
 
 

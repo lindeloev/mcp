@@ -36,11 +36,6 @@ get_jags_code = function(tables, prior_table, family) {
   par_x = tables$data_columns$par_x
   ar_order = get_arma_order(tables$predictors, "ar")
   ma_order = get_arma_order(tables$predictors, "ma")
-  prior = stats::setNames(prior_table$parsed, prior_table$parameter)
-  prior_description = stats::setNames(prior_table$description, prior_table$parameter)
-
-  # Parameters sampled via an auxiliary node (see add_reparams())
-  aux_table = prior_table[!is.na(prior_table$aux_suffix), , drop = FALSE]
 
   # Begin building JAGS model. `mm` is short for "mcp model".
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
@@ -53,66 +48,29 @@ get_jags_code = function(tables, prior_table, family) {
   # CHANGE POINT PRIORS #
   #######################
   # Each change point keeps its specified prior, and cp_order_ restricts them to ordered
-  # change points with any minimum segment lengths. dirichlet(alpha) is the default uniform prior
-  # expanded to the segment length.
-  cps = prior[intersect(paste0("cp_", seq_len(K - 1L)), names(prior))]
-  is_dirichlet = vapply(cps, function(p) p$dist %in% "dirichlet", logical(1))  # %in% is FALSE for dist = NA
-  if (any(is_dirichlet)) {
-    # overlay_user_prior_specs() ensures that all or none are dirichlet()
-    dirch_alpha = vapply(cps, function(p) {
-      if (length(p$args) == 1) suppressWarnings(as.numeric(p$args)) else NA_real_
-    }, numeric(1))
-    if (any(!is.finite(dirch_alpha)) || any(dirch_alpha < 1))
-      stop("`dirichlet(alpha)` requires one finite alpha >= 1.")
-    if (any(dirch_alpha != dirch_alpha[1]))
-      stop("All `dirichlet(alpha)` change point priors must use the same alpha.")
-  }
-
-  cp_prior_str = function(name, p = prior[[name]], ...) {
-    get_prior_str(name, p, description = prior_description[[name]], ...)
-  }
-  cp_effects = group_effects[group_effects$part == "cp", , drop = FALSE]
-  locations = cp_effects$name[vapply(prior[cp_effects$name], is_cp_location, logical(1))]
-  min_lengths = rep("0", length(cps))
-  for (i in seq_along(cps)) {
-    name = names(cps)[i]
-    value = cps[[i]]
-    if (any(is_dirichlet)) {
-      value = parse_prior(paste0("dunif(cp_0, cp_", K, ")"))
-    } else if (!is.na(value$dist)) {
-      # A minimum segment length goes in cp_order_
-      bounds = get_prior_bounds(value)
-      min_length = get_min_segment_length(bounds, i, names(cps))
-      if (!is.null(min_length)) {
-        min_lengths[i] = min_length
-        value = set_prior_bounds(value, c("cp_0", bounds[2]))
-      }
-    }
-    mm = paste0(mm, cp_prior_str(name, value))
-
-    # Group-level change points right after their population-level change point. Bounds at earlier
-    # group-specific change points, e.g., "(cp_1 + cp_1_id[id_])", use their sampled locations.
-    effect = cp_effects[cp_effects$population_name == name, , drop = FALSE]
-    if (nrow(effect) == 1) {
-      group_value = prior[[effect$name]]
-      for (location in locations) {
-        population_name = cp_effects$population_name[cp_effects$name == location]
-        group_value$trunc = gsub(paste0(population_name, " + ", location, "["), paste0(location, "_location["), group_value$trunc, fixed = TRUE)
-      }
-      mm = paste0(mm, cp_prior_str(effect$sd_name), cp_prior_str(effect$name, group_value, group_col = effect$group_col, population_name = name))
-    }
+  # change points with any minimum segment lengths (see add_nodes()). Group-level change
+  # points come right after their population-level change point.
+  cps = tables$cps
+  row = function(name) prior_table[match(name, prior_table$parameter), ]
+  for (j in seq_len(nrow(cps))) {
+    mm = paste0(mm, get_prior_str(row(cps$name[j])))
+    if (!is.na(cps$group_col[j]))
+      mm = paste0(mm, get_prior_str(row(cps$sd_name[j])), get_prior_str(row(cps$group_name[j]), cps$group_col[j]))
   }
   mm = paste0(mm, "  cp_", K, " = max(", par_x, ")\n")
 
   # Observed nodes (data: cp_order_ = 1 and cp_weight_ = 0) that restrict the priors above
-  if (length(cps) > 1) {
-    steps = paste0("step(cp_", 2:length(cps), " - cp_", 2:length(cps) - 1, ifelse(min_lengths[-1] == "0", "", paste0(" - ", min_lengths[-1])), ")")
+  cp_rows = row(cps$name)
+  if (nrow(cps) > 1) {
+    min_lengths = cp_rows$min_length
+    steps = paste0("step(cp_", 2:nrow(cps), " - cp_", 2:nrow(cps) - 1, ifelse(min_lengths[-1] == "0", "", paste0(" - ", min_lengths[-1])), ")")
     mm = paste0(mm, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(min_lengths != "0")) " with minimum segment lengths", "\n")
   }
-  if (any(is_dirichlet) && dirch_alpha[1] != 1) {
+  alpha = if (nrow(cps) > 0 && cp_rows$parsed[[1]]$dist %in% "dirichlet") as.numeric(cp_rows$parsed[[1]]$args) else 1  # %in% is FALSE for dist = NA
+  if (alpha != 1) {
     # Zeros trick: dpois(0 | lambda) adds -lambda = (alpha - 1) * sum(log(segment length / range of x)) to the log density
     log_lengths = paste0("log((cp_", seq_len(K), " - cp_", seq_len(K) - 1, ") / (cp_", K, " - cp_0))", collapse = " + ")
-    mm = paste0(mm, "  cp_weight_ ~ dpois(-", format_prior_number(dirch_alpha[1] - 1), " * (", log_lengths, "))  # dirichlet(", format_prior_number(dirch_alpha[1]), ") weight on the segment lengths\n")
+    mm = paste0(mm, "  cp_weight_ ~ dpois(-", format_prior_number(alpha - 1), " * (", log_lengths, "))  # dirichlet(", format_prior_number(alpha), ") weight on the segment lengths\n")
   }
   mm = paste0(mm, "
   # Priors for population-level effects\n")
@@ -121,30 +79,15 @@ get_jags_code = function(tables, prior_table, family) {
   # OTHER PRIORS #
   ################
   # Split scalar/population priors from group-indexed coefficient priors.
-  is_cp = names(prior) %in% c(names(cps), cp_effects$name, cp_effects$sd_name)
-  prior_pop = prior[!is_cp & !names(prior) %in% group_effects$name]
-  prior_group = prior[!is_cp & names(prior) %in% group_effects$name]
-
-  # Use get_prior_str() to add remaining population-level priors
-  for (i in seq_along(prior_pop)) {
-    name = names(prior_pop)[i]
-    aux = aux_table[aux_table$parameter == name, , drop = FALSE]
-    if (nrow(aux) == 1) {
-      mm = paste0(mm, get_aux_prior_str(name, prior_pop[[i]], prior_description[[name]], aux))
-    } else {
-      mm = paste0(mm, get_prior_str(name, prior_pop[[i]], description = prior_description[[name]]))
-    }
-  }
-
-  # Use get_prior_str() to add group-level priors.
-  if (length(prior_group) > 0) {
+  is_cp = prior_table$parameter %in% c(cps$name, cps$sd_name, cps$group_name)
+  group_cols = stats::setNames(group_effects$group_col, group_effects$name)
+  is_group = prior_table$parameter %in% names(group_cols)
+  for (i in which(!is_cp & !is_group))
+    mm = paste0(mm, get_prior_str(prior_table[i, ]))
+  if (any(!is_cp & is_group)) {
     mm = paste0(mm, "\n  # Priors for group-level effects\n")
-    for (name in names(prior_group)) {
-      effect = group_effects[group_effects$name == name, , drop = FALSE]
-      if (nrow(effect) != 1)
-        stop_github("Expected exactly one group-effect row for ", name, ".")
-      mm = paste0(mm, get_prior_str(name, prior_group[[name]], group_col = effect$group_col, description = prior_description[[name]]))
-    }
+    for (i in which(!is_cp & is_group))
+      mm = paste0(mm, get_prior_str(prior_table[i, ], group_cols[[prior_table$parameter[i]]]))
   }
 
 
@@ -164,7 +107,7 @@ get_jags_code = function(tables, prior_table, family) {
   for (i_ in 1:length(", par_x, ")) {")
 
   # Add JAGS code for fitted values and indent it
-  mm = paste0(mm, gsub("\n", "\n    ", get_formula_jags(tables, family, locations)))
+  mm = paste0(mm, gsub("\n", "\n    ", get_formula_jags(tables, family, stats::setNames(prior_table$node, prior_table$parameter))))
 
 
   ##############
@@ -225,105 +168,125 @@ get_jags_code = function(tables, prior_table, family) {
 }
 
 
-# Whether a group-level change point with this prior is sampled as its absolute location,
-# e.g., cp_1_id_location ~ dnorm(cp_1 + mean, sd), rather than as a deviation (see get_prior_str()).
-# The JAGS graph then uses the location directly; the deviation is a deterministic node.
-is_cp_location = function(p) {
-  p$dist %in% "dnorm" && length(p$args) == 2  # %in% is FALSE for dist = NA
+# How each parameter is sampled in JAGS. Adds these columns to the prior table, which
+# get_prior_str() and the initial values read:
+# - node: the stochastic JAGS node. Usually the parameter itself; NA for constants and expressions.
+# - node_prior: the parsed prior on `node` (see parse_prior()).
+# - derive: JAGS expression for the parameter from `node`; NA where `node` is the parameter.
+# - sampled_as: what `node` is, for the JAGS comment; NA where `node` is the parameter.
+# - min_length: minimum length of the segment that ends at each change point, in cp_order_.
+#   NA for other parameters.
+# Nodes other than the parameter itself are for dinvgamma() and group-level change points here,
+# and for the reparameterizations in add_reparams().
+# - group_names: names of group-level parameters.
+add_nodes = function(prior_table, cps, group_names) {
+  prior_table$node = ifelse(prior_table$kind == "distribution", prior_table$parameter, NA_character_)
+  prior_table$node_prior = prior_table$parsed
+  prior_table$derive = NA_character_
+  prior_table$sampled_as = NA_character_
+  prior_table$min_length = NA_character_
+
+  # JAGS does not support dinvgamma. If inverse ~ Gamma(a, b), then 1 / inverse ~ InvGamma(a, b).
+  for (i in which(vapply(prior_table$parsed, function(parsed) parsed$dist %in% "dinvgamma", logical(1)))) {  # %in% is FALSE for dist = NA
+    parsed = prior_table$parsed[[i]]
+    if (prior_table$parameter[i] %in% group_names)
+      stop("dinvgamma() is currently only supported for population-level parameters.")
+    if (length(parsed$args) != 2 || any(nzchar(parsed$trunc)))
+      stop("Expected dinvgamma(shape, scale) without truncation. Got '", format_prior(parsed), "'.")
+    parsed$dist = "dgamma"
+    prior_table$node[i] = paste0(prior_table$parameter[i], "_inverse")
+    prior_table$node_prior[[i]] = parsed
+    prior_table$derive[i] = paste0("1 / ", prior_table$node[i])
+    prior_table$sampled_as[i] = "its inverse"
+  }
+
+  # Change points are ordered in cp_order_, which also holds minimum segment lengths, e.g.,
+  # T(cp_1 + 20, ) is T(cp_0, ) with a minimum length of 20. dirichlet(alpha) is the default
+  # uniform prior with a weight on the segment lengths (see get_jags_code()).
+  cp_rows = match(cps$name, prior_table$parameter)
+  if (any(vapply(prior_table$parsed[cp_rows], function(parsed) parsed$dist %in% "dirichlet", logical(1)))) {  # %in% is FALSE for dist = NA
+    # overlay_user_prior_specs() ensures that all or none are dirichlet()
+    alpha = vapply(prior_table$parsed[cp_rows], function(parsed) if (length(parsed$args) == 1) suppressWarnings(as.numeric(parsed$args)) else NA_real_, numeric(1))
+    if (any(!is.finite(alpha)) || any(alpha < 1))
+      stop("`dirichlet(alpha)` requires one finite alpha >= 1.")
+    if (any(alpha != alpha[1]))
+      stop("All `dirichlet(alpha)` change point priors must use the same alpha.")
+  }
+  locations = character()  # Earlier group-level change points sampled as locations, e.g., c("cp_1 + cp_1_id[" = "cp_1_id_location[")
+  for (j in seq_len(nrow(cps))) {
+    i = cp_rows[j]
+    parsed = prior_table$parsed[[i]]
+    prior_table$min_length[i] = "0"
+    if (parsed$dist %in% "dirichlet") {  # %in% is FALSE for dist = NA
+      prior_table$node_prior[[i]] = parse_prior(paste0("dunif(cp_0, cp_", nrow(cps) + 1, ")"))
+    } else if (!is.na(parsed$dist)) {
+      bounds = get_prior_bounds(parsed)
+      min_length = get_min_segment_length(bounds, j, cps$name)
+      if (!is.null(min_length)) {
+        prior_table$min_length[i] = min_length
+        prior_table$node_prior[[i]] = set_prior_bounds(parsed, c("cp_0", bounds[2]))
+      }
+    }
+
+    # Group-level change points. Bounds at earlier group-specific change points, e.g.,
+    # "(cp_1 + cp_1_id[id_])", use their sampled locations.
+    group_row = match(cps$group_name[j], prior_table$parameter)
+    parsed = prior_table$parsed[[group_row]]
+    if (is.na(cps$group_col[j]) || is.na(parsed$dist))
+      next
+    for (deviation in names(locations))
+      parsed$trunc = gsub(deviation, locations[[deviation]], parsed$trunc, fixed = TRUE)
+
+    # dnorm() deviations are sampled as each group's absolute location, cp_1_id_location ~ dnorm(cp_1 + mean, sd)
+    if (parsed$dist == "dnorm" && length(parsed$args) == 2) {
+      population = cps$name[j]
+      parsed$args[1] = if (parsed$args[1] == "0") population else paste0(population, " + ", parsed$args[1])
+      # Deviation bounds such as "cp_0 - cp_1" are simply "cp_0" on the location
+      population_suffix = paste0(" - ", population)
+      parsed$trunc = vapply(parsed$trunc, function(bound) {
+        if (!nzchar(bound))
+          return("")
+        if (endsWith(bound, population_suffix))
+          return(substr(bound, 1, nchar(bound) - nchar(population_suffix)))
+        paste0(population, " + (", bound, ")")
+      }, character(1), USE.NAMES = FALSE)
+      prior_table$node[group_row] = paste0(cps$group_name[j], "_location")
+      prior_table$derive[group_row] = paste0(prior_table$node[group_row], "[", cps$group_col[j], "_] - ", population)
+      prior_table$sampled_as[group_row] = "each group's absolute change point"
+      locations[[paste0(population, " + ", cps$group_name[j], "[")]] = paste0(prior_table$node[group_row], "[")
+    }
+    prior_table$node_prior[[group_row]] = parsed
+  }
+  prior_table
 }
 
 
-# Directly sampled parameters in `prior_table`, i.e., not constant, reparameterized (see add_reparams()),
-# or sampled via a `_location` or `_inverse` node. Must agree with get_prior_str().
-is_sampled_par = function(prior_table, parameters) {
-  group_cps = parameters$parameter[parameters$part == "cp" & parameters$scope == "group"]
-  is_location = prior_table$parameter %in% group_cps & vapply(prior_table$parsed, is_cp_location, logical(1))
-  is_inverse = vapply(prior_table$parsed, function(p) p$dist %in% "dinvgamma", logical(1))  # %in% is FALSE for dist = NA
-  prior_table$kind == "distribution" & is.na(prior_table$aux_suffix) & !is_location & !is_inverse
-}
-
-
-# Get the JAGS code (one or more lines) for the parsed prior `p` on parameter `name`.
+# Get the JAGS code (one or more lines) for the prior on one parameter, given its row
+# in the prior table. Writes the node with its prior and derives the parameter from
+# it (see add_nodes()). Constants and expressions are written as they are.
 # - group_col: NULL for population-level priors. Otherwise the grouping column, and
 #   the prior is written in a loop over its levels.
-# - population_name: for group-level change points, the population-level change point, e.g., "cp_1".
-# - description: comment to add in the JAGS code.
-# Parameters sampled via another node must be excluded in is_sampled_par().
-get_prior_str = function(name, p, group_col = NULL, population_name = NULL, description = "Prior") {
-  description = gsub("[\r\n]+", " ", description)
-
-  # JAGS does not support dinvgamma. Write it manually.
-  # If inverse_shape ~ Gamma(a, b), then shape = 1 / inverse_shape ~ InvGamma(a, b).
-  if (p$dist %in% "dinvgamma") {  # %in% is FALSE for dist = NA
+get_prior_str = function(row, group_col = NULL) {
+  name = row$parameter
+  description = gsub("[\r\n]+", " ", row$description)
+  index = if (!is.null(group_col)) paste0("[", group_col, "_]") else ""
+  if (is.na(row$node)) {
+    # Fixed constants/expressions for group-level effects must be vectors over group levels
+    value = row$value
     if (!is.null(group_col))
-      stop("dinvgamma() is currently only supported for population-level parameters.")
-    if (length(p$args) != 2 || any(nzchar(p$trunc)))
-      stop("Expected dinvgamma(shape, scale) without truncation. Got '", format_prior(p), "'.")
-
-    inverse_name = paste0(name, "_inverse")
-    return(paste0(
-      "  ", inverse_name, " ~ dgamma(", p$args[1], ", ", p$args[2], ")  # ", description, "\n",
-      "  ", name, " = 1 / ", inverse_name, "  # Inverse-gamma parameter\n"
-    ))
+      value = gsub(paste0("([A-Za-z0-9_]+_", group_col, ")\\b(?!\\[)"), paste0("\\1[", group_col, "_]"), value, perl = TRUE)
+    lines = paste0(name, index, " = ", value, "  # ", description)
+  } else {
+    # Convert SD/scale to JAGS precision and write a stochastic node
+    sampled_as = if (is.na(row$sampled_as)) "" else paste0("; sampled as ", row$sampled_as)
+    lines = paste0(row$node, index, " ~ ", format_prior(prior_to_jags(row$node_prior[[1]])), "  # ", description, sampled_as)
+    if (!is.na(row$derive))
+      lines = c(lines, paste0(name, index, " = ", row$derive))
   }
 
-  # Other distributions: convert SD/scale to JAGS precision and write a stochastic node
-  if (!is.na(p$dist)) {
-    p = prior_to_jags(p)
-    value = format_prior(p)
-
-    # Plain population-level parameter
-    if (is.null(group_col)) {
-      return(paste0("  ", name, " ~ ", value, "  # ", description, "\n"))
-
-    # Ordinary group-level effect: one draw per group level
-    } else if (is.null(population_name)) {
-      return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
-    ", name, "[", group_col, "_] ~ ", value, "  # ", description, "
-  }\n"))
-
-    # Group-level change point. For dnorm() priors, sample each group's absolute change point
-    # location, cp_1_id_location ~ dnorm(cp_1 + mean, sd).
-    } else {
-      if (is_cp_location(p)) {
-        location_name = paste0(name, "_location")
-        p$args[1] = if (p$args[1] == "0") population_name else paste0(population_name, " + ", p$args[1])
-        # Deviation bounds such as "cp_0 - cp_1" are simply "cp_0" on the location
-        population_suffix = paste0(" - ", population_name)
-        p$trunc = vapply(p$trunc, function(bound) {
-          if (!nzchar(bound))
-            return("")
-          if (endsWith(bound, population_suffix))
-            return(substr(bound, 1, nchar(bound) - nchar(population_suffix)))
-          paste0(population_name, " + (", bound, ")")
-        }, character(1), USE.NAMES = FALSE)
-        return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
-    ", location_name, "[", group_col, "_] ~ ", format_prior(p), "  # ", description, "
-    ", name, "[", group_col, "_] = ", location_name, "[", group_col, "_] - ", population_name, "  # deviation from the population-level change point
-  }\n"))
-      }
-
-      # Group-level for other distributions: sample the deviation directly
-      return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
-    ", name, "[", group_col, "_] ~ ", value, "  # ", description, "
-  }\n"))
-    }
-  }
-
-  # Fixed constants/expressions for group-level effects must be vectors over group
-  # levels so they can be indexed as name[group_col_index_[i_]] in the likelihood.
-  # References to other group-level effects are indexed too, e.g.,
-  # "x_1_id * 2" becomes "x_1_id[id_] * 2".
-  value = format_prior(p)
-  if (!is.null(group_col)) {
-    value = gsub(paste0("([A-Za-z0-9_]+_", group_col, ")\\b(?!\\[)"), paste0("\\1[", group_col, "_]"), value, perl = TRUE)
-    return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
-    ", name, "[", group_col, "_] = ", value, "  # ", description, "
-  }\n"))
-  }
-
-  # Merge it nicely and return
-  paste0("  ", name, " = ", value, "  # ", description, "\n")
+  if (is.null(group_col))
+    return(paste0("  ", lines, "\n", collapse = ""))
+  paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {\n", paste0("    ", lines, "\n", collapse = ""), "  }\n")
 }
 
 
@@ -332,21 +295,21 @@ get_prior_str = function(name, p, group_col = NULL, population_name = NULL, desc
 # mcp's legacy string syntax uses conventional distribution scales. JAGS
 # uses inverse variance for normal-like distributions and inverse scale for
 # double-exponential and logistic distributions. Takes and returns a parsed prior.
-prior_to_jags = function(p) {
-  if (identical(p$dist, "dcauchy"))
+prior_to_jags = function(parsed) {
+  if (identical(parsed$dist, "dcauchy"))
     stop("JAGS does not support `dcauchy()`; use `dt(location, scale, 1)` instead.")
 
-  exponent = jags_scale_exponent(p$dist)
+  exponent = jags_scale_exponent(parsed$dist)
   if (is.null(exponent))
-    return(p)
-  if (length(p$args) < 2)
-    stop("Expected a scale as the second argument of '", format_prior(p), "'.")
+    return(parsed)
+  if (length(parsed$args) < 2)
+    stop("Expected a scale as the second argument of '", format_prior(parsed), "'.")
 
-  denominator = paste0("(", gsub(" ", "", p$args[2]), ")")
+  denominator = paste0("(", gsub(" ", "", parsed$args[2]), ")")
   if (exponent == 2)
     denominator = paste0(denominator, "^2")
-  p$args[2] = paste0("1/", denominator)
-  p
+  parsed$args[2] = paste0("1/", denominator)
+  parsed
 }
 
 

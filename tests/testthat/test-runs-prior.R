@@ -237,7 +237,7 @@ testthat::test_that("Change points keep their specified priors, restricted to or
 testthat::test_that("Change point inits are ordered and within the priors, around fixed and user-supplied values", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1, ~ 1), data.frame(x = 0:100, y = 0), par_x = "x", sample = FALSE,
     prior = list(cp_2 = "dunif(80, 90)", cp_3 = "dnorm(50, 5)"))
-  jags_prior = function(fit) stats::setNames(fit$.internal$prior_table$parsed, fit$.internal$prior_table$parameter)  # With cp_0 and cp_K
+  jags_prior = function(fit) with(fit$.internal, prior_table[match(model_tables$cps$name, prior_table$parameter), ])  # With cp_0 and cp_K
   testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100)), list(cp_1 = 25, cp_2 = 81, cp_3 = 82))
   testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100), list(cp_2 = 85)), list(cp_1 = 25, cp_3 = 86))
   testthat::expect_error(get_cp_inits(jags_prior(fit), c(0, 100), list(cp_3 = 70)), "no room for ordered change points")

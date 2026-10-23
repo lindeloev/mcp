@@ -45,10 +45,10 @@ x_degree = function(x_factor) {
 #'
 #' @param tables Model tables, as in `get_fit_model_tables(fit)`.
 #' @param family An mcpfamily object.
-#' @param locations Group-level change points sampled as absolute locations (see `is_cp_location()`).
+#' @param nodes Named vector of the JAGS node that is sampled for each parameter (see `add_nodes()`).
 #' @return A string with JAGS code for the body of the likelihood loop.
 #' @noRd
-get_formula_jags = function(tables, family, locations) {
+get_formula_jags = function(tables, family, nodes) {
   par_x = tables$data_columns$par_x
   terms = get_formula_terms(tables)
   K = nrow(tables$segments)
@@ -56,11 +56,13 @@ get_formula_jags = function(tables, family, locations) {
   # Change points cp_0, ..., cp_K. Group-specific change points are sampled locations or include group-level deviations.
   cps = tables$cps
   index = paste0("[", cps$group_col, "_index_[i_]]")
+  node = unname(nodes[cps$group_name])
+  is_location = !is.na(node) & node != cps$group_name
   cp = c(
     "cp_0",
     ifelse(is.na(cps$group_name), cps$name, ifelse(
-      cps$group_name %in% locations,
-      paste0(cps$group_name, "_location", index),
+      is_location,
+      paste0(node, index),
       paste0("(", cps$name, " + ", cps$group_name, index, ")")
     )),
     paste0("cp_", K)

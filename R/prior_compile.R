@@ -136,39 +136,39 @@ parse_prior = function(x) {
 
 
 # Write a parsed prior (see parse_prior()) as a string, e.g., "dnorm(0, 1) T(0, )".
-format_prior = function(p) {
-  if (is.na(p$dist))
-    return(p$args)
-  out = paste0(p$dist, "(", paste(p$args, collapse = ", "), ")")
-  if (any(nzchar(p$trunc)))
-    out = paste0(out, " T(", paste(p$trunc, collapse = ", "), ")")
+format_prior = function(parsed) {
+  if (is.na(parsed$dist))
+    return(parsed$args)
+  out = paste0(parsed$dist, "(", paste(parsed$args, collapse = ", "), ")")
+  if (any(nzchar(parsed$trunc)))
+    out = paste0(out, " T(", paste(parsed$trunc, collapse = ", "), ")")
   out
 }
 
 
 # The lower and upper bounds of a parsed prior: the arguments of dunif() or T() ("" where unbounded).
-get_prior_bounds = function(p) {
-  if (!identical(p$dist, "dunif"))
-    return(p$trunc)
-  if (any(nzchar(p$trunc)))
+get_prior_bounds = function(parsed) {
+  if (!identical(parsed$dist, "dunif"))
+    return(parsed$trunc)
+  if (any(nzchar(parsed$trunc)))
     stop("JAGS cannot truncate dunif(). Set its lower and upper bounds as its arguments instead, e.g., \"dunif(20, 50)\".", call. = FALSE)
-  p$args
+  parsed$args
 }
 
 
-set_prior_bounds = function(p, bounds) {
-  if (identical(p$dist, "dunif")) p$args = bounds else p$trunc = bounds
-  p
+set_prior_bounds = function(parsed, bounds) {
+  if (identical(parsed$dist, "dunif")) parsed$args = bounds else parsed$trunc = bounds
+  parsed
 }
 
 
 # Apply `shift()` to the location and the bounds of a parsed prior, e.g., to write the
 # prior on x + c from the prior on x. Both arguments of dunif() are bounds.
-shift_prior = function(p, shift) {
-  location = if (p$dist == "dunif") 1:2 else 1
-  p$args[location] = vapply(p$args[location], shift, character(1), USE.NAMES = FALSE)
-  p$trunc = vapply(p$trunc, function(bound) if (nzchar(bound)) shift(bound) else "", character(1), USE.NAMES = FALSE)
-  p
+shift_prior = function(parsed, shift) {
+  location = if (parsed$dist == "dunif") 1:2 else 1
+  parsed$args[location] = vapply(parsed$args[location], shift, character(1), USE.NAMES = FALSE)
+  parsed$trunc = vapply(parsed$trunc, function(bound) if (nzchar(bound)) shift(bound) else "", character(1), USE.NAMES = FALSE)
+  parsed
 }
 
 
@@ -250,12 +250,12 @@ resolve_prior_expression = function(x, context) {
 
 
 # Resolve every argument and bound in one parsed prior.
-resolve_prior = function(p, context) {
-  p$args = vapply(p$args, resolve_prior_expression, character(1), context = context, USE.NAMES = FALSE)
-  p$trunc = vapply(p$trunc, function(bound) {
+resolve_prior = function(parsed, context) {
+  parsed$args = vapply(parsed$args, resolve_prior_expression, character(1), context = context, USE.NAMES = FALSE)
+  parsed$trunc = vapply(parsed$trunc, function(bound) {
     if (nzchar(bound)) resolve_prior_expression(bound, context) else ""
   }, character(1), USE.NAMES = FALSE)
-  p
+  parsed
 }
 
 
@@ -278,28 +278,28 @@ prior_quantile = function(dist, a, bounds, prob) {
 
 # The lower and upper bounds of a parsed prior for prior_summary(): the arguments of dunif()
 # or T(), or the support of the distribution.
-describe_prior_bounds = function(p, context = list()) {
-  if (is.na(p$dist))
+describe_prior_bounds = function(parsed, context = list()) {
+  if (is.na(parsed$dist))
     return("none")
-  bounds = get_prior_bounds(p)
+  bounds = get_prior_bounds(parsed)
   bounds[!nzchar(bounds)] = c("-Inf", "Inf")[!nzchar(bounds)]
   if (!identical(bounds, c("-Inf", "Inf")))
     return(paste0("[", bounds[1], ", ", bounds[2], "]"))
-  if (p$dist == "dirichlet")
+  if (parsed$dist == "dirichlet")
     return(paste0("[", paste(vapply(range(context$data[[context$x_name]], na.rm = TRUE), format_prior_number, character(1)), collapse = ", "), "]"))
-  if (p$dist == "dbeta") return("[0, 1]")
-  if (p$dist %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
+  if (parsed$dist == "dbeta") return("[0, 1]")
+  if (parsed$dist %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
 }
 
 
 # Classify a parsed prior as a distribution, alias, expression, or constant.
-prior_kind = function(p, all_names) {
-  if (!is.na(p$dist))
+prior_kind = function(parsed, all_names) {
+  if (!is.na(parsed$dist))
     return("distribution")
-  if (!is.na(suppressWarnings(as.numeric(p$args))))
+  if (!is.na(suppressWarnings(as.numeric(parsed$args))))
     return("constant")
-  if (p$args %in% all_names)
+  if (parsed$args %in% all_names)
     return("alias")
   "expression"
 }

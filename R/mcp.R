@@ -351,7 +351,7 @@ mcp = function(
   # Make jags code if it is not provided by the user
   if (!custom_jags_code) {
     jags_code = get_jags_code(model_tables, prior_table, family)
-    assert_inits(inits, prior_table$parameter[is_sampled_par(prior_table, parameters)])
+    assert_inits(inits, prior_table$parameter[which(prior_table$node == prior_table$parameter)])
   }
 
 
