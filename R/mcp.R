@@ -305,9 +305,7 @@ mcp = function(
 
   # Make prior
   assert_prior_not_shared(prior, predictor_occurrences, group_occurrences)
-  prior = get_prior(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
-  prior_table = attr(prior, "prior_table")
-  attr(prior, "prior_table") = NULL
+  prior_table = get_prior_table(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
   assert_fixed_dpars(prior_table, predictor_definitions, family)
 
   # Assemble model metadata used by fitted-model methods
@@ -352,7 +350,7 @@ mcp = function(
 
   # Make jags code if it is not provided by the user
   if (!custom_jags_code) {
-    jags_code = get_jags_code(model_tables, prior, prior_table, family)
+    jags_code = get_jags_code(model_tables, prior_table, family)
     assert_inits(inits, prior_table$parameter[is_sampled_par(prior_table, parameters)])
   }
 
@@ -367,7 +365,7 @@ mcp = function(
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses
-  all_pars = names(prior)
+  all_pars = prior_table$parameter
   missing_response_rows = which(is.na(data[[segments$y[1]]]))
   imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
     paste0(segments$y[1], "[", missing_response_rows, "]")
@@ -430,11 +428,12 @@ mcp = function(
   ##########
   # Return canonical formulas attached to .GlobalEnv to avoid environment bloat
   model = lapply(segments$form, stats::as.formula, env = globalenv())
-  prior = prior[order(match(names(prior), parameters$parameter))]  # Order like mcp_pars()
 
-  # In fit$prior, show the JAGS nodes cp_0 and cp_K as the ends of the observed range, as users specify them
+  # fit$prior in the format of mcp(..., prior), ordered like mcp_pars(). Show the JAGS nodes cp_0 and cp_K
+  # as the ends of the observed range, as users specify them.
   x_range = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, nrow(segments)), "\\b"))
-  prior = lapply(prior, function(value) if (is.character(value)) stringr::str_replace_all(value, x_range) else value)
+  prior = stats::setNames(as.list(stringr::str_replace_all(prior_table$value, x_range)), prior_table$parameter)
+  prior = prior[order(match(names(prior), parameters$parameter))]
 
   # Class stuff
   class(model) = c("mcplist", "list")

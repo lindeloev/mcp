@@ -235,12 +235,13 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
 # Check the hierarchy before drawing a group effect. Change-point deviations are
 # drawn from their default bounded normal, so user-specified priors are not supported.
 assert_generatable_group_prior = function(fit, effect) {
-  prior = fit$prior[[effect$name]]
+  table = fit$.internal$prior_table
+  row = match(effect$name, table$parameter)
+  prior = table$value[row]
   if (effect$part == "cp") {
-    table = fit$.internal$prior_table
-    if (table$source[table$parameter == effect$name] == "user")
+    if (table$source[row] == "user")
       stop(
-        "Cannot generate group-level change point '", effect$name, "' from the user-specified prior '", prior,
+        "Cannot generate group-level change point '", effect$name, "' from the user-specified prior '", table$rule[row],
         "'. `fit$simulate()` supports only the default prior here. Remove '", effect$name, "' from `mcp(prior = ...)` to simulate.",
         call. = FALSE
       )

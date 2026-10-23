@@ -219,7 +219,7 @@ get_median_inits = function(prior) {
 # possible to be within the lower and upper bounds of their priors and ordered. Fixed change points and the
 # user's initial values stay where they are. Sampler fails at init if impossible values are chosen because
 # it is incompatible with the 1 ~ dbern(...) ordering node.
-# - prior: Named list of resolved priors, as in `fit$prior`.
+# - prior: Named list of resolved priors, as in `prior_table$value` (with cp_0 and cp_K).
 get_cp_inits = function(prior, x_range, user_inits = list()) {
   cps = prior[grepl("^cp_[0-9]+$", names(prior))]
   n = length(cps)

@@ -212,6 +212,7 @@ fit_simulate = function(fit,
   args = list(...)
   model_tables = get_fit_model_tables(fit)
   model_group_definitions = definition_rows(model_tables$group_effects)
+  prior_table = fit$.internal$prior_table
   model_group_effects = model_tables$group_effects
   assert_model_data(
     newdata, data_columns$par_x,
@@ -290,8 +291,8 @@ fit_simulate = function(fit,
     group_levels = unique(group)
 
     # Identify alias group-level effects; otherwise add new.
-    target = fit$prior[[effect$name]]
-    if (!is.null(target) && target %in% names(args)) {
+    target = prior_table$value[match(effect$name, prior_table$parameter)]
+    if (target %in% names(args)) {
       args[[effect$name]] = args[[target]]
     } else {
       assert_generatable_group_prior(fit, effect)

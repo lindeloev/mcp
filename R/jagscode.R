@@ -26,17 +26,17 @@ get_jags_family_context = function(segments) {
 #' Make JAGS code for Multiple Change Point model
 #'
 #' @param tables Model tables, as in `get_fit_model_tables(fit)`.
-#' @param prior Resolved priors from `get_prior()`.
-#' @param prior_table Resolved prior metadata from `get_prior()`.
+#' @param prior_table Resolved priors and metadata from `get_prior_table()`.
 #' @param family An mcpfamily object.
 #' @return String. A JAGS model.
 #' @noRd
-get_jags_code = function(tables, prior, prior_table, family) {
+get_jags_code = function(tables, prior_table, family) {
   segments = tables$segments
   group_effects = definition_rows(tables$group_effects)
   par_x = tables$data_columns$par_x
   ar_order = get_arma_order(tables$predictors, "ar")
   ma_order = get_arma_order(tables$predictors, "ma")
+  prior = stats::setNames(as.list(prior_table$value), prior_table$parameter)
   prior_description = stats::setNames(prior_table$description, prior_table$parameter)
   prior_kind_ = stats::setNames(prior_table$kind, prior_table$parameter)
 
