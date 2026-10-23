@@ -507,24 +507,16 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
     quiet = TRUE
   )
 
-  # Check mcp_draws preserves exact types and values
+  # Check mcp_draws selects the exact draw columns of all levels
   draws = mcp_draws(fit, ndraws = 2)
-  expect_type(draws$id, "character")
-  expect_type(draws$site, "character")
-  expect_setequal(unique(draws$id), c("01", "1", "site,a", "a[b]"))
-  expect_setequal(unique(draws$site), c("loc,north", "loc,south", "loc,east"))
-
-  # Check values against exact draw-column names, independently of the reshape.
   raw = as_draws_df(fit)
   effects = unpack_group_effects(fit, pars = TRUE)$effects
   for (i in seq_len(nrow(effects))) {
-    effect = effects[i, ]
-    nodes = paste0(effect$name, "[", draws[[effect$group_col]], "]")
-    expected = as.matrix(raw)[cbind(match(draws$.draw, raw$.draw), match(nodes, names(raw)))]
-    expect_equal(draws[[effect$name]], as.numeric(expected))
+    nodes = paste0(effects$name[i], "[", unique(opaque_data[[effects$group_col[i]]]), "]")
+    expect_equal(unname(as.matrix(draws[nodes])), unname(as.matrix(raw[match(draws$.draw, raw$.draw), nodes])))
   }
-  expect_equal(nrow(draws), 2 * 4 * 3)
-  expect_equal(nrow(mcp_draws(fit, group = FALSE, ndraws = 2)), 2)
+  expect_equal(nrow(draws), 2)
+  expect_false(any(grepl("[", names(mcp_draws(fit, group = FALSE, ndraws = 2)), fixed = TRUE)))
 
   # Check fitted and predict join without type mismatch
   fit_res = fitted(fit)
@@ -539,9 +531,7 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
   # The same draw names also support ordered factors, including unused levels.
   factor_fit = fit
   factor_fit$data$id = ordered(fit$data$id, levels = c("unused", "a[b]", "1", "01", "site,a"))
-  factor_draws = mcp_draws(factor_fit, ndraws = 2)
-  expect_identical(levels(factor_draws$id), levels(factor_fit$data$id))
-  expect_true(is.ordered(factor_draws$id))
+  expect_equal(mcp_draws(factor_fit)[["Intercept_1_id[a[b]]"]], mcp_draws(fit)[["Intercept_1_id[a[b]]"]])
 
   # Check out-of-sample prediction with newdata
   nd = data.frame(x = 1:2, id = c("01", "a[b]"), site = c("loc,north", "loc,east"))
@@ -678,7 +668,7 @@ test_that("new groups reject hierarchies the R generators cannot reproduce", {
   newdata = data.frame(x = 1, id = "new")
 
   existing = mcp_draws(fit, newdata = data.frame(x = 1, id = "a"), prior = TRUE)
-  expect_true(all(existing$Intercept_1_id == 5))
+  expect_true(all(existing[["Intercept_1_id[a]"]] == 5))
   expect_error(mcp_draws(fit, newdata = newdata, prior = TRUE),
                "not in the fitted data: 'new'")
   expect_error(fit$simulate(fit, newdata, Intercept_1 = 0, sigma_1 = 1,

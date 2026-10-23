@@ -198,90 +198,38 @@ nchains = posterior::nchains
 niterations = posterior::niterations
 
 
-#' Get tidy draws with or without group-level effects
+#' Get draws with group-level deviations for selected group levels
 #'
-#' Extract posterior or prior draws formatted as tidy data frames
-#'
-#' Returns in a format useful for `fit$simulate()` with population-level parameters in wide format
-#' and group-level deviations in long format (the number of rows is multiplied
-#' by the number of selected group levels).
+#' One row per draw with population-level parameters and group-level deviations as
+#' `name[level]` columns, to be matched to data rows using `draws_to_pars()`. Group-level
+#' deviations that are not selected are zero (the population-level mean).
 #'
 #' @inheritParams mcmclist_draws
 #' @inheritParams fitted.mcpfit
-#' @param population
-#'   * `TRUE` All population-level model parameters.
-#'   * `FALSE` No population-level parameters. Same as `c()`.
-#'   * Character vector: Only include specified population-level parameters.
 #' @param group Group-level deviations. One of:
 #'   * `TRUE` All group-level deviations.
 #'   * `FALSE` No group-level deviations (`c()`).
 #'   * `"cp"` or `"predictor"`: All group-level deviations belonging to that part of
 #'     the model.
 #'   * Character vector: Only include specified group-level parameters (`*` is a wildcard).
-#' @param absolute Logical. Return the group-specific change points of the selected
-#'   group-level change points (`TRUE`) instead of their deviations (`FALSE`)?
 #' @param newdata Optional prediction data selecting group levels. Levels must
 #'   be in the fitted data.
-#' @param pivot Logical. `FALSE` returns one row per draw with group-level deviations
-#'   as `name[level]` columns, to be matched to data rows using `draws_to_pars()`.
-#' @return `tibble` of posterior draws in `tidybayes` format.
+#' @return `tibble` of draws.
 #' @noRd
-mcp_draws = function(
-  fit,
-  population = TRUE,
-  group = TRUE,
-  absolute = FALSE,
-  prior = FALSE,
-  ndraws = NULL,
-  newdata = NULL,
-  pivot = TRUE
-) {
-  # General argument checks
+mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = NULL) {
   checkmate::assert_class(fit, "mcpfit")
-  checkmate::assert_multi_class(population, c("logical", "character"))
-  checkmate::assert_multi_class(group, c("logical", "character"), null.ok = TRUE)
-  checkmate::assert_flag(absolute)
   checkmate::assert_flag(prior)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+  groups = with(unpack_group_effects(fit, pars = group)$effects, split(name, group_col))
+  if (!is.null(newdata))
+    assert_data_cols(newdata, names(groups))
 
-  if (all(population == FALSE) && all(group == FALSE))
-    stop("At least one TRUE or one parameter must be provided through either the `group` or the `population` arguments.")
-
-
-  # ----- IDENTIFY PARAMETERS -----
-  # Group-level parameters.
-  group_info = unpack_group_effects(fit, pars = group)
-
-  # Population-level parameters. Result is `pars_population`.
-  if (all(population == FALSE)) {
-    pars_population = c()  # Empty if no absolute group-level change points
-  } else if (all(population == TRUE)) {
-    pars_population = mcp_pars(fit, scope = "population")$parameter
-  } else if (is.character(population)) {
-    if (!all(population %in% mcp_pars(fit, scope = "population")$parameter))
-      stop("Not all `population` selections are population-level parameters.")
-
-    pars_population = population
-  }
-
-  # Group-level change points to add to their population-level change points (`absolute_cps`)
-  cp_effects = group_info$effects[group_info$effects$part == "cp", , drop = FALSE]
-  absolute_groups = if (absolute) cp_effects$name else NULL
-  absolute_cps = if (absolute) cp_effects$population_name else NULL
-
-  # ----- GET THESE PARAMETERS AS TIDY DRAWS -----
-  # Select draws before expanding across group levels.
   draws = tibble::as_tibble(posterior::as_draws_df(fit, prior = prior))
   if (!is.null(ndraws))
     draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
 
-  # Prepare for tidyr::pivot_longer_spec:
-  # Describe the reshape using original factor levels
-  groups = split(group_info$effects$name, group_info$effects$group_col)
-  if (!is.null(newdata))
-    assert_data_cols(newdata, names(groups))
-  
-  specs = lapply(names(groups), function(col) {
+  # Columns of the selected group-level deviations at the selected levels
+  group_nodes = unlist(lapply(names(groups), function(col) {
     levels = if (is.null(newdata)) unique(fit$data[[col]]) else unique(newdata[[col]])
     novel = setdiff(levels, fit$data[[col]])
     if (length(novel) > 0)
@@ -291,41 +239,15 @@ mcp_draws = function(
         "to predict without group-level effects, or `fit$simulate()` to simulate new groups.",
         call. = FALSE
       )
-    spec = tidyr::expand_grid(.value = groups[[col]], !!col := levels)
-    spec$.name = paste0(spec$.value, "[", spec[[col]], "]")
-    spec
-  })
-  group_nodes = unlist(lapply(specs, function(spec) spec$.name))
-  draws = dplyr::select(draws, dplyr::all_of(unique(c(
-    ".chain", ".iteration", ".draw", pars_population, absolute_cps, group_nodes
-  ))))
-
-  if (!pivot) {
-    draws[, setdiff(mcp_pars(fit, scope = "group")$parameter, unlist(groups))] = 0  # As below
-    return(draws)
-  }
-
-  # Pivot shared group-level effects together; successive pivots cross grouping columns.
-  for (spec in specs)
-    draws = tidyr::pivot_longer_spec(draws, spec)
-
-  # Add population-level change points to deviations, then remove helper columns.
-  if (length(absolute_cps) > 0) {
-    draws[, absolute_cps] = draws[, absolute_cps] + draws[, absolute_groups]
-    draws = dplyr::select(draws, -dplyr::all_of(absolute_groups))
-  }
-
-  # Unassigned group-level deviations are simulated as zero (the population-level mean).
-  remaining_group_cols = dplyr::setdiff(mcp_pars(fit, scope = "group")$parameter, colnames(draws))
-  draws[, remaining_group_cols] = 0
-
-  # Return with chain etc. first
-  draws %>%
-    dplyr::relocate(".chain", ".iteration", ".draw")
+    paste0(rep(groups[[col]], each = length(levels)), "[", levels, "]")
+  }))
+  draws = dplyr::select(draws, dplyr::all_of(c(".chain", ".iteration", ".draw", mcp_pars(fit, scope = "population")$parameter, group_nodes)))
+  draws[, setdiff(mcp_pars(fit, scope = "group")$parameter, unlist(groups))] = 0
+  draws
 }
 
 
-# Parameter values of draws from `mcp_draws(..., pivot = FALSE)`, as used by `evaluate_formula()`:
+# Parameter values of draws from `mcp_draws()`, as used by `evaluate_formula()`:
 # one value per draw for population-level parameters and one value per row of `data` and draw
 # (a rows x draws matrix) for group-level deviations, matched by the grouping columns in `data`.
 # - groups: Group-level deviation names by grouping column, e.g., `list(id = c("Intercept_1_id", "x_1_id"))`.

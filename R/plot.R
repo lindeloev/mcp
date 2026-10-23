@@ -487,30 +487,28 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   dens_scale = 0.2  # Proportion of plot height
   dens_cut = 0.05  # How much to move density down. 5% is ggplot default. Move a bit further.
 
-  # facet_by will expand by group in mcp_draws(). Categorical cols share
-  # parameters across facets, so only expand for group-level effects.
-  model_tables = get_fit_model_tables(fit)
-  cps = model_tables$cps
-  group_cols = unique(stats::na.omit(model_tables$group_effects$group_col))
-  facet_by = intersect(facet_by, group_cols)
+  # Faceting by the grouping column of group-level change points shows each group's change
+  # points, cp_1 + cp_1_id[level]. Categorical cols share parameters across facets.
+  cps = get_fit_model_tables(fit)$cps
   cp_matches_facet = cps$group_col %in% facet_by
-  if (!any(cp_matches_facet))
+  facet_by = unique(cps$group_col[cp_matches_facet])
+  if (length(facet_by) == 0)
     facet_by = NULL
 
-  # Get group-level and population-level change-point parameter names.
-  if (!is.null(facet_by)) {
-    group = cps$group_name[cp_matches_facet]
-    population = cps$name[!cp_matches_facet]
-  } else {
-    group = NULL
-    population = cps$name
-  }
+  # Change point draws in long format: one row per draw, change point, and facet level
+  draws = posterior::as_draws_df(fit, prior = prior)
+  levels = if (is.null(facet_by)) NA else unique(fit$data[[facet_by]])
+  draws = dplyr::bind_rows(lapply(seq_along(levels), function(level_index) dplyr::bind_rows(lapply(seq_len(nrow(cps)), function(j) {
+    value = draws[[cps$name[j]]]
+    if (cp_matches_facet[j])
+      value = value + draws[[paste0(cps$group_name[j], "[", levels[level_index], "]")]]
+    tibble::tibble(.chain = draws$.chain, cp_name = cps$name[j], level_index = level_index, value = value)
+  }))))
+  if (!is.null(facet_by))
+    draws[[facet_by]] = levels[draws$level_index]
 
-  # Get draws in long format
-  draws = mcp_draws(fit, population = population, group = group, absolute = TRUE, prior = prior) %>%
-    tidyr::pivot_longer(cols = dplyr::matches("^cp_[0-9]+$"), names_to = "cp_name", values_to = "value") %>%
-
-    # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
+  # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
+  draws = draws %>%
     dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) %>%
     dplyr::summarise(dens = list(
       if (is.na(stats::sd(.data$value)) || stats::sd(.data$value) == 0) {

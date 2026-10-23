@@ -333,7 +333,7 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
   smoke_fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws[keep, , drop = FALSE]))
-  draws = mcp_draws(smoke_fit, population = TRUE, group = TRUE, pivot = FALSE)
+  draws = mcp_draws(smoke_fit)
   effects = unpack_group_effects(fit, pars = TRUE)$effects
   pars = draws_to_pars(draws, newdata, split(effects$name, effects$group_col))
   links = evaluate_formula(get_fit_model_tables(fit), fit$family, get_model_data(fit, newdata), pars, nrow(draws))

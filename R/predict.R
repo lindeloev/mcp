@@ -131,8 +131,8 @@ pp_eval = function(
   ########################
   data = get_model_data(fit, newdata)
   draws = mcp_draws(
-    fit, population = TRUE, group = group_effects, prior = prior, ndraws = ndraws,
-    newdata = if (length(group_info$cols) > 0) newdata, pivot = FALSE
+    fit, group = group_effects, prior = prior, ndraws = ndraws,
+    newdata = if (length(group_info$cols) > 0) newdata
   )
   groups = split(group_info$effects$name, group_info$effects$group_col)
   y = if (!replicate_garma) newdata[[data_columns$response]]  # NULL generates fresh AR/MA series
