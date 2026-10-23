@@ -544,6 +544,7 @@ test_that("summaries use central intervals and posterior diagnostics", {
   expect_length(capture.output(summary_result <- summary(demo_fit, width = width)), 0)
   expect_s3_class(summary_result, c("mcpsummary", "tbl_df"))
   expect_identical(capture.output(print(summary_result)), printed)
+  expect_error(summary(demo_fit, digits = 0), "not >= 1")
 })
 
 test_that("PPC and LOO draws stay aligned", {

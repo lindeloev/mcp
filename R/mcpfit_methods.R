@@ -163,8 +163,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
       stop("There were no matching parameters in the model.")
   }
 
-  # A model such as `y ~ 0` has no primary-response fixed effects. Return a
-  # regular empty summary instead of asking posterior to summarise no draws.
+  # The selection can be empty, e.g., `fixef(fit, dpar = "mu")` when all mu segments are `~ 0`.
+  # Return a regular empty summary instead of asking posterior to summarise no draws.
   if (length(get_cols) == 0) {
     estimates = tibble::tibble(
       parameter = character(), mean = numeric(), sd = numeric(), lower = numeric(),
@@ -186,7 +186,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 
   # Order rows and add `segment`/`dpar` using the canonical parameter table
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
-  # their base name; ties (levels of the same group effect) preserve their
+  # their base name; ties (levels of the same group-level effect) preserve their
   # incoming factor-level order from draws.
   base_name = sub("\\[.*\\]$", "", estimates$parameter)
   match_idx = match(base_name, pars$parameter)
@@ -223,7 +223,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #' @param object An \code{\link{mcpfit}} object.
 #' @param width Float. The width of the central posterior interval (between 0
 #'   and 1).
-#' @param digits Non-negative integer. Number of significant digits of `sd` when
+#' @param digits Positive integer. Number of significant digits of `sd` when
 #'   printing the summary. Defaults to 2. `mean`, `lower`, `upper`, and `sim` are
 #'   rounded to the same decimal places in each row. The returned tibble retains
 #'   the unrounded values.
@@ -308,7 +308,7 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
   fit = object  # Standard name in mcp
   checkmate::assert_class(fit, "mcpfit")
   assert_width(width)
-  checkmate::assert_int(digits, lower = 0)
+  checkmate::assert_int(digits, lower = 1)
   checkmate::assert_flag(prior)
   checkmate::assert_flag(verbose)
   rlang::check_dots_empty()

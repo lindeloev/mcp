@@ -264,7 +264,7 @@ mcp_draws = function(
     pars_population = population
   }
 
-  # Group-level change points to add to their population change points (`absolute_cps`)
+  # Group-level change points to add to their population-level change points (`absolute_cps`)
   cp_effects = group_info$effects[group_info$effects$part == "cp", , drop = FALSE]
   absolute_groups = if (absolute) cp_effects$name else NULL
   absolute_cps = if (absolute) cp_effects$population_name else NULL
@@ -305,7 +305,7 @@ mcp_draws = function(
     return(draws)
   }
 
-  # Pivot shared group effects together; successive pivots cross grouping columns.
+  # Pivot shared group-level effects together; successive pivots cross grouping columns.
   for (spec in specs)
     draws = tidyr::pivot_longer_spec(draws, spec)
 

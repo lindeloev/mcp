@@ -209,7 +209,7 @@ mcp = function(
   assert_rel(model)
 
   # Check data and data-model correspondence
-  if (missing(data) || is.null(data) || !is.data.frame(data))
+  if (missing(data) || is.null(data))
     stop("`data` is required in mcp() since mcp v0.4.0. Passing data = NULL or omitting data is no longer supported.", call. = FALSE)
 
   checkmate::assert_data_frame(data)
@@ -389,7 +389,7 @@ mcp = function(
 
     class(draws) = "mcmc.list"
 
-    # JAGS sorts nodes alphabetically. Order them like mcp_pars() instead, keeping group levels in data order.
+    # JAGS sorts nodes alphabetically. Order them like mcp_pars() instead, keeping group levels in factor-level order.
     draws[, order(match(sub("\\[.*", "", coda::varnames(draws)), parameters$parameter)), drop = FALSE]
   }
 

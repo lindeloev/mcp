@@ -13,7 +13,7 @@
 #' @param form A one-sided predictor formula.
 #' @param data A data frame used to fit the design.
 #' @param spec An optional fitted specification returned by this function.
-#' @return A list with `matrix` and `spec`.
+#' @return A list with `matrix`, `offset` (`NULL` without `offset()`), and `spec`.
 #' @noRd
 get_fitted_design = function(form = NULL, data, spec = NULL) {
   # Construct model.frame. na.pass prevents silent row omission so we can throw an informative error below
@@ -874,12 +874,4 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     group_effects = predictor_group_effects,
     design_specs = design_specs
   )
-}
-
-
-#' Return only the population predictor table.
-#'
-#' @noRd
-get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
-  get_predictor_tables(model, data, family, par_x, check_rank)$predictors
 }

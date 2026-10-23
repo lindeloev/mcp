@@ -1,4 +1,4 @@
-#' Get a list of x-coordinates to evaluate fit$simulate at
+#' Get x-coordinates at which to evaluate the model for plotting
 #'
 #' Solves two problems: if setting the number of points too high, the
 #' function becomes slow. If setting it too low, the posterior at large intercept-

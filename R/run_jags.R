@@ -324,7 +324,7 @@ assert_jags_namespace = function(data_names, family, segments, predictors,
 #' @inheritParams run_jags
 #' @param data A tibble
 #' @param segments A segment table returned by `get_segment_tables()`.
-#' @param predictors Returned by `get_predictors()`.
+#' @param predictors The `predictors` table from `get_predictor_tables()`.
 #' @param group_effects Returned by `get_group_effects()`.
 #' @param design_specs Named fitted design specifications.
 #' @noRd

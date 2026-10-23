@@ -282,7 +282,7 @@ fit_simulate = function(fit,
     }
   }
 
-  # Predictor group effects retain the ordinary independent normal hierarchy.
+  # Predictor group-level effects keep the ordinary independent normal hierarchy.
   predictor_effects = model_group_definitions[model_group_definitions$part != "cp", , drop = FALSE]
   for (i in seq_len(nrow(predictor_effects))) {
     effect = predictor_effects[i, ]

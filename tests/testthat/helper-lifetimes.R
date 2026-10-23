@@ -4,3 +4,9 @@ expect_lifetimes = function(x, expected) {
   actual = stats::setNames(x$next_segment, x$name)[names(expected)]
   testthat::expect_equal(unname(actual), unname(expected))
 }
+
+
+# The population predictor table of a model
+get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
+  get_predictor_tables(model, data, family, par_x, check_rank)$predictors
+}

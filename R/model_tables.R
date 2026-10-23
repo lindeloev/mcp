@@ -104,7 +104,7 @@ get_segment_tables = function(model, data, family, par_x) {
 #' then the other distributional parameters in the order defined by the
 #' family, then `ar`/`ma` components, each ascending by segment.
 #'
-#' @param predictors A table from `get_predictors()`.
+#' @param predictors The `predictors` table from `get_predictor_tables()`.
 #' @param cps A table of change points from `get_segment_tables()`.
 #' @param group_effects A table from `get_group_effects()`.
 #' @param family An `mcpfamily` object.

@@ -90,7 +90,7 @@ get_jags_code = function(tables, prior_table, family) {
     }
     mm = paste0(mm, cp_prior_str(name, value))
 
-    # Group-level change points right after their population change point. Bounds at earlier
+    # Group-level change points right after their population-level change point. Bounds at earlier
     # group-specific change points, e.g., "(cp_1 + cp_1_id[id_])", use their sampled locations.
     effect = cp_effects[cp_effects$population_name == name, , drop = FALSE]
     if (nrow(effect) == 1) {
@@ -246,7 +246,7 @@ is_sampled_par = function(prior_table, parameters) {
 # Get the JAGS code (one or more lines) for the parsed prior `p` on parameter `name`.
 # - group_col: NULL for population-level priors. Otherwise the grouping column, and
 #   the prior is written in a loop over its levels.
-# - population_name: for group-level change points, the population change point, e.g., "cp_1".
+# - population_name: for group-level change points, the population-level change point, e.g., "cp_1".
 # - description: comment to add in the JAGS code.
 # Parameters sampled via another node must be excluded in is_sampled_par().
 get_prior_str = function(name, p, group_col = NULL, population_name = NULL, description = "Prior") {
@@ -299,7 +299,7 @@ get_prior_str = function(name, p, group_col = NULL, population_name = NULL, desc
         }, character(1), USE.NAMES = FALSE)
         return(paste0("  for (", group_col, "_ in 1:n_unique_", group_col, ") {
     ", location_name, "[", group_col, "_] ~ ", format_prior(p), "  # ", description, "
-    ", name, "[", group_col, "_] = ", location_name, "[", group_col, "_] - ", population_name, "  # deviation from population change point
+    ", name, "[", group_col, "_] = ", location_name, "[", group_col, "_] - ", population_name, "  # deviation from the population-level change point
   }\n"))
       }
 

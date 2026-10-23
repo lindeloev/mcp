@@ -380,9 +380,9 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 }
 
 
-#' Takes a cp formula (as a string) and returns its properties
+#' Takes the content of cp() and returns its properties
 #'
-#' @param form_cp Segment formula as string.
+#' @param form_cp The expression inside `cp()`, e.g., `1 + (1 | id)`, or `NULL` for segment 1.
 #' @param i segment number
 #' @return A one-row tibble with columns:
 #'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
