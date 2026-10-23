@@ -176,8 +176,9 @@ assert_inits = function(inits, pars) {
 # Initial values where users supplied none: ordered change points (see get_cp_inits()) and prior medians of
 # other population-level parameters, e.g., SDs away from zero. Custom JAGS code may define parameters differently.
 get_default_inits = function(prior_table, parameters, x_range, inits, custom_jags_code = NULL) {
-  prior = stats::setNames(as.list(prior_table$value), prior_table$parameter)
-  is_median = (is_sampled_par(prior_table, parameters) | grepl("^dinvgamma\\(", prior_table$value)) &
+  prior = stats::setNames(prior_table$parsed, prior_table$parameter)
+  is_inverse = vapply(prior, function(p) p$dist %in% "dinvgamma", logical(1))  # %in% is FALSE for dist = NA
+  is_median = (is_sampled_par(prior_table, parameters) | is_inverse) &
     prior_table$parameter %in% parameters$parameter[parameters$scope == "population" & parameters$role != "change_point"]
   defaults = c(get_cp_inits(prior, x_range, if (!is.list(inits[[1]])) inits), get_median_inits(prior[is_median]))  # Ignores chain-specific inits
   if (is.null(custom_jags_code)) defaults else
@@ -192,23 +193,20 @@ get_median_inits = function(prior) {
 
   inits = list()
   for (name in names(prior)) {
-    parts = split_prior_truncation(prior[[name]])
-    call = parse_prior_call(parts$distribution)
-    if (is.null(call))
+    p = prior[[name]]
+    if (is.na(p$dist))
       next
-    if (call$name == "dinvgamma") {
+    if (p$dist == "dinvgamma") {
       name = paste0(name, "_inverse")
-      call$name = "dgamma"
+      p$dist = "dgamma"
     }
 
-    a = vapply(call$args, as_number, numeric(1), USE.NAMES = FALSE)
+    a = vapply(p$args, as_number, numeric(1), USE.NAMES = FALSE)
     bounds = c(-Inf, Inf)
-    if (!is.null(parts$truncation)) {
-      trunc_args = parse_prior_call(parts$truncation)$args
-      bounds[nzchar(trunc_args)] = vapply(trunc_args[nzchar(trunc_args)], as_number, numeric(1), USE.NAMES = FALSE)
-    }
+    is_bounded = nzchar(p$trunc)
+    bounds[is_bounded] = vapply(p$trunc[is_bounded], as_number, numeric(1), USE.NAMES = FALSE)
     if (!anyNA(a) && !anyNA(bounds))
-      inits[[name]] = prior_quantile(call$name, a, bounds, 0.5)
+      inits[[name]] = prior_quantile(p$dist, a, bounds, 0.5)
   }
   inits
 }
@@ -219,7 +217,7 @@ get_median_inits = function(prior) {
 # possible to be within the lower and upper bounds of their priors and ordered. Fixed change points and the
 # user's initial values stay where they are. Sampler fails at init if impossible values are chosen because
 # it is incompatible with the 1 ~ dbern(...) ordering node.
-# - prior: Named list of resolved priors, as in `prior_table$value` (with cp_0 and cp_K).
+# - prior: Named list of parsed priors, as in `prior_table$parsed` (with cp_0 and cp_K).
 get_cp_inits = function(prior, x_range, user_inits = list()) {
   cps = prior[grepl("^cp_[0-9]+$", names(prior))]
   n = length(cps)
@@ -230,11 +228,12 @@ get_cp_inits = function(prior, x_range, user_inits = list()) {
   # Fixed change points and user-supplied initial values are bounded by themselves.
   env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n + 1)))
   evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
-  is_free = vapply(cps, is_distribution, logical(1))
+  is_free = vapply(cps, function(p) !is.na(p$dist), logical(1))
   lower = upper = min_lengths = numeric(n)
   for (i in seq_len(n)) {
-    fixed = c(user_inits[[names(cps)[i]]], suppressWarnings(as.numeric(cps[[i]])))[1]
-    bounds = if (is_free[i] && !startsWith(cps[[i]], "dirichlet")) split_cp_bounds(cps[[i]])$bounds
+    p = cps[[i]]
+    fixed = c(user_inits[[names(cps)[i]]], if (is_free[i]) NA else suppressWarnings(as.numeric(p$args)))[1]
+    bounds = if (is_free[i] && p$dist != "dirichlet") get_prior_bounds(p)
     min_length = if (!is.null(bounds)) get_min_segment_length(bounds, i, names(cps))
     if (!is.null(min_length))
       bounds[1] = "cp_0"

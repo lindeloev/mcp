@@ -203,7 +203,7 @@ testthat::test_that("Dirichlet change point prior matches direct R simulation", 
 testthat::test_that("Minimum segment lengths go in cp_order_", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"), sample = FALSE)
   testthat::expect_equal(fit$prior$cp_2, "dnorm(2, 1) T(cp_1 + 0.5, max(x))")
-  testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0,cp_3)", fixed = TRUE)
+  testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0, cp_3)", fixed = TRUE)
   testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
 
   # A lower bound at the previous change point is a minimum segment length of 0, i.e., just the ordering
@@ -237,7 +237,7 @@ testthat::test_that("Change points keep their specified priors, restricted to or
 testthat::test_that("Change point inits are ordered and within the priors, around fixed and user-supplied values", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1, ~ 1), data.frame(x = 0:100, y = 0), par_x = "x", sample = FALSE,
     prior = list(cp_2 = "dunif(80, 90)", cp_3 = "dnorm(50, 5)"))
-  jags_prior = function(fit) as.list(stats::setNames(fit$.internal$prior_table$value, fit$.internal$prior_table$parameter))  # With cp_0 and cp_K
+  jags_prior = function(fit) stats::setNames(fit$.internal$prior_table$parsed, fit$.internal$prior_table$parameter)  # With cp_0 and cp_K
   testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100)), list(cp_1 = 25, cp_2 = 81, cp_3 = 82))
   testthat::expect_equal(get_cp_inits(jags_prior(fit), c(0, 100), list(cp_2 = 85)), list(cp_1 = 25, cp_3 = 86))
   testthat::expect_error(get_cp_inits(jags_prior(fit), c(0, 100), list(cp_3 = 70)), "no room for ordered change points")
@@ -281,6 +281,22 @@ testthat::test_that("parse_prior_call parses prior calls, arguments, and truncat
   # Named arguments are explicitly rejected
   testthat::expect_error(parse_prior_call("dnorm(sd = 1, mean = 10)"), "Named arguments are not supported")
   testthat::expect_error(parse_prior_call("T(lower = 0, )"), "Named arguments are not supported")
+})
+
+
+testthat::test_that("parse_prior parses distributions, truncation, and expressions, and format_prior writes them back", {
+  testthat::expect_equal(parse_prior("dnorm(0, 1) T(0, )"), list(dist = "dnorm", args = c("0", "1"), trunc = c("0", "")))
+  testthat::expect_equal(parse_prior("dunif(min(x),max(x))"), list(dist = "dunif", args = c("min(x)", "max(x)"), trunc = c("", "")))
+  testthat::expect_equal(parse_prior("cp_1+5"), list(dist = NA_character_, args = "cp_1 + 5", trunc = c("", "")))
+  testthat::expect_equal(parse_prior(0.5), list(dist = NA_character_, args = "0.5", trunc = c("", "")))
+  for (x in c("dnorm(0, 1) T(0, )", "dt(0, 2, 3) T(, cp_1 + 2)", "dunif(cp_1 + 20, max(x))", "dirichlet(1)", "Intercept_1", "x_1 * 2"))
+    testthat::expect_identical(format_prior(parse_prior(x)), x)
+  testthat::expect_identical(format_prior(parse_prior("dnorm(0, 1) T(,)")), "dnorm(0, 1)")
+
+  testthat::expect_error(parse_prior("dnorm(0, 1) T(0)"), "Use T(lower, upper)", fixed = TRUE)
+  testthat::expect_error(parse_prior("exp(cp_1) T(0, )"), "Only distributions can be truncated")
+  testthat::expect_error(parse_prior("dnorm(1, "), "Could not parse prior expression")
+  testthat::expect_error(get_prior_bounds(parse_prior("dunif(0, 1) T(0.5, )")), "JAGS cannot truncate dunif()", fixed = TRUE)
 })
 
 
@@ -419,7 +435,7 @@ testthat::test_that("offset adjusts identity-link default intercept priors to y 
     )
     for (i in 1:2) {
       adjusted = d$y - d[[c("baseline", "baseline2")[i]]]
-      expect_prior(split_prior_truncation(fit$prior[[paste0("Intercept_", i)]])$distribution, paste0("dnorm(", format_prior_number(mean(adjusted)), ", ", format_prior_number(2.5 * sd(adjusted)), ")"))
+      expect_prior(sub(" T\\(.*", "", fit$prior[[paste0("Intercept_", i)]]), paste0("dnorm(", format_prior_number(mean(adjusted)), ", ", format_prior_number(2.5 * sd(adjusted)), ")"))
     }
 
     ps = prior_summary(fit, verbose = TRUE)
@@ -512,13 +528,14 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
 
 
 test_that("legacy prior scales are translated to JAGS parameters", {
-  expect_equal(prior_to_jags("dnorm(5, 2)"), "dnorm(5, 1/(2)^2) ")
-  expect_equal(prior_to_jags("dt(3, 2, 1)"), "dt(3, 1/(2)^2, 1) ")
-  expect_equal(prior_to_jags("dlnorm(3, 2)"), "dlnorm(3, 1/(2)^2) ")
-  expect_equal(prior_to_jags("ddexp(3, 2)"), "ddexp(3, 1/(2)) ")
-  expect_equal(prior_to_jags("dlogis(3, 2) T(0, )"), "dlogis(3, 1/(2)) T(0,)")
+  to_jags = function(x) format_prior(prior_to_jags(parse_prior(x)))
+  expect_equal(to_jags("dnorm(5, 2)"), "dnorm(5, 1/(2)^2)")
+  expect_equal(to_jags("dt(3, 2, 1)"), "dt(3, 1/(2)^2, 1)")
+  expect_equal(to_jags("dlnorm(3, 2)"), "dlnorm(3, 1/(2)^2)")
+  expect_equal(to_jags("ddexp(3, 2)"), "ddexp(3, 1/(2))")
+  expect_equal(to_jags("dlogis(3, 2) T(0, )"), "dlogis(3, 1/(2)) T(0, )")
   expect_error(
-    prior_to_jags("dcauchy(3, 2)"),
+    to_jags("dcauchy(3, 2)"),
     "use `dt(location, scale, 1)`",
     fixed = TRUE
   )
@@ -616,7 +633,7 @@ test_that("change point priors refer to the exact ends of the observed range, cp
   expect_equal(fit$prior$cp_1, "dunif(min(x), 5)")
   expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(min(x), max(x))")
   expect_equal(fit$prior$Intercept_1, "dnorm(0.618632254190743, 1)")
-  expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0,cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
+  expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0, cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
 
   # cp_0 and cp_K are JAGS nodes, not parameters
   expect_error(mcp(list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE, prior = list(cp_1 = "dunif(cp_0, 5)")), "Use `min(x)` and `max(x)`", fixed = TRUE)

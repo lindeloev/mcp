@@ -83,18 +83,6 @@ instantiate_prior_template = function(x, context) {
 }
 
 
-# Separate a prior distribution call from its optional truncation clause.
-split_prior_truncation = function(x) {
-  match = regexpr("(?<=\\))\\s*T\\s*\\(", x, perl = TRUE)
-  if (match[1] == -1)
-    return(list(distribution = trimws(x), truncation = NULL))
-  list(
-    distribution = trimws(substr(x, 1, match[1] - 1L)),
-    truncation = trimws(substr(x, match[1], nchar(x)))
-  )
-}
-
-
 # Parse a simple prior call into its function name and argument strings.
 parse_prior_call = function(x) {
   if (is.null(x) || length(x) != 1 || is.na(x) || !is.character(x))
@@ -115,6 +103,72 @@ parse_prior_call = function(x) {
   }
   args = vapply(call_args, deparse_prior, character(1), USE.NAMES = FALSE)
   list(name = name, args = args)
+}
+
+
+# Parse a prior into its distribution `dist`, argument strings `args`, and truncation bounds
+# `trunc` ("" where unbounded), e.g., "dnorm(0, 1) T(0, )" into list(dist = "dnorm",
+# args = c("0", "1"), trunc = c("0", "")). Constants, aliases, and expressions have
+# dist = NA and the expression as their only argument. Priors are parsed once and written
+# as strings with format_prior() (or prior_to_jags() for JAGS code).
+parse_prior = function(x) {
+  if (is.numeric(x))
+    return(list(dist = NA_character_, args = format_prior_number(x), trunc = c("", "")))
+
+  trunc = c("", "")
+  match = regexpr("(?<=\\))\\s*T\\s*\\(", x, perl = TRUE)
+  if (match[1] != -1) {
+    call = parse_prior_call(substr(x, match[1], nchar(x)))
+    if (is.null(call) || call$name != "T" || length(call$args) != 2)
+      stop("Could not parse the truncation in prior '", x, "'. Use T(lower, upper), e.g., T(0, ).", call. = FALSE)
+    trunc = call$args
+    x = substr(x, 1, match[1] - 1L)
+  }
+
+  call = parse_prior_call(x)
+  if (!is.null(call) && grepl("^d[A-Za-z]", call$name))
+    return(list(dist = call$name, args = call$args, trunc = trunc))
+  if (any(nzchar(trunc)))
+    stop("Only distributions can be truncated. Got '", x, "' with T().", call. = FALSE)
+  expr = tryCatch(str2lang(x), error = function(e) stop("Could not parse prior expression '", x, "'.", call. = FALSE))
+  list(dist = NA_character_, args = deparse_prior(expr), trunc = c("", ""))
+}
+
+
+# Write a parsed prior (see parse_prior()) as a string, e.g., "dnorm(0, 1) T(0, )".
+format_prior = function(p) {
+  if (is.na(p$dist))
+    return(p$args)
+  out = paste0(p$dist, "(", paste(p$args, collapse = ", "), ")")
+  if (any(nzchar(p$trunc)))
+    out = paste0(out, " T(", paste(p$trunc, collapse = ", "), ")")
+  out
+}
+
+
+# The lower and upper bounds of a parsed prior: the arguments of dunif() or T() ("" where unbounded).
+get_prior_bounds = function(p) {
+  if (!identical(p$dist, "dunif"))
+    return(p$trunc)
+  if (any(nzchar(p$trunc)))
+    stop("JAGS cannot truncate dunif(). Set its lower and upper bounds as its arguments instead, e.g., \"dunif(20, 50)\".", call. = FALSE)
+  p$args
+}
+
+
+set_prior_bounds = function(p, bounds) {
+  if (identical(p$dist, "dunif")) p$args = bounds else p$trunc = bounds
+  p
+}
+
+
+# Apply `shift()` to the location and the bounds of a parsed prior, e.g., to write the
+# prior on x + c from the prior on x. Both arguments of dunif() are bounds.
+shift_prior = function(p, shift) {
+  location = if (p$dist == "dunif") 1:2 else 1
+  p$args[location] = vapply(p$args[location], shift, character(1), USE.NAMES = FALSE)
+  p$trunc = vapply(p$trunc, function(bound) if (nzchar(bound)) shift(bound) else "", character(1), USE.NAMES = FALSE)
+  p
 }
 
 
@@ -195,28 +249,13 @@ resolve_prior_expression = function(x, context) {
 }
 
 
-# Resolve every argument and bound in one prior specification.
-resolve_prior_value = function(x, context) {
-  if (is.numeric(x))
-    return(format_prior_number(x))
-  parts = split_prior_truncation(x)
-  call = parse_prior_call(parts$distribution)
-  if (!is.null(call)) {
-    args = vapply(call$args, resolve_prior_expression, character(1), context = context)
-    value = paste0(call$name, "(", paste(args, collapse = ", "), ")")
-  } else {
-    value = resolve_prior_expression(parts$distribution, context)
-  }
-  if (!is.null(parts$truncation)) {
-    trunc = parse_prior_call(trimws(parts$truncation))
-    if (is.null(trunc) || trunc$name != "T")
-      stop("Could not parse prior truncation '", parts$truncation, "'.")
-    trunc_args = vapply(trunc$args, function(arg) {
-      if (!nzchar(arg)) "" else resolve_prior_expression(arg, context)
-    }, character(1))
-    value = paste0(value, " T(", paste(trunc_args, collapse = ", "), ")")
-  }
-  value
+# Resolve every argument and bound in one parsed prior.
+resolve_prior = function(p, context) {
+  p$args = vapply(p$args, resolve_prior_expression, character(1), context = context, USE.NAMES = FALSE)
+  p$trunc = vapply(p$trunc, function(bound) {
+    if (nzchar(bound)) resolve_prior_expression(bound, context) else ""
+  }, character(1), USE.NAMES = FALSE)
+  p
 }
 
 
@@ -237,64 +276,53 @@ prior_quantile = function(dist, a, bounds, prob) {
 }
 
 
-# The lower and upper bounds of a prior: the arguments of dunif() or T(), or the support
-# of the distribution.
-prior_bounds = function(x, context = list()) {
-  parts = split_prior_truncation(x)
-  if (!is.null(parts$truncation)) {
-    trunc = parse_prior_call(trimws(parts$truncation))
-    if (!is.null(trunc) && trunc$name == "T") {
-      lower = if (length(trunc$args) >= 1 && nzchar(trunc$args[1])) trunc$args[1] else "-Inf"
-      upper = if (length(trunc$args) >= 2 && nzchar(trunc$args[2])) trunc$args[2] else "Inf"
-      if (lower == "-Inf" && upper == "Inf") return("none")
-      return(paste0("[", lower, ", ", upper, "]"))
-    }
-  }
-  call = parse_prior_call(parts$distribution)
-  if (is.null(call))
+# The lower and upper bounds of a parsed prior for prior_summary(): the arguments of dunif()
+# or T(), or the support of the distribution.
+describe_prior_bounds = function(p, context = list()) {
+  if (is.na(p$dist))
     return("none")
-  if (call$name == "dunif" && length(call$args) == 2)
-    return(paste0("[", call$args[1], ", ", call$args[2], "]"))
-  if (call$name == "dirichlet")
+  bounds = get_prior_bounds(p)
+  bounds[!nzchar(bounds)] = c("-Inf", "Inf")[!nzchar(bounds)]
+  if (!identical(bounds, c("-Inf", "Inf")))
+    return(paste0("[", bounds[1], ", ", bounds[2], "]"))
+  if (p$dist == "dirichlet")
     return(paste0("[", paste(vapply(range(context$data[[context$x_name]], na.rm = TRUE), format_prior_number, character(1)), collapse = ", "), "]"))
-  if (call$name == "dbeta") return("[0, 1]")
-  if (call$name %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
+  if (p$dist == "dbeta") return("[0, 1]")
+  if (p$dist %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
 }
 
 
-# Classify a prior as a distribution, alias, expression, or constant.
-prior_kind = function(value, all_names) {
-  if (is.numeric(value) || (is.character(value) && !is.na(suppressWarnings(as.numeric(trimws(value))))))
-    return("constant")
-  parts = split_prior_truncation(value)
-  call = parse_prior_call(parts$distribution)
-  if (!is.null(call) && (grepl("^d[A-Za-z]", call$name) || call$name == "dirichlet"))
+# Classify a parsed prior as a distribution, alias, expression, or constant.
+prior_kind = function(p, all_names) {
+  if (!is.na(p$dist))
     return("distribution")
-  if (trimws(value) %in% all_names)
+  if (!is.na(suppressWarnings(as.numeric(p$args))))
+    return("constant")
+  if (p$args %in% all_names)
     return("alias")
   "expression"
 }
 
 
 # Compile one prior into its resolved value and user-facing metadata.
-compile_prior_record = function(parameter, code, all_names, context, source,
+compile_prior_record = function(parameter, parsed, all_names, context, source,
                                  description = NULL) {
-  kind = prior_kind(code, all_names)
-  original = if (is.numeric(code)) format_prior_number(code) else code
-  display_original = legacy_translate_prior(original, context)
+  kind = prior_kind(parsed, all_names)
+  display_original = legacy_translate_prior(format_prior(parsed), context)
   context$cp_limits = kind == "distribution" && parameter %in% context$cp_pars
-  resolved = resolve_prior_value(code, context)
+  resolved = resolve_prior(parsed, context)
+  value = format_prior(resolved)
   # Show the exact ends of the observed range, cp_0 and cp_K, as numbers
   display_context = context
   display_context$cp_limits = FALSE
-  display = resolve_prior_value(code, display_context)
-  bounds = prior_bounds(display, context)
+  display = resolve_prior(parsed, display_context)
+  bounds = describe_prior_bounds(display, context)
   if (context$cp_limits && parameter %in% context$cp_names)
     bounds = paste0(bounds, ", ordered")
 
   if (kind == "expression") {
-    expr = tryCatch(parse(text = resolved, keep.source = FALSE)[[1]], error = function(e) NULL)
+    expr = tryCatch(parse(text = value, keep.source = FALSE)[[1]], error = function(e) NULL)
     unknown = if (is.null(expr)) character() else setdiff(all.vars(expr), all_names)
     if (length(unknown) > 0) {
       stop(
@@ -310,38 +338,31 @@ compile_prior_record = function(parameter, code, all_names, context, source,
       distribution = if (source == "default") "Family-defined default prior" else "User-specified prior",
       alias = paste0("Same value as ", trimws(display_original)),
       expression = "Deterministic expression",
-      constant = paste0("Fixed at ", format_prior_display(resolved))
+      constant = paste0("Fixed at ", format_prior_display(value))
     )
   }
 
   tibble::tibble(
     parameter = parameter,
-    prior = format_prior_display(display),
+    prior = format_prior_display(format_prior(display)),
     bounds = format_prior_display(bounds),
     rule = format_prior_display(display_original),
     description = description,
     source = source,
     kind = kind,
-    value = resolved
+    value = value,
+    parsed = list(resolved)
   )
 }
 
 
 # Compile all symbolic prior specifications into the final prior table.
 compile_prior_specs = function(specs, all_names, context) {
-  required = c("parameter", "code", "description", "source")
+  required = c("parameter", "parsed", "description", "source")
   assert_data_cols(specs, required)
   records = lapply(seq_len(nrow(specs)), function(i) {
-    code = specs$code[[i]]
-    if (specs$source[i] == "default") {
-      # A constant response (e.g., a placeholder before simulating data) has no
-      # scale. Use 1 instead, as rstanarm does for non-Gaussian families.
-      if (!isTRUE(context$y_sd > 0))
-        code = gsub("sd\\(\\.y( - offset(_[0-9]+)?)?\\)", "1", code)
-      code = instantiate_prior_template(code, context)
-    }
     compile_prior_record(
-      specs$parameter[i], code, all_names, context, specs$source[i],
+      specs$parameter[i], specs$parsed[[i]], all_names, context, specs$source[i],
       specs$description[i]
     )
   })

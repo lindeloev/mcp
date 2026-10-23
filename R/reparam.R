@@ -39,9 +39,10 @@ add_reparams = function(table, predictors, cps, context, reparam = TRUE) {
   # intercept is shifted without change points, so bounded priors (truncation or dunif) work too.
   is_reparam_prior = function(name, segment_1 = FALSE) {
     row = match(name, table$parameter)
-    call = parse_prior_call(split_prior_truncation(table$value[row])$distribution)
-    reparam && !is.na(row) && table$source[row] == "default" && !is.null(call) &&
-      call$name %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !grepl("T(", table$value[row], fixed = TRUE))
+    if (!reparam || is.na(row))
+      return(FALSE)
+    p = table$parsed[[row]]
+    table$source[row] == "default" && p$dist %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !any(nzchar(p$trunc)))
   }
   # Terms without other variables (a model-matrix column of ones)
   is_pure = vapply(predictors$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
@@ -125,30 +126,17 @@ get_value_at_cp = function(own, own_pure, k) {
 
 
 # JAGS code for a parameter sampled via an auxiliary node (see add_reparams()).
-# `aux` is the parameter's row in the prior table.
-get_aux_prior_str = function(name, value, description, aux) {
+# `p` is the parsed prior and `aux` is the parameter's row in the prior table.
+get_aux_prior_str = function(name, p, description, aux) {
   # Prior on the auxiliary node: dist(location * width + shift, scale * width)
   aux_name = paste0(name, "_", aux$aux_suffix, "_")
-  if (!is.na(aux$aux_shift) || !is.na(aux$aux_width)) {
-    parts = split_prior_truncation(value)
-    call = parse_prior_call(parts$distribution)
-    location = call$args[1]
-    if (!is.na(aux$aux_width)) {
-      location = if (location == "0") "0" else paste0(location, " * ", aux$aux_width)
-      call$args[2] = paste0(call$args[2], " * ", aux$aux_width)
-    }
-    if (!is.na(aux$aux_shift))
-      location = if (location == "0") aux$aux_shift else paste0(location, " + ", aux$aux_shift)
-    call$args[1] = location
-
-    # Bounded priors are only shifted (see is_reparam_prior())
-    shift = function(bound) if (bound == "") "" else paste0(bound, " + ", aux$aux_shift)
-    if (call$name == "dunif")
-      call$args[2] = shift(call$args[2])
-    value = paste0(call$name, "(", paste(call$args, collapse = ", "), ")")
-    if (!is.null(parts$truncation))
-      value = paste0(value, " T(", paste(vapply(parse_prior_call(parts$truncation)$args, shift, character(1)), collapse = ", "), ")")
+  if (!is.na(aux$aux_width)) {
+    p$args[1] = if (p$args[1] == "0") "0" else paste0(p$args[1], " * ", aux$aux_width)
+    p$args[2] = paste0(p$args[2], " * ", aux$aux_width)
   }
+  # Bounded priors are only shifted (see is_reparam_prior())
+  if (!is.na(aux$aux_shift))
+    p = shift_prior(p, function(x) if (x == "0") aux$aux_shift else paste0(x, " + ", aux$aux_shift))
 
   # The parameter derived from the auxiliary node: (aux - derive) / width
   derive = if (is.na(aux$aux_derive)) aux_name else paste0(aux_name, " - (", aux$aux_derive, ")")
@@ -161,7 +149,7 @@ get_aux_prior_str = function(name, value, description, aux) {
     rise = "; sampled as the rise over the segment"
   )
   paste0(
-    "  ", aux_name, " ~ ", prior_to_jags(value), "  # ", description, sampled_as[[aux$aux_suffix]], "\n",
+    "  ", aux_name, " ~ ", format_prior(prior_to_jags(p)), "  # ", description, sampled_as[[aux$aux_suffix]], "\n",
     "  ", name, " = ", derive, "\n"
   )
 }

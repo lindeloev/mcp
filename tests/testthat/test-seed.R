@@ -35,7 +35,7 @@ test_that("get_jags_inits creates separate reproducible streams", {
 test_that("get_median_inits uses numeric priors and truncation", {
   prior = list(a = "dnorm(1, 2)", b = "dt(0, 3, 3) T(0, )", c = "dbeta(1, 3)", d = "dnorm(0, b)", e = "dinvgamma(2, 3)")
   expect_equal(
-    get_median_inits(prior),
+    get_median_inits(lapply(prior, parse_prior)),
     list(a = 1, b = 3 * stats::qt(0.75, 3), c = stats::qbeta(0.5, 1, 3), e_inverse = stats::qgamma(0.5, 2, 3))
   )
 })

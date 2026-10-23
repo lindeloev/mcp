@@ -57,6 +57,14 @@ get_prior_table = function(segments, cps, predictors, group_effects, family, pri
     default_group_specs(group_effects, family)
   )
 
+  # Parse default and specified priors once. A constant response (e.g., a placeholder before
+  # simulating data) has no scale. Use 1 instead, as rstanarm does for non-Gaussian families.
+  if (!isTRUE(context$y_sd > 0))
+    specs$code = gsub("sd\\(\\.y( - offset(_[0-9]+)?)?\\)", "1", specs$code)
+  specs$parsed = lapply(instantiate_prior_template(specs$code, context), parse_prior)
+  specs$code = NULL
+  prior = lapply(prior, parse_prior)
+
   compile = function(prior) {
     specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)
     specs = add_intercept_references(specs, predictors, context)
