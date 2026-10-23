@@ -169,6 +169,7 @@ get_plot = function(x,
   # Central intervals, with the lower and upper ends in the `quantile` column
   get_interval = function(type, value_col) {
     local_pp_eval(type, summary = TRUE, ndraws = ndraws) %>%
+      dplyr::select(-".mean", -".sd") %>%
       tidyr::pivot_longer(c(".lower", ".upper"), names_to = "quantile", values_to = value_col) %>%
       add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
