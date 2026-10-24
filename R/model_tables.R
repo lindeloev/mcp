@@ -71,8 +71,8 @@ get_segment_tables = function(model, data, family, par_x) {
   # `cps`: one row per *estimated* change point (nrow(segments) - 1 of
   # them), naturally indexed by `cp` instead of borrowing the segment index.
   # `segment` is an explicit join key: the segment that this change point starts.
-  cps = segments %>%
-    dplyr::filter(.data$segment > 1) %>%
+  cps = segments |>
+    dplyr::filter(.data$segment > 1) |>
     dplyr::transmute(
       cp = .data$segment - 1,
       segment = .data$segment,
@@ -139,13 +139,13 @@ get_pars_table = function(predictors, cps, group_predictors, family) {
   dpar_levels = c("cp", "mu", setdiff(family$dpar_specs$dpar, "mu"), "ar", "ma")
 
   # Public `dpar` values are those accepted by `dpar` arguments, e.g., "ar1". Change points have none.
-  pars %>%
-    dplyr::arrange(factor(.data$dpar, levels = dpar_levels), .data$order, .data$segment, .data$.tie) %>%
+  pars |>
+    dplyr::arrange(factor(.data$dpar, levels = dpar_levels), .data$order, .data$segment, .data$.tie) |>
     dplyr::mutate(dpar = dplyr::case_when(
       .data$part == "cp" ~ NA_character_,
       .data$dpar %in% c("ar", "ma") ~ paste0(.data$dpar, .data$order),
       .default = .data$dpar
-    )) %>%
+    )) |>
     dplyr::select("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
 }
 

@@ -2,7 +2,6 @@
 # JAGS ran in future workers and coda was never loaded in this session.
 #' @keywords internal
 #' @import patchwork
-#' @importFrom magrittr %>%
 #' @importFrom dplyr .data
 #' @importFrom bayesplot pp_check
 #' @importFrom coda varnames

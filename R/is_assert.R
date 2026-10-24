@@ -216,9 +216,9 @@ assert_ordered_population_cps = function(cps, args) {
 
 # Asserts whether `rel` is in a model
 assert_rel = function(model) {
-  has_rel = model %>%
-    sapply(formula_to_char) %>%
-    stringr::str_detect("(^|[^A-Za-z0-9._])rel\\(") %>%
+  has_rel = model |>
+    sapply(formula_to_char) |>
+    stringr::str_detect("(^|[^A-Za-z0-9._])rel\\(") |>
     any()
 
   if (has_rel)

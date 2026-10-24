@@ -463,8 +463,8 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(summary$.lower, c(0, 10))
   expect_equal(summary$.upper, c(0, 10))
 
-  samples = fitted(fit, newdata = newdata, summary = FALSE, width = FALSE) %>% add_plot_groups()
-  quantiles = tidyr::pivot_longer(summary, c(".lower", ".upper"), names_to = "quantile", values_to = ".epred") %>%
+  samples = fitted(fit, newdata = newdata, summary = FALSE, width = FALSE) |> add_plot_groups()
+  quantiles = tidyr::pivot_longer(summary, c(".lower", ".upper"), names_to = "quantile", values_to = ".epred") |>
     add_plot_groups(curve_by = "group")
   quantile_layer = geom_quantiles(
     quantiles,

@@ -90,7 +90,7 @@ parse_predictor_group_term = function(
     ))
   }
 
-  coefficient %>%
+  coefficient |>
     dplyr::transmute(
       dpar = .data$dpar,
       segment = .data$segment,
@@ -129,7 +129,7 @@ get_predictor_group_definitions_segment = function(
     blocks = tibble::tibble(term = terms,
       key = vapply(terms, group_block_key, character(1)),
       group = vapply(terms, function(term) deparse1(str2lang(term)[[3]]), character(1)),
-      source = selected$source[match(terms, selected$term_key)]) %>%
+      source = selected$source[match(terms, selected$term_key)]) |>
       dplyr::distinct(.data$key, .data$source, .keep_all = TRUE)
     if (anyDuplicated(blocks$group))
       stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment, including terms reused with `same()`.", call. = FALSE)

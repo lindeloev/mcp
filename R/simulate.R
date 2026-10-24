@@ -22,7 +22,7 @@ relevel_newdata = function(newdata, fit) {
 
       # Helpful error
       if (any(is.na(new_col))) {
-        new_levels = newdata[is.na(new_col), col_name] %>% as.character() %>% unique()
+        new_levels = newdata[is.na(new_col), col_name] |> as.character() |> unique()
         stop("Got novel values (", and_collapse(new_levels), ") for column ", col_name, ". Only values used during fitting are allowed.")
       }
     } else if (is.character(org_col)) {

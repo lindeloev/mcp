@@ -72,7 +72,7 @@ test_that("Poisson fixed change-point inference against glm()", {
 
 
 test_that("Poisson simulation against glm()", {
-  newdata = df %>% dplyr::select(-"y") %>% tidyr::expand_grid(rep = 1:100)
+  newdata = df |> dplyr::select(-"y") |> tidyr::expand_grid(rep = 1:100)
   newdata$y = fit_mcp$simulate(fit_mcp, newdata, Intercept_1 = 1, x_1 = 0.15, groupB_1 = -0.5)
 
   fit_glm_sim = glm(y ~ x + group, data = newdata, family = poisson())

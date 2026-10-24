@@ -108,9 +108,9 @@ summarise_pars = function(draws, width, convergence = NULL) {
     sd = stats::sd,
     lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
     upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE)
-  ) %>%
-    dplyr::rename(parameter = "variable") %>%
-    dplyr::left_join(convergence, by = "parameter") %>%
+  ) |>
+    dplyr::rename(parameter = "variable") |>
+    dplyr::left_join(convergence, by = "parameter") |>
     dplyr::mutate(
       ess_bulk = round(.data$ess_bulk),
       ess_tail = round(.data$ess_tail)

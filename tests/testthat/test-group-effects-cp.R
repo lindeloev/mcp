@@ -85,7 +85,7 @@ test_that("simulation generates bounded hierarchical change-point locations", {
   by_group = vapply(split(deviations, cp_group_data$id), unique, numeric(1))
   expect_false(isTRUE(all.equal(mean(by_group), 0)))
   expect_true(all(5 + by_group >= 1 & 5 + by_group <= 10))
-  cp_prior = prior_summary(fit) %>% dplyr::filter(.data$parameter == "cp_1_id")
+  cp_prior = prior_summary(fit) |> dplyr::filter(.data$parameter == "cp_1_id")
   expect_equal(cp_prior$bounds, "[1 - cp_1, 10 - cp_1]")
 })
 

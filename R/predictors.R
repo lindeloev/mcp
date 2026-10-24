@@ -89,8 +89,8 @@ collect_design_specs = function(...) {
       return(NULL)
     dplyr::select(table, "design_id", "design_spec")
   })
-  rows = dplyr::bind_rows(tables) %>%
-    dplyr::filter(!is.na(.data$design_id)) %>%
+  rows = dplyr::bind_rows(tables) |>
+    dplyr::filter(!is.na(.data$design_id)) |>
     dplyr::distinct(.data$design_id, .keep_all = TRUE)
 
   stats::setNames(rows$design_spec, rows$design_id)
@@ -292,8 +292,8 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 
   # Disallow multiple terms within functions involving par_x
   formula_terms = attr(stats::terms(form_rhs), "term.labels")
-  contains_multiple_terms = formula_terms %>%
-    stringr::str_extract("(?<=\\().*(?=\\))") %>%
+  contains_multiple_terms = formula_terms |>
+    stringr::str_extract("(?<=\\().*(?=\\))") |>
     stringr::str_detect("[+:*]")
   contains_x = term_contains(par_x, formula_terms)
   is_bad = contains_x & contains_multiple_terms
@@ -612,7 +612,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   # Construct bare columns in the full unwrapped formula, then borrow source columns
   form_rhs = remove_terms(form_rhs, "group")
   current = get_predictors_dpar(data, form_rhs, segment, dpar, par_x, order,
-    check_rank = check_rank && nrow(selected) == 0, design_id = design_id) %>%
+    check_rank = check_rank && nrow(selected) == 0, design_id = design_id) |>
     dplyr::mutate(definition_segment = .data$segment)
   if (nrow(selected) == 0)
     return(current)
@@ -738,7 +738,7 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
         design_id = paste("population", component, if (arma$order == 0) 0 else order, segment, sep = ":"),
         previous = previous
       )
-    }) %>%
+    }) |>
       dplyr::bind_rows()
   }
 
@@ -774,8 +774,8 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # rather than the link-scale intercept sigma_Intercept_1 of a modeled sigma().
   unmodeled = parsed_predictors$dpar %in% setdiff(family$dpar_specs$dpar, c("mu", unlist(lapply(components, names))))
   parsed_predictors$name[unmodeled] = paste0(parsed_predictors$dpar[unmodeled], "_1")
-  predictors = parsed_predictors %>%
-    dplyr::filter(.data$par_type != "offset") %>%
+  predictors = parsed_predictors |>
+    dplyr::filter(.data$par_type != "offset") |>
     dplyr::mutate(matrix_col = dplyr::row_number())
 
   assert_unique_predictor_names(definition_rows(predictors))
@@ -819,8 +819,8 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   if (nrow(definitions) > 0) {
     # Rows without coefficients are `(0 | group)` turn-offs, which only mark resets below.
     # Link each coefficient to its population counterpart, if there is one.
-    group_predictors = definitions %>%
-      dplyr::filter(.data$has_coefficients) %>%
+    group_predictors = definitions |>
+      dplyr::filter(.data$has_coefficients) |>
       dplyr::mutate(
         population_name = dplyr::if_else(
           .data$population_name %in% predictors$name,
@@ -828,7 +828,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
           NA_character_
         ),
         matrix_col = nrow(predictors) + dplyr::row_number()
-      ) %>%
+      ) |>
       dplyr::select(
         "population_name", "name", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "order",
@@ -841,7 +841,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     # Group intercepts and other terms apply in their own segment only.
     group_key = function(x) paste(x$dpar, x$group_col)
     is_reset = !definitions$has_coefficients | definitions$par_type %in% "Intercept"
-    disjoined = dplyr::distinct(definitions, .data$dpar, .data$group_col) %>%
+    disjoined = dplyr::distinct(definitions, .data$dpar, .data$group_col) |>
       dplyr::inner_join(dplyr::distinct(predictors[is_intercept, c("dpar", "segment")]), by = "dpar", relationship = "many-to-many")
     group_resets = dplyr::bind_rows(
       tibble::tibble(key = group_key(definitions)[is_reset], segment = definitions$segment[is_reset]),
@@ -855,7 +855,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   # Store each fitted component specification once, not on every coefficient.
   design_specs = collect_design_specs(parsed_predictors, definitions)
-  predictors = predictors %>%
+  predictors = predictors |>
     dplyr::select(-"design_spec")
   if ("design_spec" %in% names(group_predictors))
     group_predictors = dplyr::select(group_predictors, -"design_spec")

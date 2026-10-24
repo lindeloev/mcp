@@ -154,22 +154,22 @@ get_plot = function(x,
     pp_eval(
       fit, newdata, summary = summary, type = type, width = width, rate = rate, prior = prior,
       dpar = if (type == "fitted") dpar, group_effects = group_effects, arma = needs_arma, ndraws = ndraws, scale = scale
-    ) %>%
+    ) |>
       dplyr::select(-dplyr::any_of(y_col))
   }
 
   # Fitted lines need only `lines` draws, selected jointly across all curves. Values are in the response column.
   eval_lines = if (lines > 0) {
-    local_pp_eval("fitted", summary = FALSE, ndraws = lines) %>%
-      dplyr::rename("{y_col}" := dplyr::all_of(get_value_col("fitted", dpar, scale))) %>%
+    local_pp_eval("fitted", summary = FALSE, ndraws = lines) |>
+      dplyr::rename("{y_col}" := dplyr::all_of(get_value_col("fitted", dpar, scale))) |>
       add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
 
   # Central intervals, with the lower and upper ends in the `quantile` column
   get_interval = function(type, value_col) {
-    local_pp_eval(type, summary = TRUE, ndraws = ndraws) %>%
-      dplyr::select(-".mean", -".sd") %>%
-      tidyr::pivot_longer(c(".lower", ".upper"), names_to = "quantile", values_to = value_col) %>%
+    local_pp_eval(type, summary = TRUE, ndraws = ndraws) |>
+      dplyr::select(-".mean", -".sd") |>
+      tidyr::pivot_longer(c(".lower", ".upper"), names_to = "quantile", values_to = value_col) |>
       add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
   fitted_data = if (show_fitted) get_interval("fitted", y_col)
@@ -507,8 +507,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
     draws[[facet_by]] = levels[draws$level_index]
 
   # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
-  draws = draws %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) %>%
+  draws = draws |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) |>
     dplyr::summarise(dens = list(
       if (is.na(stats::sd(.data$value)) || stats::sd(.data$value) == 0) {
         list(x = rep(.data$value[1], 2), y = c(0, 1))
@@ -518,8 +518,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
           error = function(e) stats::density(.data$value, bw = "nrd0", n = 2^10)
         )
       }
-    )) %>%
-    dplyr::rowwise() %>%
+    )) |>
+    dplyr::rowwise() |>
     dplyr::mutate(
       densx = list(.data$dens$x),
       densy = list((.data$dens$y / max(.data$dens$y)) *  # Scale to 1 height
@@ -527,8 +527,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
                      limits_y[1] -  # Put on x-axis
                      diff(limits_y) * dens_cut  # Move a bit further down to remove zero-density line from view.
       )
-    ) %>%
-    dplyr::select(-"dens") %>%
+    ) |>
+    dplyr::select(-"dens") |>
     tidyr::unnest(c("densx", "densy"))
 
 

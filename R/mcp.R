@@ -384,7 +384,7 @@ mcp = function(
       seed = seed,
       quiet = quiet,
       use_glm = use_jags_glm(family, group_definitions)
-    ) %>%
+    ) |>
       recover_levels(data, parameters[parameters$scope == "group", ])
 
     class(draws) = "mcmc.list"

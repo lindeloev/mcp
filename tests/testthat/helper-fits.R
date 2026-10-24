@@ -1,5 +1,3 @@
-`%>%` = magrittr::`%>%`  # instead of importing dplyr
-
 #' Test a list of segments and simulation values
 #'
 #' * Simulates data from model and values
@@ -117,7 +115,7 @@ test_matches_simulated = function(fit, min_ess) {
   summaries = rbind(
     get_summary(fit, width = 0.97, scope = "population"),
     ranef(fit, width = 0.97)
-  ) %>%
+  ) |>
     dplyr::filter(is.na(sim) == FALSE)
 
   # Parameters recovery check:

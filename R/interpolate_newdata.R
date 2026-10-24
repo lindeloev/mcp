@@ -22,7 +22,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
     arma = is_arma(fit)
 
   data_columns = mcp_columns(fit)
-  xdata = fit$data[, data_columns$par_x] %>% as.numeric()
+  xdata = fit$data[, data_columns$par_x] |> as.numeric()
 
   # If there are AR/MA terms and arma == TRUE, evaluate at the data
   if (isTRUE(arma)) {
@@ -183,12 +183,12 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
   by_grid = if (length(by) == 0) {
     data.frame(.row = 1)[, FALSE, drop = FALSE]
   } else {
-    lapply(fit$data[, by, drop = FALSE], unique) %>% expand.grid()
+    lapply(fit$data[, by, drop = FALSE], unique) |> expand.grid()
   }
   continuous_at = get_continuous_at(
     fit$data, data_columns, at, unique(c(group_cols, series_col))
   )
-  newdata = by_grid %>% tidyr::expand_grid("{data_columns$par_x}" := x_values)
+  newdata = by_grid |> tidyr::expand_grid("{data_columns$par_x}" := x_values)
   if (!is.null(continuous_at))
     newdata = tidyr::expand_grid(newdata, continuous_at)
 

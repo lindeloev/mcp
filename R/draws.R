@@ -285,6 +285,6 @@ imputed_draws = function(object, ndraws = NULL) {
     .value = ".imputed",
     .row = imputed_response_rows
   )
-  tidyr::pivot_longer_spec(draws, pivot_spec) %>%
+  tidyr::pivot_longer_spec(draws, pivot_spec) |>
     dplyr::relocate(".chain", ".iteration", ".draw")
 }

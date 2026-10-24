@@ -116,7 +116,7 @@ convergence_table = function(draws) {
     rhat = posterior::rhat,
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
-  ) %>%
+  ) |>
     dplyr::rename(parameter = "variable")
 }
 

@@ -148,7 +148,7 @@ default_predictor_specs = function(predictors, family, context) {
   if (anyDuplicated(keys))
     stop_github("Default prior specifications are not unique by dpar and par_type.")
 
-  joined = predictors %>%
+  joined = predictors |>
     dplyr::left_join(defaults, by = c("dpar", prior_type = "par_type"))
   is_factor_intercept = joined$prior_type == "Intercept" & joined$par_type != "Intercept"
   joined$description[is_factor_intercept] = paste0(joined$description[is_factor_intercept], "; one per factor level")
@@ -181,7 +181,7 @@ default_group_specs = function(group_predictors, family) {
     return(empty_prior_specs())
 
   defaults = filter_default_conditions(family$default_prior, family)
-  joined = group_predictors %>%
+  joined = group_predictors |>
     dplyr::left_join(
       dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
       by = c("dpar", "par_type")
@@ -334,7 +334,7 @@ assert_prior_not_shared = function(prior, predictors, group_predictors) {
       replaced = stringr::str_replace(.data$sd_name, paste0("_", .data$definition_segment, "_"), paste0("_", .data$segment, "_")),
       original = .data$sd_name
     )
-  ) %>% dplyr::distinct()
+  ) |> dplyr::distinct()
   bad_prior = shared[shared$replaced %in% names(prior), , drop = FALSE]
   if (nrow(bad_prior) > 0) {
     guidance = if (nrow(bad_prior) == 1) {

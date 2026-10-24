@@ -82,7 +82,7 @@ test_that("Gaussian fixed change-point inference against lm()", {
 
 
 test_that("Gaussian simulation against lm()", {
-  newdata = df %>% dplyr::select(-"y") %>% tidyr::expand_grid(rep = 1:100)
+  newdata = df |> dplyr::select(-"y") |> tidyr::expand_grid(rep = 1:100)
   newdata$y = fit_mcp$simulate(fit_mcp, newdata, Intercept_1 = 3, x_1 = 0.5, groupB_1 = -2, sigma_1 = 1.5)
 
   fit_lm_sim = lm(y ~ x + group, data = newdata)

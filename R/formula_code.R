@@ -78,12 +78,12 @@ get_formula_jags = function(model_tables, family, nodes) {
   # One sum per dpar. Coefficients sharing a segment, x-degree, and end are one inprod().
   formula_dpar = function(dpar) {
     dpar_terms = terms[terms$dpar == dpar, ]
-    coefficients = dpar_terms[is.na(dpar_terms$offset), ] %>%
+    coefficients = dpar_terms[is.na(dpar_terms$offset), ] |>
       dplyr::mutate(
         name = ifelse(is.na(.data$group_col), .data$name, paste0(.data$name, "[", .data$group_col, "_index_[i_]]")),
         x_code = ifelse(.data$x_degree == 0, "1", paste0("x_local_", .data$segment, "_[i_]", x_power(.data$x_degree)))
-      ) %>%
-      dplyr::group_by(.data$segment, .data$x_degree, .data$end) %>%
+      ) |>
+      dplyr::group_by(.data$segment, .data$x_degree, .data$end) |>
       dplyr::summarise(
         code = paste0(
           "  ", applies(dplyr::first(.data$start), dplyr::first(.data$end)),
