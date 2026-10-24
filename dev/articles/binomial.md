@@ -300,12 +300,12 @@ fit$jags_code
     ##   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points
     ## 
     ##   # Priors for population-level effects
-    ##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale
-    ##   year_2_end_ ~ dnorm(Intercept_1, 1/(0.043121968093205169*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling); sampled as the value at the segment end
+    ##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)  # Link-scale intercept, approximately uniform on the probability scale
+    ##   year_2_end_ ~ dnorm(Intercept_1, 1/(0.043121968093205169*(cp_2-cp_1))^2)  # Autoscaled link-scale coefficient (rstanarm autoscaling); sampled as the value at the segment end
     ##   year_2 = (year_2_end_ - (Intercept_1)) / (cp_2 - cp_1)
-    ##   Intercept_3_end_ ~ dnorm(year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale; sampled as the value at the segment end
+    ##   Intercept_3_end_ ~ dnorm(year_3 * (cp_3 - cp_2), 1/(1.5)^2)  # Link-scale intercept, approximately uniform on the probability scale; sampled as the value at the segment end
     ##   Intercept_3 = Intercept_3_end_ - (year_3 * (cp_3 - cp_2))
-    ##   year_3 ~ dnorm(0, 1/(0.043121968093205169)^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling)
+    ##   year_3 ~ dnorm(0, 1/(0.043121968093205169)^2)  # Autoscaled link-scale coefficient (rstanarm autoscaling)
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(year)) {

@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-10-22</h4>
+            <h4 data-toc-skip class="date">2026-10-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -444,17 +444,17 @@ priors on group-level effects</a>.</p>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(x)</span></span>
 <span><span class="co">##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x</span></span>
-<span><span class="co">##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation</span></span>
+<span><span class="co">##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0, )  # Group-level change-point SD before truncation</span></span>
 <span><span class="co">##   for (id_ in 1:n_unique_id) {</span></span>
-<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighboring change points</span></span>
-<span><span class="co">##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point</span></span>
+<span><span class="co">##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighboring change points; sampled as each group's absolute change point</span></span>
+<span><span class="co">##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1</span></span>
 <span><span class="co">##   }</span></span>
 <span><span class="co">##   cp_2 = max(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(25.186470821654748, 1/(18.620544312604412)^2)   # Mean intercept (rstanarm default)</span></span>
-<span><span class="co">##   x_2 ~ dnorm(0, 1/(0.64588420009064662)^2)   # Autoscaled mean coefficient (rstanarm default)</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(25.186470821654748, 1/(18.620544312604412)^2)  # Mean intercept (rstanarm default)</span></span>
+<span><span class="co">##   x_2 ~ dnorm(0, 1/(0.64588420009064662)^2)  # Autoscaled mean coefficient (rstanarm default)</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>

@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-10-22</h4>
+            <h4 data-toc-skip class="date">2026-10-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -744,12 +744,12 @@ R</a>.</p>
 <span><span class="co">##   cp_2 = max(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   ar1_1 ~ dnorm(0, 1/(0.5)^2) T(-1,1)  # Zero-centered regularizing dependence coefficient</span></span>
-<span><span class="co">##   ar1_2 ~ dnorm(0, 1/(0.5)^2) T(-1,1)  # Zero-centered regularizing dependence coefficient</span></span>
-<span><span class="co">##   Intercept_1_mid_ ~ dnorm(70.05488308241101 + x_1 * (25), 1/(74.061610437431241)^2)   # Mean intercept (rstanarm default); sampled as the value at the expected midpoint of segment 1</span></span>
+<span><span class="co">##   ar1_1 ~ dnorm(0, 1/(0.5)^2) T(-1, 1)  # Zero-centered regularizing dependence coefficient</span></span>
+<span><span class="co">##   ar1_2 ~ dnorm(0, 1/(0.5)^2) T(-1, 1)  # Zero-centered regularizing dependence coefficient</span></span>
+<span><span class="co">##   Intercept_1_mid_ ~ dnorm(70.05488308241101 + x_1 * (25), 1/(74.061610437431241)^2)  # Mean intercept (rstanarm default); sampled as the value at the expected midpoint of segment 1</span></span>
 <span><span class="co">##   Intercept_1 = Intercept_1_mid_ - (x_1 * (25))</span></span>
-<span><span class="co">##   x_1 ~ dnorm(0, 1/(2.5463835748232295)^2)   # Autoscaled mean coefficient (rstanarm default)</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(35.6)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   x_1 ~ dnorm(0, 1/(2.5463835748232295)^2)  # Autoscaled mean coefficient (rstanarm default)</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(35.6)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Apply GARMA recursion to link-scale residuals</span></span>
 <span><span class="co">##   resid_garma_[1] = 0</span></span>

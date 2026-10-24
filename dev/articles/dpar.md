@@ -310,17 +310,17 @@ fit$jags_code
     ##   cp_order_ ~ dbern(step(cp_2 - cp_1) * step(cp_3 - cp_2))  # Ordered change points
     ## 
     ##   # Priors for population-level effects
-    ##   Intercept_1 ~ dnorm(26.268121747257734, 1/(118.97849793160449)^2)   # Mean intercept (rstanarm default)
-    ##   Intercept_2 ~ dnorm(26.268121747257734, 1/(118.97849793160449)^2)   # Mean intercept (rstanarm default)
-    ##   x_3_end_ ~ dnorm(Intercept_2, 1/(2.055635353724206*(cp_3-cp_2))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
+    ##   Intercept_1 ~ dnorm(26.268121747257734, 1/(118.97849793160449)^2)  # Mean intercept (rstanarm default)
+    ##   Intercept_2 ~ dnorm(26.268121747257734, 1/(118.97849793160449)^2)  # Mean intercept (rstanarm default)
+    ##   x_3_end_ ~ dnorm(Intercept_2, 1/(2.055635353724206*(cp_3-cp_2))^2)  # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
     ##   x_3 = (x_3_end_ - (Intercept_2)) / (cp_3 - cp_2)
-    ##   sigma_Intercept_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept; on the value at min(x); sampled as the value at the expected midpoint of segment 1
+    ##   sigma_Intercept_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)  # Weakly regularizing modeled log-SD intercept; on the value at min(x); sampled as the value at the expected midpoint of segment 1
     ##   sigma_Intercept_1 = sigma_Intercept_1_mid_ - (sigma_x_1 * (25.875))
-    ##   sigma_x_1 ~ dt(0, 1/(0.043193421279068007)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD
-    ##   sigma_Intercept_2 ~ dt(0, 1/(2.5)^2, 3)   # Weakly regularizing modeled log-SD intercept
-    ##   sigma_x_3_end_ ~ dt(sigma_Intercept_2, 1/(0.043193421279068007*(cp_3-cp_2))^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the value at the segment end
+    ##   sigma_x_1 ~ dt(0, 1/(0.043193421279068007)^2, 3)  # Regularizing log-SD coefficient scaled by the predictor SD
+    ##   sigma_Intercept_2 ~ dt(0, 1/(2.5)^2, 3)  # Weakly regularizing modeled log-SD intercept
+    ##   sigma_x_3_end_ ~ dt(sigma_Intercept_2, 1/(0.043193421279068007*(cp_3-cp_2))^2, 3)  # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the value at the segment end
     ##   sigma_x_3 = (sigma_x_3_end_ - (sigma_Intercept_2)) / (cp_3 - cp_2)
-    ##   sigma_xE2_3_rise_ ~ dt(0, 1/(0.0002100945749551876*(cp_3-cp_2)^2)^2, 3)   # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the rise over the segment
+    ##   sigma_xE2_3_rise_ ~ dt(0, 1/(0.0002100945749551876*(cp_3-cp_2)^2)^2, 3)  # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the rise over the segment
     ##   sigma_xE2_3 = sigma_xE2_3_rise_ / (cp_3 - cp_2)^2
     ## 
     ##   # Model and likelihood

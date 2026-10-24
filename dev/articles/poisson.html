@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-10-22</h4>
+            <h4 data-toc-skip class="date">2026-10-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -375,8 +375,8 @@ above.</p>
 <span><span class="co">##   cp_2 = max(date)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
-<span><span class="co">##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)  # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
+<span><span class="co">##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)  # Robustly centered log-count intercept with a minimum scale of 2.5</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(date)) {</span></span>

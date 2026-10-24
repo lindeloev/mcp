@@ -212,9 +212,12 @@ A ggplot2 object.
 
 ## Details
 
-`plot()` uses `fit$simulate()` on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries are based on CDFs
-computed on `ndraws` draws, and change-point densities are simple
+`plot()` evaluates the model on posterior draws like
+[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+and
+[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
+These represent the (joint) posterior distribution. Interval summaries
+are based on `ndraws` draws, and change-point densities are simple
 densities on all available draws.
 
 ## Functions

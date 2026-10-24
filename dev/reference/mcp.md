@@ -405,13 +405,13 @@ demo_fit$jags_code
 #>   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points
 #> 
 #>   # Priors for population-level effects
-#>   Intercept_1 ~ dnorm(13.825120048974153, 1/(17.382500430759464)^2)   # Mean intercept (rstanarm default)
-#>   time_2_end_ ~ dnorm(Intercept_1, 1/(0.62123709509255609*(cp_2-cp_1))^2)   # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
+#>   Intercept_1 ~ dnorm(13.825120048974153, 1/(17.382500430759464)^2)  # Mean intercept (rstanarm default)
+#>   time_2_end_ ~ dnorm(Intercept_1, 1/(0.62123709509255609*(cp_2-cp_1))^2)  # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
 #>   time_2 = (time_2_end_ - (Intercept_1)) / (cp_2 - cp_1)
-#>   Intercept_3_end_ ~ dnorm(13.825120048974153 + time_3 * (cp_3 - cp_2), 1/(17.382500430759464)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end
+#>   Intercept_3_end_ ~ dnorm(13.825120048974153 + time_3 * (cp_3 - cp_2), 1/(17.382500430759464)^2)  # Mean intercept (rstanarm default); sampled as the value at the segment end
 #>   Intercept_3 = Intercept_3_end_ - (time_3 * (cp_3 - cp_2))
-#>   time_3 ~ dnorm(0, 1/(0.62123709509255609)^2)   # Autoscaled mean coefficient (rstanarm default)
-#>   sigma_1 ~ dt(0, 1/(5.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+#>   time_3 ~ dnorm(0, 1/(0.62123709509255609)^2)  # Autoscaled mean coefficient (rstanarm default)
+#>   sigma_1 ~ dt(0, 1/(5.7)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale
 #> 
 #>   # Model and likelihood
 #>   for (i_ in 1:length(time)) {

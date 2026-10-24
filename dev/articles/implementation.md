@@ -58,9 +58,9 @@ fit$jags_code
     ##   cp_2 = max(x)
     ## 
     ##   # Priors for population-level effects
-    ##   Intercept_1 ~ dnorm(5.5, 1/(7.5691258852437295)^2)   # Mean intercept (rstanarm default)
-    ##   Intercept_2 ~ dnorm(5.5, 1/(7.5691258852437295)^2)   # Mean intercept (rstanarm default)
-    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   Intercept_1 ~ dnorm(5.5, 1/(7.5691258852437295)^2)  # Mean intercept (rstanarm default)
+    ##   Intercept_2 ~ dnorm(5.5, 1/(7.5691258852437295)^2)  # Mean intercept (rstanarm default)
+    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {
@@ -184,9 +184,9 @@ fit$jags_code
     ##   cp_2 = max(x)
     ## 
     ##   # Priors for population-level effects
-    ##   x_1 ~ dnorm(0, 1/(2.5)^2)   # Autoscaled mean coefficient (rstanarm default)
-    ##   x_2 ~ dnorm(0, 1/(2.5)^2)   # Autoscaled mean coefficient (rstanarm default)
-    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   x_1 ~ dnorm(0, 1/(2.5)^2)  # Autoscaled mean coefficient (rstanarm default)
+    ##   x_2 ~ dnorm(0, 1/(2.5)^2)  # Autoscaled mean coefficient (rstanarm default)
+    ##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {

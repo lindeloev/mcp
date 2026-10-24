@@ -360,21 +360,21 @@ fit_manual$jags_code
     ## model {
     ##   # Change points
     ##   cp_0 = min(x)
-    ##   cp_1 ~ dnorm(30, 1/(10)^2) T(cp_0,cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points
+    ##   cp_1 ~ dnorm(30, 1/(10)^2) T(cp_0, cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points
     ##   cp_2 = 80  # Fixed at 80
     ##   cp_3 = max(x)
     ##   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points
     ## 
     ##   # Priors for population-level effects
-    ##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(,10)  # User-specified prior
+    ##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(, 10)  # User-specified prior
     ##   x_1 ~ dbeta(2, 5)  # User-specified prior
-    ##   Intercept_2_end_ ~ dnorm(24.321850954171083 + x_2 * (cp_2 - cp_1), 1/(26.856367009148308)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end
+    ##   Intercept_2_end_ ~ dnorm(24.321850954171083 + x_2 * (cp_2 - cp_1), 1/(26.856367009148308)^2)  # Mean intercept (rstanarm default); sampled as the value at the segment end
     ##   Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))
-    ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior
-    ##   Intercept_3_end_ ~ dnorm(24.321850954171083 + x_3 * (cp_3 - cp_2), 1/(26.856367009148308)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end
+    ##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )  # User-specified prior
+    ##   Intercept_3_end_ ~ dnorm(24.321850954171083 + x_3 * (cp_3 - cp_2), 1/(26.856367009148308)^2)  # Mean intercept (rstanarm default); sampled as the value at the segment end
     ##   Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))
     ##   x_3 = x_2  # Same value as x_2
-    ##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {

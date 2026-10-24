@@ -749,12 +749,12 @@ fit$jags_code
     ##   cp_2 = max(x)
     ## 
     ##   # Priors for population-level effects
-    ##   ar1_1 ~ dnorm(0, 1/(0.5)^2) T(-1,1)  # Zero-centered regularizing dependence coefficient
-    ##   ar1_2 ~ dnorm(0, 1/(0.5)^2) T(-1,1)  # Zero-centered regularizing dependence coefficient
-    ##   Intercept_1_mid_ ~ dnorm(70.05488308241101 + x_1 * (25), 1/(74.061610437431241)^2)   # Mean intercept (rstanarm default); sampled as the value at the expected midpoint of segment 1
+    ##   ar1_1 ~ dnorm(0, 1/(0.5)^2) T(-1, 1)  # Zero-centered regularizing dependence coefficient
+    ##   ar1_2 ~ dnorm(0, 1/(0.5)^2) T(-1, 1)  # Zero-centered regularizing dependence coefficient
+    ##   Intercept_1_mid_ ~ dnorm(70.05488308241101 + x_1 * (25), 1/(74.061610437431241)^2)  # Mean intercept (rstanarm default); sampled as the value at the expected midpoint of segment 1
     ##   Intercept_1 = Intercept_1_mid_ - (x_1 * (25))
-    ##   x_1 ~ dnorm(0, 1/(2.5463835748232295)^2)   # Autoscaled mean coefficient (rstanarm default)
-    ##   sigma_1 ~ dt(0, 1/(35.6)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   x_1 ~ dnorm(0, 1/(2.5463835748232295)^2)  # Autoscaled mean coefficient (rstanarm default)
+    ##   sigma_1 ~ dt(0, 1/(35.6)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Apply GARMA recursion to link-scale residuals
     ##   resid_garma_[1] = 0

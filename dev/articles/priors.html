@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Working with priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-22</h4>
+            <h4 data-toc-skip class="date">2026-10-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/priors.Rmd" class="external-link"><code>vignettes/priors.Rmd</code></a></small>
       <div class="d-none name"><code>priors.Rmd</code></div>
@@ -423,21 +423,21 @@ points.</p>
 <pre><code><span><span class="co">## model {</span></span>
 <span><span class="co">##   # Change points</span></span>
 <span><span class="co">##   cp_0 = min(x)</span></span>
-<span><span class="co">##   cp_1 ~ dnorm(30, 1/(10)^2) T(cp_0,cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points</span></span>
+<span><span class="co">##   cp_1 ~ dnorm(30, 1/(10)^2) T(cp_0, cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points</span></span>
 <span><span class="co">##   cp_2 = 80  # Fixed at 80</span></span>
 <span><span class="co">##   cp_3 = max(x)</span></span>
 <span><span class="co">##   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(,10)  # User-specified prior</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(5)^2) T(, 10)  # User-specified prior</span></span>
 <span><span class="co">##   x_1 ~ dbeta(2, 5)  # User-specified prior</span></span>
-<span><span class="co">##   Intercept_2_end_ ~ dnorm(24.321850954171083 + x_2 * (cp_2 - cp_1), 1/(26.856367009148308)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end</span></span>
+<span><span class="co">##   Intercept_2_end_ ~ dnorm(24.321850954171083 + x_2 * (cp_2 - cp_1), 1/(26.856367009148308)^2)  # Mean intercept (rstanarm default); sampled as the value at the segment end</span></span>
 <span><span class="co">##   Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))</span></span>
-<span><span class="co">##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1,)  # User-specified prior</span></span>
-<span><span class="co">##   Intercept_3_end_ ~ dnorm(24.321850954171083 + x_3 * (cp_3 - cp_2), 1/(26.856367009148308)^2)   # Mean intercept (rstanarm default); sampled as the value at the segment end</span></span>
+<span><span class="co">##   x_2 ~ dt(0, 1/(1)^2, 3) T(x_1, )  # User-specified prior</span></span>
+<span><span class="co">##   Intercept_3_end_ ~ dnorm(24.321850954171083 + x_3 * (cp_3 - cp_2), 1/(26.856367009148308)^2)  # Mean intercept (rstanarm default); sampled as the value at the segment end</span></span>
 <span><span class="co">##   Intercept_3 = Intercept_3_end_ - (x_3 * (cp_3 - cp_2))</span></span>
 <span><span class="co">##   x_3 = x_2  # Same value as x_2</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(9.9)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>

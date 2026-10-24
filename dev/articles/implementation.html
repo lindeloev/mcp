@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>From formulas to sampler code</h1>
             
-            <h4 data-toc-skip class="date">2026-10-22</h4>
+            <h4 data-toc-skip class="date">2026-10-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/implementation.Rmd" class="external-link"><code>vignettes/implementation.Rmd</code></a></small>
       <div class="d-none name"><code>implementation.Rmd</code></div>
@@ -159,9 +159,9 @@ uses the indicator formulation of change points:</p>
 <span><span class="co">##   cp_2 = max(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(5.5, 1/(7.5691258852437295)^2)   # Mean intercept (rstanarm default)</span></span>
-<span><span class="co">##   Intercept_2 ~ dnorm(5.5, 1/(7.5691258852437295)^2)   # Mean intercept (rstanarm default)</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(5.5, 1/(7.5691258852437295)^2)  # Mean intercept (rstanarm default)</span></span>
+<span><span class="co">##   Intercept_2 ~ dnorm(5.5, 1/(7.5691258852437295)^2)  # Mean intercept (rstanarm default)</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>
@@ -269,9 +269,9 @@ there.</p>
 <span><span class="co">##   cp_2 = max(x)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   x_1 ~ dnorm(0, 1/(2.5)^2)   # Autoscaled mean coefficient (rstanarm default)</span></span>
-<span><span class="co">##   x_2 ~ dnorm(0, 1/(2.5)^2)   # Autoscaled mean coefficient (rstanarm default)</span></span>
-<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale</span></span>
+<span><span class="co">##   x_1 ~ dnorm(0, 1/(2.5)^2)  # Autoscaled mean coefficient (rstanarm default)</span></span>
+<span><span class="co">##   x_2 ~ dnorm(0, 1/(2.5)^2)  # Autoscaled mean coefficient (rstanarm default)</span></span>
+<span><span class="co">##   sigma_1 ~ dt(0, 1/(3.7)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(x)) {</span></span>

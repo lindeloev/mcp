@@ -330,8 +330,8 @@ fit$jags_code
     ##   cp_2 = max(date)
     ## 
     ##   # Priors for population-level effects
-    ##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
-    ##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)   # Robustly centered log-count intercept with a minimum scale of 2.5
+    ##   Intercept_1 ~ dnorm(0, 1/(2.5)^2)  # Robustly centered log-count intercept with a minimum scale of 2.5
+    ##   Intercept_2 ~ dnorm(0, 1/(2.5)^2)  # Robustly centered log-count intercept with a minimum scale of 2.5
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(date)) {

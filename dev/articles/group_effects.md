@@ -411,17 +411,17 @@ fit$jags_code
     ##   # Change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
-    ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0,)  # Group-level change-point SD before truncation
+    ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0, )  # Group-level change-point SD before truncation
     ##   for (id_ in 1:n_unique_id) {
-    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighboring change points
-    ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1  # deviation from population change point
+    ##     cp_1_id_location[id_] ~ dnorm(cp_1, 1/(cp_1_id_sd)^2) T(cp_0, cp_2)  # Group-level change-point deviations, truncated between the neighboring change points; sampled as each group's absolute change point
+    ##     cp_1_id[id_] = cp_1_id_location[id_] - cp_1
     ##   }
     ##   cp_2 = max(x)
     ## 
     ##   # Priors for population-level effects
-    ##   Intercept_1 ~ dnorm(25.186470821654748, 1/(18.620544312604412)^2)   # Mean intercept (rstanarm default)
-    ##   x_2 ~ dnorm(0, 1/(0.64588420009064662)^2)   # Autoscaled mean coefficient (rstanarm default)
-    ##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0,)  # Positive residual SD calibrated on the response scale
+    ##   Intercept_1 ~ dnorm(25.186470821654748, 1/(18.620544312604412)^2)  # Mean intercept (rstanarm default)
+    ##   x_2 ~ dnorm(0, 1/(0.64588420009064662)^2)  # Autoscaled mean coefficient (rstanarm default)
+    ##   sigma_1 ~ dt(0, 1/(5.3)^2, 3) T(0, )  # Positive residual SD calibrated on the response scale
     ## 
     ##   # Model and likelihood
     ##   for (i_ in 1:length(x)) {

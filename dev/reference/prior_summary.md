@@ -83,8 +83,8 @@ prior_summary(demo_fit, verbose = TRUE)  # Include their rules and sources
 #> 1 cp_1              2 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered dunif(min(time), max(time))                        Flat Dirichlet on the segment lengths                 default distribution
 #> 2 cp_2              3 NA    dunif(0.61863, 99.741) [0.61863, 99.741], ordered dunif(min(time), max(time))                        Flat Dirichlet on the segment lengths                 default distribution
 #> 3 Intercept_1       1 mu    dnorm(13.825, 17.383)  none                       dnorm(mean(response), 2.5 * sd(response))          Mean intercept (rstanarm default)                     default distribution
-#> 4 time_2            2 mu    dnorm(0, 0.62124)      none                       dnorm(0, 2.5 * sd(response) / (sd(time)))          Autoscaled mean coefficient (rstanarm default)        default distribution
+#> 4 time_2            2 mu    dnorm(0, 0.62124)      none                       dnorm(0, 2.5 * sd(response)/(sd(time)))            Autoscaled mean coefficient (rstanarm default)        default distribution
 #> 5 Intercept_3       3 mu    dnorm(13.825, 17.383)  none                       dnorm(mean(response), 2.5 * sd(response))          Mean intercept (rstanarm default)                     default distribution
-#> 6 time_3            3 mu    dnorm(0, 0.62124)      none                       dnorm(0, 2.5 * sd(response) / (sd(time)))          Autoscaled mean coefficient (rstanarm default)        default distribution
+#> 6 time_3            3 mu    dnorm(0, 0.62124)      none                       dnorm(0, 2.5 * sd(response)/(sd(time)))            Autoscaled mean coefficient (rstanarm default)        default distribution
 #> 7 sigma_1           1 sigma dt(0, 5.7, 3) T(0, )   [0, Inf]                   dt(0, max(2.5, round(mad(response), 1)), 3) T(0, ) Positive residual SD calibrated on the response scale default distribution
 ```

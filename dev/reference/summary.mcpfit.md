@@ -46,10 +46,10 @@ print(x, ...)
 
 - digits:
 
-  Non-negative integer. Number of significant digits of `sd` when
-  printing the summary. Defaults to 2. `mean`, `lower`, `upper`, and
-  `sim` are rounded to the same decimal places in each row. The returned
-  tibble retains the unrounded values.
+  Positive integer. Number of significant digits of `sd` when printing
+  the summary. Defaults to 2. `mean`, `lower`, `upper`, and `sim` are
+  rounded to the same decimal places in each row. The returned tibble
+  retains the unrounded values.
 
 - prior:
 

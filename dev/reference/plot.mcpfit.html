@@ -235,10 +235,9 @@ coefficient you want to evaluate.</p></li>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>plot()</code> uses <code>fit$simulate()</code> on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries are based on CDFs
-computed on <code>ndraws</code> draws, and change-point densities are simple
-densities on all available draws.</p>
+    <p><code>plot()</code> evaluates the model on posterior draws like <code><a href="execute-mcp-model.html">fitted()</a></code> and <code><a href="execute-mcp-model.html">predict()</a></code>. These represent the
+(joint) posterior distribution. Interval summaries are based on <code>ndraws</code> draws, and change-point
+densities are simple densities on all available draws.</p>
     </div>
     <div class="section level2">
     <h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a></h2>

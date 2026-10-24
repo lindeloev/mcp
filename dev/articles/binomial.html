@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-10-22</h4>
+            <h4 data-toc-skip class="date">2026-10-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/binomial.Rmd" class="external-link"><code>vignettes/binomial.Rmd</code></a></small>
       <div class="d-none name"><code>binomial.Rmd</code></div>
@@ -347,12 +347,12 @@ links.</p>
 <span><span class="co">##   cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Priors for population-level effects</span></span>
-<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale</span></span>
-<span><span class="co">##   year_2_end_ ~ dnorm(Intercept_1, 1/(0.043121968093205169*(cp_2-cp_1))^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling); sampled as the value at the segment end</span></span>
+<span><span class="co">##   Intercept_1 ~ dnorm(0, 1/(1.5)^2)  # Link-scale intercept, approximately uniform on the probability scale</span></span>
+<span><span class="co">##   year_2_end_ ~ dnorm(Intercept_1, 1/(0.043121968093205169*(cp_2-cp_1))^2)  # Autoscaled link-scale coefficient (rstanarm autoscaling); sampled as the value at the segment end</span></span>
 <span><span class="co">##   year_2 = (year_2_end_ - (Intercept_1)) / (cp_2 - cp_1)</span></span>
-<span><span class="co">##   Intercept_3_end_ ~ dnorm(year_3 * (cp_3 - cp_2), 1/(1.5)^2)   # Link-scale intercept, approximately uniform on the probability scale; sampled as the value at the segment end</span></span>
+<span><span class="co">##   Intercept_3_end_ ~ dnorm(year_3 * (cp_3 - cp_2), 1/(1.5)^2)  # Link-scale intercept, approximately uniform on the probability scale; sampled as the value at the segment end</span></span>
 <span><span class="co">##   Intercept_3 = Intercept_3_end_ - (year_3 * (cp_3 - cp_2))</span></span>
-<span><span class="co">##   year_3 ~ dnorm(0, 1/(0.043121968093205169)^2)   # Autoscaled link-scale coefficient (rstanarm autoscaling)</span></span>
+<span><span class="co">##   year_3 ~ dnorm(0, 1/(0.043121968093205169)^2)  # Autoscaled link-scale coefficient (rstanarm autoscaling)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   # Model and likelihood</span></span>
 <span><span class="co">##   for (i_ in 1:length(year)) {</span></span>
