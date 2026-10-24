@@ -86,9 +86,9 @@ unpack_arma = function(expr) {
 
 
 # Returns the requested AR/MA order, or NA if the term is absent
-get_arma_order = function(predictors, term) {
+get_arma_order = function(coefs, term) {
   term = rlang::arg_match0(term, c("ar", "ma"))
-  orders = predictors$order[predictors$dpar == term]
+  orders = coefs$order[coefs$dpar == term]
   if (length(orders) == 0) NA else max(orders, na.rm = TRUE)
 }
 
@@ -144,7 +144,7 @@ assert_arma_series = function(data, series) {
 
 
 # Validate the AR/MA configuration of a model before sampling
-check_arma_model = function(family, predictors, data_columns, data) {
+check_arma_model = function(family, coefs, data_columns, data) {
   if (is.null(family$garma))
     stop(
       "family = ", family$family, "(link = \"", family$link,
@@ -152,7 +152,7 @@ check_arma_model = function(family, predictors, data_columns, data) {
     )
 
   response_data = get_family_response_data(family, data_columns, data)
-  assert_arma_thresholds(family, predictors$threshold[predictors$dpar %in% c("ar", "ma")], response_data)
+  assert_arma_thresholds(family, coefs$threshold[coefs$dpar %in% c("ar", "ma")], response_data)
 
   par_x = data_columns$par_x
   series = data_columns$series
@@ -188,7 +188,7 @@ assert_arma_thresholds = function(family, threshold, data = list()) {
 
 # Check whether this model has any AR/MA terms
 is_arma = function(fit) {
-  any(get_fit_model_tables(fit)$predictors$dpar %in% c("ar", "ma"))
+  any(get_fit_model_tables(fit)$coefs$dpar %in% c("ar", "ma"))
 }
 
 
@@ -319,7 +319,7 @@ arma_root_violations = function(links, component) {
 #' @noRd
 warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   diagnostics = resolve_diagnostics(diagnostics)
-  components = intersect(c("ar", "ma"), unique(get_fit_model_tables(fit)$predictors$dpar))
+  components = intersect(c("ar", "ma"), unique(get_fit_model_tables(fit)$coefs$dpar))
   enabled = vapply(components, function(component) {
     !is.null(diagnostics[[component]])
   }, logical(1))
@@ -455,8 +455,8 @@ get_garma_jags_code = function(ar_order, ma_order, par_x, series = FALSE) {
 
 
 # Build the observation-threshold node used by GARMA terms. One threshold applies to all segments.
-get_garma_threshold_jags_code = function(predictors) {
-  threshold = unique(stats::na.omit(predictors$threshold))
+get_garma_threshold_jags_code = function(coefs) {
+  threshold = unique(stats::na.omit(coefs$threshold))
   if (length(threshold) == 0)
     return("")
 

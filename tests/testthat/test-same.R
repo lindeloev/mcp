@@ -1,4 +1,4 @@
-test_that("shared slopes retain implicit intercepts and shared intercepts retain factor coding", {
+test_that("same() slopes keep implicit intercepts and same() intercepts keep factor coding", {
   data = data.frame(x = 1:12, y = 0, g = factor(rep(c("a", "b", "c"), 4)))
   fit = mcp(list(y ~ 1 + x, ~ same(x)), data, par_x = "x", sample = FALSE)
   expect_equal(as.numeric(fit$simulate(fit, data, cp_1 = 6, Intercept_1 = 1,
@@ -16,7 +16,7 @@ test_that("shared slopes retain implicit intercepts and shared intercepts retain
 })
 
 
-test_that("AR sharing resolves every lag and preserves current segment transitions", {
+test_that("same() on AR resolves every lag and preserves current segment transitions", {
   data = data.frame(x = 1:12, y = sin(1:12))
   fit = mcp(list(y ~ 1 + ar(2), ~ 1 + ar(2, same(1), threshold = 0.2)),
     data, par_x = "x", sample = FALSE)
@@ -51,7 +51,7 @@ test_that("same() reuses population coefficients with x measured from the curren
 
   expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "Intercept_1", "x_1", "z_1", "sigma_1"))
   expect_equal(
-    tables$predictors[tables$predictors$segment == 2, c("name", "definition_segment")],
+    tables$coefs[tables$coefs$segment == 2, c("name", "definition_segment")],
     tibble::tibble(name = c("x_1", "z_1"), definition_segment = c(1L, 1L))
   )
   expect_equal(
@@ -64,7 +64,7 @@ test_that("same() reuses population coefficients with x measured from the curren
 })
 
 
-test_that("a fitted shared-coefficient model evaluates its likelihood", {
+test_that("a fitted model with same() evaluates its likelihood", {
   set.seed(1)
   data = data.frame(x = 1:12, z = rep(c(0, 1), 6))
   data$y = 1 + 0.2 * data$x + 0.5 * data$z + stats::rnorm(nrow(data), 0, 0.2)
@@ -85,12 +85,12 @@ test_that("a fitted shared-coefficient model evaluates its likelihood", {
 })
 
 
-test_that("sharing chains reuse fitted bases and explicit sources bridge gaps", {
+test_that("chains of same() reuse fitted bases and explicit sources bridge gaps", {
   data = data.frame(x = 1:20, z = sin(1:20), y = 0)
   fit = mcp(list(y ~ 1 + poly(z, 2), ~ 0 + same(poly(z, 2)),
     ~ 0 + same(poly(z, 2))), data, par_x = "x", sample = FALSE)
   tables = get_fit_model_tables(fit)
-  source = tables$predictors[tables$predictors$term_key == "poly(z, 2)" & tables$predictors$segment == 1, ]
+  source = tables$coefs[tables$coefs$term_key == "poly(z, 2)" & tables$coefs$segment == 1, ]
   newdata = data.frame(x = c(3, 9, 17), z = c(-0.4, 0.2, 0.7))
   args = c(list(fit = fit, newdata = newdata, cp_1 = 6, cp_2 = 14,
     Intercept_1 = 2, sigma_1 = 1, .type = "fitted"),
@@ -136,8 +136,8 @@ test_that("same() preserves source factor coding and supports explicit sources",
   tables = get_fit_model_tables(fit)
 
   expect_setequal(mcp_pars(fit)$parameter, c("cp_1", "cp_2", "Intercept_1", "groupb_1", "groupc_1", "sigma_1"))
-  expect_true(all(tables$predictors$name[tables$predictors$segment > 1 & tables$predictors$term_key == "group"] %in% c("groupb_1", "groupc_1")))
-  expect_equal(unique(tables$predictors$definition_segment[tables$predictors$segment == 3]), 1L)
+  expect_true(all(tables$coefs$name[tables$coefs$segment > 1 & tables$coefs$term_key == "group"] %in% c("groupb_1", "groupc_1")))
+  expect_equal(unique(tables$coefs$definition_segment[tables$coefs$segment == 3]), 1L)
   expect_no_error(get_model_data(fit, data[1:3, ]))
 
   interaction_fit = mcp(
@@ -161,9 +161,9 @@ test_that("same() supports distributional and AR/MA coefficient formulas", {
 
   expect_false("sigma_x_2" %in% mcp_pars(dpar_fit)$parameter)
   expect_equal(
-    unique(get_fit_model_tables(dpar_fit)$predictors$definition_segment[
-      get_fit_model_tables(dpar_fit)$predictors$dpar == "sigma" &
-        get_fit_model_tables(dpar_fit)$predictors$term_key == "x"
+    unique(get_fit_model_tables(dpar_fit)$coefs$definition_segment[
+      get_fit_model_tables(dpar_fit)$coefs$dpar == "sigma" &
+        get_fit_model_tables(dpar_fit)$coefs$term_key == "x"
     ]),
     1L
   )
@@ -171,17 +171,18 @@ test_that("same() supports distributional and AR/MA coefficient formulas", {
 })
 
 
-test_that("same() validates sources, competing terms, and group blocks", {
+test_that("same() validates sources, competing terms, and group-level blocks", {
   data = data.frame(x = 1:8, y = 0, id = rep(1:2, each = 4))
 
   expect_error(mcp(list(y ~ same(1)), data, par_x = "x", sample = FALSE), "segment 1")
   expect_error(mcp(list(y ~ 1, ~ same(x)), data, par_x = "x", sample = FALSE), "cannot find")
-  expect_error(mcp(list(y ~ 1 + x, ~ x + same(x)), data, par_x = "x", sample = FALSE), "both included directly and reused")
+  expect_error(mcp(list(y ~ 1 + x, ~ x + same(x)), data, par_x = "x", sample = FALSE), "both included directly and in `same()`", fixed = TRUE)
   expect_error(
     mcp(list(y ~ 1 + x, ~ 0 + same(x)), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE),
     "Set prior on `x_1` instead of `x_2`"
   )
   expect_no_error(mcp(list(y ~ 1 + (1 | id), ~ same((1 | id))), data, par_x = "x", sample = FALSE))
+  expect_no_warning(expect_error(mcp(list(y ~ 1, ~ same((1 | id))), data, par_x = "x", sample = FALSE), "no identical group-level term"))
 })
 
 
@@ -199,7 +200,7 @@ test_that("explicit mu() syntax produces identical model tables to standard bare
 })
 
 
-test_that("shared group blocks define one hierarchy and simulate one deviation per group", {
+test_that("same() group-level terms define one hierarchy and simulate one deviation per group", {
   data = data.frame(x = 1:12, y = 0, id = rep(c("a", "b"), 6))
   fit = mcp(list(y ~ 1 + (1 | id), ~ 0 + same((1 || id))), data, par_x = "x", sample = FALSE)
   expect_equal(mcp_pars(fit, scope = "group")$parameter, "Intercept_1_id")
@@ -219,7 +220,7 @@ test_that("shared group blocks define one hierarchy and simulate one deviation p
 })
 
 
-test_that("whole group slopes reuse local coordinates, endpoints, and explicit sources", {
+test_that("same() group-level slopes keep x measured from the change point, endpoints, and explicit sources", {
   data = data.frame(x = 1:12, y = 0, id = rep(c("a", "b"), 6))
   fit = mcp(list(y ~ 1 + (0 + x || id), ~ 0 + same((0 + x || id)), ~ 0),
     data, par_x = "x", sample = FALSE)
@@ -228,9 +229,9 @@ test_that("whole group slopes reuse local coordinates, endpoints, and explicit s
   b = attr(values, "simulated")$x_1_id
   expect_equal(as.numeric(values), 1 + b * pmin(data$x, 8))
   expect_error(mcp(list(y ~ 1 + (1 + x || id), ~ 0 + same((0 + x || id))),
-    data, par_x = "x", sample = FALSE), "complete group-level term with coefficients")
+    data, par_x = "x", sample = FALSE), "no identical group-level term")
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ 0, ~ same((1 | id))),
-    data, par_x = "x", sample = FALSE), "complete group-level term with coefficients")
+    data, par_x = "x", sample = FALSE), "no identical group-level term")
   expect_no_error(mcp(list(y ~ 1 + (1 | id), ~ 0, ~ same((1 | id), as = 1)),
     data, par_x = "x", sample = FALSE))
   expect_error(mcp(list(y ~ 1 + (1 | id), ~ (0 + x || id) + same((1 | id))),
@@ -238,7 +239,7 @@ test_that("whole group slopes reuse local coordinates, endpoints, and explicit s
 })
 
 
-test_that("posterior prediction and likelihood reuse fitted group deviations", {
+test_that("posterior prediction and likelihood reuse fitted group-level deviations", {
   data = data.frame(x = 1:18, id = rep(c("a", "b", "c"), 6), y = sin(1:18))
   fit = suppressWarnings(mcp(list(y ~ 1 + (1 | id), ~ 0 + same((1 | id))),
     data, par_x = "x", iter = 40, warmup = 30, chains = 1, diagnostics = FALSE, quiet = TRUE))

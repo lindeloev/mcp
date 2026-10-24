@@ -22,7 +22,7 @@
 # Only default dnorm() and dt() priors without truncation qualify (the segment-1 intercept
 # also with truncation or dunif()). AR/MA and segments bounded by group-level change
 # points are skipped.
-add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
+add_reparams = function(prior_table, coefs, cps, context, reparam = TRUE) {
   # Sample `name` via the auxiliary node <name>_<suffix>_ (see the formulas above)
   sampled_as = c(
     mid = "the value at the expected midpoint of segment 1",
@@ -60,7 +60,7 @@ add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
     prior_table$source[row] == "default" && parsed$dist %in% c("dnorm", "dt", if (segment_1) "dunif") && (segment_1 || !any(nzchar(parsed$trunc)))
   }
   # Terms without other variables (a model-matrix column of ones)
-  is_pure = vapply(predictors$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
+  is_pure = vapply(coefs$matrix_data, function(values) all(values == 1, na.rm = TRUE), logical(1))
 
   # Helpers to write x-terms, e.g., "xE2_2 * (cp_2 - cp_1)^2"
   width = function(k, x_degree) paste0("(cp_", k, " - cp_", k - 1, ")", x_power(x_degree))
@@ -68,9 +68,9 @@ add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
   K = nrow(cps) + 1
 
   # Each dpar separately. AR/MA are not anchored at change points.
-  for (dpar in setdiff(unique(predictors$dpar), c("ar", "ma"))) {
-    own = predictors[predictors$dpar == dpar, ]
-    own_pure = is_pure[predictors$dpar == dpar]
+  for (dpar in setdiff(unique(coefs$dpar), c("ar", "ma"))) {
+    own = coefs[coefs$dpar == dpar, ]
+    own_pure = is_pure[coefs$dpar == dpar]
     # x-terms without other variables, in the segment that defines them
     slopes = own[own$x_degree > 0 & own_pure & own$segment == own$definition_segment, ]
 

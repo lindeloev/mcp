@@ -88,15 +88,15 @@ parse_segments = function(model, data, family, par_x, series = NULL) {
 #' then the other distributional parameters in the order defined by the
 #' family, then `ar`/`ma` components, each ascending by segment.
 #'
-#' @param predictors The `predictors` table from `get_predictor_tables()`.
+#' @param coefs The `coefs` table from `get_coef_tables()`.
 #' @param cps A table of change points from `parse_segments()`.
-#' @param group_predictors The `group_predictors` table from `get_predictor_tables()`.
+#' @param group_coefs The `group_coefs` table from `get_coef_tables()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and group),
 #'   with columns `parameter`, `part`, `scope`, `role`, `segment`, `dpar`,
 #'   `group_col`, and `population_parameter`.
 #' @noRd
-get_pars_table = function(predictors, cps, group_predictors, family) {
+get_pars_table = function(coefs, cps, group_coefs, family) {
   group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
 
   # One tibble per kind of parameter. Zero-row tables recycle to zero rows. `.tie` orders each
@@ -108,14 +108,14 @@ get_pars_table = function(predictors, cps, group_predictors, family) {
       dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1),
     tibble::tibble(parameter = group_cps$group_name, part = "cp", scope = "group", role = "change_point", segment = group_cps$segment,
       dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2),
-    tibble::tibble(parameter = predictors$name, part = "predictor", scope = "population", role = "coefficient", segment = predictors$segment,
-      dpar = predictors$dpar, order = predictors$order, .tie = predictors$matrix_col),
-    tibble::tibble(parameter = group_predictors$sd_name, part = "predictor", scope = "population", role = "group_sd", segment = group_predictors$segment,
-      dpar = group_predictors$dpar, order = group_predictors$order, group_col = group_predictors$group_col,
-      population_parameter = group_predictors$population_name, .tie = group_predictors$matrix_col + 0.1),
-    tibble::tibble(parameter = group_predictors$name, part = "predictor", scope = "group", role = "coefficient", segment = group_predictors$segment,
-      dpar = group_predictors$dpar, order = group_predictors$order, group_col = group_predictors$group_col,
-      population_parameter = group_predictors$population_name, .tie = group_predictors$matrix_col + 0.2)
+    tibble::tibble(parameter = coefs$name, part = "predictor", scope = "population", role = "coefficient", segment = coefs$segment,
+      dpar = coefs$dpar, order = coefs$order, .tie = coefs$matrix_col),
+    tibble::tibble(parameter = group_coefs$sd_name, part = "predictor", scope = "population", role = "group_sd", segment = group_coefs$segment,
+      dpar = group_coefs$dpar, order = group_coefs$order, group_col = group_coefs$group_col,
+      population_parameter = group_coefs$population_parameter, .tie = group_coefs$matrix_col + 0.1),
+    tibble::tibble(parameter = group_coefs$name, part = "predictor", scope = "group", role = "coefficient", segment = group_coefs$segment,
+      dpar = group_coefs$dpar, order = group_coefs$order, group_col = group_coefs$group_col,
+      population_parameter = group_coefs$population_parameter, .tie = group_coefs$matrix_col + 0.2)
   )
 
   # Canonical group order: cp, mu, other family dpars (family order), then
@@ -208,7 +208,7 @@ get_predictor_cols = function(fit) {
 }
 
 
-# Rows that define parameters (and priors). Coefficients shared via same() also
+# Rows that define parameters (and priors). Coefficients in same() also
 # occur in later segments, where `segment != definition_segment`.
 definition_rows = function(table) {
   table[which(table$segment == table$definition_segment), , drop = FALSE]
@@ -220,7 +220,7 @@ definition_rows = function(table) {
 # change points.
 get_disjoined_cps = function(fit) {
   model_tables = get_fit_model_tables(fit)
-  terms = dplyr::bind_rows(model_tables$predictors, model_tables$group_predictors)
+  terms = dplyr::bind_rows(model_tables$coefs, model_tables$group_coefs)
   cps = model_tables$cps[is.na(model_tables$cps$group_col), ]
   is_disjoined = vapply(cps$segment, function(segment) {
     segment_terms = terms[terms$segment == segment, ]

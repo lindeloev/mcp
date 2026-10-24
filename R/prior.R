@@ -31,13 +31,13 @@ validate_prior_v1 = function(prior) {
 }
 
 # The prior table: resolved priors and metadata for all parameters in the model
-get_prior_table = function(data_columns, cps, predictors, group_predictors, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
+get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
   checkmate::assert_class(family, "mcpfamily")
   context = prior_context(data, data_columns, nrow(cps) + 1, design_specs)
   context$cp_names = cps$name
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
   legacy_prior_constants(prior, context)
-  predictors$prior_type = get_prior_type(predictors)
+  coefs$prior_type = get_prior_type(coefs)
 
   # Disallow cp_0 and cp_K (at least for now)
   prior_text = unlist(prior[vapply(prior, is.character, logical(1))])
@@ -52,8 +52,8 @@ get_prior_table = function(data_columns, cps, predictors, group_predictors, fami
   # Default priors
   prior_specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
-    default_predictor_specs(predictors, family, context),
-    default_group_specs(group_predictors, family)
+    default_coef_specs(coefs, family, context),
+    default_group_specs(group_coefs, family)
   )
 
   # Parse default and specified priors once. A constant response (e.g., a placeholder before
@@ -65,8 +65,8 @@ get_prior_table = function(data_columns, cps, predictors, group_predictors, fami
   prior = lapply(prior, parse_prior)
 
   compile = function(prior) {
-    prior_specs = overlay_user_prior_specs(prior_specs, prior, cps, context, predictors, family)
-    prior_specs = add_intercept_references(prior_specs, predictors, context)
+    prior_specs = overlay_user_prior_specs(prior_specs, prior, cps, context, coefs, family)
+    prior_specs = add_intercept_references(prior_specs, coefs, context)
     compile_prior_specs(prior_specs, prior_specs$parameter, context)
   }
   prior_table = compile(prior)
@@ -83,8 +83,8 @@ get_prior_table = function(data_columns, cps, predictors, group_predictors, fami
   }
 
   # How each parameter is sampled
-  prior_table = add_nodes(prior_table, cps, c(cps$group_name, group_predictors$name))
-  add_reparams(prior_table, predictors, cps, context, reparam)
+  prior_table = add_nodes(prior_table, cps, c(cps$group_name, group_coefs$name))
+  add_reparams(prior_table, coefs, cps, context, reparam)
 }
 
 

@@ -17,7 +17,7 @@ bad_prior = list(
     cp_2 = "dirichlet(0.5)"  # alpha has to be >= 1
   ),
   list(
-    cp_1 = "dunif(min(x), cp_2)"  # Limits can only refer to the previous change point
+    cp_1 = "dunif(min(x), cp_2)"  # Bounds can only refer to the previous change point
   ),
   list(
     cp_2 = "dnorm(1, 1) T(cp_1 - 0.5, )"  # ... and only as a minimum segment length
@@ -78,7 +78,7 @@ testthat::test_that("Prior entries must be scalar numbers or strings", {
 
 
 good_prior = list(
-  list(  # Fixed values and non-default change point
+  list(  # Constant priors and non-default change point
     Intercept_2 = "Intercept_1",
     cp_1 = "dnorm(3, 10)",
     x_2 = "-0.5"
@@ -300,7 +300,7 @@ testthat::test_that("parse_prior parses distributions, truncation, and expressio
 })
 
 
-testthat::test_that("default log-count priors use normal population slopes/contrasts and half-normal group SDs", {
+testthat::test_that("default log-count priors use normal population-level slopes/contrasts and half-normal group-level SDs", {
   d = data.frame(
     x = 1:10,
     cat = factor(rep(c("A", "B"), 5)),
@@ -321,7 +321,7 @@ testthat::test_that("default log-count priors use normal population slopes/contr
     expect_prior(fit$prior$x_1, paste0("dnorm(0, ", x_scale, ")"))
     expect_prior(fit$prior$catB_1, paste0("dnorm(0, ", cat_scale, ")"))
 
-    # Group SD priors
+    # Group-level SD priors
     testthat::expect_equal(fit$prior$Intercept_1_id_sd, "dnorm(0, 2.5) T(0, )")
     testthat::expect_equal(fit$prior$x_1_id_sd, paste0("dnorm(0, ", x_scale, ") T(0, )"))
     testthat::expect_equal(fit$prior$catB_1_id_sd, "dnorm(0, 2.5) T(0, )")
@@ -511,7 +511,7 @@ testthat::test_that("gaussian(link = 'log') aligns with log-link model default p
   testthat::expect_equal(time_row$prior, format_prior_display(paste0("dnorm(0, ", expected_slope_sd, ")")))
   expect_prior(fit$prior$time_1, paste0("dnorm(0, ", expected_slope_sd, ")"))
 
-  # Group SDs are half-normals
+  # Group-level SDs are half-normals
   id_int_row = ps[ps$parameter == "Intercept_1_id_sd", ]
   testthat::expect_equal(id_int_row$prior, "dnorm(0, 2.5) T(0, )")
   testthat::expect_equal(id_int_row$bounds, "[0, Inf]")
@@ -790,14 +790,14 @@ test_that("the prior on the value at min(x) matches the default intercept prior"
     list(fit = fit, draws = as_draws_df(fit, prior = TRUE))
   }
   default = get_draws()
-  level = default$draws$Intercept_1 + default$draws$x_1 * 101
-  expect_equal(mean(level), mean(data$y), tolerance = 0.1)
-  expect_equal(stats::sd(level), 2.5 * stats::sd(data$y), tolerance = 0.1)
+  value_at_min = default$draws$Intercept_1 + default$draws$x_1 * 101
+  expect_equal(mean(value_at_min), mean(data$y), tolerance = 0.1)
+  expect_equal(stats::sd(value_at_min), 2.5 * stats::sd(data$y), tolerance = 0.1)
 
   # Reusing fit$prior gives the same model
   copy = get_draws(as.list(default$fit$prior))
   expect_equal(stats::sd(copy$draws$Intercept_1), stats::sd(default$draws$Intercept_1), tolerance = 0.1)
-  expect_equal(stats::sd(copy$draws$Intercept_1 + copy$draws$x_1 * 101), stats::sd(level), tolerance = 0.1)
+  expect_equal(stats::sd(copy$draws$Intercept_1 + copy$draws$x_1 * 101), stats::sd(value_at_min), tolerance = 0.1)
 })
 
 
@@ -807,7 +807,7 @@ test_that("factors without an intercept get intercept priors where a segment sta
   get_prior = function(model, family = gaussian())
     mcp(model, data, family = family, par_x = "x", sample = FALSE)$prior
 
-  # Segments that start at a fixed zero: each factor level gets the intercept prior
+  # Segments that start at a fixed zero: each factor value_at_min gets the intercept prior
   expect_equal(get_prior(list(y ~ 0 + state, ~ 1))[c("stateA_1", "stateB_1")], list(stateA_1 = intercept, stateB_1 = intercept))
   expect_equal(get_prior(list(y ~ 0, ~ 0 + state))$stateA_2, intercept)
   data$y = rbinom(100, 1, 0.5)
@@ -818,7 +818,7 @@ test_that("factors without an intercept get intercept priors where a segment sta
   expect_match(get_prior(list(y ~ 1, ~ 1 + state))$stateB_2, "^dnorm\\(0, ")
   expect_match(get_prior(list(y ~ 0 + state:x, ~ 1))$stateA.x_1, "^dnorm\\(0, ")
 
-  # Each factor level's prior is on its value at min(x), as for Intercept_1
+  # Each factor value_at_min's prior is on its value at min(x), as for Intercept_1
   data$y = rnorm(100, 50)
   fit = suppressWarnings(mcp(
     list(y ~ 0 + state + x), data, par_x = "x", sample = "prior",
@@ -826,9 +826,9 @@ test_that("factors without an intercept get intercept priors where a segment sta
   ))
   draws = as_draws_df(fit, prior = TRUE)
   for (name in c("stateA_1", "stateB_1")) {
-    level = draws[[name]] + draws$x_1 * 101
-    expect_equal(mean(level), mean(data$y), tolerance = 0.1)
-    expect_equal(stats::sd(level), 2.5 * stats::sd(data$y), tolerance = 0.1)
+    value_at_min = draws[[name]] + draws$x_1 * 101
+    expect_equal(mean(value_at_min), mean(data$y), tolerance = 0.1)
+    expect_equal(stats::sd(value_at_min), 2.5 * stats::sd(data$y), tolerance = 0.1)
   }
 })
 

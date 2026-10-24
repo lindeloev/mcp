@@ -124,20 +124,20 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   expect_named(
     tables,
     c(
-      "data_columns", "cps", "predictors", "group_predictors",
+      "data_columns", "cps", "coefs", "group_coefs",
       "parameters", "design_specs"
     )
   )
   expect_named(tables$data_columns, c("par_x", "response", "series", "weights"))
   expect_named(
-    tables$group_predictors,
+    tables$group_coefs,
     c(
-      "population_name", "name", "group_col", "segment", "dpar",
+      "population_parameter", "name", "group_col", "segment", "dpar",
       "sd_name", "par_type", "matrix_name", "order", "x_degree", "design_id",
       "design_col", "matrix_col", "definition_segment", "next_segment"
     )
   )
-  expect_equal(nrow(tables$group_predictors), 0)  # Group-level change points are only in `cps`
+  expect_equal(nrow(tables$group_coefs), 0)  # Group-level change points are only in `cps`
   expect_named(
     tables$parameters,
     c("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
@@ -549,7 +549,7 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   stuck_post = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "stuck"))))
   expect_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100)), "stuck")
 
-  # Intentionally fixed parameter does not trigger warning (including indexed group deviations)
+  # A constant prior does not trigger the warning (including indexed group-level deviations)
   expect_no_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100), constant_pars = "stuck"))
   stuck_group = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "Intercept_1_id[A]"))))
   expect_no_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100), constant_pars = "Intercept_1_id"))

@@ -1,5 +1,5 @@
 models_ar = list(
-  # Segment-specific AR coefficients and an AR predictor effect.
+  # Segment-specific AR coefficients and an AR x-term.
   list(y ~ 1 + ar(2, series = id),
        ~ 0 + x + ar(1, 1 + x),
        ~ 0 + ar(0),

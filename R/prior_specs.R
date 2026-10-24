@@ -120,36 +120,36 @@ fill_predictor_scale = function(prior, matrix_data, x_degree) {
 }
 
 
-# The par_type ("Intercept", "dummy", or "slope") whose default prior each row of `predictors`
+# The par_type ("Intercept", "dummy", or "slope") whose default prior each row of `coefs`
 # gets. Usually its own, but a factor in a segment that starts at zero, i.e., without an earlier
 # intercept or x-term to join, is coded as all intercepts, e.g., `y ~ 0 + state` or segment 2 in
 # `list(y ~ 0, ~ 0 + state)`. In other joined segments, `0 + state` gives jumps, which keep the contrast prior.
-get_prior_type = function(predictors) {
-  key = paste(predictors$dpar, predictors$order)
-  joins = predictors$par_type == "Intercept" | predictors$x_degree > 0
-  starts_at_zero = vapply(seq_len(nrow(predictors)), function(i) {
-    !any(joins & key == key[i] & predictors$segment < predictors$segment[i])
+get_prior_type = function(coefs) {
+  key = paste(coefs$dpar, coefs$order)
+  joins = coefs$par_type == "Intercept" | coefs$x_degree > 0
+  starts_at_zero = vapply(seq_len(nrow(coefs)), function(i) {
+    !any(joins & key == key[i] & coefs$segment < coefs$segment[i])
   }, logical(1))
 
-  term = paste(key, predictors$segment, predictors$term_key)
-  sums_to_one = vapply(split(predictors$matrix_data, term), function(columns) {
+  term = paste(key, coefs$segment, coefs$term_key)
+  sums_to_one = vapply(split(coefs$matrix_data, term), function(columns) {
     all(abs(Reduce(`+`, columns) - 1) < 1e-8, na.rm = TRUE)
   }, logical(1))
 
-  is_factor_intercept = predictors$par_type == "dummy" & predictors$x_degree == 0 & starts_at_zero & sums_to_one[term]
-  replace(predictors$par_type, is_factor_intercept, "Intercept")
+  is_factor_intercept = coefs$par_type == "dummy" & coefs$x_degree == 0 & starts_at_zero & sums_to_one[term]
+  replace(coefs$par_type, is_factor_intercept, "Intercept")
 }
 
 
 # Default priors for population-level coefficients, looked up by dpar and par_type
-default_predictor_specs = function(predictors, family, context) {
+default_coef_specs = function(coefs, family, context) {
   defaults = filter_default_conditions(dplyr::bind_rows(family$default_prior, default_arma_specs()), family)
 
   keys = paste(defaults$dpar, defaults$par_type)
   if (anyDuplicated(keys))
     stop_github("Default prior specifications are not unique by dpar and par_type.")
 
-  joined = predictors |>
+  joined = coefs |>
     dplyr::left_join(defaults, by = c("dpar", prior_type = "par_type"))
   is_factor_intercept = joined$prior_type == "Intercept" & joined$par_type != "Intercept"
   joined$description[is_factor_intercept] = paste0(joined$description[is_factor_intercept], "; one per factor level")
@@ -178,12 +178,12 @@ default_predictor_specs = function(predictors, family, context) {
 
 
 # Default priors for group-level SDs and deviations
-default_group_specs = function(group_predictors, family) {
-  if (nrow(group_predictors) == 0)
+default_group_specs = function(group_coefs, family) {
+  if (nrow(group_coefs) == 0)
     return(empty_prior_specs())
 
   defaults = filter_default_conditions(family$default_prior, family)
-  joined = group_predictors |>
+  joined = group_coefs |>
     dplyr::left_join(
       dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
       by = c("dpar", "par_type")
@@ -323,21 +323,21 @@ truncate_lower_prior = function(parsed, lower, name = NULL) {
 
 
 # Check that priors are set on the original parameter, not on names that same() replaced.
-# - predictors, group_predictors: occurrence tables, i.e., including rows reused by same().
-assert_prior_not_shared = function(prior, predictors, group_predictors) {
-  shared = dplyr::bind_rows(
+# - coefs, group_coefs: occurrence tables, i.e., including occurrences from same().
+assert_prior_on_definitions = function(prior, coefs, group_coefs) {
+  occurrences = dplyr::bind_rows(
     dplyr::transmute(
-      dplyr::filter(predictors, .data$segment != .data$definition_segment),
+      dplyr::filter(coefs, .data$segment != .data$definition_segment),
       replaced = stringr::str_replace(.data$name, "_[0-9]+$", paste0("_", .data$segment)),
       original = .data$name
     ),
     dplyr::transmute(
-      dplyr::filter(group_predictors, .data$segment != .data$definition_segment),
+      dplyr::filter(group_coefs, .data$segment != .data$definition_segment),
       replaced = stringr::str_replace(.data$sd_name, paste0("_", .data$definition_segment, "_"), paste0("_", .data$segment, "_")),
       original = .data$sd_name
     )
   ) |> dplyr::distinct()
-  bad_prior = shared[shared$replaced %in% names(prior), , drop = FALSE]
+  bad_prior = occurrences[occurrences$replaced %in% names(prior), , drop = FALSE]
   if (nrow(bad_prior) > 0) {
     guidance = if (nrow(bad_prior) == 1) {
       paste0("`", bad_prior$original, "` instead of `", bad_prior$replaced, "`")
@@ -353,7 +353,7 @@ assert_prior_not_shared = function(prior, predictors, group_predictors) {
 
 # Replace default prior specs with the user's parsed `prior`, adding the bounds that the model
 # requires, e.g., the observed range for change points and sigma > 0. Updates descriptions accordingly.
-overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors, family) {
+overlay_user_prior_specs = function(prior_specs, prior, cps, context, coefs, family) {
   name_matches = names(prior) %in% prior_specs$parameter
   if (any(!name_matches)) {
     stop(
@@ -401,8 +401,8 @@ overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors
 
   # Enforce the support of constant dpars, e.g., sigma > 0
   bounds = get_constant_dpar_bounds(family)
-  for (name in intersect(names(prior), predictors$name[predictors$dpar %in% names(bounds)])) {
-    dpar = predictors$dpar[match(name, predictors$name)]
+  for (name in intersect(names(prior), coefs$name[coefs$dpar %in% names(bounds)])) {
+    dpar = coefs$dpar[match(name, coefs$name)]
     original = prior[[name]]
     prior[[name]] = truncate_lower_prior(original, bounds[[dpar]], name)
     if (!identical(prior[[name]], original))
@@ -438,12 +438,12 @@ overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors
 # Segment-1 x-terms that change the coefficient `name` along x. These have the same
 # model-matrix column apart from x, e.g., `stateb.x` for `stateb` in `1 + state * x`.
 # Intercepts (incl. each level in `0 + state`) also have x-terms without other variables, e.g., `x`.
-get_x_partners = function(predictors, name) {
-  i = match(name, predictors$name)
-  own = predictors$matrix_data[[i]]
-  candidates = predictors[predictors$segment == 1 & predictors$dpar == predictors$dpar[i] & predictors$x_degree > 0, ]
+get_x_partners = function(coefs, name) {
+  i = match(name, coefs$name)
+  own = coefs$matrix_data[[i]]
+  candidates = coefs[coefs$segment == 1 & coefs$dpar == coefs$dpar[i] & coefs$x_degree > 0, ]
   is_partner = vapply(candidates$matrix_data, function(values) {
-    (predictors$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE)) || isTRUE(all.equal(values, own))
+    (coefs$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE)) || isTRUE(all.equal(values, own))
   }, logical(1))
   candidates[is_partner, ]
 }
@@ -454,27 +454,27 @@ get_x_partners = function(predictors, name) {
 # coefficients remain at x = 0 (as in lm()), so their priors are conditional on the
 # coefficients' x-terms, e.g., "dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))" or
 # "dnorm(0 - stateb.x_1 * min(x), ...)". Other predictors are at 0.
-add_intercept_references = function(prior_specs, predictors, context) {
+add_intercept_references = function(prior_specs, coefs, context) {
   if (context$x_min == 0)
     return(prior_specs)
 
-  coefs = predictors[predictors$segment == 1 & predictors$x_degree == 0 & predictors$dpar %notin% c("ar", "ma"), ]
-  for (i in seq_len(nrow(coefs))) {
-    row = match(coefs$name[i], prior_specs$parameter)
+  targets = coefs[coefs$segment == 1 & coefs$x_degree == 0 & coefs$dpar %notin% c("ar", "ma"), ]
+  for (i in seq_len(nrow(targets))) {
+    row = match(targets$name[i], prior_specs$parameter)
     if (is.na(row) || prior_specs$source[row] != "default")
       next
     parsed = prior_specs$parsed[[row]]
     if (parsed$dist %notin% c("dnorm", "dt", "dunif"))
       next
 
-    terms = get_x_partners(predictors, coefs$name[i])
+    terms = get_x_partners(coefs, targets$name[i])
     if (nrow(terms) == 0)
       next
 
     # Subtract the x-terms at min(x) from the location and the truncation bounds
     reference = paste0(" - ", terms$name, " * min(", context$x_display, ")", x_power(terms$x_degree), collapse = "")
     prior_specs$parsed[[row]] = shift_prior(parsed, function(arg) if (arg == "0") reference else paste0(arg, reference))
-    what = if (coefs$prior_type[i] == "Intercept") "value" else "difference"
+    what = if (targets$prior_type[i] == "Intercept") "value" else "difference"
     prior_specs$description[row] = paste0(prior_specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
   }
   prior_specs

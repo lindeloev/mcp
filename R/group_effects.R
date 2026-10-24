@@ -30,7 +30,7 @@ group_block_key = function(term) {
 #' Parse one predictor group-level term
 #'
 #' @param term A term such as `"1 | id"`, `"factor || id"`, or `"0 | id"`.
-#' @inheritParams get_predictors_dpar
+#' @inheritParams get_coefs_dpar
 #' @return A tibble with one row per group-level coefficient, or one row with
 #'   `has_coefficients = FALSE` for an explicit turn-off.
 #' @noRd
@@ -60,12 +60,12 @@ parse_predictor_group_term = function(
       "Got `(", term, ")` in segment ", segment, "."
     )
   }
-  coefficient = get_predictors_dpar(
+  coefficient = get_coefs_dpar(
     data, coefficient_form, segment, dpar, par_x,
     order = NULL,
     design_id = paste("group", dpar, group_col, segment, sep = ":")
   )
-  assert_unique_predictor_names(coefficient)
+  assert_unique_coef_names(coefficient)
   has_coefficients = nrow(coefficient) > 0
 
   # A turn-off like `(0 | id)`: one row without coefficients
@@ -76,7 +76,7 @@ parse_predictor_group_term = function(
       group_col = group_col,
       group_term = term,
       has_coefficients = FALSE,
-      population_name = NA_character_,
+      population_parameter = NA_character_,
       name = NA_character_,
       sd_name = NA_character_,
       par_type = NA_character_,
@@ -97,9 +97,9 @@ parse_predictor_group_term = function(
       group_col = .env$group_col,
       group_term = .env$term,
       has_coefficients = TRUE,
-      population_name = .data$name,
-      name = paste0(.data$population_name, "_", .env$group_col),
-      sd_name = paste0(.data$population_name, "_", .env$group_col, "_sd"),
+      population_parameter = .data$name,
+      name = paste0(.data$population_parameter, "_", .env$group_col),
+      sd_name = paste0(.data$population_parameter, "_", .env$group_col, "_sd"),
       par_type = .data$par_type,
       matrix_name = .data$matrix_name,
       order = as.integer(.data$order),
@@ -120,7 +120,7 @@ get_predictor_group_definitions_segment = function(
   definitions = list()
   for (dpar in intersect(family$dpar_specs$dpar, names(components))) {
     form_env = environment(components[[dpar]])
-    standardized = standardize_shared_component(components[[dpar]], segment)
+    standardized = standardize_same_component(components[[dpar]], segment)
     selected = standardized$selected
     selected = selected[vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
@@ -132,18 +132,19 @@ get_predictor_group_definitions_segment = function(
       source = selected$source[match(terms, selected$term_key)]) |>
       dplyr::distinct(.data$key, .data$source, .keep_all = TRUE)
     if (anyDuplicated(blocks$group))
-      stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment, including terms reused with `same()`.", call. = FALSE)
+      stop("Only one predictor group-level term per distributional parameter and grouping factor is allowed in a segment, including terms in `same()`.", call. = FALSE)
 
-    # Group terms are atomic blocks; source coding and all coefficients are reused together
+    # Group-level terms are atomic blocks; same() takes their source coding and all coefficients together
     for (i in seq_len(nrow(blocks))) {
       term = blocks$term[i]
       source_segment = blocks$source[i]
       if (!is.na(source_segment)) {
-        source = previous[previous$dpar == dpar & previous$segment == source_segment &
+        # `previous` has no columns before the first group-level term
+        source = if (NROW(previous) > 0) previous[previous$dpar == dpar & previous$segment == source_segment &
           previous$has_coefficients & previous$group_key == blocks$key[i], , drop = FALSE]
-        if (is.null(source) || nrow(source) == 0)
-          stop("`same()` requires a complete group-level term with coefficients in segment ", source_segment,
-            " for ", dpar, ": (", term, "). Partial block sharing is not supported.", call. = FALSE)
+        if (NROW(source) == 0)
+          stop("`same((", term, "))` found no identical group-level term for ", dpar, " in segment ", source_segment,
+            ". `same()` must repeat a complete group-level term from its source segment.", call. = FALSE)
         block = source
         block$segment = segment
       } else {
@@ -236,7 +237,7 @@ assert_generatable_group_prior = function(fit, name, sd_name) {
   expected = paste0("dnorm(0, ", sd_name, ")")
   if (!identical(prior, expected))
     stop(
-      "Cannot generate group effect '", name, "' from prior '", prior,
+      "Cannot generate group-level deviation '", name, "' from prior '", prior,
       "'. This generator supports only '", expected, "' here.",
       call. = FALSE
     )

@@ -19,7 +19,7 @@ test_that("model-defining data cannot be missing", {
 })
 
 
-test_that("simulation requires ordered population change points", {
+test_that("simulation requires ordered population-level change points", {
   data = data.frame(x = 1:5, y = 0)
   fit = mcp(
     list(y ~ 1, ~ 1, ~ 1), data,

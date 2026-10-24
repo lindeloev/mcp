@@ -5,7 +5,7 @@
 
 
 # The terms of each dpar's linear predictor: one row per coefficient in each segment where it
-# applies (including reused coefficients and group-level deviations) and one row per offset.
+# applies (including occurrences from same() and group-level deviations) and one row per offset.
 # A term applies from change point `start`, which starts its segment, until change point `end`
 # (NA: through the last segment). Change points are numbered from cp_0 = min(x) to cp_K = max(x).
 # `dpar` names the linear predictor, e.g., "mu", "sigma", or "ar1" for the first AR lag.
@@ -26,7 +26,7 @@ get_formula_terms = function(model_tables) {
     offset = field("offset_name", character(1))
   )
 
-  terms = dplyr::bind_rows(model_tables$predictors[columns], model_tables$group_predictors[c(columns, "group_col")], offsets)
+  terms = dplyr::bind_rows(model_tables$coefs[columns], model_tables$group_coefs[c(columns, "group_col")], offsets)
   terms$dpar = paste0(terms$dpar, tidyr::replace_na(as.character(terms$order), ""))
   terms$start = terms$segment - 1L
   terms$end = terms$next_segment - 1L
@@ -98,7 +98,7 @@ get_formula_jags = function(model_tables, family, nodes) {
     paste0("# Formula for ", dpar, "\n", node, "_[i_] =\n", paste0(c(coefficients$code, offset_code), collapse = " + \n"))
   }
   formula_jags = paste0(
-    x_local, get_garma_threshold_jags_code(model_tables$predictors), "\n\n",
+    x_local, get_garma_threshold_jags_code(model_tables$coefs), "\n\n",
     paste0(vapply(unique(terms$dpar), formula_dpar, character(1)), collapse = "\n\n")
   )
 

@@ -155,10 +155,10 @@ test_that("Gaussian JAGS weights implement a likelihood power", {
     )
   }, "NA values detected in 'y'")
   tables = get_fit_model_tables(fit)
-  predictor_tables = get_predictor_tables(fit$model, fit$data, fit$family, par_x = "x")
+  coef_tables = get_coef_tables(fit$model, fit$data, fit$family, par_x = "x")
   jags_data = get_jags_data(
-    fit$data, fit$family, length(fit$model), tables$data_columns, predictor_tables$predictors,
-    predictor_tables$group_predictors, tables$parameters, fit$jags_code
+    fit$data, fit$family, length(fit$model), tables$data_columns, coef_tables$coefs,
+    coef_tables$group_coefs, tables$parameters, fit$jags_code
   )
 
   expect_equal(jags_data$response_observed_, c(1, 0, 1, 1))

@@ -12,7 +12,7 @@ test_that("families define dpars independently of prior rows", {
   expect_equal(gaussian_family$dpar_specs$link_modeled, c("identity", "log"))
   expect_false(any(gaussian_family$dpar_specs$modeled))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
-  expect_equal(gaussian_family$dpar_specs$require_initial_predictor, c(FALSE, TRUE))
+  expect_equal(gaussian_family$dpar_specs$require_initial_term, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_named(
     gaussian_family$default_prior,
@@ -213,21 +213,21 @@ test_that("included dpar wrappers use the generic formula path", {
     new_dpar_spec("aux", "log", implicit = TRUE)
   )
 
-  predictors = get_predictors(
+  coefs = get_coefs(
     list(y ~ 1 + x + aux(1 + x)),
     data,
     family,
     par_x = "x"
   )
 
-  expect_setequal(unique(predictors$dpar), c("mu", "sigma", "aux"))
+  expect_setequal(unique(coefs$dpar), c("mu", "sigma", "aux"))
   expect_equal(
-    predictors$name[predictors$dpar == "aux"],
+    coefs$name[coefs$dpar == "aux"],
     c("aux_Intercept_1", "aux_x_1")
   )
 })
 
-test_that("distributional population terms apply only where included", {
+test_that("distributional population-level terms apply only where included", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),
@@ -261,7 +261,7 @@ test_that("distributional population terms apply only where included", {
   expected = 0.5 + ifelse(data$x < 3.5, data$z, ifelse(data$x < 5.5, 0, 2 * data$z))
   expect_equal(as.numeric(sigma), expected)
 
-  shape = get_predictors(
+  shape = get_coefs(
     list(y ~ 1 + shape(1 + z), ~ 0 + shape(0 + z)),
     data,
     as_mcpfamily(negbinomial()),
@@ -271,16 +271,16 @@ test_that("distributional population terms apply only where included", {
 })
 
 
-test_that("required dpars have an initial predictor and implicit defaults retain their provenance", {
+test_that("required dpars include a term in segment 1 and implicit defaults keep their provenance", {
   data = data.frame(x = 1:6, z = 1:6, y = c(1, 2, 1, 3, 2, 4))
 
   expect_error(
     mcp(list(y ~ 1 + sigma(0)), data, par_x = "x", sample = FALSE),
-    "`sigma\\(0\\)` cannot be the initial predictor"
+    "`sigma\\(0\\)` cannot be the first segment's formula"
   )
   expect_error(
     mcp(list(y ~ 1 + shape(0)), data, family = negbinomial(), par_x = "x", sample = FALSE),
-    "`shape\\(0\\)` cannot be the initial predictor"
+    "`shape\\(0\\)` cannot be the first segment's formula"
   )
   expect_silent(mcp(list(y ~ 1 + sigma(0 + x)), data, par_x = "x", sample = FALSE))
   expect_silent(mcp(list(y ~ 1 + shape(0 + z)), data, family = negbinomial(), par_x = "x", sample = FALSE))
@@ -463,7 +463,7 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(summary$.lower, c(0, 10))
   expect_equal(summary$.upper, c(0, 10))
 
-  samples = fitted(fit, newdata = newdata, summary = FALSE, width = FALSE) |> add_plot_groups()
+  draws = fitted(fit, newdata = newdata, summary = FALSE, width = FALSE) |> add_plot_groups()
   quantiles = tidyr::pivot_longer(summary, c(".lower", ".upper"), names_to = "quantile", values_to = ".epred") |>
     add_plot_groups(curve_by = "group")
   quantile_layer = geom_quantiles(
@@ -481,7 +481,7 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
   expect_equal(length(unique(automatic_quantiles$colour)), 2)
 
   plot = ggplot2::ggplot(
-    samples,
+    draws,
     ggplot2::aes(x = .data$x, color = .data$.group)
   ) + quantile_layer
   built_quantiles = ggplot2::ggplot_build(plot)$data[[1]]

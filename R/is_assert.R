@@ -40,7 +40,7 @@ stop_github = function(...) {
 
 # Require offset() in every segment where a dpar applies if it is in any of them. Offsets usually
 # describe the observation (e.g., exposure), so omitting one in a segment is likely a mistake.
-# Dpars apply in all segments (joined when omitted); AR/MA only in segments that include them.
+# Dpars apply in all segments (joined when not included); AR/MA only in segments that include them.
 assert_offsets = function(components, family) {
   for (dpar in c(family$dpar_specs$dpar, "ar", "ma")) {
     is_arma = dpar %in% c("ar", "ma")
@@ -148,7 +148,7 @@ assert_reserved_offset_namespace = function(col_names, context = "data") {
 
 
 # Validate response auxiliaries independently of whether responses themselves
-# are observed. This makes the same family-level invariants available to model
+# are observed. This makes the same family invariants available to model
 # construction and R-side simulation.
 assert_response_data = function(family, data_columns, data, response_required = TRUE, aux_required = NULL) {
   aux_columns = get_family_aux_columns(family, data_columns)
@@ -176,11 +176,11 @@ assert_response_data = function(family, data_columns, data, response_required = 
 
 
 # Constant dpars, e.g., sigma_1 = 2, must be within their support (sigma > 0) without relying
-# on the numerical floor used for observation-level calculations.
-assert_constant_dpars = function(prior_table, predictors, family) {
+# on the numerical floor used for per-observation calculations.
+assert_constant_dpars = function(prior_table, coefs, family) {
   bounds = get_constant_dpar_bounds(family)
   for (dpar in names(bounds)) {
-    is_constant = prior_table$parameter %in% predictors$name[predictors$dpar == dpar] & prior_table$kind == "constant"
+    is_constant = prior_table$parameter %in% coefs$name[coefs$dpar == dpar] & prior_table$kind == "constant"
     values = suppressWarnings(as.numeric(prior_table$value[is_constant]))
     if (any(values <= bounds[[dpar]])) {
       bad_parameters = prior_table$parameter[is_constant][values <= bounds[[dpar]]]
@@ -278,9 +278,9 @@ assert_dpar = function(dpar, fit, type) {
   if (is.null(dpar))
     dpar = "epred"
 
-  predictors = get_fit_model_tables(fit)$predictors
+  coefs = get_fit_model_tables(fit)$coefs
   allowed_dpars = unique(c(
-    paste0(predictors$dpar, tidyr::replace_na(as.character(predictors$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
+    paste0(coefs$dpar, tidyr::replace_na(as.character(coefs$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
     fit$family$dpar_specs$dpar,  # any model parameters that have no regression terms (~0)
     "epred"
   ))

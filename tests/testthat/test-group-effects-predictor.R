@@ -14,7 +14,7 @@ coefficient_data = data.frame(
 )
 
 
-test_that("predictor group intercepts apply only where included, replace, and turn off", {
+test_that("group-level intercepts in the predictor part apply only where included, replace, and turn off", {
   fit = mcp(
     list(
       y ~ 1 + (1 | id),
@@ -25,13 +25,13 @@ test_that("predictor group intercepts apply only where included, replace, and tu
     par_x = "x",
     sample = FALSE
   )
-  effect = get_fit_model_tables(fit)$group_predictors
+  effect = get_fit_model_tables(fit)$group_coefs
 
   expect_equal(effect$name, "Intercept_1_id")
-  expect_equal(effect$population_name, "Intercept_1")
+  expect_equal(effect$population_parameter, "Intercept_1")
   expect_equal(effect$next_segment, 2L)
   expect_equal(effect$dpar, "mu")
-  expect_equal(effect$matrix_col, nrow(get_fit_model_tables(fit)$predictors) + 1L)
+  expect_equal(effect$matrix_col, nrow(get_fit_model_tables(fit)$coefs) + 1L)
   expect_true(effect$sd_name %in% names(formals(fit$simulate)))
   expect_false(effect$name %in% names(formals(fit$simulate)))
 
@@ -60,23 +60,23 @@ test_that("predictor group intercepts apply only where included, replace, and tu
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(replacement)$group_predictors
+  effects = get_fit_model_tables(replacement)$group_coefs
   expect_equal(effects$name, c("Intercept_1_id", "Intercept_2_id"))
   expect_equal(effects$next_segment, c(2L, NA_integer_))
 })
 
 
-test_that("predictor group intercepts work for family dpars and group-only formulas", {
+test_that("group-level intercepts in the predictor part work for family dpars and group-only formulas", {
   fit = mcp(
     list(y ~ 0 + (1 | id) + sigma(0 + (1 || id))),
     group_data,
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_predictors
+  effects = get_fit_model_tables(fit)$group_coefs
 
   expect_equal(effects$name, c("Intercept_1_id", "sigma_Intercept_1_id"))
-  expect_true(all(is.na(effects$population_name)))
+  expect_true(all(is.na(effects$population_parameter)))
   expect_equal(effects$dpar, c("mu", "sigma"))
   expect_equal(mcp_pars(fit, scope = "group")$parameter, effects$name)
   expect_equal(
@@ -128,14 +128,14 @@ test_that("double-bar terms expand into independent group coefficients", {
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_predictors
+  effects = get_fit_model_tables(fit)$group_coefs
 
   expect_equal(
     effects$name,
     c("Intercept_1_id", "stateB_1_id", "stateC_1_id")
   )
   expect_equal(
-    effects$population_name,
+    effects$population_parameter,
     c("Intercept_1", NA_character_, NA_character_)
   )
   expect_equal(effects$par_type, c("Intercept", "dummy", "dummy"))
@@ -198,12 +198,12 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
     par_x = "x",
     sample = FALSE
   )
-  factor_effects = get_fit_model_tables(factor_fit)$group_predictors
+  factor_effects = get_fit_model_tables(factor_fit)$group_coefs
   expect_equal(
     factor_effects$name,
     c("stateA_1_id", "stateB_1_id", "stateC_1_id")
   )
-  expect_true(all(is.na(factor_effects$population_name)))
+  expect_true(all(is.na(factor_effects$population_parameter)))
   expect_true(all(factor_effects$par_type == "dummy"))
 
   slope_fit = mcp(
@@ -212,15 +212,15 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
     par_x = "x",
     sample = FALSE
   )
-  slope_effect = get_fit_model_tables(slope_fit)$group_predictors
+  slope_effect = get_fit_model_tables(slope_fit)$group_coefs
   expect_equal(slope_effect$name, "z_1_id")
   expect_equal(slope_effect$par_type, "slope")
-  expect_true(is.na(slope_effect$population_name))
+  expect_true(is.na(slope_effect$population_parameter))
   expect_match(slope_fit$jags_code, "z_1_id\\[id_\\]")
 })
 
 
-test_that("local group slopes retain joined endpoints until an intercept or zero block", {
+test_that("joined group-level slopes apply until an intercept or zero block", {
   data = data.frame(
     x = 1:12,
     y = 0,
@@ -238,7 +238,7 @@ test_that("local group slopes retain joined endpoints until an intercept or zero
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_predictors
+  effects = get_fit_model_tables(fit)$group_coefs
   expect_equal(effects$name, c("x_1_id", "x_3_id", "Intercept_4_id"))
   expect_equal(effects$next_segment, c(4L, 4L, 5L))
 
@@ -268,7 +268,7 @@ test_that("local group slopes retain joined endpoints until an intercept or zero
   expect_equal(as.numeric(simulated), as.numeric(expected))
 })
 
-test_that("population intercepts end local group slopes of the same dpar", {
+test_that("population-level intercepts end joined group-level slopes of the same dpar", {
   data = data.frame(
     x = 1:12,
     y = 0,
@@ -277,14 +277,14 @@ test_that("population intercepts end local group slopes of the same dpar", {
   fit = mcp(
     list(
       y ~ 0 + (0 + x || id),
-      ~ 0 + sigma(1),  # A sigma intercept does not end mu group slopes
+      ~ 0 + sigma(1),  # A sigma intercept does not end mu group-level slopes
       ~ 1
     ),
     data,
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_predictors
+  effects = get_fit_model_tables(fit)$group_coefs
   expect_equal(effects$name, "x_1_id")
   expect_equal(effects$next_segment, 3L)
 
@@ -313,7 +313,7 @@ test_that("double-bar coefficient blocks are replaced together", {
     par_x = "x",
     sample = FALSE
   )
-  effects = get_fit_model_tables(fit)$group_predictors
+  effects = get_fit_model_tables(fit)$group_coefs
 
   expect_equal(
     effects$name,
@@ -371,7 +371,7 @@ test_that("factor group coefficients sample and predict by level", {
 })
 
 
-test_that("predictor group effects use existing prediction selectors", {
+test_that("group-level effects in the predictor part use existing prediction selectors", {
   set.seed(42)
   data = data.frame(
     x = rep(1:6, 2),
@@ -555,7 +555,7 @@ test_that("grouping columns that also serve as predictors are retained when grou
   expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE)))
   expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE, facet_by = "id")))
 
-  # Check that fixed effect differences are preserved when group deviations are excluded
+  # Check that population-level differences are preserved when group-level deviations are not included
   f_novary = fitted(fit, prior = TRUE, group_effects = FALSE)
   expect_equal(nrow(f_novary), 10)
   expect_true(all(c("x", "id", ".mean") %in% names(f_novary)))
@@ -604,7 +604,7 @@ test_that("group-only and offset-only covariates are represented in prediction m
 })
 
 
-test_that("fit$simulate() preserves shared group effects", {
+test_that("fit$simulate() preserves group-level deviations that share a prior", {
   group_df = data.frame(
     x = 1:8,
     y = c(1, 2, 1, 2, 5, 6, 5, 6),
@@ -670,7 +670,7 @@ test_that("new groups reject hierarchies the R generators cannot reproduce", {
                "not in the fitted data: 'new'")
   expect_error(fit$simulate(fit, newdata, Intercept_1 = 0, sigma_1 = 1,
                             Intercept_1_id_sd = 1, .type = "fitted"),
-               "Cannot generate group effect 'Intercept_1_id'")
+               "Cannot generate group-level deviation 'Intercept_1_id'")
 
   default_fit = mcp(model, group_data, par_x = "x", sample = "prior",
                     chains = 1, iter = 20, warmup = 10,

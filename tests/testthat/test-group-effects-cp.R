@@ -32,7 +32,7 @@ test_that("group-level change points use absolute locations and sequential bound
   expect_match(fit$jags_code, "cp_1_id\\[id_\\] = cp_1_id_location\\[id_\\] - cp_1")
   expect_match(fit$jags_code, "cp_2_id_location\\[id_\\].*cp_1_id_location\\[id_\\]")
   expect_false(grepl("_uncentered", fit$jags_code, fixed = TRUE))
-  expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)  # Population change points only
+  expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)  # Population-level change points only
 })
 
 
@@ -47,7 +47,7 @@ test_that("custom normal change-point hierarchies retain model bounds", {
   expect_match(fit$prior$cp_1_id, "T(min(x) - cp_1, max(x) - cp_1)", fixed = TRUE)
   expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1, .*\\) T\\(cp_0, cp_2\\)")
 
-  # Fixed values are not truncated
+  # Constant priors are not truncated
   fit = mcp(
     list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
     cp_group_data,
@@ -101,7 +101,7 @@ test_that("simulation rejects user-specified priors on change-point deviations",
   expect_error(simulate_with(list(cp_1_id = "dnorm(2, 0.1)")), "user-specified prior")
   expect_no_error(simulate_with(list(cp_1_id = "dnorm(0, cp_1_id_sd)")))  # Identical to the default
 
-  # Priors on the population change point and the SD are replaced by the arguments
+  # Priors on the population-level change point and the SD are replaced by the arguments
   expect_no_error(simulate_with(list(cp_1 = "dnorm(5, 1)", cp_1_id_sd = "dnorm(0, 2) T(0, )")))
 })
 

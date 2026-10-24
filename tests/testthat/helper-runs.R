@@ -115,7 +115,7 @@ test_runs = function(model,
       }
     }
 
-    # Ensure default change-point priors do not have samples outside the observed range
+    # Ensure default change-point priors do not have draws outside the observed range
     cps = get_fit_model_tables(fit)$cps
     if (length(intersect(names(prior), cps$name)) == 0 && nrow(cps) > 0) {
       x_range = range(fit$data[[columns$par_x]], na.rm = TRUE)
@@ -125,7 +125,7 @@ test_runs = function(model,
       }
     }
 
-    # Population change points are ordered in all draws
+    # Population-level change points are ordered in all draws
     if (nrow(cps) > 1) {
       for (chain in c(.subset2(fit, "mcmc_post"), .subset2(fit, "mcmc_prior"))) {
         pop = as.matrix(chain)[, cps$name, drop = FALSE]
@@ -186,7 +186,7 @@ test_s3_methods = function(fit) {
   if (utils::packageVersion("rjags") < "5")  # See fit$version$jags in mcp(). Update once rjags 5 is on CRAN.
     testthat::expect_s3_class(fit$version$jags, "package_version")
 
-  # Test criterions. Will warn about very few samples
+  # Test criterions. Will warn about very few draws
   if (!is.null(.subset2(fit, "mcmc_post"))) {
     fit_loo = suppressMessages(suppressWarnings(loo(fit)))
     fit_waic = suppressMessages(suppressWarnings(waic(fit)))
@@ -220,7 +220,7 @@ test_s3_methods = function(fit) {
       )
     }
 
-    # Check that samples are the correct format
+    # Check that draws are the correct format
     samples_col = .subset2(fit_to_test, col)
     testthat::expect_true(is.list(samples_col))
     testthat::expect_true(coda::is.mcmc(samples_col[[1]]))
@@ -408,7 +408,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   )
 
   # `log_lik()` follows the conventional draws-by-observation matrix default.
-  # Its former observation-level data-frame output remains available explicitly.
+  # Its former per-observation data-frame output remains available explicitly.
   if (colname == "loglik") {
     default_result = try(func(fit, prior = prior), silent = TRUE)
     if (!inherits(default_result, "try-error")) {

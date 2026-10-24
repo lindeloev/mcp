@@ -72,14 +72,14 @@ rewrite_zero_offset = function(form, par_x) {
 }
 
 
-#' Collect fitted design specifications carried by predictor rows
+#' Collect fitted design specifications carried by coefficient rows
 #'
-#' Each call to `get_predictors_dpar()` temporarily repeats its fitted design
+#' Each call to `get_coefs_dpar()` temporarily repeats its fitted design
 #' specification on its coefficient rows so ordinary `bind_rows()` operations
 #' can carry it through the parser. This helper deduplicates those temporary
 #' columns into the named list stored once on the fitted model.
 #'
-#' @param ... Predictor tables that may contain `design_id` and `design_spec`.
+#' @param ... Coefficient tables that may contain `design_id` and `design_spec`.
 #' @return A named list of fitted design specifications.
 #' @noRd
 collect_design_specs = function(...) {
@@ -98,12 +98,12 @@ collect_design_specs = function(...) {
 
 
 # First segment where each term no longer applies (`next_segment`; NA = through the last segment).
-# Joined terms apply until a later segment in `resets` starts their `key` afresh; other terms apply in their own segment only.
+# Joined terms apply until the next segment in `disjoined_at` for their `key`; other terms apply in their own segment only.
 # - key, segment, joins: One value per term.
-# - resets: A data frame with `key` and `segment` columns.
-get_next_segment = function(key, segment, joins, resets, n_segments) {
+# - disjoined_at: A data frame with `key` and `segment` columns.
+get_next_segment = function(key, segment, joins, disjoined_at, n_segments) {
   vapply(seq_along(segment), function(i) {
-    later = if (joins[i]) resets$segment[resets$key == key[i] & resets$segment > segment[i]] else segment[i] + 1L
+    later = if (joins[i]) disjoined_at$segment[disjoined_at$key == key[i] & disjoined_at$segment > segment[i]] else segment[i] + 1L
     later = later[later <= n_segments]
     if (length(later) == 0) NA_integer_ else as.integer(min(later))
   }, integer(1))
@@ -119,7 +119,7 @@ get_next_segment = function(key, segment, joins, resets, n_segments) {
 #'
 #' @param form A one-sided predictor formula.
 #' @param par_x Name of the change-point variable.
-#' @return The rewritten formula and the local degree of each formula term.
+#' @return The rewritten formula and the x-degree of each formula term.
 #' @noRd
 rewrite_local_x = function(form, par_x) {
   local_name = ".mcp_local_x"
@@ -213,8 +213,8 @@ get_par_x = function(vars, data, par_x = NULL) {
 }
 
 
-# Zero-row predictor table with the columns returned by get_predictors_dpar()
-empty_predictors = function() {
+# Zero-row coefficient table with the columns returned by get_coefs_dpar()
+empty_coefs = function() {
   tibble::tibble(
     dpar = character(),
     segment = integer(),
@@ -232,7 +232,7 @@ empty_predictors = function() {
 }
 
 
-#' Get predictors for one distributional parameter
+#' Get coefficients for one distributional parameter
 #'
 #' This function extracts a `par_x`-less design matrix.
 #' x-terms are measured from the change point, so `par_x` is multiplied in the formula
@@ -260,11 +260,11 @@ empty_predictors = function() {
 #'   - `design_col`: column occupied by the row in that component's model matrix.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.
 #' @noRd
-get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL,
+get_coefs_dpar = function(data, form_rhs, segment, dpar, par_x, order = NULL,
                                check_rank = TRUE, design_id = NULL) {
   # Empty segments return no rows
   if (all(as.character(form_rhs) == c("~", "0")))
-    return(empty_predictors())
+    return(empty_coefs())
 
   checkmate::assert_data_frame(data)
   checkmate::assert_formula(form_rhs)
@@ -410,11 +410,11 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
         design_spec = list(design$spec)
       ))
     } else {
-      return(empty_predictors())
+      return(empty_coefs())
     }
   }
 
-  predictors = tibble::tibble(
+  coefs = tibble::tibble(
     dpar = dpar,
     segment = segment,
     matrix_name = matrix_name,
@@ -434,7 +434,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   )
 
   # Return
-  predictors
+  coefs
 }
 
 
@@ -444,17 +444,17 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 #' resulting parameter names must be valid in JAGS. Distinct terms can
 #' therefore occasionally produce the same name, for example `a:b` and `ab`.
 #'
-#' @param predictors A data frame returned by `get_predictors_dpar()`.
-#' @return `predictors`, invisibly. Stops with an informative error on
+#' @param coefs A data frame returned by `get_coefs_dpar()`.
+#' @return `coefs`, invisibly. Stops with an informative error on
 #'   collision.
 #' @noRd
-assert_unique_predictor_names = function(predictors) {
-  collision_names = unique(predictors$name[duplicated(predictors$name)])
+assert_unique_coef_names = function(coefs) {
+  collision_names = unique(coefs$name[duplicated(coefs$name)])
   if (length(collision_names) == 0)
-    return(invisible(predictors))
+    return(invisible(coefs))
 
   collision_lines = vapply(collision_names, function(name) {
-    rows = predictors[predictors$name == name, , drop = FALSE]
+    rows = coefs[coefs$name == name, , drop = FALSE]
     sources = paste0(
       "`", rows$matrix_name, "` (", rows$dpar,
       ", segment ", rows$segment, ")"
@@ -478,7 +478,7 @@ term_contains = function(par_x, terms) {
 
 # same() -------------------------------------------------------------------
 # Resolve which terms same() reuses from which segment. Downstream code only sees
-# definition rows and the later occurrences of reused coefficients (see definition_rows()).
+# definition rows and the later occurrences from same() (see definition_rows()).
 
 # Extract and validate formula terms selected by a same() call
 same_selector_terms = function(selector, env) {
@@ -495,7 +495,7 @@ same_selector_terms = function(selector, env) {
   attrs = attributes(stats::terms(selector_form))
   terms = attrs$term.labels
 
-  # Offsets have no coefficient to share
+  # Offsets have no coefficient to reuse
   if (!is.null(attrs$offset))
     stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each segment where it applies.", call. = FALSE)
 
@@ -519,7 +519,7 @@ parse_same_call = function(expr, segment, env) {
       (length(args) == 2 && arg_names[2] != "as"))
     stop("`same()` accepts one selection and an optional named `as` segment, e.g. `same(x, as = 1)`.", call. = FALSE)
   if (segment == 1)
-    stop("`same()` cannot be used in segment 1 because there is no earlier coefficient to reuse.", call. = FALSE)
+    stop("`same()` cannot be used in segment 1 because there is no earlier segment.", call. = FALSE)
 
   # Resolve and validate the source segment
   source = segment - 1L
@@ -544,13 +544,13 @@ parse_same_call = function(expr, segment, env) {
 # Unwrap same() in a component formula, e.g., `~ same(x) + z` to `~ x + z`. Returns the
 # formula and the `selected` term_keys with their `source` segment. Used for population-level
 # terms and complete group-level terms.
-standardize_shared_component = function(form_rhs, segment) {
+standardize_same_component = function(form_rhs, segment) {
   # Expand additive selectors once, retaining ordinary formula coding context
   leaves = unpack_additive(form_rhs[[2]])
-  shared = vapply(leaves, is_call_to, logical(1), name = "same")
-  if (any(vapply(leaves[!shared], contains_call_to, logical(1), name = "same")))
+  is_same = vapply(leaves, is_call_to, logical(1), name = "same")
+  if (any(vapply(leaves[!is_same], contains_call_to, logical(1), name = "same")))
     stop("`same()` must be an additive selector of a complete term, such as `same(x:z)`.", call. = FALSE)
-  selected = dplyr::bind_rows(lapply(leaves[shared], parse_same_call,
+  selected = dplyr::bind_rows(lapply(leaves[is_same], parse_same_call,
     segment = segment, env = environment(form_rhs)))
   if (nrow(selected) == 0)
     selected = tibble::tibble(term_key = character(), source = integer())
@@ -559,20 +559,20 @@ standardize_shared_component = function(form_rhs, segment) {
     if (anyDuplicated(selected$term_key))
       stop("Overlapping `same()` selections cannot use competing sources.", call. = FALSE)
 
-    # Shared intercepts replace implicit intercepts, but conflict with explicit 1
-    bare = leaves[!shared]
-    shared_intercept = "(Intercept)" %in% selected$term_key
-    if (shared_intercept && any(vapply(bare, function(x) identical(x, 1) || identical(x, 1L), logical(1))))
+    # Reused intercepts replace implicit intercepts, but conflict with explicit 1
+    bare = leaves[!is_same]
+    same_intercept = "(Intercept)" %in% selected$term_key
+    if (same_intercept && any(vapply(bare, function(x) identical(x, 1) || identical(x, 1L), logical(1))))
       stop("An explicit bare `1` and `same(1)` are competing intercepts; include only one.", call. = FALSE)
     bare_expr = sum_exprs(c(list(0), bare))
     bare_terms = attr(stats::terms(stats::as.formula(call("~", bare_expr), env = environment(form_rhs))), "term.labels")
     if (any(selected$term_key %in% bare_terms))
-      stop("A term cannot be both included directly and reused with `same()` in segment ", segment, ".", call. = FALSE)
+      stop("A term cannot be both included directly and in `same()` in segment ", segment, ".", call. = FALSE)
 
     # Unwrap selectors for coding; 0 + same(1) still includes an intercept
-    leaves[shared] = lapply(leaves[shared], function(x) x[[2]])
+    leaves[is_same] = lapply(leaves[is_same], function(x) x[[2]])
     expr = sum_exprs(leaves)
-    if (shared_intercept)
+    if (same_intercept)
       expr = call("+", expr, 1)
     form_rhs = stats::as.formula(call("~", expr), env = environment(form_rhs))
   }
@@ -580,18 +580,18 @@ standardize_shared_component = function(form_rhs, segment) {
 }
 
 
-# Predictor rows for one dpar or AR/MA lag in a segment. Terms in same() are the rows of their
+# Coefficient rows for one dpar or AR/MA lag in a segment. Terms in same() are the rows of their
 # source segment in `previous`, so they keep its name and model-matrix coding.
-get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
+get_coefs_component = function(data, form_rhs, segment, dpar, par_x, order = NULL,
                                   design_id = NULL, previous = NULL) {
-  standardized = standardize_shared_component(form_rhs, segment)
+  standardized = standardize_same_component(form_rhs, segment)
   form_rhs = standardized$form
   selected = standardized$selected
   selected = selected[!vapply(selected$term_key, is_group_term, logical(1)), , drop = FALSE]
 
   # Construct bare columns in the full unwrapped formula, then borrow source columns
   form_rhs = remove_terms(form_rhs, "group")
-  current = get_predictors_dpar(data, form_rhs, segment, dpar, par_x, order,
+  current = get_coefs_dpar(data, form_rhs, segment, dpar, par_x, order,
     check_rank = nrow(selected) == 0, design_id = design_id) |>
     dplyr::mutate(definition_segment = .data$segment)
   if (nrow(selected) == 0)
@@ -609,7 +609,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   })
   bare = current[!current$term_key %in% selected$term_key, , drop = FALSE]
 
-  # Keep current segment offsets even when all its coefficients are shared
+  # Keep current segment offsets even when all its coefficients are in same()
   if (nrow(bare) == 0 && nrow(current) > 0 && isTRUE(current$design_spec[[1]]$has_offset)) {
     bare = current[1, ]
     bare$par_type = "offset"
@@ -628,10 +628,10 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
 }
 
 
-# Does an explicit dpar formula provide no initial predictor at all? This is
+# Does an explicit dpar formula in segment 1 include no term at all? This is
 # deliberately syntactic: a nonzero offset or a group-only formula counts as
-# an initial predictor even though it has no population coefficient.
-is_empty_initial_predictor = function(form) {
+# a term even though it has no population-level coefficient.
+lacks_initial_term = function(form) {
   form_terms = stats::terms(form)
   attrs = attributes(form_terms)
   group_terms = attrs$term.labels[vapply(attrs$term.labels, is_group_term, logical(1))]
@@ -642,18 +642,18 @@ is_empty_initial_predictor = function(form) {
     coefficient_attrs$intercept == 1 || length(coefficient_attrs$term.labels) > 0
   }, logical(1))
 
-  # Coefficients or nonzero offsets are initial predictors
+  # Coefficients or nonzero offsets are terms
   if (attrs$intercept == 1 || length(population_terms) > 0 || any(group_has_coefficients))
     return(FALSE)
   all(get_offset_labels(form_terms) %in% c("offset(0)", "stats::offset(0)"))
 }
 
 
-#' Apply `get_predictors_dpar` to each formula in a segment
+#' Apply `get_coefs_dpar` to each formula in a segment
 #'
 #' @param components The segment's components from `get_segment_components()`.
 #' @noRd
-get_predictors_segment = function(components, segment, family, data, par_x, previous = NULL) {
+get_coefs_segment = function(components, segment, family, data, par_x, previous = NULL) {
   checkmate::assert_list(components)
   checkmate::assert_int(segment, lower = 1)
   checkmate::assert_class(family, "mcpfamily")
@@ -672,16 +672,16 @@ get_predictors_segment = function(components, segment, family, data, par_x, prev
     # later segments until the user includes another dpar intercept.
     if (is.null(dpar_form) && dpar_spec$implicit && segment == 1) {
       dpar_form = stats::as.formula("~1", env = environment(components$mu))
-    } else if (!is.null(dpar_form) && segment == 1 && dpar_spec$require_initial_predictor && is_empty_initial_predictor(dpar_form)) {
+    } else if (!is.null(dpar_form) && segment == 1 && dpar_spec$require_initial_term && lacks_initial_term(dpar_form)) {
       stop(
-        "`", dpar, "(0)` cannot be the initial predictor for family = ", family$family,
-        "(). Include an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
+        "`", dpar, "(0)` cannot be the first segment's formula for family = ", family$family,
+        "(). Include a term in segment 1, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",
         call. = FALSE
       )
     }
 
     if (!is.null(dpar_form)) {
-      dpar_pars[[dpar]] = get_shared_predictors(
+      dpar_pars[[dpar]] = get_coefs_component(
         data, dpar_form, segment, dpar = dpar, par_x, NULL,
         design_id = paste("population", dpar, segment, sep = ":"), previous = previous
       )
@@ -703,7 +703,7 @@ get_predictors_segment = function(components, segment, family, data, par_x, prev
     # Expand one formula into a separate regression parameter for each lag.
     # Order 0 turns off all lags, coded as lag 1 with formula ~ 0.
     arma_pars[[component]] = lapply(seq_len(max(1, arma$order)), function(order) {
-      get_shared_predictors(
+      get_coefs_component(
         data, arma$form, segment, component, par_x, order,
         design_id = paste("population", component, if (arma$order == 0) 0 else order, segment, sep = ":"),
         previous = previous
@@ -722,65 +722,65 @@ get_predictors_segment = function(components, segment, family, data, par_x, prev
 }
 
 
-#' Apply `get_predictors_segment` to all segments of a model.
+#' Apply `get_coefs_segment` to all segments of a model.
 #'
-#' @return A list with the `components` of each segment, the `predictors` and
-#'   `group_predictors` (one row per occurrence, see `definition_rows()`), and the
+#' @return A list with the `components` of each segment, the `coefs` and
+#'   `group_coefs` (one row per occurrence, see `definition_rows()`), and the
 #'   fitted `design_specs`.
 #' @noRd
-get_predictor_tables = function(model, data, family, par_x) {
+get_coef_tables = function(model, data, family, par_x) {
   # Parse the components of each segment once (mu, other dpars, ar, ma)
   components = lapply(model, function(form) get_segment_components(get_rhs(form), family))
   n_segments = length(components)
   assert_offsets(components, family)
 
   # Resolve each component against earlier occurrences, including chains
-  parsed_predictors = NULL
+  parsed_coefs = NULL
   for (segment in seq_len(n_segments)) {
-    parsed_predictors = dplyr::bind_rows(parsed_predictors,
-      get_predictors_segment(components[[segment]], segment, family, data, par_x,
-        previous = parsed_predictors))
+    parsed_coefs = dplyr::bind_rows(parsed_coefs,
+      get_coefs_segment(components[[segment]], segment, family, data, par_x,
+        previous = parsed_coefs))
   }
-  parsed_predictors = dplyr::arrange(parsed_predictors, .data$dpar, .data$segment)
+  parsed_coefs = dplyr::arrange(parsed_coefs, .data$dpar, .data$segment)
 
   # An implicit dpar without a formula anywhere is the parameter itself, e.g., sigma_1
   # rather than the link-scale intercept sigma_Intercept_1 of a modeled sigma().
-  unmodeled = parsed_predictors$dpar %in% setdiff(family$dpar_specs$dpar, c("mu", unlist(lapply(components, names))))
-  parsed_predictors$name[unmodeled] = paste0(parsed_predictors$dpar[unmodeled], "_1")
-  predictors = parsed_predictors |>
+  unmodeled = parsed_coefs$dpar %in% setdiff(family$dpar_specs$dpar, c("mu", unlist(lapply(components, names))))
+  parsed_coefs$name[unmodeled] = paste0(parsed_coefs$dpar[unmodeled], "_1")
+  coefs = parsed_coefs |>
     dplyr::filter(.data$par_type != "offset") |>
     dplyr::mutate(matrix_col = dplyr::row_number())
 
-  assert_unique_predictor_names(definition_rows(predictors))
+  assert_unique_coef_names(definition_rows(coefs))
 
   # AR and MA transform the same response history, so one threshold applies to all segments.
   thresholds = unique(unlist(lapply(components, function(x) stats::na.omit(c(x$ar$threshold, x$ma$threshold)))))
   if (length(thresholds) > 1)
     stop("Only one `threshold` value can be specified across all ar() and ma() terms.")
   threshold = if (length(thresholds) == 1) thresholds else 0.1  # Default
-  predictors$threshold = ifelse(predictors$dpar %in% c("ar", "ma"), threshold, NA_real_)
+  coefs$threshold = ifelse(coefs$dpar %in% c("ar", "ma"), threshold, NA_real_)
 
-  # How long each population term applies. x-terms and intercepts join later segments until the
-  # next intercept for the same dpar and AR/MA lag, which starts a disjoined segment. AR/MA terms
-  # also end in a segment that does not include their lag. Other terms apply in their own segment only.
-  population_key = paste(predictors$dpar, predictors$order)
-  is_intercept = predictors$par_type == "Intercept"
+  # How long each population-level term applies. x-terms and intercepts join later segments until the
+  # next intercept for the same dpar and AR/MA lag disjoins them. A segment that does not include an
+  # AR/MA lag turns it off, i.e., disjoins it from zero. Other terms apply in their own segment only.
+  population_key = paste(coefs$dpar, coefs$order)
+  is_intercept = coefs$par_type == "Intercept"
   included_arma = get_included_arma(components)
-  arma_lags = dplyr::distinct(predictors[predictors$dpar %in% c("ar", "ma"), c("dpar", "order")])
-  arma_resets = lapply(seq_len(nrow(arma_lags)), function(i) {
+  arma_lags = dplyr::distinct(coefs[coefs$dpar %in% c("ar", "ma"), c("dpar", "order")])
+  arma_disjoined_at = lapply(seq_len(nrow(arma_lags)), function(i) {
     included = included_arma$segment[included_arma$dpar == arma_lags$dpar[i] & included_arma$order >= arma_lags$order[i]]
     tibble::tibble(key = paste(arma_lags$dpar[i], arma_lags$order[i]), segment = setdiff(seq_len(n_segments), included))
   })
-  population_resets = dplyr::bind_rows(
-    tibble::tibble(key = population_key[is_intercept], segment = predictors$segment[is_intercept]),
-    arma_resets
+  population_disjoined_at = dplyr::bind_rows(
+    tibble::tibble(key = population_key[is_intercept], segment = coefs$segment[is_intercept]),
+    arma_disjoined_at
   )
-  predictors$next_segment = get_next_segment(
-    population_key, predictors$segment, joins = is_intercept | predictors$x_degree > 0,
-    population_resets, n_segments
+  coefs$next_segment = get_next_segment(
+    population_key, coefs$segment, joins = is_intercept | coefs$x_degree > 0,
+    population_disjoined_at, n_segments
   )
 
-  # Parse group blocks segment by segment so `same()` can find its source
+  # Parse group-level blocks segment by segment so `same()` can find its source
   definitions = NULL
   for (segment in seq_len(n_segments)) {
     definitions = dplyr::bind_rows(definitions,
@@ -788,53 +788,54 @@ get_predictor_tables = function(model, data, family, par_x) {
         data, par_x, previous = definitions))
   }
 
-  group_predictors = definitions
+  group_coefs = definitions
   if (nrow(definitions) > 0) {
-    # Rows without coefficients are `(0 | group)` turn-offs, which only mark resets below.
+    # Rows without coefficients are `(0 | group)` turn-offs, which only disjoin (see below).
     # Link each coefficient to its population counterpart, if there is one.
-    group_predictors = definitions |>
+    group_coefs = definitions |>
       dplyr::filter(.data$has_coefficients) |>
       dplyr::mutate(
-        population_name = dplyr::if_else(
-          .data$population_name %in% predictors$name,
-          .data$population_name,
+        population_parameter = dplyr::if_else(
+          .data$population_parameter %in% coefs$name,
+          .data$population_parameter,
           NA_character_
         ),
-        matrix_col = nrow(predictors) + dplyr::row_number()
+        matrix_col = nrow(coefs) + dplyr::row_number()
       ) |>
       dplyr::select(
-        "population_name", "name", "group_col", "segment", "dpar",
+        "population_parameter", "name", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "order",
         "x_degree", "design_id", "design_col", "matrix_col", "matrix_data",
         "design_spec", "definition_segment"
       )
 
-    # How long each group term applies. Group x-terms join later segments until a group intercept
-    # or `(0 | group)` for the same dpar and grouping column, or a population intercept for that dpar.
-    # Group intercepts and other terms apply in their own segment only.
+    # How long each group-level term applies. Group-level x-terms join later segments until a group-level intercept
+    # or `(0 | group)` (turns off) for the same dpar and grouping column, or a population-level intercept for that
+    # dpar, disjoins them.
+    # Group-level intercepts and other terms apply in their own segment only.
     group_key = function(x) paste(x$dpar, x$group_col)
-    is_reset = !definitions$has_coefficients | definitions$par_type %in% "Intercept"
-    disjoined = dplyr::distinct(definitions, .data$dpar, .data$group_col) |>
-      dplyr::inner_join(dplyr::distinct(predictors[is_intercept, c("dpar", "segment")]), by = "dpar", relationship = "many-to-many")
-    group_resets = dplyr::bind_rows(
-      tibble::tibble(key = group_key(definitions)[is_reset], segment = definitions$segment[is_reset]),
-      tibble::tibble(key = group_key(disjoined), segment = disjoined$segment)
+    is_disjoining = !definitions$has_coefficients | definitions$par_type %in% "Intercept"
+    by_population_intercept = dplyr::distinct(definitions, .data$dpar, .data$group_col) |>
+      dplyr::inner_join(dplyr::distinct(coefs[is_intercept, c("dpar", "segment")]), by = "dpar", relationship = "many-to-many")
+    group_disjoined_at = dplyr::bind_rows(
+      tibble::tibble(key = group_key(definitions)[is_disjoining], segment = definitions$segment[is_disjoining]),
+      tibble::tibble(key = group_key(by_population_intercept), segment = by_population_intercept$segment)
     )
-    group_predictors$next_segment = get_next_segment(
-      group_key(group_predictors), group_predictors$segment,
-      joins = group_predictors$x_degree > 0, group_resets, n_segments
+    group_coefs$next_segment = get_next_segment(
+      group_key(group_coefs), group_coefs$segment,
+      joins = group_coefs$x_degree > 0, group_disjoined_at, n_segments
     )
   }
 
   # Store each fitted component specification once, not on every coefficient.
-  design_specs = collect_design_specs(parsed_predictors, definitions)
-  predictors = predictors |>
+  design_specs = collect_design_specs(parsed_coefs, definitions)
+  coefs = coefs |>
     dplyr::select(-"design_spec")
-  if ("design_spec" %in% names(group_predictors))
-    group_predictors = dplyr::select(group_predictors, -"design_spec")
-  if ("name" %notin% names(group_predictors))
-    group_predictors = tibble::tibble(
-      population_name = character(), name = character(), group_col = character(), segment = integer(),
+  if ("design_spec" %in% names(group_coefs))
+    group_coefs = dplyr::select(group_coefs, -"design_spec")
+  if ("name" %notin% names(group_coefs))
+    group_coefs = tibble::tibble(
+      population_parameter = character(), name = character(), group_col = character(), segment = integer(),
       dpar = character(), sd_name = character(), par_type = character(), matrix_name = character(),
       order = integer(), x_degree = integer(), design_id = character(), design_col = integer(),
       matrix_col = integer(), matrix_data = list(), definition_segment = integer(), next_segment = integer()
@@ -842,8 +843,8 @@ get_predictor_tables = function(model, data, family, par_x) {
 
   list(
     components = components,
-    predictors = predictors,
-    group_predictors = group_predictors,
+    coefs = coefs,
+    group_coefs = group_coefs,
     design_specs = design_specs
   )
 }

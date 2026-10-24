@@ -11,10 +11,11 @@ Use one word per concept, so users are not confused:
 - **included** / **not included** (terms): what terms are written in a formula. This matches base R wording. Prefer "not included" over "omitted", "dropped", or "excluded". Avoid: declared, active, written.
 - **x-terms**: formula terms involving `par_x`, i.e., the change point dimension, e.g., `x`, `I(x^2)`, `x:z`. They are *measured from the change point*. Avoid: segment-local, "count from".
 - **joined**: a segment without an intercept (`0 + ...`). Avoid: carry, persist, retain.
-- **disjoined**: a segment with an intercept. It starts afresh. Avoid: reset.
+- **disjoined**: a segment with an intercept. It starts afresh. Applies separately to each dpar, each grouping column of its group-level terms, and each AR/MA lag, e.g., "joined mu, disjoined sigma". As a verb, the intercept *disjoins* the earlier joined terms. Avoid: reset.
+- **turns off**: `(0 | group)`, `ar(0)`/`ma(0)`, or not including an earlier AR/MA lag. The earlier group-level terms or AR/MA terms no longer apply from that segment, i.e., they are disjoined from zero. Use only for these; use "disjoined" for intercepts, and "not included" for other terms.
 - **linear predictor**: the segmented linear predictor η of a dpar. Always write "linear predictor" in full.
 - **change-point part** / **predictor part**: the two parts of a segment formula, i.e., `cp()` and the rest. Matches the `part` column of `mcp_pars()`.
-- **reuse** and **same**: include an earlier coefficient in a segment with `same()`, e.g., "reuse a coefficient". "same" is an OK word too. Avoid "share" except for priors that share a value, e.g., `Intercept_2 = "Intercept_1"`.
+- **`same()`**: include an earlier coefficient in a segment. Name `same()` where it applies, e.g., "terms in `same()`" or "`same(x)` includes `x_1` in segment 2". "Reuse" is OK only as the verb for what `same()` does, e.g., "`same(x)` reuses `x_1`". Avoid "share" except for priors that share a value, e.g., `Intercept_2 = "Intercept_1"`.
 - **plateau**: a segment or dpar without x-terms, e.g., `~ 1` or a joined `~ 0`.
 - **slope**: the coefficient of `x`. Informal; use "x-terms" for the general case.
 
@@ -68,7 +69,7 @@ Do not use "bounds" for these.
 
 
 ## Code only
-- **definition / occurrence**: a coefficient is defined in the first segment that includes it (`definition_segment`) and occurs there and in every later segment that reuses it with `same()`. In docs, say "reuse" instead.
+- **definition / occurrence**: a coefficient is defined in the first segment that includes it (`definition_segment`) and occurs there and in every later segment with it in `same()`. In docs, refer to `same()` instead.
 - **par / pars**: Shorthand for "parameter".
 - **coef / coefs**: Shorthand for "coefficient".
 - **cp**: Shorthand for "change point".

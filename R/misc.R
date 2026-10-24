@@ -168,11 +168,11 @@ warn_nonconvergence = function(convergence, diagnostics = list(), constant_pars 
 }
 
 
-# Design matrix with one column per coefficient in `predictors` and `group_predictors`,
+# Design matrix with one column per coefficient in `coefs` and `group_coefs`,
 # ordered by `matrix_col`. The columns are in their `matrix_data`.
-get_predictor_matrix = function(predictors, group_predictors = NULL) {
-  columns = c(predictors$matrix_data, group_predictors$matrix_data)
-  do.call(cbind, columns[order(c(predictors$matrix_col, group_predictors$matrix_col))])
+get_predictor_matrix = function(coefs, group_coefs = NULL) {
+  columns = c(coefs$matrix_data, group_coefs$matrix_data)
+  do.call(cbind, columns[order(c(coefs$matrix_col, group_coefs$matrix_col))])
 }
 
 

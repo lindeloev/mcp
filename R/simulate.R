@@ -41,7 +41,7 @@ relevel_newdata = function(newdata, fit) {
 }
 
 
-# Fill `matrix_data` in a `predictors` or `group_predictors` table from the evaluated designs (see get_model_data())
+# Fill `matrix_data` in a `coefs` or `group_coefs` table from the evaluated designs (see get_model_data())
 populate_design_columns = function(table, evaluated_designs) {
   table$matrix_data = vector("list", nrow(table))
   for (design_id in unique(stats::na.omit(table$design_id))) {
@@ -85,8 +85,8 @@ get_model_data = function(fit, newdata) {
   list(
     x = newdata[[cols$par_x]],
     matrix = get_predictor_matrix(
-      populate_design_columns(model_tables$predictors, designs),
-      populate_design_columns(model_tables$group_predictors, designs)
+      populate_design_columns(model_tables$coefs, designs),
+      populate_design_columns(model_tables$group_coefs, designs)
     ),
     offsets = stats::setNames(
       lapply(names(offset_specs), function(design_id) as.numeric(designs[[design_id]]$offset)),
@@ -137,7 +137,7 @@ evaluate_model = function(fit, data, pars, ndraws, y = NULL, type = "predict",
   if (arma && is_arma(fit)) {
     if (is.null(y) && type != "predict")
       stop("The response is required to evaluate GARMA terms.")
-    threshold = unique(stats::na.omit(model_tables$predictors$threshold))
+    threshold = unique(stats::na.omit(model_tables$coefs$threshold))
     garma = simulate_garma(
       links$mu, get_lags(links, "ar"), get_lags(links, "ma"), threshold, family, dpars,
       data = data$response, y = y, series = data$series
@@ -280,9 +280,9 @@ fit_simulate = function(fit,
   }
 
   # Group-level deviations in the predictor part: normal with their SD
-  predictor_effects = definition_rows(model_tables$group_predictors)
-  for (i in seq_len(nrow(predictor_effects))) {
-    effect = predictor_effects[i, ]
+  group_definitions = definition_rows(model_tables$group_coefs)
+  for (i in seq_len(nrow(group_definitions))) {
+    effect = group_definitions[i, ]
     assert_data_cols(newdata, effect$group_col)
     group = newdata[[effect$group_col]]
     group_levels = unique(group)

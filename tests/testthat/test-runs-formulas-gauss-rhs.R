@@ -15,7 +15,7 @@ good_intercepts = list(
        ~ 1,
        ~ 0,
        ~ 1),
-  list(y ~ 1 + (1 | id),  # Predictor group intercept is included in this segment
+  list(y ~ 1 + (1 | id),  # Group-level intercept in the predictor part is included in this segment
        ~ 1,
        ~ 1 + (0 | id)),
   list(y ~ 1 + (ok_id_factor || id))  # Independent intercept and factor deviations
@@ -45,7 +45,7 @@ test_that("formula functions reject multiple terms containing par_x", {
   )
 })
 
-test_that("population terms apply only where included while x-terms join", {
+test_that("population-level terms apply only where included while x-terms join", {
   data = data.frame(
     x = 1:8,
     z = c(0, 1, 0, 2, 1, 3, 2, 4),
@@ -96,7 +96,7 @@ test_that("redefinitions replace complete formula terms", {
     group = factor(rep(c("a", "b", "c"), 4)),
     y = 0
   )
-  predictors = get_predictors(
+  coefs = get_coefs(
     list(
       y ~ 1 + group + poly(z, 2),
       ~ 0 + x + group + poly(z, 2)
@@ -105,15 +105,15 @@ test_that("redefinitions replace complete formula terms", {
     as_mcpfamily(gaussian()),
     par_x = "x"
   )
-  first_terms = predictors$segment == 1 & predictors$par_type != "Intercept" & predictors$x_degree == 0
+  first_terms = coefs$segment == 1 & coefs$par_type != "Intercept" & coefs$x_degree == 0
 
-  expect_true(all(predictors$next_segment[first_terms] == 2L))
+  expect_true(all(coefs$next_segment[first_terms] == 2L))
   expect_equal(
-    length(unique(predictors$term_key[grepl("poly", predictors$matrix_name)])),
+    length(unique(coefs$term_key[grepl("poly", coefs$matrix_name)])),
     1L
   )
 
-  reset = get_predictors(
+  reset = get_coefs(
     list(y ~ 1 + z, ~ 1, ~ 0 + z),
     data,
     as_mcpfamily(gaussian()),
@@ -279,14 +279,14 @@ test_that("formula variables are classified by role for par_x detection", {
   )
 })
 
-test_that("transformations use the original par_x while segment bases stay local", {
+test_that("transformations use the original par_x while segment bases are measured from the change point", {
   data = data.frame(x = 0:10, y = 0)
   fit = mcp(
     list(y ~ 1, ~ 1 + sin(x) + x + I(x^2)),
     data,
     sample = FALSE
   )
-  table = get_predictors(fit$model, data, fit$family, par_x = "x")
+  table = get_coefs(fit$model, data, fit$family, par_x = "x")
 
   expect_equal(table$x_degree[table$matrix_name == "sin(x)"], 0L)
   expect_equal(
@@ -315,19 +315,19 @@ test_that("transformations use the original par_x while segment bases stay local
 test_that("par_x is recognized as an exact formula symbol", {
   data = data.frame(a.b = 0:4, axb = c(2, 4, 6, 8, 10), y = 0)
   fit = mcp(list(y ~ 0 + axb), data, par_x = "a.b", sample = FALSE)
-  predictor = dplyr::filter(get_predictors(fit$model, data, fit$family, par_x = "a.b"), .data$dpar == "mu")
+  coefs = dplyr::filter(get_coefs(fit$model, data, fit$family, par_x = "a.b"), .data$dpar == "mu")
 
-  expect_equal(predictor$x_degree, 0L)
-  expect_equal(unname(predictor$matrix_data[[1]]), data$axb)
+  expect_equal(coefs$x_degree, 0L)
+  expect_equal(unname(coefs$matrix_data[[1]]), data$axb)
 })
 
 test_that("x-free interactions are evaluated directly at zero", {
   data = data.frame(x = 0:4, z = c(2, 0, 0, 4, 5), y = 0)
   fit = mcp(list(y ~ 0 + x:z), data, par_x = "x", sample = FALSE)
-  predictor = dplyr::filter(get_predictors(fit$model, data, fit$family, par_x = "x"), .data$dpar == "mu")
+  coefs = dplyr::filter(get_coefs(fit$model, data, fit$family, par_x = "x"), .data$dpar == "mu")
 
-  expect_equal(predictor$x_degree, 1L)
-  expect_equal(unname(predictor$matrix_data[[1]]), data$z)
+  expect_equal(coefs$x_degree, 1L)
+  expect_equal(unname(coefs$matrix_data[[1]]), data$z)
 
   segmented = mcp(list(y ~ 0, ~ 0 + x:z), data, par_x = "x", sample = FALSE)
   fitted = segmented$simulate(
@@ -358,9 +358,9 @@ test_that("factor punctuation produces safe parameter names", {
     y = 0
   )
   fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
-  predictor = get_fit_model_tables(fit)$predictors
-  slash_row = grepl("a/b", predictor$matrix_name, fixed = TRUE)
-  safe_name = predictor$name[slash_row]
+  coefs = get_fit_model_tables(fit)$coefs
+  slash_row = grepl("a/b", coefs$matrix_name, fixed = TRUE)
+  safe_name = coefs$name[slash_row]
 
   expect_true(length(safe_name) == 1 && grepl("^[A-Za-z][A-Za-z0-9_.]*$", safe_name))
   args = list(fit = fit, newdata = data, Intercept_1 = 0, sigma_1 = 1, .type = "fitted")
@@ -370,8 +370,8 @@ test_that("factor punctuation produces safe parameter names", {
 
 # Columns of the design matrix evaluated on `newdata` for the coefficients `names`
 design_columns = function(fit, newdata, names) {
-  predictors = get_fit_model_tables(fit)$predictors
-  get_model_data(fit, newdata)$matrix[, predictors$matrix_col[match(names, predictors$name)], drop = FALSE]
+  coefs = get_fit_model_tables(fit)$coefs
+  get_model_data(fit, newdata)$matrix[, coefs$matrix_col[match(names, coefs$name)], drop = FALSE]
 }
 
 test_that("prediction reuses fitted factor encodings", {
@@ -381,16 +381,16 @@ test_that("prediction reuses fitted factor encodings", {
     state = ordered(rep(c("low", "middle", "high"), 2))
   )
   ordered_fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
-  ordered_tables = get_predictor_tables(ordered_fit$model, data, ordered_fit$family, par_x = "x")
-  ordered_matrix = get_predictor_matrix(ordered_tables$predictors)  # No group-level effects
+  ordered_tables = get_coef_tables(ordered_fit$model, data, ordered_fit$family, par_x = "x")
+  ordered_matrix = get_predictor_matrix(ordered_tables$coefs)  # No group-level effects
   ordered_new = get_model_data(ordered_fit, transform(data, state = as.character(state)))$matrix
   expect_equal(unname(ordered_new), unname(ordered_matrix))
 
   custom_data = transform(data, state = factor(state))
   contrasts(custom_data$state) = stats::contr.sum(3)
   custom_fit = suppressWarnings(mcp(list(y ~ state), custom_data, par_x = "x", sample = FALSE))
-  custom_tables = suppressWarnings(get_predictor_tables(custom_fit$model, custom_data, custom_fit$family, par_x = "x"))
-  custom_matrix = get_predictor_matrix(custom_tables$predictors)  # No group-level effects
+  custom_tables = suppressWarnings(get_coef_tables(custom_fit$model, custom_data, custom_fit$family, par_x = "x"))
+  custom_matrix = get_predictor_matrix(custom_tables$coefs)  # No group-level effects
   custom_new = get_model_data(custom_fit, transform(custom_data, state = as.character(state)))$matrix
   expect_equal(unname(custom_new), unname(custom_matrix))
 })
@@ -404,8 +404,8 @@ test_that("prediction is independent of later contrast options", {
     state = factor(rep(c("a", "b", "c"), 2))
   )
   fit = mcp(list(y ~ state), data, par_x = "x", sample = FALSE)
-  fitted_tables = get_predictor_tables(fit$model, data, fit$family, par_x = "x")
-  fitted_matrix = get_predictor_matrix(fitted_tables$predictors)  # No group-level effects
+  fitted_tables = get_coef_tables(fit$model, data, fit$family, par_x = "x")
+  fitted_matrix = get_predictor_matrix(fitted_tables$coefs)  # No group-level effects
 
   options(contrasts = c("contr.sum", "contr.poly"))
   new_matrix = get_model_data(fit, data)$matrix
@@ -415,7 +415,7 @@ test_that("prediction is independent of later contrast options", {
 test_that("data-derived bases reuse their fitted specification", {
   data = data.frame(x = 1:8, y = 1:8)
   newdata = data.frame(x = 9:10)
-  coefficients = function(fit) setdiff(get_fit_model_tables(fit)$predictors$name, c("Intercept_1", "sigma_1"))
+  coefficients = function(fit) setdiff(get_fit_model_tables(fit)$coefs$name, c("Intercept_1", "sigma_1"))
 
   scale_fit = mcp(list(y ~ scale(x)), data, sample = FALSE)
   expect_equal(

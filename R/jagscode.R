@@ -31,10 +31,10 @@ get_jags_family_context = function(data_columns) {
 #' @return String. A JAGS model.
 #' @noRd
 get_jags_code = function(model_tables, prior_table, family) {
-  group_predictors = definition_rows(model_tables$group_predictors)
+  group_coefs = definition_rows(model_tables$group_coefs)
   par_x = model_tables$data_columns$par_x
-  ar_order = get_arma_order(model_tables$predictors, "ar")
-  ma_order = get_arma_order(model_tables$predictors, "ma")
+  ar_order = get_arma_order(model_tables$coefs, "ar")
+  ma_order = get_arma_order(model_tables$coefs, "ma")
 
   # Begin building JAGS model.
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
@@ -79,7 +79,7 @@ get_jags_code = function(model_tables, prior_table, family) {
   ################
   # Split scalar/population priors from group-indexed coefficient priors.
   is_cp = prior_table$parameter %in% c(cps$name, cps$sd_name, cps$group_name)
-  group_cols = stats::setNames(group_predictors$group_col, group_predictors$name)
+  group_cols = stats::setNames(group_coefs$group_col, group_coefs$name)
   is_group = prior_table$parameter %in% names(group_cols)
   for (i in which(!is_cp & !is_group))
     jags_code = paste0(jags_code, get_prior_str(prior_table[i, ]))

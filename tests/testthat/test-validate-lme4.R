@@ -95,7 +95,7 @@ test_that("Gaussian uncorrelated random intercept and slope model agrees with lm
 })
 
 
-test_that("Gaussian fixed change point with group intercepts agrees with lme4::lmer()", {
+test_that("Gaussian constant change point with group-level intercepts agrees with lme4::lmer()", {
   testthat::skip_if_not_installed("lme4")
 
   set.seed(42)

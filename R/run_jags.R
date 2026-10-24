@@ -123,10 +123,10 @@ run_jags = function(jags_code,
 }
 
 
-# The JAGS glm module helps some families always and others only with group-level predictor effects.
-use_jags_glm = function(family, group_predictors) {
+# The JAGS glm module helps some families always and others only with group-level effects in the predictor part.
+use_jags_glm = function(family, group_coefs) {
   glm_module = family$backends$jags$glm_module
-  identical(glm_module, "always") || (identical(glm_module, "group_effects") && nrow(group_predictors) > 0)
+  identical(glm_module, "always") || (identical(glm_module, "group_effects") && nrow(group_coefs) > 0)
 }
 
 
@@ -307,12 +307,12 @@ assert_jags_namespace = function(data_names, family, n_segments, parameters, jag
 #' @param data A tibble
 #' @param n_segments The number of segments.
 #' @param data_columns Data-column roles, as returned by `mcp_columns()`.
-#' @param predictors The `predictors` table from `get_predictor_tables()`.
-#' @param group_predictors The `group_predictors` table from `get_predictor_tables()`.
+#' @param coefs The `coefs` table from `get_coef_tables()`.
+#' @param group_coefs The `group_coefs` table from `get_coef_tables()`.
 #' @param parameters The parameters table from `get_pars_table()`.
 #' @param design_specs Named fitted design specifications.
 #' @noRd
-get_jags_data = function(data, family, n_segments, data_columns, predictors, group_predictors, parameters, jags_code,
+get_jags_data = function(data, family, n_segments, data_columns, coefs, group_coefs, parameters, jags_code,
                           generated = TRUE, design_specs = list()) {
   group_cols = unique(stats::na.omit(parameters$group_col))
   series = data_columns$series
@@ -340,7 +340,7 @@ get_jags_data = function(data, family, n_segments, data_columns, predictors, gro
   }
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
-  jags_data$rhs_matrix_ = get_predictor_matrix(predictors, group_predictors)
+  jags_data$rhs_matrix_ = get_predictor_matrix(coefs, group_coefs)
 
   # Add any offset vectors to JAGS data
   for (design_spec in design_specs) {

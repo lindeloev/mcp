@@ -1,19 +1,19 @@
 test_that("AR and MA terms are parsed as separate model components", {
   data = data.frame(x = 1:6, y = 1:6)
-  predictors = get_predictors(
+  coefs = get_coefs(
     list(y ~ 1 + x + ar(2, 1 + x) + ma(1, 0 + x)),
     data,
     as_mcpfamily(gaussian()),
     par_x = "x"
   )
 
-  expect_setequal(unique(predictors$dpar), c("mu", "sigma", "ar", "ma"))
-  expect_equal(unique(predictors$order[predictors$dpar == "ar"]), 1:2)
-  expect_equal(unique(predictors$order[predictors$dpar == "ma"]), 1)
-  expect_equal(sum(predictors$dpar == "ar"), 4)
-  expect_equal(sum(predictors$dpar == "ma"), 1)
-  expect_true(all(grepl("^ar[12]_", predictors$name[predictors$dpar == "ar"])))
-  expect_true(all(grepl("^ma1_", predictors$name[predictors$dpar == "ma"])))
+  expect_setequal(unique(coefs$dpar), c("mu", "sigma", "ar", "ma"))
+  expect_equal(unique(coefs$order[coefs$dpar == "ar"]), 1:2)
+  expect_equal(unique(coefs$order[coefs$dpar == "ma"]), 1)
+  expect_equal(sum(coefs$dpar == "ar"), 4)
+  expect_equal(sum(coefs$dpar == "ma"), 1)
+  expect_true(all(grepl("^ar[12]_", coefs$name[coefs$dpar == "ar"])))
+  expect_true(all(grepl("^ma1_", coefs$name[coefs$dpar == "ma"])))
 })
 
 
@@ -22,15 +22,15 @@ test_that("AR and MA each allow one term per segment", {
   family = as_mcpfamily(gaussian())
 
   expect_error(
-    get_predictors(list(y ~ ar(1) + ar(2)), data, family, par_x = "x"),
+    get_coefs(list(y ~ ar(1) + ar(2)), data, family, par_x = "x"),
     "Only one `ar()` allowed in each segment", fixed = TRUE
   )
   expect_error(
-    get_predictors(list(y ~ ma(1) + ma(2)), data, family, par_x = "x"),
+    get_coefs(list(y ~ ma(1) + ma(2)), data, family, par_x = "x"),
     "Only one `ma()` allowed in each segment", fixed = TRUE
   )
   expect_no_error(
-    get_predictors(list(y ~ ar(1) + ma(1)), data, family, par_x = "x")
+    get_coefs(list(y ~ ar(1) + ma(1)), data, family, par_x = "x")
   )
 })
 
@@ -39,15 +39,15 @@ test_that("including a lower-order AR/MA turns off higher lags", {
   data = data.frame(x = 1:6, y = 1:6)
   family = as_mcpfamily(gaussian())
 
-  predictors = get_predictors(
+  coefs = get_coefs(
     list(y ~ ar(2), ~ ar(1)), data, family, par_x = "x"
   )
   expect_equal(
-    predictors$next_segment[predictors$name == "ar2_1"],
+    coefs$next_segment[coefs$name == "ar2_1"],
     2L
   )
 
-  joined_lower = get_predictors(
+  joined_lower = get_coefs(
     list(y ~ ar(2), ~ ar(1, 0)), data, family, par_x = "x"
   )
   expect_equal(joined_lower$next_segment[joined_lower$name == "ar1_1"], NA_integer_)
@@ -60,16 +60,16 @@ test_that("including a lower-order AR/MA turns off higher lags", {
     perl = TRUE
   )
 
-  zeroed = get_predictors(
+  zeroed = get_coefs(
     list(y ~ ar(2), ~ ar(2, 0)), data, family, par_x = "x"
   )
   expect_true(all(is.na(zeroed$next_segment[zeroed$dpar == "ar"])))
 
-  ma_predictors = get_predictors(
+  ma_coefs = get_coefs(
     list(y ~ ma(2), ~ ma(1)), data, family, par_x = "x"
   )
   expect_equal(
-    ma_predictors$next_segment[ma_predictors$name == "ma2_1"],
+    ma_coefs$next_segment[ma_coefs$name == "ma2_1"],
     2L
   )
 })
@@ -79,13 +79,13 @@ test_that("ar(0) and ma(0) turn off AR/MA components", {
   data = data.frame(x = 1:6, y = 1:6)
   family = as_mcpfamily(gaussian())
 
-  zeroed_ar = get_predictors(
+  zeroed_ar = get_coefs(
     list(y ~ 1 + x + ar(2), ~ 0 + x + ar(0)), data, family, par_x = "x"
   )
   expect_true(all(zeroed_ar$next_segment[zeroed_ar$dpar == "ar" & zeroed_ar$segment == 1] == 2L))
   expect_equal(sum(zeroed_ar$dpar == "ar" & zeroed_ar$segment == 2), 0)
 
-  zeroed_ma = get_predictors(
+  zeroed_ma = get_coefs(
     list(y ~ 1 + x + ma(2), ~ 0 + x + ma(0)), data, family, par_x = "x"
   )
   expect_true(all(zeroed_ma$next_segment[zeroed_ma$dpar == "ma" & zeroed_ma$segment == 1] == 2L))
@@ -124,11 +124,11 @@ test_that("positive-order AR/MA zero formulas are joined to the earlier intercep
 
 test_that("AR/MA components are off until included again", {
   data = data.frame(x = 1:9, y = rep(c(1, 2, 3), 3))
-  predictors = get_predictors(
+  coefs = get_coefs(
     list(y ~ ar(1), ~ 0, ~ ar(1)), data, as_mcpfamily(gaussian()), par_x = "x"
   )
   expect_equal(
-    stats::setNames(predictors$next_segment[predictors$dpar == "ar"], predictors$name[predictors$dpar == "ar"]),
+    stats::setNames(coefs$next_segment[coefs$dpar == "ar"], coefs$name[coefs$dpar == "ar"]),
     c(ar1_1 = 2L, ar1_3 = NA_integer_)
   )
 
@@ -146,7 +146,7 @@ test_that("MA order errors describe MA syntax", {
   data = data.frame(x = 1:6, y = 1:6)
 
   expect_error(
-    get_predictors(
+    get_coefs(
       list(y ~ ma(x)),
       data,
       as_mcpfamily(gaussian()),
@@ -162,25 +162,25 @@ test_that("One GARMA threshold applies to all segments and defaults to 0.1", {
   data = data.frame(x = 1:6, y = 1:6)
   family = as_mcpfamily(gaussian())
   get_thresholds = function(model) {
-    predictors = get_predictors(model, data, family, par_x = "x")
-    unique(predictors$threshold[predictors$dpar %in% c("ar", "ma")])
+    coefs = get_coefs(model, data, family, par_x = "x")
+    unique(coefs$threshold[coefs$dpar %in% c("ar", "ma")])
   }
 
   expect_equal(get_thresholds(list(y ~ ar(1), ~ ar(1, 1 + x))), 0.1)
   expect_equal(get_thresholds(list(y ~ ar(1), ~ ar(1, 1 + x, threshold = 0.2) + ma(1))), 0.2)
 
   expect_error(
-    get_predictors(list(y ~ ar(1, threshold = 0.2) + ma(1, threshold = 0.3)), data, family, "x"),
+    get_coefs(list(y ~ ar(1, threshold = 0.2) + ma(1, threshold = 0.3)), data, family, "x"),
     "Only one `threshold` value can be specified across all ar() and ma() terms.",
     fixed = TRUE
   )
   expect_error(
-    get_predictors(list(y ~ ar(1, threshold = 0.2), ~ ar(1, threshold = 0.3)), data, family, "x"),
+    get_coefs(list(y ~ ar(1, threshold = 0.2), ~ ar(1, threshold = 0.3)), data, family, "x"),
     "Only one `threshold` value can be specified across all ar() and ma() terms.",
     fixed = TRUE
   )
   expect_error(
-    get_predictors(list(y ~ ar(1, threshold = 0)), data, family, "x"),
+    get_coefs(list(y ~ ar(1, threshold = 0)), data, family, "x"),
     "`threshold` in ar() must be one number between 0 and 1.",
     fixed = TRUE
   )

@@ -131,7 +131,7 @@ test_matches_simulated = function(fit, min_ess) {
   matches = summaries$match == "OK" | (summaries$sim >= new_lower & summaries$sim <= new_upper)
   correctly_estimated = (sum(!matches) <= max_failures)
 
-  # At least some effective samples for structural parameters. Individual
+  # A minimum ESS for structural parameters. Individual
   # Group-level deviations are still checked for recovery above, but their ESS is not
   # a useful regression signal because it is dominated by partial pooling.
   ess_summaries = summaries[!grepl("[", summaries$parameter, fixed = TRUE), ]
@@ -170,7 +170,7 @@ test_example_plot = function(plot, example) {
 #' @param plot The plot produced by `mcp_example()`.
 #' @param example The name passed to `mcp_example()`.
 snapshot_example_plot = function(plot, example) {
-  # JAGS 5 samples differ from JAGS 4 for the same seed, so the reference snapshots only apply to JAGS 4.
+  # JAGS 5 draws differ from JAGS 4 for the same seed, so the reference snapshots only apply to JAGS 4.
   testthat::skip_if(utils::packageVersion("rjags") >= "5", "Example snapshots were made with JAGS 4.")
   if (inherits(plot, "patchwork"))
     plot = plot & ggplot2::theme_gray()

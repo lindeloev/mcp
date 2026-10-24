@@ -291,30 +291,30 @@ mcp = function(
   model = parsed$model
   cps = parsed$cps
   data_columns = parsed$data_columns
-  predictor_tables = get_predictor_tables(model, data, family, par_x)
-  predictor_occurrences = predictor_tables$predictors
-  group_occurrences = predictor_tables$group_predictors
-  predictor_definitions = definition_rows(predictor_occurrences)
-  group_definitions = definition_rows(group_occurrences)
-  family = resolve_dpar_specs(family, predictor_tables$components)
-  parameters = get_pars_table(predictor_definitions, cps, group_definitions, family)
+  coef_tables = get_coef_tables(model, data, family, par_x)
+  coefs = coef_tables$coefs
+  group_coefs = coef_tables$group_coefs
+  coef_definitions = definition_rows(coefs)
+  group_definitions = definition_rows(group_coefs)
+  family = resolve_dpar_specs(family, coef_tables$components)
+  parameters = get_pars_table(coef_definitions, cps, group_definitions, family)
   if (nrow(parameters) == 0)
     stop("The model does not contain any parameters to estimate.", call. = FALSE)
 
   # Make prior
-  assert_prior_not_shared(prior, predictor_occurrences, group_occurrences)
-  prior_table = get_prior_table(data_columns, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
-  assert_constant_dpars(prior_table, predictor_definitions, family)
+  assert_prior_on_definitions(prior, coefs, group_coefs)
+  prior_table = get_prior_table(data_columns, cps, coef_definitions, group_definitions, family, prior, data, coef_tables$design_specs, reparam)
+  assert_constant_dpars(prior_table, coef_definitions, family)
 
   # Data-sized design values are only needed to build the model. Fitted-model
   # methods evaluate the stored design specifications on (new)data instead.
   model_tables = list(
     data_columns = data_columns,
     cps = cps,
-    predictors = dplyr::select(predictor_occurrences, -"matrix_data"),
-    group_predictors = dplyr::select(group_occurrences, -"matrix_data"),
+    coefs = dplyr::select(coefs, -"matrix_data"),
+    group_coefs = dplyr::select(group_coefs, -"matrix_data"),
     parameters = parameters,
-    design_specs = lapply(predictor_tables$design_specs, function(design_spec) {
+    design_specs = lapply(coef_tables$design_specs, function(design_spec) {
       design_spec$offset_data = NULL
       environment(design_spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
       design_spec
@@ -327,14 +327,14 @@ mcp = function(
   if (length(unreachable) > 0)
     stop(
       "Function(s) used in the formulas are not available from the global environment: ", and_collapse(paste0("`", unreachable, "`")),
-      ". Define them at the top level, or add the transformed column(s) to `data`.",
+      ". Define them in the global environment, or add the transformed column(s) to `data`.",
       call. = FALSE
     )
 
-  has_arma = any(predictor_definitions$dpar %in% c("ar", "ma"))
+  has_arma = any(coef_definitions$dpar %in% c("ar", "ma"))
   if (has_arma) {
-    check_arma_model(family, predictor_definitions, data_columns, data)
-    warn_arma_not_included(predictor_tables$components)
+    check_arma_model(family, coef_definitions, data_columns, data)
+    warn_arma_not_included(coef_tables$components)
   }
 
   # Make jags code if it is not provided by the user
@@ -348,9 +348,9 @@ mcp = function(
   # SAMPLE #
   ##########
   jags_data = get_jags_data(
-    data, family, length(model), data_columns, predictor_occurrences, group_occurrences, parameters, jags_code,
+    data, family, length(model), data_columns, coefs, group_coefs, parameters, jags_code,
     generated = !custom_jags_code,
-    design_specs = predictor_tables$design_specs
+    design_specs = coef_tables$design_specs
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses

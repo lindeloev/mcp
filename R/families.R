@@ -101,7 +101,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   # Default values and funcs for the dependent variable (the response)
   response_defaults = list(
     auxiliary = list(weights = list(
-      required = FALSE,  # Is this required in the formula? FALSE = can be omitted.
+      required = FALSE,  # Is this required in the formula? FALSE = need not be included.
       operations = "log_lik"  # For which operations is this auxiliary column needed?
     )),
     validate = function(y, data, data_columns) invisible(TRUE),  # Default to no validation
@@ -268,7 +268,7 @@ mcpfamily_gaussian = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = "log", lower = 0, floor = 1e-5)
+      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_term = TRUE, link_modeled = "log", lower = 0, floor = 1e-5)
     ),
     default_prior = default_prior,
     response = list(),
@@ -584,7 +584,7 @@ mcpfamily_negbinomial = function(family) {
     family,
     dpar_specs = dplyr::bind_rows(
       new_dpar_spec("mu", family$link),
-      new_dpar_spec("shape", "identity", implicit = TRUE, require_initial_predictor = TRUE, link_modeled = family$link_shape, lower = 0)
+      new_dpar_spec("shape", "identity", implicit = TRUE, require_initial_term = TRUE, link_modeled = family$link_shape, lower = 0)
     ),
     default_prior = default_prior,
     response = response,
@@ -597,8 +597,8 @@ mcpfamily_negbinomial = function(family) {
 
 # Describe a distributional parameter. `lower` is the exclusive lower bound of its
 # support (e.g., 0 for sigma) and bounds constant priors. `floor` is an optional numerical
-# floor on observation-level values (see dev/DECISIONS.md for sigma).
-new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor = FALSE, lower = NA_real_,
+# floor on per-observation values (see dev/DECISIONS.md for sigma).
+new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_term = FALSE, lower = NA_real_,
                           link_modeled = link, floor = NA_real_) {
   tibble::tibble(
     dpar = dpar,
@@ -607,7 +607,7 @@ new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_predictor
     link_modeled = link_modeled,
     modeled = FALSE,
     implicit = implicit,
-    require_initial_predictor = require_initial_predictor,
+    require_initial_term = require_initial_term,
     lower = lower,
     floor = floor
   )
@@ -650,7 +650,7 @@ assert_dpar_specs = function(x) {
   checkmate::assert_data_frame(x)
   required = c(
     "dpar", "link", "link_constant", "link_modeled", "modeled",
-    "implicit", "require_initial_predictor", "lower", "floor"
+    "implicit", "require_initial_term", "lower", "floor"
   )
   assert_data_cols(x, required)
 
@@ -674,8 +674,8 @@ assert_dpar_specs = function(x) {
     stop("`family$dpar_specs$modeled` must be logical without missing values.")
   if (!is.logical(x$implicit) || anyNA(x$implicit))
     stop("`family$dpar_specs$implicit` must be logical without missing values.")
-  if (!is.logical(x$require_initial_predictor) || anyNA(x$require_initial_predictor))
-    stop("`family$dpar_specs$require_initial_predictor` must be logical without missing values.")
+  if (!is.logical(x$require_initial_term) || anyNA(x$require_initial_term))
+    stop("`family$dpar_specs$require_initial_term` must be logical without missing values.")
   if (!is.numeric(x$lower))
     stop("`family$dpar_specs$lower` must be numeric.")
   if (!is.numeric(x$floor))

@@ -135,32 +135,32 @@ test_that("hypothesis()", {
     fixed = TRUE
   )
 
-  fit_fixed = fit_same
-  mcmc_prior = .subset2(fit_fixed, "mcmc_prior")
-  mcmc_post = .subset2(fit_fixed, "mcmc_post")
+  fit_constant = fit_same
+  mcmc_prior = .subset2(fit_constant, "mcmc_prior")
+  mcmc_post = .subset2(fit_constant, "mcmc_post")
   for (chain in seq_along(mcmc_prior)) {
     mcmc_prior[[chain]][, "sigma_1"] = 1
     mcmc_post[[chain]][, "sigma_1"] = 1
   }
-  fit_fixed$mcmc_prior = mcmc_prior
-  fit_fixed$mcmc_post = mcmc_post
+  fit_constant$mcmc_prior = mcmc_prior
+  fit_constant$mcmc_post = mcmc_post
   expect_error(
-    hypothesis(fit_fixed, "sigma_1 = 0.99"),
+    hypothesis(fit_constant, "sigma_1 = 0.99"),
     "prior contrast is constant",
     fixed = TRUE
   )
 
-  fit_shared = fit_same
-  mcmc_prior = .subset2(fit_shared, "mcmc_prior")
-  mcmc_post = .subset2(fit_shared, "mcmc_post")
+  fit_same_draws = fit_same
+  mcmc_prior = .subset2(fit_same_draws, "mcmc_prior")
+  mcmc_post = .subset2(fit_same_draws, "mcmc_post")
   for (chain in seq_along(mcmc_prior)) {
     mcmc_prior[[chain]][, "Intercept_3"] = mcmc_prior[[chain]][, "Intercept_1"]
     mcmc_post[[chain]][, "Intercept_3"] = mcmc_post[[chain]][, "Intercept_1"]
   }
-  fit_shared$mcmc_prior = mcmc_prior
-  fit_shared$mcmc_post = mcmc_post
+  fit_same_draws$mcmc_prior = mcmc_prior
+  fit_same_draws$mcmc_post = mcmc_post
   expect_error(
-    hypothesis(fit_shared, "Intercept_1 = Intercept_3"),
+    hypothesis(fit_same_draws, "Intercept_1 = Intercept_3"),
     "prior contrast is constant",
     fixed = TRUE
   )

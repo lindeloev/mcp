@@ -110,7 +110,7 @@ test_that("mcp sampling iterations are validated", {
 })
 
 
-test_that("mcp seed reproduces prior and posterior samples", {
+test_that("mcp seed reproduces prior and posterior draws", {
   old_plan = future::plan(future::sequential)
   on.exit(future::plan(old_plan), add = TRUE)
 
