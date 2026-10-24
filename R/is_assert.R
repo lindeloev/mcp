@@ -42,7 +42,7 @@ stop_github = function(...) {
 # describe the observation (e.g., exposure), so omitting one in a segment is likely a mistake.
 # Dpars apply in all segments (joined when omitted); AR/MA only in segments that include them.
 assert_offsets = function(components, family) {
-  for (dpar in c(family$dpars, "ar", "ma")) {
+  for (dpar in c(family$dpar_specs$dpar, "ar", "ma")) {
     is_arma = dpar %in% c("ar", "ma")
     forms = lapply(components, function(x) if (is_arma) x[[dpar]]$form else x[[dpar]])
     applies = if (is_arma) !vapply(forms, is.null, logical(1)) else rep(TRUE, length(forms))
@@ -284,7 +284,7 @@ assert_dpar = function(dpar, fit, type) {
   predictors = get_fit_model_tables(fit)$predictors
   allowed_dpars = unique(c(
     paste0(predictors$dpar, tidyr::replace_na(as.character(predictors$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
-    fit$family$dpars,  # any model parameters that have no regression terms (~0)
+    fit$family$dpar_specs$dpar,  # any model parameters that have no regression terms (~0)
     "epred"
   ))
   checkmate::assert_string(dpar)

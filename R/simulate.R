@@ -118,7 +118,7 @@ evaluate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
   links = evaluate_formula(tables, family, data, pars, n_draws)
 
   # Distributional parameters on the response scale, with numerical floors as in the JAGS code
-  dpars = lapply(stats::setNames(nm = family$dpars), function(name) {
+  dpars = lapply(stats::setNames(nm = family$dpar_specs$dpar), function(name) {
     spec = get_dpar_spec(family, name)
     value = get_link_function(spec$link, inverse = TRUE)(links[[name]])
     if (!is.na(spec$floor))

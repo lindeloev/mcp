@@ -117,7 +117,6 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
   family$r = r
   family$backends = backends
   family$garma = garma
-  family = add_dpar_specs(family)
 
   family$linkfun = get_link_function(family$link)
   family$linkinv = get_link_function(family$link, inverse = TRUE)
@@ -627,29 +626,17 @@ get_constant_dpar_bounds = function(family) {
 }
 
 
-# Standardize and expose a family's distributional-parameter metadata.
-add_dpar_specs = function(family) {
-  assert_dpar_specs(family$dpar_specs)
-  family$dpars = family$dpar_specs$dpar
-  family$links = stats::setNames(family$dpar_specs$link, family$dpar_specs$dpar)
-  family
-}
-
-
 # Resolve each dpar link from whether the model includes a formula for it, e.g., sigma(1).
 # - components: A list with `get_segment_components()` for each segment.
 resolve_dpar_specs = function(family, components) {
   checkmate::assert_class(family, "mcpfamily")
-  family = add_dpar_specs(family)
-
   family$dpar_specs$modeled = family$dpar_specs$dpar %in% unlist(lapply(components, names))
   family$dpar_specs$link = ifelse(
     family$dpar_specs$modeled,
     family$dpar_specs$link_modeled,
     family$dpar_specs$link_constant
   )
-
-  add_dpar_specs(family)
+  family
 }
 
 
@@ -806,8 +793,6 @@ assert_mcpfamily = function(x) {
   checkmate::assert_data_frame(x$default_prior)
   assert_data_cols(x$default_prior, c("dpar", "par_type", "prior"))
   assert_dpar_specs(x$dpar_specs)
-  checkmate::assert_character(x$dpars)
-  checkmate::assert_character(x$links)
   checkmate::assert_list(x$response$auxiliary)
   auxiliary_names = names(x$response$auxiliary)
   if (length(auxiliary_names) > 0) {

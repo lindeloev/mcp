@@ -118,7 +118,7 @@ get_predictor_group_definitions_segment = function(
 ) {
   # Parse group-level terms for all distributional parameters (including mu)
   definitions = list()
-  for (dpar in intersect(family$dpars, names(components))) {
+  for (dpar in intersect(family$dpar_specs$dpar, names(components))) {
     form_env = environment(components[[dpar]])
     standardized = standardize_shared_component(components[[dpar]], segment)
     selected = standardized$selected

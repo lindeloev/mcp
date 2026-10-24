@@ -240,14 +240,14 @@ get_segment_components = function(form_rhs, family) {
   # Unpack top-level additive terms and their wrapper names
   leaves = unpack_additive(form_rhs[[2]])
   leaf_names = vapply(leaves, function(x) if (is.call(x)) deparse1(x[[1]]) else "", character(1))
-  wrappers = c(family$dpars, "ar", "ma")
+  wrappers = c(family$dpar_specs$dpar, "ar", "ma")
 
-  unsupported = setdiff(intersect(leaf_names, known_dpar_wrappers()), family$dpars)
+  unsupported = setdiff(intersect(leaf_names, known_dpar_wrappers()), family$dpar_specs$dpar)
   if (length(unsupported) > 0) {
     family_call = paste0(family$family, "()")
     stop(
       paste0("`", unsupported, "()`", collapse = " and "), " is not a distributional parameter for family = ", family_call, ". ",
-      "Available parameters: ", and_collapse(paste0("`", family$dpars, "`")), "."
+      "Available parameters: ", and_collapse(paste0("`", family$dpar_specs$dpar, "`")), "."
     )
   }
   repeated = unique(leaf_names[duplicated(leaf_names) & leaf_names %in% wrappers])

@@ -694,7 +694,7 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
   # DISTRIBUTIONAL PARAMETERS #
   #############################
   dpar_pars = list()
-  for (dpar in family$dpars) {
+  for (dpar in family$dpar_specs$dpar) {
     spec = get_dpar_spec(family, dpar)
     dpar_form = components[[dpar]]
 
@@ -772,7 +772,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
 
   # An implicit dpar without a formula anywhere is the parameter itself, e.g., sigma_1
   # rather than the link-scale intercept sigma_Intercept_1 of a modeled sigma().
-  unmodeled = parsed_predictors$dpar %in% setdiff(family$dpars, c("mu", unlist(lapply(components, names))))
+  unmodeled = parsed_predictors$dpar %in% setdiff(family$dpar_specs$dpar, c("mu", unlist(lapply(components, names))))
   parsed_predictors$name[unmodeled] = paste0(parsed_predictors$dpar[unmodeled], "_1")
   predictors = parsed_predictors %>%
     dplyr::filter(.data$par_type != "offset") %>%

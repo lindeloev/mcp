@@ -13,7 +13,7 @@ test_that("families define dpars independently of prior rows", {
   expect_false(any(gaussian_family$dpar_specs$modeled))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpar_specs$require_initial_predictor, c(FALSE, TRUE))
-  expect_equal(gaussian_family$dpars, c("mu", "sigma"))
+  expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_named(
     gaussian_family$default_prior,
     c("dpar", "par_type", "prior", "group_sd_prior", "description", "condition")
@@ -28,7 +28,7 @@ test_that("families define dpars independently of prior rows", {
 
   expect_equal(poisson_family$dpar_specs$dpar, "mu")
   expect_equal(poisson_family$dpar_specs$link, "log")
-  expect_equal(poisson_family$dpars, "mu")
+  expect_equal(poisson_family$dpar_specs$dpar, "mu")
 
   # Compact prior tables are standardized in as_mcpfamily().
   standardized_prior = standardize_family_default_priors(data.frame(
@@ -41,7 +41,7 @@ test_that("families define dpars independently of prior rows", {
 
   for (family in mean_only_families) {
     expect_equal(family$dpar_specs$dpar, "mu")
-    expect_equal(family$dpars, "mu")
+    expect_equal(family$dpar_specs$dpar, "mu")
   }
 
   # Removing prior metadata must not redefine the mathematical family.
@@ -114,7 +114,7 @@ test_that("built-in families implement the shared internal contract", {
     expect_true(is.function(family$r$log_lik))
     expect_true(is.function(family$r$rng))
     expect_true(is.function(family$r$quantile))
-    expect_true(all(family$dpars %in% known_dpar_wrappers()))  # Informative errors for wrappers used with other families
+    expect_true(all(family$dpar_specs$dpar %in% known_dpar_wrappers()))  # Informative errors for wrappers used with other families
     expect_true(is.function(family$backends$jags$likelihood))
     expect_true(is.list(family$response$auxiliary))
     expect_true(is.function(family$response$observed))
@@ -166,7 +166,7 @@ test_that("generated code separates link and distribution scales", {
 
   expect_match(constant_fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, link_sigma_\\[i_\\]\\)")
   expect_false(grepl("max\\(1e-09, link_sigma_", constant_fit$jags_code))
-  expect_equal(constant_fit$family$links["sigma"], c(sigma = "identity"))
+  expect_equal(get_dpar_spec(constant_fit$family, "sigma")$link, "identity")
   expect_false(constant_fit$family$dpar_specs$modeled[
     constant_fit$family$dpar_specs$dpar == "sigma"
   ])
@@ -176,13 +176,13 @@ test_that("generated code separates link and distribution scales", {
   expect_match(fit$jags_code, "link_sigma_\\[i_\\] =")
   expect_match(fit$jags_code, "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
   expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
-  expect_equal(fit$family$links[c("mu", "sigma")], c(mu = "log", sigma = "log"))
+  expect_equal(fit$family$dpar_specs$link, c("log", "log"))
   expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
   expect_equal(fit$prior$sigma_Intercept_1, "dt(-sigma_x_1 * 1, 2.5, 3)")
   expect_prior(fit$prior$sigma_x_1, paste0("dt(0, ", format_prior_number(2.5 / stats::sd(data$x)), ", 3)"))
   expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
 
-  expect_equal(change_fit$family$links["sigma"], c(sigma = "log"))
+  expect_equal(get_dpar_spec(change_fit$family, "sigma")$link, "log")
   expect_equal(
     unname(unlist(change_fit$prior[c("sigma_Intercept_1", "sigma_Intercept_2")])),
     rep("dt(0, 2.5, 3)", 2)
@@ -212,7 +212,6 @@ test_that("included dpar wrappers use the generic formula path", {
     family$dpar_specs,
     new_dpar_spec("aux", "log", implicit = TRUE)
   )
-  family = add_dpar_specs(family)
 
   predictors = get_predictors(
     list(y ~ 1 + x + aux(1 + x)),
@@ -291,7 +290,7 @@ test_that("required dpars have an initial predictor and implicit defaults retain
   expect_true("sigma_Intercept_2" %in% mcp_pars(fit)$parameter)
 
   implicit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", sample = FALSE)
-  expect_equal(implicit$family$links["sigma"], c(sigma = "identity"))
+  expect_equal(get_dpar_spec(implicit$family, "sigma")$link, "identity")
   expect_equal(mcp_pars(implicit)$parameter[grepl("^sigma", mcp_pars(implicit)$parameter)], "sigma_1")
 })
 
@@ -332,7 +331,7 @@ test_that("AR and MA component names are reserved", {
   )
 
   expect_error(
-    add_dpar_specs(family),
+    assert_dpar_specs(family$dpar_specs),
     "'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.",
     fixed = TRUE
   )

@@ -148,7 +148,7 @@ evaluate_formula = function(tables, family, data, pars, n_draws) {
 
   # Sum the terms of each dpar. As in the JAGS code, terms sharing a segment, end, and x-degree
   # are summed before multiplying by x and by where they apply. Dpars without terms are zero.
-  dpars = unique(c(terms$dpar, family$dpars))
+  dpars = unique(c(terms$dpar, family$dpar_specs$dpar))
   lapply(stats::setNames(nm = dpars), function(dpar) {
     link = matrix(0, n_rows, n_draws)
     dpar_terms = terms[terms$dpar == dpar, ]

@@ -178,7 +178,7 @@ pp_eval = function(
   })
   combine = function(get) do.call(cbind, lapply(evaluated, get))  # Blocks of draws are columns
   values = combine(function(block) block$value)
-  dpars = if (keep_dpars) lapply(stats::setNames(nm = fit$family$dpars), function(name) combine(function(block) block$dpars[[name]]))
+  dpars = if (keep_dpars) lapply(stats::setNames(nm = fit$family$dpar_specs$dpar), function(name) combine(function(block) block$dpars[[name]]))
   if (type == "residuals")
     values = y - values
 

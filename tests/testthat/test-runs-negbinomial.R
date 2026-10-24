@@ -116,8 +116,8 @@ test_that("negative-binomial exposes mean-shape metadata and defaults", {
   data = data.frame(x = 1:5, y = c(0, 1, 2, 4, 8))
   fit = mcp(list(y ~ 1 + x), data, family = negbinomial(), sample = FALSE)
 
-  expect_equal(fit$family$dpars, c("mu", "shape"))
-  expect_equal(fit$family$links, c(mu = "log", shape = "identity"))
+  expect_equal(fit$family$dpar_specs$dpar, c("mu", "shape"))
+  expect_equal(fit$family$dpar_specs$link, c("log", "identity"))
   expect_equal(fit$prior$shape_1, "dinvgamma(0.4, 0.3)")
   expect_match(fit$jags_code, "shape_1 = 1 / shape_1_inverse", fixed = TRUE)
 
@@ -138,7 +138,7 @@ test_that("modeled shape uses link-scale coefficient priors", {
     sample = FALSE
   )
 
-  expect_equal(fit$family$links, c(mu = "log", shape = "log"))
+  expect_equal(fit$family$dpar_specs$link, c("log", "log"))
   expect_equal(fit$prior$shape_Intercept_1, "dnorm(-shape_x_1 * 1, 2.5)")
   expect_prior(
     fit$prior$shape_x_1,
@@ -151,8 +151,8 @@ test_that("negative-binomial support does not alter Poisson metadata or priors",
   data = data.frame(x = 1:5, y = c(0, 1, 2, 4, 8))
   fit = mcp(list(y ~ 1 + x), data, family = poisson(), sample = FALSE)
 
-  expect_equal(fit$family$dpars, "mu")
-  expect_equal(fit$family$links, c(mu = "log"))
+  expect_equal(fit$family$dpar_specs$dpar, "mu")
+  expect_equal(fit$family$dpar_specs$link, "log")
   expect_equal(fit$prior$Intercept_1, "dnorm(0.7 - x_1 * 1, 2.5)")
   expect_prior(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
 
