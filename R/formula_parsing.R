@@ -38,15 +38,29 @@ get_rhs = function(form) {
 }
 
 
-# Check whether an expression is a formula call, e.g., `y ~ x`
-is_tilde_call = function(expr) {
-  is.call(expr) && identical(expr[[1]], as.name("~"))
+# Check whether an expression is a call to `name`, e.g., "cp" for `cp(1)` or "~" for `y ~ x`
+is_call_to = function(expr, name) {
+  is.call(expr) && identical(deparse1(expr[[1]]), name)
 }
 
 
-# Check whether an expression is a call to cp()
-is_cp_call = function(expr) {
-  is.call(expr) && identical(deparse1(expr[[1]]), "cp")
+# Recursively check whether an expression contains any call to `name`
+contains_call_to = function(expr, name) {
+  if (is_call_to(expr, name))
+    return(TRUE)
+  is.call(expr) && any(vapply(as.list(expr)[-1], contains_call_to, logical(1), name = name))
+}
+
+
+# Join expressions with `+`, e.g., list(1, quote(x)) --> `1 + x`
+sum_exprs = function(exprs) {
+  Reduce(function(a, b) call("+", a, b), exprs)
+}
+
+
+# The offset() terms of a terms object, e.g., "offset(log(t))". base::terms() omits them from term.labels.
+get_offset_labels = function(terms) {
+  vapply(attr(terms, "offset"), function(i) deparse1(attr(terms, "variables")[[i + 1]]), character(1))
 }
 
 
@@ -60,22 +74,11 @@ called_functions = function(expr) {
 }
 
 
-# Recursively check whether an expression contains any call to cp()
-contains_cp_call = function(expr) {
-  if (is_cp_call(expr))
-    return(TRUE)
-  if (!is.call(expr))
-    return(FALSE)
-
-  any(vapply(as.list(expr)[-1], contains_cp_call, logical(1)))
-}
-
-
 # Split a segment RHS expression into the cp() content (NULL if absent) and the remaining terms
 # E.g., `cp(1 + (1 | id)) + 0 + x` --> list(cp = `1 + (1 | id)`, rhs = `0 + x`).
 split_cp = function(rhs) {
   leaves = unpack_additive(rhs)
-  is_cp = vapply(leaves, is_cp_call, logical(1))
+  is_cp = vapply(leaves, is_call_to, logical(1), name = "cp")
   if (!any(is_cp))
     return(list(cp = NULL, rhs = rhs))
   if (sum(is_cp) > 1)
@@ -88,7 +91,7 @@ split_cp = function(rhs) {
   rest = leaves[!is_cp]
   list(
     cp = cp[[2]],
-    rhs = if (length(rest) == 0) 1 else Reduce(function(a, b) call("+", a, b), rest)
+    rhs = if (length(rest) == 0) 1 else sum_exprs(rest)
   )
 }
 
@@ -134,7 +137,7 @@ get_formula_vars = function(model) {
   for (i in seq_along(model)) {
     form = model[[i]]
     lhs = if (length(form) == 3) form[[2]] else NULL
-    if (i == 1 && is.call(lhs) && identical(lhs[[1]], as.name("|"))) {
+    if (i == 1 && is_call_to(lhs, "|")) {
       add("response", all.vars(lhs[[2]]))
       add("auxiliary", all.vars(lhs[[3]]))
     } else if (i == 1) {
@@ -164,22 +167,16 @@ remove_terms = function(form, remove) {
   remove = rlang::arg_match0(remove, c("group", "population"))
 
   # Find terms with "|"
-  attrs = attributes(stats::terms(form))
-  term.labels = attrs$term.labels
+  form_terms = stats::terms(form)
+  term.labels = attr(form_terms, "term.labels")
   is_group = stringr::str_detect(term.labels, "\\|")
 
   # Add parenthesis back to them
   term.labels[is_group] = paste0("(", term.labels[is_group], ")")
 
-  # Remove non-matching types
+  # Remove non-matching types. Offsets belong to population formulas.
   if (remove == "group") {
-    term.labels = term.labels[!is_group]
-    # base::terms() omits offset() from term.labels; re-attach it for population formulas
-    if (!is.null(attrs$offset)) {
-      offset_terms = vapply(attrs$offset, function(i) deparse1(attrs$variables[[i + 1]]), character(1))
-      term.labels = c(term.labels, offset_terms)
-    }
-    term.labels = c(attrs$intercept, term.labels)  # Add intercept indicator
+    term.labels = c(attr(form_terms, "intercept"), term.labels[!is_group], get_offset_labels(form_terms))
   } else if (remove == "population") {
     term.labels = term.labels[is_group]
   }
@@ -218,7 +215,7 @@ get_term_content = function(term, env = parent.frame()) {
 
 # Unpack an additive expression into a list of leaf terms
 unpack_additive = function(expr) {
-  if (is.call(expr) && identical(deparse1(expr[[1]]), "+")) {
+  if (is_call_to(expr, "+")) {
     c(unpack_additive(expr[[2]]), unpack_additive(expr[[3]]))
   } else {
     list(expr)
@@ -235,7 +232,6 @@ get_segment_components = function(form_rhs, family) {
   checkmate::assert_formula(form_rhs)
   checkmate::assert_class(family, "mcpfamily")
   as_form = function(expr) stats::as.formula(call("~", expr), env = environment(form_rhs))
-  sum_exprs = function(exprs) Reduce(function(a, b) call("+", a, b), exprs)
 
   # Unpack top-level additive terms and their wrapper names
   leaves = unpack_additive(form_rhs[[2]])
@@ -286,14 +282,14 @@ canonicalize_segment = function(form, i, default_response = NULL) {
   }
 
   split = split_cp(form[[length(form)]])
-  if (contains_cp_call(split$rhs))
+  if (contains_call_to(split$rhs, "cp"))
     stop("Error in segment ", i, ": `cp()` must be a separate term in the formula, e.g., `~ cp((1 | id)) + 0 + x`. Got `", deparse1(form), "`.", call. = FALSE)
 
   # Segment 1 must define the response and cannot contain a change point
   if (i == 1) {
     if (length(form) == 2)
       stop("No response variable in segment 1.", call. = FALSE)
-    if (is_tilde_call(form[[2]]))
+    if (is_call_to(form[[2]], "~"))
       stop("The first segment must have exactly one tilde. Got two.", call. = FALSE)
     if (!is.null(split$cp))
       stop("Segment 1 has no change point, so `cp()` is only allowed in segments 2+.", call. = FALSE)

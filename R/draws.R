@@ -224,10 +224,6 @@ mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = 
   if (!is.null(newdata))
     assert_data_cols(newdata, names(groups))
 
-  draws = tibble::as_tibble(posterior::as_draws_df(fit, prior = prior))
-  if (!is.null(ndraws))
-    draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
-
   # Columns of the selected group-level deviations at the selected levels
   group_nodes = unlist(lapply(names(groups), function(group_col) {
     group_levels = if (is.null(newdata)) unique(fit$data[[group_col]]) else unique(newdata[[group_col]])
@@ -241,7 +237,13 @@ mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = 
       )
     paste0(rep(groups[[group_col]], each = length(group_levels)), "[", group_levels, "]")
   }))
-  draws = dplyr::select(draws, dplyr::all_of(c(".chain", ".iteration", ".draw", mcp_pars(fit, scope = "population")$parameter, group_nodes)))
+
+  # Subset before converting, as models can have many group-level deviations
+  columns = c(mcp_pars(fit, scope = "population")$parameter, group_nodes)
+  draws = posterior::subset_draws(posterior_draws(fit, prior = prior), variable = columns)
+  draws = tibble::as_tibble(posterior::as_draws_df(draws))[c(".chain", ".iteration", ".draw", columns)]
+  if (!is.null(ndraws))
+    draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
   draws[, setdiff(mcp_pars(fit, scope = "group")$parameter, unlist(groups))] = 0
   draws
 }

@@ -53,12 +53,12 @@ legacy_parameter_names = function(x, context) {
 legacy_cp_lhs = function(form, i, response) {
   lhs = form[[2]]
   rhs = form[[3]]
-  if (is_tilde_call(rhs))
+  if (is_call_to(rhs, "~"))
     stop("Error in segment ", i, " (change point): empty change point term.", call. = FALSE)
 
   # `response ~ cp ~ rhs`
-  if (is_tilde_call(lhs)) {
-    if (is_tilde_call(lhs[[2]]))
+  if (is_call_to(lhs, "~")) {
+    if (is_call_to(lhs[[2]], "~"))
       stop("Error in segment ", i, ": Got none or more than two ~ in a segment formula.", call. = FALSE)
     if (!identical(lhs[[2]], response))
       stop("Error in segment ", i, ": the response must be the same as in segment 1. Got `", deparse1(lhs[[2]]), "`.", call. = FALSE)
@@ -68,7 +68,7 @@ legacy_cp_lhs = function(form, i, response) {
     stop("Error in segment ", i, ": the change point is defined both in `cp()` and on the left-hand side. Use only `cp()`.", call. = FALSE)
 
   # If using the old lhs-cp, transform to rhs-cp during soft deprecation.
-  new_rhs = if (identical(lhs, 1)) rhs else Reduce(function(a, b) call("+", a, b), c(call("cp", lhs), unpack_additive(rhs)))
+  new_rhs = if (identical(lhs, 1)) rhs else sum_exprs(c(call("cp", lhs), unpack_additive(rhs)))
   new_form = stats::as.formula(call("~", new_rhs), env = environment(form))
   warning(
     "Left-hand sides in segment 2+ formulas were deprecated in mcp v0.4.0. Use `cp()` for change points: ",

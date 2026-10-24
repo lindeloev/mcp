@@ -137,6 +137,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     return(NULL)
 
   # Select by the independent scope and role dimensions of the parameter table.
+  # Group-level deviations, e.g., "cp_1_id[A]", match by name without the level.
   all_cols = posterior::variables(draws)
   pars = mcp_pars(fit)
   selected = pars$scope == scope
@@ -144,19 +145,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
     selected = selected & pars$role %in% role
   if (!is.null(dpar))
     selected = selected & pars$dpar %in% dpar
-  selected_names = pars$parameter[selected]
-
-  if (scope == "population") {
-    get_cols = all_cols[all_cols %in% selected_names]
-  } else {
-    get_cols = all_cols[vapply(
-      all_cols,
-      function(column) any(startsWith(column, paste0(selected_names, "["))),
-      logical(1)
-    )]
-    if (length(get_cols) == 0)
-      stop("There were no matching parameters in the model.")
-  }
+  get_cols = all_cols[sub("\\[.*\\]$", "", all_cols) %in% pars$parameter[selected]]
 
   # The selection can be empty, e.g., `fixef(fit, dpar = "mu")` when all mu segments are `~ 0`.
   # Return a regular empty summary instead of asking posterior to summarise no draws.
@@ -179,8 +168,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   draws = posterior::subset_draws(draws, variable = get_cols)
   estimates = summarise_pars(draws, width, convergence = if (!prior) cached_convergence(fit))
 
-  # Order rows like mcp_pars() and add `segment`/`dpar`. Group-level deviations, e.g., "cp_1_id[A]",
-  # match by name without the level and keep their factor-level order from the draws.
+  # Order rows like mcp_pars() and add `segment`/`dpar`. Group-level deviations keep their factor-level order from the draws.
   base_name = sub("\\[.*\\]$", "", estimates$parameter)
   match_idx = match(base_name, pars$parameter)
   estimates$segment = pars$segment[match_idx]
@@ -620,9 +608,7 @@ vcov.mcpfit = function(object, correlation = FALSE, pars = NULL, dpar = "mu",
   if (length(pars) == 0)
     return(NULL)
 
-  draws = posterior::as_draws_matrix(posterior_draws(
-    object, prior = prior
-  ))
+  draws = posterior::as_draws_matrix(posterior::subset_draws(posterior_draws(object, prior = prior), variable = pars))
   if (correlation)
     return(stats::cor(draws[, pars, drop = FALSE]))
 
@@ -650,9 +636,7 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
 
   # Central intervals
   probs = c((1 - level) / 2, 1 - (1 - level) / 2)
-  draws = posterior::as_draws_matrix(posterior_draws(
-    object, prior = prior
-  ))
+  draws = posterior::as_draws_matrix(posterior::subset_draws(posterior_draws(object, prior = prior), variable = unique(parm)))
   intervals = parm |>
     vapply(
       function(parameter) stats::quantile(draws[, parameter], probs = probs, names = FALSE),

@@ -499,7 +499,8 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
     facet_by = NULL
 
   # Change point draws in long format: one row per draw, change point, and facet level
-  draws = posterior::as_draws_df(fit, prior = prior)
+  draws = posterior::subset_draws(posterior_draws(fit, prior = prior), variable = c(cps$name, cps$group_name[cp_matches_facet]))
+  draws = posterior::as_draws_df(draws)
   levels = if (is.null(facet_by)) NA else unique(fit$data[[facet_by]])
   draws = dplyr::bind_rows(lapply(seq_along(levels), function(level_index) dplyr::bind_rows(lapply(seq_len(nrow(cps)), function(j) {
     value = draws[[cps$name[j]]]

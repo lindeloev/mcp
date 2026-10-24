@@ -38,7 +38,7 @@ get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
     # Make fine resolution around change points in addition to coarse resolution
     draws = mcmclist_draws(fit, prior = prior)
     cp_pars = get_fit_model_tables(fit)$cps$name
-    draws_mat = as.matrix(draws)[, cp_pars, drop = FALSE]
+    draws_mat = as.matrix(draws[, cp_pars, drop = FALSE])
 
     # Compute and return
     x_values = sort(c(

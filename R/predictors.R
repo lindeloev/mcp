@@ -147,12 +147,7 @@ rewrite_local_x = function(form, par_x) {
   # Rewrite the expanded term labels, then restore the original intercept and offset settings.
   terms = stats::terms(form)
   rewritten = lapply(attr(terms, "term.labels"), rewrite_term)
-  labels = vapply(rewritten, `[[`, character(1), "label")
-  # terms() omits offset() from term.labels; preserve it when reformulating
-  if (!is.null(attr(terms, "offset"))) {
-    offset_terms = vapply(attr(terms, "offset"), function(i) deparse1(attr(terms, "variables")[[i + 1]]), character(1))
-    labels = c(labels, offset_terms)
-  }
+  labels = c(vapply(rewritten, `[[`, character(1), "label"), get_offset_labels(terms))
   form = stats::reformulate(
     labels, intercept = attr(terms, "intercept"), env = environment(form)
   )
@@ -485,23 +480,6 @@ term_contains = function(par_x, terms) {
 # Resolve which terms same() reuses from which segment. Downstream code only sees
 # definition rows and the later occurrences of reused coefficients (see definition_rows()).
 
-# Check whether an expression is a call to same()
-is_same_call = function(expr) {
-  is.call(expr) && identical(deparse1(expr[[1]]), "same")
-}
-
-
-# Recursively check whether an expression contains any call to same()
-contains_same_call = function(expr) {
-  if (is_same_call(expr))
-    return(TRUE)
-  if (!is.call(expr))
-    return(FALSE)
-
-  any(vapply(as.list(expr)[-1], contains_same_call, logical(1)))
-}
-
-
 # Extract and validate formula terms selected by a same() call
 same_selector_terms = function(selector, env) {
   # Disallow unsupported calls inside same()
@@ -509,7 +487,7 @@ same_selector_terms = function(selector, env) {
     stop("`same(offset(...))` is not supported. Repeat `offset(...)` in each segment where it applies.", call. = FALSE)
   if (is.call(selector) && deparse1(selector[[1]]) %in% c("ar", "ma", known_dpar_wrappers()))
     stop("Select terms inside their component, e.g. `sigma(same(1))`, rather than wrapping a component in `same(sigma(1))`.", call. = FALSE)
-  if (contains_same_call(selector))
+  if (contains_call_to(selector, "same"))
     stop("Nested `same()` calls are not supported.", call. = FALSE)
 
   # Convert selector to a formula and extract terms
@@ -569,8 +547,8 @@ parse_same_call = function(expr, segment, env) {
 standardize_shared_component = function(form_rhs, segment) {
   # Expand additive selectors once, retaining ordinary formula coding context
   leaves = unpack_additive(form_rhs[[2]])
-  shared = vapply(leaves, is_same_call, logical(1))
-  if (any(vapply(leaves[!shared], contains_same_call, logical(1))))
+  shared = vapply(leaves, is_call_to, logical(1), name = "same")
+  if (any(vapply(leaves[!shared], contains_call_to, logical(1), name = "same")))
     stop("`same()` must be an additive selector of a complete term, such as `same(x:z)`.", call. = FALSE)
   selected = dplyr::bind_rows(lapply(leaves[shared], parse_same_call,
     segment = segment, env = environment(form_rhs)))
@@ -586,14 +564,14 @@ standardize_shared_component = function(form_rhs, segment) {
     shared_intercept = "(Intercept)" %in% selected$term_key
     if (shared_intercept && any(vapply(bare, function(x) identical(x, 1) || identical(x, 1L), logical(1))))
       stop("An explicit bare `1` and `same(1)` are competing intercepts; include only one.", call. = FALSE)
-    bare_expr = Reduce(function(a, b) call("+", a, b), c(list(0), bare))
+    bare_expr = sum_exprs(c(list(0), bare))
     bare_terms = attr(stats::terms(stats::as.formula(call("~", bare_expr), env = environment(form_rhs))), "term.labels")
     if (any(selected$term_key %in% bare_terms))
       stop("A term cannot be both included directly and reused with `same()` in segment ", segment, ".", call. = FALSE)
 
     # Unwrap selectors for coding; 0 + same(1) still includes an intercept
     leaves[shared] = lapply(leaves[shared], function(x) x[[2]])
-    expr = Reduce(function(a, b) call("+", a, b), leaves)
+    expr = sum_exprs(leaves)
     if (shared_intercept)
       expr = call("+", expr, 1)
     form_rhs = stats::as.formula(call("~", expr), env = environment(form_rhs))
@@ -656,7 +634,8 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
 # deliberately syntactic: a nonzero offset or a group-only formula counts as
 # an initial predictor even though it has no population coefficient.
 is_empty_initial_predictor = function(form) {
-  attrs = attributes(stats::terms(form))
+  form_terms = stats::terms(form)
+  attrs = attributes(form_terms)
   group_terms = attrs$term.labels[vapply(attrs$term.labels, is_group_term, logical(1))]
   population_terms = setdiff(attrs$term.labels, group_terms)
   group_has_coefficients = vapply(group_terms, function(term) {
@@ -665,19 +644,10 @@ is_empty_initial_predictor = function(form) {
     coefficient_attrs$intercept == 1 || length(coefficient_attrs$term.labels) > 0
   }, logical(1))
 
-  # Check regular coefficient-terms; if no issue is found return TRUE
+  # Coefficients or nonzero offsets are initial predictors
   if (attrs$intercept == 1 || length(population_terms) > 0 || any(group_has_coefficients))
     return(FALSE)
-  if (is.null(attrs$offset))
-    return(TRUE)
-
-  # Check offset terms
-  offset_terms = vapply(
-    attrs$offset,
-    function(i) deparse1(attrs$variables[[i + 1]]),
-    character(1)
-  )
-  all(offset_terms %in% c("offset(0)", "stats::offset(0)"))
+  all(get_offset_labels(form_terms) %in% c("offset(0)", "stats::offset(0)"))
 }
 
 
