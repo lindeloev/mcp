@@ -1,5 +1,8 @@
 # mcp terminology
-Use one word per concept in documentation, messages, and user-facing output, so users are not confused.
+Use one word per concept, so users are not confused:
+
+- Documentation, messages, user-facing output, and code comments use the full terms below.
+- Code may use the listed abbreviations (`pars`, `coefs`, `cp`), but nothing else.
 
 
 ## Formulas and segments
@@ -9,7 +12,6 @@ Use one word per concept in documentation, messages, and user-facing output, so 
 - **x-terms**: formula terms involving `par_x`, i.e., the change point dimension, e.g., `x`, `I(x^2)`, `x:z`. They are *measured from the change point*. Avoid: segment-local, "count from".
 - **joined**: a segment without an intercept (`0 + ...`). Avoid: carry, persist, retain.
 - **disjoined**: a segment with an intercept. It starts afresh. Avoid: reset.
-- **predictor**: a variable included in a formula, e.g., "continuous predictor" or "categorical predictor".
 - **linear predictor**: the segmented linear predictor η of a dpar. Always write "linear predictor" in full.
 - **change-point part** / **predictor part**: the two parts of a segment formula, i.e., `cp()` and the rest. Matches the `part` column of `mcp_pars()`.
 - **reuse** and **same**: include an earlier coefficient in a segment with `same()`, e.g., "reuse a coefficient". "same" is an OK word too. Avoid "share" except for priors that share a value, e.g., `Intercept_2 = "Intercept_1"`.
@@ -30,9 +32,14 @@ Use one word per concept in documentation, messages, and user-facing output, so 
 - **population-level change point**: e.g., `cp_1` in a model with group-level change points. Avoid: population change point.
 - **realized**: the result of the bounds of group-level change points, e.g., "realized SD" of the group-specific change points, as opposed to `cp_1_id_sd`, which is the SD *before truncation*.
 - **population-level** / **group-level**: the `scope` of a parameter. Population-level includes the coefficients of all dpars, including AR/MA. It is OK to paranthetically mention fixed/random effects for lme4 users.
+
+
+## Data
 - **variable**: a column in the data, e.g., the change-point variable `par_x`.
+- **predictor**: a variable included in a formula, e.g., "continuous predictor" or "categorical predictor". One predictor can give several coefficients, e.g., a factor or `x + I(x^2)`, so do not use "predictor" for a coefficient.
 - **level**: a factor level, or in "group-level". Avoid for anything else!
 - **par_x** should consistently be called "the change-point variable"
+
 
 ## Priors
 See `vignettes/priors.Rmd#cp_prior`.
@@ -58,3 +65,11 @@ Do not use "bounds" for these.
 - **observed range** (of x): the data from `min(x)` to `max(x)`. Its **ends** are `min(x)` and `max(x)`.
 - **lower and upper ends**: of a central interval, e.g., `.lower`/`.upper` and `lower`/`upper`.
 - **limits**: of plots, e.g., `limits_y` (ggplot convention).
+
+
+## Code only
+- **definition / occurrence**: a coefficient is defined in the first segment that includes it (`definition_segment`) and occurs there and in every later segment that reuses it with `same()`. In docs, say "reuse" instead.
+- **par / pars**: Shorthand for "parameter".
+- **coef / coefs**: Shorthand for "coefficient".
+- **cp**: Shorthand for "change point".
+- **name**: In model tables, the parameter name (e.g., `cp_1`, `x_1`); `mcp_pars()` shows it as parameter.
