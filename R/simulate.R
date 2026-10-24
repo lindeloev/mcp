@@ -71,7 +71,7 @@ populate_design_columns = function(table, evaluated_designs) {
 #' @noRd
 get_model_data = function(fit, newdata) {
   model_tables = get_fit_model_tables(fit)
-  cols = mcp_columns(fit)
+  data_columns = mcp_columns(fit)
   newdata = relevel_newdata(as.data.frame(newdata), fit)
 
   # Evaluate each fitted design once. x-terms are multiplied by x measured from the change point later.
@@ -83,7 +83,7 @@ get_model_data = function(fit, newdata) {
   offset_specs = Filter(function(design_spec) isTRUE(design_spec$has_offset), model_tables$design_specs)
 
   list(
-    x = newdata[[cols$par_x]],
+    x = newdata[[data_columns$par_x]],
     matrix = get_predictor_matrix(
       populate_design_columns(model_tables$coefs, designs),
       populate_design_columns(model_tables$group_coefs, designs)
@@ -92,8 +92,8 @@ get_model_data = function(fit, newdata) {
       lapply(names(offset_specs), function(design_id) as.numeric(designs[[design_id]]$offset)),
       vapply(offset_specs, `[[`, character(1), "offset_name")
     ),
-    series = if (!is.null(cols$series)) newdata[[cols$series]],
-    response = get_family_response_data(fit$family, cols, newdata)
+    series = if (!is.null(data_columns$series)) newdata[[data_columns$series]],
+    response = get_family_response_data(fit$family, data_columns, newdata)
   )
 }
 

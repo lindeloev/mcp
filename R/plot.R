@@ -368,7 +368,7 @@ get_plot = function(x,
 #' @param ... Must be empty. Reserved for future use.
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @seealso plot_pars plot_dpar pp_check
+#' @seealso [plot_pars()], [pp_check()]
 #' @details
 #'   `plot()` evaluates the model on posterior draws like `fitted()` and `predict()`. These represent the
 #'   (joint) posterior distribution. Interval summaries are based on `ndraws` draws, and change-point

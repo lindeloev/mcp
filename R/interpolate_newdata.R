@@ -13,21 +13,15 @@
 #' @param by Character vector of grouping columns to evaluate separately.
 #' @return A vector of x-values to evaluate at.
 #' @noRd
-get_x_values = function(fit, by = NULL, prior = FALSE, arma = NULL) {
+get_x_values = function(fit, by = NULL, prior = FALSE) {
   N_BASIS = 100
   N_CP = 50
   X_RESOLUTION_GROUPED = 300
 
-  if (is.null(arma))
-    arma = is_arma(fit)
-
   data_columns = mcp_columns(fit)
   xdata = fit$data[, data_columns$par_x] |> as.numeric()
 
-  # If there are AR/MA terms and arma == TRUE, evaluate at the data
-  if (isTRUE(arma)) {
-    x_values = xdata
-  } else if (!is.null(by) || is.null(mcmclist_draws(fit, prior = prior, error = FALSE))) {
+  if (!is.null(by) || is.null(mcmclist_draws(fit, prior = prior, error = FALSE))) {
     # Just give up for grouped evaluations (usually very distributed change points)
     # and fits without the requested draws, and return a reasonable resolution
     x_values = seq(min(xdata), max(xdata), length.out = X_RESOLUTION_GROUPED)
@@ -167,7 +161,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
   # Get x-values before `by` is standardized below. Otherwise an absent grouping
   # argument becomes character(0), which selects the denser grouped grid.
   if (is.null(x_values))
-    x_values = get_x_values(fit, by = by, prior = prior, arma = arma)
+    x_values = get_x_values(fit, by = by, prior = prior)
 
   # Get unique predictors
   data_columns = mcp_columns(fit)

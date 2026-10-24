@@ -211,7 +211,7 @@ resolve_prior_ast = function(expr, context) {
   }
 
   # In change point priors, min(x) and max(x) are the JAGS nodes cp_0 and cp_K
-  if (isTRUE(context$cp_limits) && func_name %in% c("min", "max") && identical(args, list(as.name(context$par_x))))
+  if (isTRUE(context$range_as_nodes) && func_name %in% c("min", "max") && identical(args, list(as.name(context$par_x))))
     return(as.name(paste0("cp_", if (func_name == "min") 0 else context$n_segments)))
 
   summaries = c("min", "max", "mean", "median", "sd", "mad")
@@ -313,15 +313,15 @@ compile_prior_record = function(parameter, parsed, all_names, context, source,
                                  description = NULL) {
   kind = prior_kind(parsed, all_names)
   display_original = legacy_translate_prior(format_prior(parsed), context)
-  context$cp_limits = kind == "distribution" && parameter %in% context$cp_pars
+  context$range_as_nodes = kind == "distribution" && parameter %in% context$cp_pars
   resolved = resolve_prior(parsed, context)
   value = format_prior(resolved)
   # Show the exact ends of the observed range, cp_0 and cp_K, as numbers
   display_context = context
-  display_context$cp_limits = FALSE
+  display_context$range_as_nodes = FALSE
   display = resolve_prior(parsed, display_context)
   bounds = describe_prior_bounds(display, context)
-  if (context$cp_limits && parameter %in% context$cp_names)
+  if (context$range_as_nodes && parameter %in% context$cp_names)
     bounds = paste0(bounds, ", ordered")
 
   if (kind == "expression") {

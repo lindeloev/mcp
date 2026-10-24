@@ -705,6 +705,20 @@ test_that("draw-dependent methods require explicit prior selection", {
 })
 
 
+test_that("ndraws is bounded by the available draws", {
+  expect_error(fitted(demo_fit, ndraws = 1001), "`ndraws` cannot exceed the 1000 available draws.", fixed = TRUE)
+
+  # pp_check() defaults to more draws than short fits have
+  short_fit = thin_post_draws(demo_fit, 40)
+  expect_s3_class(pp_check(short_fit), "ggplot")
+})
+
+
+test_that("an empty inits list means no user inits", {
+  expect_no_error(mcp(demo_fit$model, demo_fit$data, inits = list(), sample = FALSE))
+})
+
+
 
 test_that("generics shared with brms and rstantools dispatch both ways", {
   skip_if_not_installed("brms")

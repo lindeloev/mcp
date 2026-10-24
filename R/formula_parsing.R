@@ -104,7 +104,7 @@ split_cp = function(rhs) {
 # E.g., `y ~ 1 + x + offset(log(t)) + (1 | id)` gives response = "y", predictor = "x",
 # group = "id", and offset = "t".
 get_formula_vars = function(model) {
-  checkmate::assert_true(is_mcpmodel(model), .var.name = "model")
+  assert_mcpmodel(model)
   vars = list(response = character(), auxiliary = character(), predictor = character(),
               group = character(), offset = character(), series = character())
   add = function(role, x) vars[[role]] <<- union(vars[[role]], x)

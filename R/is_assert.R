@@ -12,16 +12,16 @@ is_family = function(x) {
   TRUE
 }
 
-# Check if object is a valid mcp model formula list
-is_mcpmodel = function(x) {
-  checkmate::assert_list(x, min.len = 1)
+# Check that `model` is a list of segment formulas
+assert_mcpmodel = function(model) {
+  checkmate::assert_list(model, min.len = 1)
 
-  for (segment in x) {
+  for (segment in model) {
     if (!inherits(segment, "formula"))
       stop("All segments must be formulas. This segment is not a formula: ", segment)
   }
 
-  TRUE
+  invisible(model)
 }
 
 

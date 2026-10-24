@@ -278,10 +278,10 @@ truncate_cp_prior = function(cps, j, parsed, context) {
   if (is.na(parsed$dist) || parsed$dist == "dirichlet")
     return(parsed)
 
-  x_range = paste0(c("min(", "max("), context$x_display, ")")
+  range_ends = paste0(c("min(", "max("), context$x_display, ")")
   bounds = get_prior_bounds(parsed)
   if (!any(nzchar(bounds)))
-    return(set_prior_bounds(parsed, x_range))
+    return(set_prior_bounds(parsed, range_ends))
 
   min_length = get_min_segment_length(bounds, j, cps$name)
   if (identical(min_length, "0")) {
@@ -293,7 +293,7 @@ truncate_cp_prior = function(cps, j, parsed, context) {
     )
   }
   if (!is.null(min_length) && !nzchar(bounds[2]))
-    return(set_prior_bounds(parsed, c(bounds[1], x_range[2])))
+    return(set_prior_bounds(parsed, c(bounds[1], range_ends[2])))
   parsed
 }
 

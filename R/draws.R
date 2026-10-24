@@ -242,8 +242,11 @@ mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = 
   columns = c(mcp_pars(fit, scope = "population")$parameter, group_nodes)
   draws = posterior::subset_draws(posterior_draws(fit, prior = prior), variable = columns)
   draws = tibble::as_tibble(posterior::as_draws_df(draws))[c(".chain", ".iteration", ".draw", columns)]
-  if (!is.null(ndraws))
+  if (!is.null(ndraws)) {
+    if (ndraws > nrow(draws))
+      stop("`ndraws` cannot exceed the ", nrow(draws), " available draws.", call. = FALSE)
     draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
+  }
   draws[, setdiff(mcp_pars(fit, scope = "group")$parameter, unlist(groups))] = 0
   draws
 }

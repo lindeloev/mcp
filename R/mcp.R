@@ -205,7 +205,7 @@ mcp = function(
   # CHECK INPUTS #
   ################
   # Check model
-  checkmate::assert_true(is_mcpmodel(model), .var.name = "model")
+  assert_mcpmodel(model)
   assert_rel(model)
 
   # Check data and data-model correspondence
@@ -269,6 +269,8 @@ mcp = function(
   checkmate::assert_int(iter, lower = 1)
   checkmate::assert_int(warmup, lower = 1)
   checkmate::assert_list(inits, null.ok = TRUE)
+  if (length(inits) == 0)
+    inits = NULL
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
   diagnostics = resolve_diagnostics(diagnostics)
   if (missing(quiet) && identical(Sys.getenv("IN_PKGDOWN"), "true"))
@@ -426,8 +428,8 @@ mcp = function(
 
   # fit$prior in the format of mcp(..., prior), ordered like mcp_pars(). Show the JAGS nodes cp_0 and cp_K
   # as the ends of the observed range, as users specify them.
-  x_range = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, length(model)), "\\b"))
-  prior = stats::setNames(as.list(stringr::str_replace_all(prior_table$value, x_range)), prior_table$parameter)
+  range_ends = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, length(model)), "\\b"))
+  prior = stats::setNames(as.list(stringr::str_replace_all(prior_table$value, range_ends)), prior_table$parameter)
   prior = prior[order(match(names(prior), parameters$parameter))]
 
   # Class stuff

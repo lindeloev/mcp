@@ -85,8 +85,8 @@ add_sim_match = function(estimates, sim, fit) {
 
   # A disjoined change point has the same likelihood anywhere between two adjacent observed x.
   # Match if `sim` is between the same observed x as the interval.
-  cols = mcp_columns(fit)
-  x_obs = sort(unique(fit$data[[cols$par_x]][!is.na(fit$data[[cols$response]])]))
+  data_columns = mcp_columns(fit)
+  x_obs = sort(unique(fit$data[[data_columns$par_x]][!is.na(fit$data[[data_columns$response]])]))
   gap = function(value) findInterval(value, x_obs, left.open = TRUE)
   is_disjoined = estimates$parameter %in% get_disjoined_cps(fit)
   is_match[is_disjoined] = (gap(estimates$lower) <= gap(estimates$sim) & gap(estimates$sim) <= gap(estimates$upper))[is_disjoined]

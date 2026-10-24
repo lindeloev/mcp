@@ -20,12 +20,11 @@
 #'   support `prior = TRUE` or `newdata`. For GARMA models, they default to `arma = TRUE`
 #'   to match the one-step-ahead log-likelihood used for the LOO weights.
 #' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
-#' @seealso \code{\link{plot.mcpfit}} \code{\link{predict.mcpfit}}
+#' @seealso [plot.mcpfit()], [plot_pars()], [predict.mcpfit()]
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
 #' @export pp_check
 #' @exportS3Method bayesplot::pp_check
-#' @seealso plot_pars plot_dpar pp_check
 #' @examples
 #' \donttest{
 #' pp_check(demo_fit)
@@ -56,6 +55,8 @@ pp_check.mcpfit = function(
   checkmate::assert_multi_class(group_effects, c("logical", "character"))
   assert_arma(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
+  if (!is.null(ndraws))
+    ndraws = min(ndraws, sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1))))  # Short fits have fewer draws than the default
 
   if (is.null(newdata)) {
     eval_data = fit$data

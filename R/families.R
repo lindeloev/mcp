@@ -84,20 +84,7 @@ as_mcpfamily = function(x) {
 # - r: R functions for predictions, log_lik(), etc. (see assert_mcpfamily()).
 # - backends$jags: the likelihood in JAGS code and when to use the JAGS glm module.
 # - garma: the observed response for AR/MA on the link scale, bounded by `threshold`. NULL if unsupported.
-new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
-                         default_prior = family$default_prior,
-                         response = family$response, 
-                         r = family$r,
-                         backends = family$backends, 
-                         garma = family$garma) {
-  if (is.null(dpar_specs) || is.null(default_prior) || is.null(response) ||
-      is.null(r) || is.null(backends$jags)) {
-    stop(
-      "family = ", family$family, "() does not have a complete internal mcp ",
-      "family specification."
-    )
-  }
-
+new_mcpfamily = function(family, dpar_specs, default_prior, response, r, backends, garma) {
   # Default values and funcs for the dependent variable (the response)
   response_defaults = list(
     auxiliary = list(weights = list(

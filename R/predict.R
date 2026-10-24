@@ -18,7 +18,7 @@ pp_eval = function(
   arma = TRUE,
   ndraws = NULL,
   draws_format = "tidy",
-  scale = 'response',
+  scale = "response",
   .max_cells = 1e6
 ) {
   ########################

@@ -73,4 +73,7 @@ Do not use "bounds" for these.
 - **par / pars**: Shorthand for "parameter".
 - **coef / coefs**: Shorthand for "coefficient".
 - **cp**: Shorthand for "change point".
+- **cols / \*_cols**: Shorthand for a character vector of column names, e.g., `group_cols` and `required_cols`.
+- **data_columns**: The named list of column roles returned by `mcp_columns()` (`par_x`, `response`, `series`, `trials`, ...). Not shortened, to match `mcp_columns()` and to keep it distinct from `*_cols`.
+- **x_range / range_ends / range_nodes**: The observed range of x as numbers (`range(x)`), as strings (`"min(x)"`, `"max(x)"`), and as the JAGS nodes `cp_0` and `cp_K`.
 - **name**: In model tables, the parameter name (e.g., `cp_1`, `x_1`); `mcp_pars()` shows it as parameter.
