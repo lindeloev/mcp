@@ -97,7 +97,6 @@ importFrom(loo,
   loo_compare,
   waic
 )
-importFrom(magrittr,"%>%")
 importFrom(nlme,
   fixef,
   ranef

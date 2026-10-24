@@ -40,7 +40,7 @@
 \item{width}{Float. The width of the central posterior interval (between 0
 and 1).}
 
-\item{digits}{Non-negative integer. Number of significant digits of \code{sd} when
+\item{digits}{Positive integer. Number of significant digits of \code{sd} when
 printing the summary. Defaults to 2. \code{mean}, \code{lower}, \code{upper}, and \code{sim} are
 rounded to the same decimal places in each row. The returned tibble retains
 the unrounded values.}

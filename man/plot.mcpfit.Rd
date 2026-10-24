@@ -141,10 +141,9 @@ A \pkg{ggplot2} object.
 Plot prior or posterior model draws on top of data.
 }
 \details{
-\code{plot()} uses \code{fit$simulate()} on posterior draws. These represent the
-(joint) posterior distribution. Interval summaries are based on CDFs
-computed on \code{ndraws} draws, and change-point densities are simple
-densities on all available draws.
+\code{plot()} evaluates the model on posterior draws like \code{fitted()} and \code{predict()}. These represent the
+(joint) posterior distribution. Interval summaries are based on \code{ndraws} draws, and change-point
+densities are simple densities on all available draws.
 }
 \section{Functions}{
 \itemize{
