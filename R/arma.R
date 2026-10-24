@@ -144,16 +144,18 @@ assert_arma_series = function(data, series) {
 
 
 # Validate the AR/MA configuration of a model before sampling
-check_arma_model = function(family, predictors, segments, data, par_x, series = NULL) {
+check_arma_model = function(family, predictors, data_columns, data) {
   if (is.null(family$garma))
     stop(
       "family = ", family$family, "(link = \"", family$link,
       "\") does not define the GARMA behavior required by ar() or ma()."
     )
 
-  response_data = get_family_response_data(family, segments, data)
+  response_data = get_family_response_data(family, data_columns, data)
   assert_arma_thresholds(family, predictors$threshold[predictors$dpar %in% c("ar", "ma")], response_data)
 
+  par_x = data_columns$par_x
+  series = data_columns$series
   x_by_series = split(data[[par_x]], if (is.null(series)) 1 else data[[series]])
   x_unordered = any(vapply(
     x_by_series,

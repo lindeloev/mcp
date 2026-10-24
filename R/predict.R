@@ -76,7 +76,6 @@ pp_eval = function(
   ###############
   # Identify grouping columns to exclude based on the `group_effects` argument
   group_info = unpack_group_effects(fit, pars = group_effects)
-  model_tables = get_fit_model_tables(fit)
   group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, if (evaluating_arma) data_columns$series, get_predictor_cols(fit)))
 
@@ -85,8 +84,8 @@ pp_eval = function(
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
   if (type == "fitted" && (rate || dpar != "epred"))
     aux_operations = setdiff(aux_operations, "epred")
-  aux_columns = get_family_aux_columns(fit$family, model_tables$segments)
-  aux_used = names(get_family_aux_columns(fit$family, model_tables$segments, aux_operations))
+  aux_columns = get_family_aux_columns(fit$family, data_columns)
+  aux_used = names(get_family_aux_columns(fit$family, data_columns, aux_operations))
   unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
 
   # Build list of required columns and validate presence in newdata
@@ -112,7 +111,7 @@ pp_eval = function(
   assert_data_cols(newdata, required_cols)
   assert_response_data(
     fit$family,
-    model_tables$segments,
+    data_columns,
     newdata,
     response_required = !response_not_required,
     aux_required = aux_used

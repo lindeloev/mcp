@@ -306,25 +306,17 @@ canonicalize_segment = function(form, i, default_response = NULL) {
 #' Unpacks y variable name
 #'
 #' @inheritParams mcp
-#' @param form_y The left-hand side, e.g., `y | trials(N)`, as a string or expression. NA for segments 2+.
+#' @param form_y The left-hand side, e.g., `y | trials(N)`, as a string or expression.
 #' @param i Segment number
-#' @return A one-row tibble with the response and auxiliary-data columns.
+#' @return A list with the `response` column and one element per family auxiliary,
+#'   e.g., `list(response = "y", trials = "N", weights = NULL)`.
 #' @noRd
 unpack_y = function(form_y, i, family, env = parent.frame()) {
   if (is.language(form_y))
     form_y = deparse1(form_y)
 
   family_aux = names(family$response$auxiliary)
-  aux_names = unique(c("trials", "weights", family_aux))
-  response = stats::setNames(as.list(rep(NA_character_, length(aux_names) + 1)), c("y", aux_names))
-
-  # Segments 2+ have no response
-  if (is.na(form_y)) {
-    if (i == 1)
-      stop("A response must be defined in segment 1, e.g., 'y ~ 1'")
-
-    return(tibble::as_tibble(response))
-  }
+  response = stats::setNames(vector("list", length(family_aux) + 1), c("response", family_aux))
 
 
   # Split `y | trials(N)` into the response and auxiliary terms
@@ -339,7 +331,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
     stop("There should be exactly one response variable. Got ", length(y_col), " in segment ", i)
   if (!is.symbol(str2lang(y_col)))
     stop("The response must be a data column name. Got '", y_col, "' in segment ", i, ". Transform it in the data before fitting, e.g., `data$y_log = log(data$y)`.", call. = FALSE)
-  response$y = y_col
+  response$response = y_col
 
   # AUXILIARY: only the family's terms are allowed after the pipe
   term_labels = character()
@@ -374,7 +366,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
     response[[name]] = column
   }
 
-  tibble::as_tibble(response)
+  response
 }
 
 

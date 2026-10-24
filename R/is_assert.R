@@ -150,10 +150,9 @@ assert_reserved_offset_namespace = function(col_names, context = "data") {
 # Validate response auxiliaries independently of whether responses themselves
 # are observed. This makes the same family-level invariants available to model
 # construction and R-side simulation.
-assert_response_data = function(family, segments, data, response_required = TRUE, aux_required = NULL) {
-  aux_columns = get_family_aux_columns(family, segments)
-  response_columns = c(list(y = segments$y[1]), as.list(aux_columns))
-  response_data = get_family_response_data(family, segments, data)
+assert_response_data = function(family, data_columns, data, response_required = TRUE, aux_required = NULL) {
+  aux_columns = get_family_aux_columns(family, data_columns)
+  response_data = get_family_response_data(family, data_columns, data)
 
   # For auxiliaries not required by the operation, supply valid placeholders
   if (!is.null(aux_required)) {
@@ -169,8 +168,8 @@ assert_response_data = function(family, segments, data, response_required = TRUE
   if (!is.null(weights) && (!is.numeric(weights) || anyNA(weights) || any(weights <= 0)))
     stop("All weights must be numeric and greater than zero.")
 
-  y = if (response_required && segments$y[1] %in% names(data)) data[[segments$y[1]]] else rep(NA_real_, nrow(data))
-  family$response$validate(y, response_data, response_columns)
+  y = if (response_required && data_columns$response %in% names(data)) data[[data_columns$response]] else rep(NA_real_, nrow(data))
+  family$response$validate(y, response_data, data_columns)
 
   invisible(TRUE)
 }

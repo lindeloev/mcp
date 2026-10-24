@@ -132,9 +132,9 @@ use_jags_glm = function(family, group_predictors) {
 
 # JAGS data for sampling the prior. The response is set to NA, except for weighted discrete
 # likelihoods, which use the response in a zeros trick that `response_observed_ = 0` turns off.
-get_jags_prior_data = function(jags_data, family, segments) {
-  if (all(is.na(segments$weights)) || !isTRUE(family$response$is_discrete))
-    jags_data[[segments$y[1]]][] = NA
+get_jags_prior_data = function(jags_data, family, data_columns) {
+  if (is.null(data_columns$weights) || !isTRUE(family$response$is_discrete))
+    jags_data[[data_columns$response]][] = NA
   if (!is.null(jags_data$response_observed_))
     jags_data$response_observed_[] = 0L
   jags_data
@@ -306,18 +306,20 @@ assert_jags_namespace = function(data_names, family, segments, parameters, jags_
 #' @inheritParams run_jags
 #' @param data A tibble
 #' @param segments A segment table returned by `get_segment_tables()`.
+#' @param data_columns Data-column roles, as returned by `mcp_columns()`.
 #' @param predictors The `predictors` table from `get_predictor_tables()`.
 #' @param group_predictors The `group_predictors` table from `get_predictor_tables()`.
 #' @param parameters The parameters table from `get_pars_table()`.
 #' @param design_specs Named fitted design specifications.
 #' @noRd
-get_jags_data = function(data, family, segments, predictors, group_predictors, parameters, jags_code,
-                          series = NULL, generated = TRUE, design_specs = list()) {
+get_jags_data = function(data, family, segments, data_columns, predictors, group_predictors, parameters, jags_code,
+                          generated = TRUE, design_specs = list()) {
   group_cols = unique(stats::na.omit(parameters$group_col))
+  series = data_columns$series
 
   # Start with "raw" data
-  aux_columns = get_family_aux_columns(family, segments)
-  cols_data = unique(stats::na.omit(c(segments$y, segments$x, unname(aux_columns))))
+  aux_columns = get_family_aux_columns(family, data_columns)
+  cols_data = unique(stats::na.omit(c(data_columns$response, data_columns$par_x, unname(aux_columns))))
   assert_jags_namespace(
     unique(c(names(data), group_cols, cols_data, series)), family, segments, parameters, jags_code, generated
   )
@@ -349,11 +351,11 @@ get_jags_data = function(data, family, segments, predictors, group_predictors, p
 
   # Compatibility for custom JAGS code written with the released data
   # constants. Generated code and newly resolved priors no longer need these.
-  context = prior_context(data, segments, design_specs)
+  context = prior_context(data, data_columns, nrow(segments), design_specs)
   jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
 
-  if (generated && any(!is.na(segments$weights))) {  # Zeros trick (see jags_weighted_likelihood())
-    jags_data$response_observed_ = as.integer(!is.na(data[[segments$y[1]]]))
+  if (generated && !is.null(data_columns$weights)) {  # Zeros trick (see jags_weighted_likelihood())
+    jags_data$response_observed_ = as.integer(!is.na(data[[data_columns$response]]))
     jags_data$likelihood_zero_ = numeric(nrow(data))
   }
 

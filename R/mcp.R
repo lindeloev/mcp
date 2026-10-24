@@ -286,9 +286,10 @@ mcp = function(
   # MODEL BUILDING #
   ##################
   # Build model metadata.
-  segment_tables = get_segment_tables(model, data, family, par_x)
+  segment_tables = get_segment_tables(model, data, family, par_x, series)
   segments = segment_tables$segments
   cps = segment_tables$cps
+  data_columns = segment_tables$data_columns
   
   # Pass the same canonical segment formulas to all model-building consumers
   model = Map(stats::as.formula, segments$form, env = segments$form_env)
@@ -305,16 +306,9 @@ mcp = function(
 
   # Make prior
   assert_prior_not_shared(prior, predictor_occurrences, group_occurrences)
-  prior_table = get_prior_table(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
+  prior_table = get_prior_table(data_columns, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
   assert_constant_dpars(prior_table, predictor_definitions, family)
 
-  # Assemble model metadata used by fitted-model methods
-  data_columns = c(
-    list(par_x = par_x, response = unique(segments$y), series = series),
-    lapply(get_family_aux_columns(family, segments), function(column) {
-      if (is.na(column)) NULL else column
-    })
-  )
   # Data-sized design values are only needed to build the model. Fitted-model
   # methods evaluate the stored design specifications on (new)data instead.
   model_tables = list(
@@ -343,7 +337,7 @@ mcp = function(
 
   has_arma = any(predictor_definitions$dpar %in% c("ar", "ma"))
   if (has_arma) {
-    check_arma_model(family, predictor_definitions, segments, data, par_x, series)
+    check_arma_model(family, predictor_definitions, data_columns, data)
     warn_arma_not_included(predictor_tables$components)
   }
 
@@ -358,21 +352,21 @@ mcp = function(
   # SAMPLE #
   ##########
   jags_data = get_jags_data(
-    data, family, segments, predictor_occurrences, group_occurrences, parameters, jags_code, series,
+    data, family, segments, data_columns, predictor_occurrences, group_occurrences, parameters, jags_code,
     generated = !custom_jags_code,
     design_specs = predictor_tables$design_specs
   )
 
   # Monitor model parameters and, for generated JAGS code, latent responses
   all_pars = prior_table$parameter
-  missing_response_rows = which(is.na(data[[segments$y[1]]]))
+  missing_response_rows = which(is.na(data[[data_columns$response]]))
   imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
-    paste0(segments$y[1], "[", missing_response_rows, "]")
+    paste0(data_columns$response, "[", missing_response_rows, "]")
 
   sample_draws = function(pars, sample) {
     draws = run_jags(
       jags_code = jags_code,
-      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, segments) else jags_data,
+      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, data_columns) else jags_data,
       pars = pars,
       sample = sample,
       n.chains = chains,

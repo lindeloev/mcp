@@ -14,11 +14,11 @@ build_llm_prompt = function(fit) {
     data = fit$data,
     family = fit$family,
     segments = model_tables$segments,
+    data_columns = model_tables$data_columns,
     predictors = mcp:::populate_design_columns(model_tables$predictors, evaluated_designs),
     group_predictors = mcp:::populate_design_columns(model_tables$group_predictors, evaluated_designs),
     parameters = model_tables$parameters,
     jags_code = fit$jags_code,
-    series = model_tables$data_columns$series,
     design_specs = design_specs
   )
 

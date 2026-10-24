@@ -45,9 +45,9 @@ display_data_name = function(x) {
 
 
 # Collect data and model summaries used to resolve symbolic prior templates.
-prior_context = function(data, segments, design_specs = list()) {
-  par_x = segments$x[1]
-  y_col = segments$y[1]
+prior_context = function(data, data_columns, n_segments, design_specs = list()) {
+  par_x = data_columns$par_x
+  y_col = data_columns$response
   x = data[[par_x]]
 
   # mu offsets are available as `offset` or `offset_<segment>` in prior expressions.
@@ -69,8 +69,8 @@ prior_context = function(data, segments, design_specs = list()) {
     x_min = min(x, na.rm = TRUE),
     y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_col]]), na.rm = TRUE)),
     offsets = offsets,
-    n_cp = nrow(segments) - 1,
-    n_segments = nrow(segments)
+    n_cp = n_segments - 1,
+    n_segments = n_segments
   )
 }
 

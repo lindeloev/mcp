@@ -157,7 +157,7 @@ test_that("Gaussian JAGS weights implement a likelihood power", {
   tables = get_fit_model_tables(fit)
   predictor_tables = get_predictor_tables(fit$model, fit$data, fit$family, par_x = "x")
   jags_data = get_jags_data(
-    fit$data, fit$family, tables$segments, predictor_tables$predictors,
+    fit$data, fit$family, tables$segments, tables$data_columns, predictor_tables$predictors,
     predictor_tables$group_predictors, tables$parameters, fit$jags_code
   )
 

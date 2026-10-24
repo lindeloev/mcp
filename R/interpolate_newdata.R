@@ -197,7 +197,7 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
     data_columns$par_x  # Don't remove par_x when it is also a rhs parameter, e.g.: y | trials(N) ~ N
   )
   if (any(auxiliary_cols %in% names(newdata)))
-    assert_response_data(fit$family, get_fit_model_tables(fit)$segments, newdata, response_required = FALSE)
+    assert_response_data(fit$family, data_columns, newdata, response_required = FALSE)
 
   # Add response column for AR/MA models
   if (isTRUE(arma)) {

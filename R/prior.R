@@ -31,9 +31,9 @@ validate_prior_v1 = function(prior) {
 }
 
 # The prior table: resolved priors and metadata for all parameters in the model
-get_prior_table = function(segments, cps, predictors, group_predictors, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
+get_prior_table = function(data_columns, cps, predictors, group_predictors, family, prior = list(), data, design_specs = list(), reparam = TRUE) {
   checkmate::assert_class(family, "mcpfamily")
-  context = prior_context(data, segments, design_specs)
+  context = prior_context(data, data_columns, nrow(cps) + 1, design_specs)
   context$cp_names = cps$name
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
   legacy_prior_constants(prior, context)

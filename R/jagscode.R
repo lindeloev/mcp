@@ -5,19 +5,19 @@
 # JAGS names for the per-observation nodes used by the family's likelihood code,
 # e.g., the response `response[i_]`, distributional parameters `sigma_[i_]`,
 # and auxiliary response columns such as `trials(N)` as `N[i_]`.
-get_jags_family_context = function(segments) {
+get_jags_family_context = function(data_columns) {
   list(
-    y = paste0(segments$y[1], "[i_]"),
+    y = paste0(data_columns$response, "[i_]"),
     threshold = "garma_threshold_[i_]",
     dpar = function(name) paste0(name, "_[i_]"),
     local = function(name) paste0(name, "_[i_]"),
     aux = function(name, default = NULL) {
-      if (name %notin% names(segments) || all(is.na(segments[[name]]))) {
+      if (is.null(data_columns[[name]])) {
         if (!is.null(default))
           return(default)
         stop_github("Missing response auxiliary ", name, "() in JAGS family context.")
       }
-      paste0(stats::na.omit(unique(segments[[name]]))[1], "[i_]")
+      paste0(data_columns[[name]], "[i_]")
     }
   )
 }
@@ -31,7 +31,6 @@ get_jags_family_context = function(segments) {
 #' @return String. A JAGS model.
 #' @noRd
 get_jags_code = function(model_tables, prior_table, family) {
-  segments = model_tables$segments
   group_predictors = definition_rows(model_tables$group_predictors)
   par_x = model_tables$data_columns$par_x
   ar_order = get_arma_order(model_tables$predictors, "ar")
@@ -39,7 +38,7 @@ get_jags_code = function(model_tables, prior_table, family) {
 
   # Begin building JAGS model.
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
-  K = max(segments$segment)
+  K = nrow(model_tables$segments)
   jags_code = paste0("model {
   # Change points
   cp_0 = min(", par_x, ")\n")
@@ -113,7 +112,7 @@ get_jags_code = function(model_tables, prior_table, family) {
   ##############
   # LIKELIHOOD #
   ##############
-  context = get_jags_family_context(segments)
+  context = get_jags_family_context(model_tables$data_columns)
   jags_code = paste0(jags_code, "\n\n    # Likelihood for family = ", family$family, "()
     ")
 

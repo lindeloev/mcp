@@ -93,7 +93,7 @@ get_model_data = function(fit, newdata) {
       vapply(offset_specs, `[[`, character(1), "offset_name")
     ),
     series = if (!is.null(cols$series)) newdata[[cols$series]],
-    response = get_family_response_data(fit$family, model_tables$segments, newdata)
+    response = get_family_response_data(fit$family, cols, newdata)
   )
 }
 
@@ -216,7 +216,7 @@ fit_simulate = function(fit,
     newdata, data_columns$par_x,
     group_cols = stats::na.omit(mcp_pars(fit, scope = "group")$group_col)
   )
-  assert_response_data(fit$family, model_tables$segments, newdata)
+  assert_response_data(fit$family, data_columns, newdata)
   if (is.null(names(args)) || any(names(args) == ""))
     stop("All arguments must be named.")
   checkmate::assert_subset(

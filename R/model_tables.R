@@ -8,10 +8,12 @@
 #' Used internally for most mcp functions.
 #'
 #' @inheritParams mcp
-#' @return A list with `segments` (one row per segment) and `cps` (one row per
-#'   estimated change point, naturally indexed by `cp = 1, 2, ...`).
+#' @param series The `series` column from `ar()`/`ma()` or `NULL`.
+#' @return A list with `segments` (one row per segment), `cps` (one row per
+#'   estimated change point, naturally indexed by `cp = 1, 2, ...`), and
+#'   `data_columns` (the data-column roles returned by `mcp_columns()`).
 #' @noRd
-get_segment_tables = function(model, data, family, par_x) {
+get_segment_tables = function(model, data, family, par_x, series = NULL) {
   checkmate::assert_string(par_x)
 
   ############################################
@@ -22,22 +24,23 @@ get_segment_tables = function(model, data, family, par_x) {
   for (i in seq_along(model)) {
     env = environment(model[[i]])
     canonical = canonicalize_segment(model[[i]], i, default_response)
-    if (i == 1)
+    if (i == 1) {
       default_response = canonical$response
+      response_columns = unpack_y(canonical$response, i, family, env)
+    }
 
     row = tibble::tibble(
       segment = i,
       form = formula_to_char(canonical$form),
       form_env = list(env)
     )
-    row = dplyr::bind_cols(row, unpack_y(canonical$response, i, family, env))
     row = dplyr::bind_cols(row, unpack_cp(canonical$cp, i, env))
 
     segments = dplyr::bind_rows(segments, row)
   }
 
-  # Every segment shares one change-point dimension, including multiple-regression models.
-  segments$x = par_x
+  # Every segment shares one response and one change-point dimension, including multiple-regression models.
+  data_columns = c(list(par_x = par_x, response = response_columns$response, series = series), response_columns[-1])
 
 
 
@@ -45,24 +48,18 @@ get_segment_tables = function(model, data, family, par_x) {
   # CHECK SEGMENTS AND DATA #
   ###########################
 
-  # Response variables
-  y_cols = unique(stats::na.omit(segments$y))
-  if (length(y_cols) != 1)
-    stop("There should be exactly one response variable. Found ", and_collapse(y_cols), " across segments.")
-
   # Group-level effects
   cp_group_cols = unique(stats::na.omit(segments$cp_group_col))
 
   # Check y
-  y_col = segments$y[1]
+  y_col = data_columns$response
   if (any(is.na(data[[y_col]]))) {
-    has_weights = any(!is.na(segments$weights))
-    if (has_weights && isTRUE(family$response$is_discrete))
+    if (!is.null(data_columns$weights) && isTRUE(family$response$is_discrete))
       stop("Weights with missing responses (NA in '", y_col, "') is not supported for family = ", family$family, "().")
     message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
   }
 
-  assert_response_data(family, segments, data)
+  assert_response_data(family, data_columns, data)
 
 
   ###############################################
@@ -89,10 +86,10 @@ get_segment_tables = function(model, data, family, par_x) {
     )
   }
 
-  # `segments`: one row per segment, shared metadata only, including all response auxiliaries.
+  # `segments`: one row per segment, shared metadata only.
   segments = dplyr::select(segments, -"cp_group_col")
 
-  list(segments = segments, cps = cps)
+  list(segments = segments, cps = cps, data_columns = data_columns)
 }
 
 

@@ -104,7 +104,7 @@ new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
       required = FALSE,  # Is this required in the formula? FALSE = can be omitted.
       operations = "log_lik"  # For which operations is this auxiliary column needed?
     )),
-    validate = function(y, data, response_columns) invisible(TRUE),  # Default to no validation
+    validate = function(y, data, data_columns) invisible(TRUE),  # Default to no validation
     observed = function(y, data, rate) y,
     probability = function(rate) FALSE,
     has_rate = FALSE,  # Does `rate = TRUE` apply, i.e., response per trial?
@@ -298,14 +298,14 @@ mcpfamily_binomial = function(family) {
       required = TRUE,
       operations = c("epred", "log_lik", "rng", "garma")
     )),
-    validate = function(y, data, response_columns) {
-      checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
-      checkmate::assert_integerish(data$trials, lower = 1, any.missing = FALSE, .var.name = response_columns$trials)
+    validate = function(y, data, data_columns) {
+      checkmate::assert_integerish(y, lower = 0, .var.name = data_columns$response)
+      checkmate::assert_integerish(data$trials, lower = 1, any.missing = FALSE, .var.name = data_columns$trials)
       invalid = which(!is.na(y) & !is.na(data$trials) & y > data$trials)
       if (length(invalid) > 0)
         stop(
-          "For family = binomial(), responses in '", response_columns$y,
-          "' cannot exceed trials in '", response_columns$trials,
+          "For family = binomial(), responses in '", data_columns$response,
+          "' cannot exceed trials in '", data_columns$trials,
           "'. Found invalid data in row(s): ", paste(invalid, collapse = ", "), "."
         )
       invisible(TRUE)
@@ -385,10 +385,10 @@ mcpfamily_bernoulli = function(family) {
   }
 
   response = list(
-    validate = function(y, data, response_columns) {
+    validate = function(y, data, data_columns) {
       invalid = which(!is.na(y) & y %notin% c(0, 1))
       if (length(invalid) > 0)
-        stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", response_columns$y, "'")
+        stop("Only responses 0 and 1 are allowed for family = bernoulli() in column '", data_columns$response, "'")
       invisible(TRUE)
     },
     probability = function(rate) TRUE,
@@ -459,8 +459,8 @@ mcpfamily_poisson = function(family) {
   }
 
   response = list(
-    validate = function(y, data, response_columns) {
-      checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
+    validate = function(y, data, data_columns) {
+      checkmate::assert_integerish(y, lower = 0, .var.name = data_columns$response)
       invisible(TRUE)
     },
     is_discrete = TRUE
@@ -532,8 +532,8 @@ mcpfamily_negbinomial = function(family) {
   )
   default_prior = dplyr::bind_rows(log_mu_priors("count"), shape_prior)
   response = list(
-    validate = function(y, data, response_columns) {
-      checkmate::assert_integerish(y, lower = 0, .var.name = response_columns$y)
+    validate = function(y, data, data_columns) {
+      checkmate::assert_integerish(y, lower = 0, .var.name = data_columns$response)
       invisible(TRUE)
     },
     is_discrete = TRUE
@@ -695,32 +695,22 @@ get_dpar_spec = function(family, dpar) {
 
 
 # Find response-auxiliary data columns used by the requested operations.
-get_family_aux_columns = function(family, segments, operations = NULL) {
+get_family_aux_columns = function(family, data_columns, operations = NULL) {
   auxiliary = family$response$auxiliary
   if (!is.null(operations)) {
     used = vapply(auxiliary, function(x) any(x$operations %in% operations), logical(1))
     auxiliary = auxiliary[used]
   }
   aux_names = names(auxiliary)
-  if (length(aux_names) == 0)
-    return(stats::setNames(character(), character()))
-
   stats::setNames(vapply(aux_names, function(name) {
-    if (name %notin% names(segments)) {
-      return(NA_character_)
-    } else {
-      cols = unique(stats::na.omit(segments[[name]]))
-      if (length(cols) > 1)
-        stop("There should be exactly zero or one column used for ", name, "().")
-      if (length(cols) == 0) NA_character_ else cols
-    }
+    if (is.null(data_columns[[name]])) NA_character_ else data_columns[[name]]
   }, character(1)), aux_names)
 }
 
 
 # Extract the response-auxiliary columns defined by a fitted family.
-get_family_response_data = function(family, segments, data) {
-  aux_columns = get_family_aux_columns(family, segments)
+get_family_response_data = function(family, data_columns, data) {
+  aux_columns = get_family_aux_columns(family, data_columns)
   out = lapply(aux_columns, function(column) {
     if (is.na(column) || column %notin% names(data)) NULL else data[[column]]
   })

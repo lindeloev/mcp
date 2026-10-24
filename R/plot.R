@@ -92,7 +92,6 @@ get_plot = function(x,
 
   # Curves are identified by categorical predictors, series, and plotted grouping columns.
   # `color_by = "auto"` colors by the only categorical predictor, if there is one.
-  model_tables = get_fit_model_tables(fit)
   data_columns = mcp_columns(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
   group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
@@ -184,7 +183,7 @@ get_plot = function(x,
   # PREP RESPONSE DATA FOR PLOT #
   ###############################
   ydata = fit$data[, data_columns$response]  # Convenient shortname
-  response_data = get_family_response_data(fit$family, model_tables$segments, fit$data)
+  response_data = get_family_response_data(fit$family, data_columns, fit$data)
 
   # Show data
   if (scale == "linear") {
