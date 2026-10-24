@@ -467,7 +467,6 @@ mcp = function(
     .internal = list(
       model_tables = model_tables,
       prior_table = prior_table,
-      prior_format = "jags_string_v1",
       diagnostics = diagnostics,
       convergence = convergence,
       custom_jags_code = custom_jags_code,

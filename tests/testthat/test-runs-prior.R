@@ -577,7 +577,6 @@ test_that("priors are resolved without changing their parameterization", {
 
   expect_prior(fit$prior$Intercept_1, paste0("dt(5.5, ", format_prior_number(stats::mad(data$y)), ", 3) T(, 9)"))
   expect_equal(fit$prior$x_2, "x_1/5")
-  expect_equal(fit$.internal$prior_format, "jags_string_v1")
   expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
   expect_match(fit$jags_code, "# User-specified prior", fixed = TRUE)
 
