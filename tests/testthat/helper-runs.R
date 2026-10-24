@@ -308,9 +308,8 @@ test_summary = function(fit, group_cols, prior = FALSE) {
     testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
     testthat::expect_equal(nlme::ranef(fit, prior = prior, verbose = TRUE), ranef(fit, prior = prior, verbose = TRUE))
 
-    effects = get_fit_model_tables(fit)$group_predictors
     group_level_counts = lapply(
-      effects$group_col,
+      mcp_pars(fit, scope = "group")$group_col,
       function(col) length(unique(fit$data[[col]]))
     )
     n_group_levels = sum(unlist(group_level_counts))
