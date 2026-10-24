@@ -372,19 +372,11 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
 
 #' Takes the content of cp() and returns its properties
 #'
-#' @param form_cp The expression inside `cp()`, e.g., `1 + (1 | id)`, or `NULL` for segment 1.
+#' @param form_cp The expression inside `cp()`, e.g., `1 + (1 | id)`.
 #' @param i segment number
-#' @return A one-row tibble with columns:
-#'   * `cp_group_col`: char or NA. Which data column defines the grouping factor?
+#' @return The data column that defines the grouping factor, or `NA` for a population-level change point.
 #' @noRd
 unpack_cp = function(form_cp, i, env = parent.frame()) {
-  # Segment 1 has no change point
-  if (is.null(form_cp)) {
-    return(tibble::tibble(
-      cp_group_col = NA
-    ))
-  }
-
   form_cp = if (rlang::is_formula(form_cp)) form_cp else stats::as.formula(call("~", form_cp), env = env)
 
   # Group-level effects
@@ -411,7 +403,5 @@ unpack_cp = function(form_cp, i, env = parent.frame()) {
   if (attrs$intercept == 0)
     stop("Error in segment ", i, " (change point): change points always include a population-level intercept. Remove `0 +`, e.g., `cp((1 | id))`.")
 
-  tibble::tibble(
-    cp_group_col = if (is.null(form_group)) NA else group_parts[2]
-  )
+  if (is.null(form_group)) NA_character_ else group_parts[2]
 }

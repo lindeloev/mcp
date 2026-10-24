@@ -21,7 +21,7 @@ get_formula_terms = function(model_tables) {
     dpar = field("dpar", character(1)),
     order = field("order", integer(1)),
     segment = segment,
-    next_segment = ifelse(segment < nrow(model_tables$segments), segment + 1L, NA_integer_),
+    next_segment = ifelse(segment <= nrow(model_tables$cps), segment + 1L, NA_integer_),
     x_degree = 0L,
     offset = field("offset_name", character(1))
   )
@@ -48,7 +48,7 @@ x_power = function(x_degree) ifelse(x_degree > 1, paste0("^", x_degree), "")
 get_formula_jags = function(model_tables, family, nodes) {
   par_x = model_tables$data_columns$par_x
   terms = get_formula_terms(model_tables)
-  K = nrow(model_tables$segments)
+  K = nrow(model_tables$cps) + 1
 
   # Change points cp_0, ..., cp_K. Group-specific change points are sampled locations or include group-level deviations.
   cps = model_tables$cps
@@ -142,7 +142,7 @@ evaluate_formula = function(model_tables, family, data, pars, ndraws) {
   cp_at = function(k) cp[[k + 1]]
 
   # x measured from each segment's change point
-  x_local = lapply(seq_len(nrow(model_tables$segments)), function(segment) {
+  x_local = lapply(seq_len(nrow(model_tables$cps) + 1), function(segment) {
     pmin(x, cp_at(segment)) - if (segment > 1) cp_at(segment - 1) else 0
   })
 

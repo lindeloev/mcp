@@ -124,7 +124,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
   expect_named(
     tables,
     c(
-      "data_columns", "segments", "cps", "predictors", "group_predictors",
+      "data_columns", "cps", "predictors", "group_predictors",
       "parameters", "design_specs"
     )
   )

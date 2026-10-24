@@ -286,14 +286,11 @@ mcp = function(
   # MODEL BUILDING #
   ##################
   # Build model metadata.
-  segment_tables = get_segment_tables(model, data, family, par_x, series)
-  segments = segment_tables$segments
-  cps = segment_tables$cps
-  data_columns = segment_tables$data_columns
-  
   # Pass the same canonical segment formulas to all model-building consumers
-  model = Map(stats::as.formula, segments$form, env = segments$form_env)
-  segments$form_env = NULL
+  parsed = parse_segments(model, data, family, par_x, series)
+  model = parsed$model
+  cps = parsed$cps
+  data_columns = parsed$data_columns
   predictor_tables = get_predictor_tables(model, data, family, par_x)
   predictor_occurrences = predictor_tables$predictors
   group_occurrences = predictor_tables$group_predictors
@@ -313,7 +310,6 @@ mcp = function(
   # methods evaluate the stored design specifications on (new)data instead.
   model_tables = list(
     data_columns = data_columns,
-    segments = segments,
     cps = cps,
     predictors = dplyr::select(predictor_occurrences, -"matrix_data"),
     group_predictors = dplyr::select(group_occurrences, -"matrix_data"),
@@ -352,7 +348,7 @@ mcp = function(
   # SAMPLE #
   ##########
   jags_data = get_jags_data(
-    data, family, segments, data_columns, predictor_occurrences, group_occurrences, parameters, jags_code,
+    data, family, length(model), data_columns, predictor_occurrences, group_occurrences, parameters, jags_code,
     generated = !custom_jags_code,
     design_specs = predictor_tables$design_specs
   )
@@ -423,11 +419,14 @@ mcp = function(
   # RETURN #
   ##########
   # Return canonical formulas attached to .GlobalEnv to avoid environment bloat
-  model = lapply(segments$form, stats::as.formula, env = globalenv())
+  model = lapply(model, function(form) {
+    environment(form) = globalenv()
+    form
+  })
 
   # fit$prior in the format of mcp(..., prior), ordered like mcp_pars(). Show the JAGS nodes cp_0 and cp_K
   # as the ends of the observed range, as users specify them.
-  x_range = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, nrow(segments)), "\\b"))
+  x_range = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, length(model)), "\\b"))
   prior = stats::setNames(as.list(stringr::str_replace_all(prior_table$value, x_range)), prior_table$parameter)
   prior = prior[order(match(names(prior), parameters$parameter))]
 

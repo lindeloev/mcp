@@ -3,40 +3,34 @@
 
 
 
-#' Build tables describing a list of segments
+#' Parse a list of segment formulas
 #'
 #' Used internally for most mcp functions.
 #'
 #' @inheritParams mcp
 #' @param series The `series` column from `ar()`/`ma()` or `NULL`.
-#' @return A list with `segments` (one row per segment), `cps` (one row per
+#' @return A list with `model` (the canonical segment formulas), `cps` (one row per
 #'   estimated change point, naturally indexed by `cp = 1, 2, ...`), and
 #'   `data_columns` (the data-column roles returned by `mcp_columns()`).
 #' @noRd
-get_segment_tables = function(model, data, family, par_x, series = NULL) {
+parse_segments = function(model, data, family, par_x, series = NULL) {
   checkmate::assert_string(par_x)
 
   ############################################
-  # BUILD SEGMENTS FROM ISOLATED FORMULAS    #
+  # CANONICALIZE ISOLATED SEGMENT FORMULAS   #
   ############################################
-  segments = tibble::tibble()
   default_response = NULL
+  cp_group_cols = character()  # One per change point. NA for population-level change points.
   for (i in seq_along(model)) {
     env = environment(model[[i]])
     canonical = canonicalize_segment(model[[i]], i, default_response)
     if (i == 1) {
       default_response = canonical$response
       response_columns = unpack_y(canonical$response, i, family, env)
+    } else {
+      cp_group_cols[i - 1] = unpack_cp(canonical$cp, i, env)
     }
-
-    row = tibble::tibble(
-      segment = i,
-      form = formula_to_char(canonical$form),
-      form_env = list(env)
-    )
-    row = dplyr::bind_cols(row, unpack_cp(canonical$cp, i, env))
-
-    segments = dplyr::bind_rows(segments, row)
+    model[[i]] = canonical$form
   }
 
   # Every segment shares one response and one change-point dimension, including multiple-regression models.
@@ -49,7 +43,12 @@ get_segment_tables = function(model, data, family, par_x, series = NULL) {
   ###########################
 
   # Group-level effects
-  cp_group_cols = unique(stats::na.omit(segments$cp_group_col))
+  if (length(unique(stats::na.omit(cp_group_cols))) > 1) {
+    stop(
+      "All group-level change points must use the same grouping factor. Found ",
+      and_collapse(paste0("'", unique(stats::na.omit(cp_group_cols)), "'")), "."
+    )
+  }
 
   # Check y
   y_col = data_columns$response
@@ -63,33 +62,21 @@ get_segment_tables = function(model, data, family, par_x, series = NULL) {
 
 
   ###############################################
-  # SPLIT INTO `segments` AND `cps`              #
+  # CHANGE POINTS                               #
   ###############################################
-  # `cps`: one row per *estimated* change point (nrow(segments) - 1 of
-  # them), naturally indexed by `cp` instead of borrowing the segment index.
+  # `cps`: one row per *estimated* change point (one fewer than segments), naturally
+  # indexed by `cp` instead of borrowing the segment index.
   # `segment` is an explicit join key: the segment that this change point starts.
-  cps = segments |>
-    dplyr::filter(.data$segment > 1) |>
-    dplyr::transmute(
-      cp = .data$segment - 1,
-      segment = .data$segment,
-      name = paste0("cp_", .data$cp),
-      group_col = as.character(.data$cp_group_col),
-      sd_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col, "_sd"), NA_character_),
-      group_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA_character_)
-    )
+  cps = tibble::tibble(
+    cp = seq_along(cp_group_cols),
+    segment = .data$cp + 1L,
+    name = paste0("cp_", .data$cp),
+    group_col = cp_group_cols,
+    sd_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col, "_sd"), NA_character_),
+    group_name = dplyr::if_else(!is.na(.data$group_col), paste0(.data$name, "_", .data$group_col), NA_character_)
+  )
 
-  if (length(cp_group_cols) > 1) {
-    stop(
-      "All group-level change points must use the same grouping factor. Found ",
-      and_collapse(paste0("'", cp_group_cols, "'")), "."
-    )
-  }
-
-  # `segments`: one row per segment, shared metadata only.
-  segments = dplyr::select(segments, -"cp_group_col")
-
-  list(segments = segments, cps = cps, data_columns = data_columns)
+  list(model = model, cps = cps, data_columns = data_columns)
 }
 
 
@@ -102,7 +89,7 @@ get_segment_tables = function(model, data, family, par_x, series = NULL) {
 #' family, then `ar`/`ma` components, each ascending by segment.
 #'
 #' @param predictors The `predictors` table from `get_predictor_tables()`.
-#' @param cps A table of change points from `get_segment_tables()`.
+#' @param cps A table of change points from `parse_segments()`.
 #' @param group_predictors The `group_predictors` table from `get_predictor_tables()`.
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and group),
