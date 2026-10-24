@@ -92,7 +92,7 @@ test_that("x-terms end at a disjoined segment even without an earlier intercept"
 test_that("redefinitions replace complete formula terms", {
   data = data.frame(
     x = 1:12,
-    z = seq(-1, 1, length.out = 12),
+    z = sin(1:12),
     group = factor(rep(c("a", "b", "c"), 4)),
     y = 0
   )
@@ -103,8 +103,7 @@ test_that("redefinitions replace complete formula terms", {
     ),
     data,
     as_mcpfamily(gaussian()),
-    par_x = "x",
-    check_rank = FALSE
+    par_x = "x"
   )
   first_terms = predictors$segment == 1 & predictors$par_type != "Intercept" & predictors$x_degree == 0
 

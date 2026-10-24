@@ -583,7 +583,7 @@ standardize_shared_component = function(form_rhs, segment) {
 # Predictor rows for one dpar or AR/MA lag in a segment. Terms in same() are the rows of their
 # source segment in `previous`, so they keep its name and model-matrix coding.
 get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
-                                  check_rank = TRUE, design_id = NULL, previous = NULL) {
+                                  design_id = NULL, previous = NULL) {
   standardized = standardize_shared_component(form_rhs, segment)
   form_rhs = standardized$form
   selected = standardized$selected
@@ -592,7 +592,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   # Construct bare columns in the full unwrapped formula, then borrow source columns
   form_rhs = remove_terms(form_rhs, "group")
   current = get_predictors_dpar(data, form_rhs, segment, dpar, par_x, order,
-    check_rank = check_rank && nrow(selected) == 0, design_id = design_id) |>
+    check_rank = nrow(selected) == 0, design_id = design_id) |>
     dplyr::mutate(definition_segment = .data$segment)
   if (nrow(selected) == 0)
     return(current)
@@ -618,14 +618,12 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   result = dplyr::bind_rows(bare, dplyr::bind_rows(borrowed))
 
   # Rank checking applies to the assembled design, including borrowed contrasts
-  if (check_rank) {
-    coefficients = result[result$par_type != "offset", , drop = FALSE]
-    matrix = do.call(cbind, lapply(seq_len(nrow(coefficients)), function(i) {
-      coefficients$matrix_data[[i]] * data[[par_x]]^coefficients$x_degree[i]
-    }))
-    colnames(matrix) = coefficients$matrix_name
-    assert_rank(matrix, segment, dpar)
-  }
+  coefficients = result[result$par_type != "offset", , drop = FALSE]
+  matrix = do.call(cbind, lapply(seq_len(nrow(coefficients)), function(i) {
+    coefficients$matrix_data[[i]] * data[[par_x]]^coefficients$x_degree[i]
+  }))
+  colnames(matrix) = coefficients$matrix_name
+  assert_rank(matrix, segment, dpar)
   result
 }
 
@@ -655,7 +653,7 @@ is_empty_initial_predictor = function(form) {
 #'
 #' @param components The segment's components from `get_segment_components()`.
 #' @noRd
-get_predictors_segment = function(components, segment, family, data, par_x, check_rank = TRUE, previous = NULL) {
+get_predictors_segment = function(components, segment, family, data, par_x, previous = NULL) {
   checkmate::assert_list(components)
   checkmate::assert_int(segment, lower = 1)
   checkmate::assert_class(family, "mcpfamily")
@@ -684,7 +682,7 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
 
     if (!is.null(dpar_form)) {
       dpar_pars[[dpar]] = get_shared_predictors(
-        data, dpar_form, segment, dpar = dpar, par_x, NULL, check_rank,
+        data, dpar_form, segment, dpar = dpar, par_x, NULL,
         design_id = paste("population", dpar, segment, sep = ":"), previous = previous
       )
     }
@@ -706,7 +704,7 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
     # Order 0 turns off all lags, coded as lag 1 with formula ~ 0.
     arma_pars[[component]] = lapply(seq_len(max(1, arma$order)), function(order) {
       get_shared_predictors(
-        data, arma$form, segment, component, par_x, order, check_rank,
+        data, arma$form, segment, component, par_x, order,
         design_id = paste("population", component, if (arma$order == 0) 0 else order, segment, sep = ":"),
         previous = previous
       )
@@ -730,7 +728,7 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
 #'   `group_predictors` (one row per occurrence, see `definition_rows()`), and the
 #'   fitted `design_specs`.
 #' @noRd
-get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
+get_predictor_tables = function(model, data, family, par_x) {
   # Parse the components of each segment once (mu, other dpars, ar, ma)
   components = lapply(model, function(form) get_segment_components(get_rhs(form), family))
   n_segments = length(components)
@@ -741,7 +739,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   for (segment in seq_len(n_segments)) {
     parsed_predictors = dplyr::bind_rows(parsed_predictors,
       get_predictors_segment(components[[segment]], segment, family, data, par_x,
-        check_rank, previous = parsed_predictors))
+        previous = parsed_predictors))
   }
   parsed_predictors = dplyr::arrange(parsed_predictors, .data$dpar, .data$segment)
 
@@ -787,7 +785,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   for (segment in seq_len(n_segments)) {
     definitions = dplyr::bind_rows(definitions,
       get_predictor_group_definitions_segment(components[[segment]], segment, family,
-        data, par_x, check_rank, previous = definitions))
+        data, par_x, previous = definitions))
   }
 
   group_predictors = definitions

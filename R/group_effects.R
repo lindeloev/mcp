@@ -35,7 +35,7 @@ group_block_key = function(term) {
 #'   `has_coefficients = FALSE` for an explicit turn-off.
 #' @noRd
 parse_predictor_group_term = function(
-  term, segment, dpar, data, par_x, check_rank = TRUE, env = parent.frame()
+  term, segment, dpar, data, par_x, env = parent.frame()
 ) {
   expr = str2lang(term)
   operator = as.character(expr[[1]])
@@ -62,7 +62,7 @@ parse_predictor_group_term = function(
   }
   coefficient = get_predictors_dpar(
     data, coefficient_form, segment, dpar, par_x,
-    order = NULL, check_rank = check_rank,
+    order = NULL,
     design_id = paste("group", dpar, group_col, segment, sep = ":")
   )
   assert_unique_predictor_names(coefficient)
@@ -114,7 +114,7 @@ parse_predictor_group_term = function(
 
 # Predictor group-level definitions for one segment, including explicit turn-offs
 get_predictor_group_definitions_segment = function(
-  components, segment, family, data, par_x, check_rank = TRUE, previous = NULL
+  components, segment, family, data, par_x, previous = NULL
 ) {
   # Parse group-level terms for all distributional parameters (including mu)
   definitions = list()
@@ -147,7 +147,7 @@ get_predictor_group_definitions_segment = function(
         block = source
         block$segment = segment
       } else {
-        block = parse_predictor_group_term(term, segment, dpar, data, par_x, check_rank, form_env)
+        block = parse_predictor_group_term(term, segment, dpar, data, par_x, form_env)
         block$definition_segment = segment
       }
       block$group_key = blocks$key[i]

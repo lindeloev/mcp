@@ -7,6 +7,6 @@ expect_lifetimes = function(x, expected) {
 
 
 # The population predictor table of a model
-get_predictors = function(model, data, family, par_x, check_rank = TRUE) {
-  get_predictor_tables(model, data, family, par_x, check_rank)$predictors
+get_predictors = function(model, data, family, par_x) {
+  get_predictor_tables(model, data, family, par_x)$predictors
 }
