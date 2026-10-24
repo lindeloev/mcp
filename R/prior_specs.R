@@ -26,6 +26,8 @@ default_arma_specs = function() {
 }
 
 
+# Default change point priors: uniform within the observed range, and for group-level
+# change points, the SD and truncated deviations
 default_cp_specs = function(cps, context) {
   n_cp = context$n_cp
   if (n_cp == 0)
@@ -42,6 +44,7 @@ default_cp_specs = function(cps, context) {
     )
   }
 
+  # Group-level change points
   for (j in seq_len(nrow(cps))) {
     if (is.na(cps$group_col[j]))
       next
@@ -117,13 +120,10 @@ fill_predictor_scale = function(prior, matrix_data, x_degree) {
 }
 
 
-# Which default prior each coefficient gets. Default priors are looked up by par_type
-# ("Intercept", "dummy", or "slope"), and this returns the par_type to use for each row of
-# `predictors`. It is the coefficient's own par_type, with one exception: a factor without an
-# intercept (y ~ 0 + state) is coded as all intercepts. This mostly concerns segment 1,
-# but applies wherever a segment starts at zero, i.e., has no earlier intercept or x-term to
-# join, e.g., segment 2 in `list(y ~ 0, ~ 0 + state)`. In other joined segments, `0 + state`
-# gives jumps from where the earlier segment left off, which keep the contrast prior.
+# The par_type ("Intercept", "dummy", or "slope") whose default prior each row of `predictors`
+# gets. Usually its own, but a factor in a segment that starts at zero, i.e., without an earlier
+# intercept or x-term to join, is coded as all intercepts, e.g., `y ~ 0 + state` or segment 2 in
+# `list(y ~ 0, ~ 0 + state)`. In other joined segments, `0 + state` gives jumps, which keep the contrast prior.
 get_prior_type = function(predictors) {
   key = paste(predictors$dpar, predictors$order)
   joins = predictors$par_type == "Intercept" | predictors$x_degree > 0
@@ -141,6 +141,7 @@ get_prior_type = function(predictors) {
 }
 
 
+# Default priors for population-level coefficients, looked up by dpar and par_type
 default_predictor_specs = function(predictors, family, context) {
   defaults = filter_default_conditions(dplyr::bind_rows(family$default_prior, default_arma_specs()), family)
 
@@ -176,6 +177,7 @@ default_predictor_specs = function(predictors, family, context) {
 }
 
 
+# Default priors for group-level SDs and deviations
 default_group_specs = function(group_predictors, family) {
   if (nrow(group_predictors) == 0)
     return(empty_prior_specs())
@@ -349,6 +351,8 @@ assert_prior_not_shared = function(prior, predictors, group_predictors) {
 }
 
 
+# Replace default prior specs with the user's parsed `prior`, adding the bounds that the model
+# requires, e.g., the observed range for change points and sigma > 0. Updates descriptions accordingly.
 overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors, family) {
   name_matches = names(prior) %in% prior_specs$parameter
   if (any(!name_matches)) {
@@ -373,6 +377,7 @@ overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors
     }
   }
 
+  # Bound change points within the observed range
   auto_truncated = character()
   for (j in seq_len(nrow(cps))) {
     name = cps$name[j]
@@ -404,6 +409,7 @@ overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors
       auto_truncated = c(auto_truncated, name)
   }
 
+  # Overlay
   for (name in names(prior)) {
     i = match(name, prior_specs$parameter)
     prior_specs$parsed[[i]] = prior[[name]]

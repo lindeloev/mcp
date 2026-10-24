@@ -56,6 +56,7 @@ pp_eval = function(
   if (type == "loglik")
     assert_loglik_garma_history(fit, newdata, arma)
 
+  # Conditional GARMA: AR/MA terms use the observed response history, so the response is needed
   conditional_garma = evaluating_arma && !replicate_garma &&
     (type %in% c("predict", "residuals") ||
        (type == "fitted" && dpar %in% c("epred", "mu")))

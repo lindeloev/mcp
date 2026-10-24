@@ -1,6 +1,6 @@
-# ABOUT: Construction of the population predictor design matrix: parsing a
-# segment's predictor formula, evaluating `model.matrix()` per distributional
-# parameter, and assembling the resulting per-segment and per-model tables.
+# ABOUT: Population-level design matrices: parsing a segment's predictor part,
+# evaluating `model.matrix()` per dpar, resolving same(), and assembling the
+# per-segment and per-model tables.
 # ------------------------------------------------------------
 
 #' Build and retain an R model-matrix specification
@@ -98,7 +98,7 @@ collect_design_specs = function(...) {
 
 
 # First segment where each term no longer applies (`next_segment`; NA = through the last segment).
-# Joined terms apply until the next segment that resets their `key`; other terms apply in their own segment only.
+# Joined terms apply until a later segment in `resets` starts their `key` afresh; other terms apply in their own segment only.
 # - key, segment, joins: One value per term.
 # - resets: A data frame with `key` and `segment` columns.
 get_next_segment = function(key, segment, joins, resets, n_segments) {
@@ -118,7 +118,7 @@ get_next_segment = function(key, segment, joins, resets, n_segments) {
 #' and do not join.
 #'
 #' @param form A one-sided predictor formula.
-#' @param par_x Name of the change-point axis.
+#' @param par_x Name of the change-point variable.
 #' @return The rewritten formula and the local degree of each formula term.
 #' @noRd
 rewrite_local_x = function(form, par_x) {
@@ -304,8 +304,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   source_design = get_fitted_design(form_rhs, data)
   matrix_name = colnames(source_design$matrix)
 
-  # model.matrix() maps every coefficient column to its originating formula
-  # term. Multi-column factors and bases therefore share a lifetime key.
+  # The formula term of each model-matrix column. Multi-column factors and bases share one key.
   term_assign = attr(source_design$matrix, "assign")
   term_key = c("(Intercept)", formula_terms)[term_assign + 1L]
 
@@ -338,7 +337,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 
 
   #######################
-  # GET PARAMATER NAMES #
+  # GET PARAMETER NAMES #
   #######################
   pars = matrix_name
 
@@ -373,7 +372,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   )
   name = make_parameter_name(gsub(" ", "", name, fixed = TRUE))
 
-  # is_dummy
+  # 0/1 columns get dummy priors
   is_dummy = apply(design_matrix, 2, function(x) all(x %in% c(0, 1)))
 
 
@@ -482,9 +481,9 @@ term_contains = function(par_x, terms) {
 }
 
 
-# Standardize coefficient-sharing selectors before ordinary formula parsing. The
-# parser below only needs to know which expanded source terms a selector names;
-# all downstream code receives resolved definition/occurrence rows.
+# same() -------------------------------------------------------------------
+# Resolve which terms same() reuses from which segment. Downstream code only sees
+# definition rows and the later occurrences of reused coefficients (see definition_rows()).
 
 # Check whether an expression is a call to same()
 is_same_call = function(expr) {
@@ -564,7 +563,9 @@ parse_same_call = function(expr, segment, env) {
 }
 
 
-# Standardize selectors once for both population terms and complete group blocks
+# Unwrap same() in a component formula, e.g., `~ same(x) + z` to `~ x + z`. Returns the
+# formula and the `selected` term_keys with their `source` segment. Used for population-level
+# terms and complete group-level terms.
 standardize_shared_component = function(form_rhs, segment) {
   # Expand additive selectors once, retaining ordinary formula coding context
   leaves = unpack_additive(form_rhs[[2]])
@@ -601,7 +602,8 @@ standardize_shared_component = function(form_rhs, segment) {
 }
 
 
-# Build a component design and replace selected terms with fitted source columns
+# Predictor rows for one dpar or AR/MA lag in a segment. Terms in same() are the rows of their
+# source segment in `previous`, so they keep its name and model-matrix coding.
 get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = NULL,
                                   check_rank = TRUE, design_id = NULL, previous = NULL) {
   standardized = standardize_shared_component(form_rhs, segment)
@@ -754,6 +756,9 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
 
 #' Apply `get_predictors_segment` to all segments of a model.
 #'
+#' @return A list with the `components` of each segment, the `predictors` and
+#'   `group_predictors` (one row per occurrence, see `definition_rows()`), and the
+#'   fitted `design_specs`.
 #' @noRd
 get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
   # Parse the components of each segment once (mu, other dpars, ar, ma)

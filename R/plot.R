@@ -1,7 +1,7 @@
 # ABOUT: These are functions directly related to plotting
 # ----------------
 
-# Add separate columns for curve identity and color mapping.
+# Add `.group` (curve identity) and `.color` columns: interactions of `curve_by` and `color_by` columns
 add_plot_groups = function(df, curve_by = names(get_categorical_levels(df)), color_by = NULL) {
   curve_by = intersect(curve_by, names(df))
   color_by = intersect(color_by, names(df))
@@ -90,6 +90,8 @@ get_plot = function(x,
   facet_by = logical0_to_null(unique(facet_by))
   color_by = logical0_to_null(unique(color_by))
 
+  # Curves are identified by categorical predictors, series, and plotted grouping columns.
+  # `color_by = "auto"` colors by the only categorical predictor, if there is one.
   model_tables = get_fit_model_tables(fit)
   data_columns = mcp_columns(fit)
   all_categorical_cols = names(get_categorical_levels(fit$data))
@@ -120,6 +122,7 @@ get_plot = function(x,
   validate_plot_groups(facet_by, "facet_by")
   validate_plot_groups(color_by, "color_by")
 
+  # Intervals are ambiguous for curves that are not mapped to color or facets
   unmapped = setdiff(categorical_cols, plot_by)
   if ((show_fitted || show_predict) && length(categorical_cols) > 1 &&
       check_unmapped && length(unmapped) > 0) {
@@ -286,6 +289,7 @@ get_plot = function(x,
   if (dpar != "epred")
     gg = gg + ggplot2::labs(y = dpar)
 
+  # Caption with the values at which other continuous predictors are held
   at_cols = setdiff(
     names(newdata),
     c(data_columns$par_x, data_columns$response, data_columns$series, all_categorical_cols, group_cols)
@@ -506,7 +510,7 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
   if (!is.null(facet_by))
     draws[[facet_by]] = levels[draws$level_index]
 
-  # Compute density per group. Tolerate zero-variance CPs like cp_2 = 80.
+  # Compute density per group. Tolerate constant change points like cp_2 = 80.
   draws = draws |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(".chain", "cp_name", facet_by)))) |>
     dplyr::summarise(dens = list(

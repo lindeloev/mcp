@@ -41,7 +41,7 @@ relevel_newdata = function(newdata, fit) {
 }
 
 
-# Populate matrix data columns in a `predictors` or `group_predictors` table.
+# Fill `matrix_data` in a `predictors` or `group_predictors` table from the evaluated designs (see get_model_data())
 populate_design_columns = function(table, evaluated_designs) {
   table$matrix_data = vector("list", nrow(table))
   for (design_id in unique(stats::na.omit(table$design_id))) {
@@ -238,7 +238,7 @@ fit_simulate = function(fit,
   cps = model_tables$cps
   group_cps = which(!is.na(cps$group_col))
 
-  # All group-level CPs share one grouping factor. Set up its level mapping once.
+  # All group-level change points share one grouping factor. Set up its level mapping once.
   if (length(group_cps) > 0) {
     group = newdata[[cps$group_col[group_cps[1]]]]
     group_levels = unique(group)
@@ -248,8 +248,8 @@ fit_simulate = function(fit,
       rep(value, length.out = nrow(newdata))[group_rows]
     })
 
-    # Mirror JAGS: sample absolute locations in CP order, using a group-level
-    # predecessor as the next lower bound and the next fixed CP as upper anchor.
+    # As in JAGS, draw each group-specific change point between the previous (possibly
+    # group-specific) change point and the next population-level change point
     x_range = range(fit$data[[data_columns$par_x]], na.rm = TRUE)
     cp_locations = list()
     for (j in group_cps) {
@@ -279,7 +279,7 @@ fit_simulate = function(fit,
     }
   }
 
-  # Predictor group-level effects keep the ordinary independent normal hierarchy.
+  # Group-level deviations in the predictor part: normal with their SD
   predictor_effects = definition_rows(model_tables$group_predictors)
   for (i in seq_len(nrow(predictor_effects))) {
     effect = predictor_effects[i, ]
@@ -287,7 +287,7 @@ fit_simulate = function(fit,
     group = newdata[[effect$group_col]]
     group_levels = unique(group)
 
-    # Identify alias group-level effects; otherwise add new.
+    # Same value as another parameter (see prior_kind()), or draw new deviations
     target = prior_table$value[match(effect$name, prior_table$parameter)]
     if (target %in% names(args)) {
       args[[effect$name]] = args[[target]]
@@ -309,8 +309,8 @@ fit_simulate = function(fit,
     fit, data, pars, ndraws = 1, type = .type, rate = .rate, dpar = .dpar, arma = .arma, scale = .scale
   )$value)
 
-  # add_simulated etc. and return
-  attr(simulated_y, "simulated") = simulated  # Set as attribute
+  # Attach the parameter values, including the simulated group-level deviations
+  attr(simulated_y, "simulated") = simulated
   class(attr(simulated_y, "simulated")) = c("mcplist", "list")  # for nicer printing
   simulated_y
 }
@@ -343,7 +343,7 @@ get_fitsimulate = function(parameters) {
     check_mcpfit_version(fit)
     warn_custom_jags_code(fit)
 
-    lapply(args_required, get, envir = environment(), inherits = FALSE)
+    lapply(args_required, get, envir = environment(), inherits = FALSE)  # Errors for missing parameter values
     do.call(fit_simulate, as.list(environment(), all.names = TRUE))
   }
 

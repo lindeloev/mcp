@@ -1,8 +1,7 @@
 # Prior assembly -----------------------------------------------------------
 
-# Validate the plain named-list prior format introduced before sampler-
-# agnostic prior objects. A future front end can dispatch classed prior objects
-# separately and retain this function as the legacy JAGS-string path.
+# Validate `prior` as a named list of JAGS strings and numbers. Future sampler-agnostic,
+# classed prior objects can be dispatched separately.
 validate_prior_v1 = function(prior) {
   checkmate::assert_list(prior)
   if (length(prior) > 0 &&
@@ -50,7 +49,7 @@ get_prior_table = function(segments, cps, predictors, group_predictors, family, 
       call. = FALSE
     )
 
-  # Begin building actual prior
+  # Default priors
   prior_specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
     default_predictor_specs(predictors, family, context),

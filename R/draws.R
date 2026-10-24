@@ -264,11 +264,8 @@ draws_to_pars = function(draws, data, groups) {
 }
 
 
-# Internal helper to extract retained posterior imputations of missing responses.
-# These are draws of the missing responses conditional on the observed data,
-# rather than fresh outcomes from predict(). For AR/MA models, later
-# observations can inform an imputation. Prediction uses these values only
-# to complete the history for subsequent observations.
+# Tidy draws of the missing responses imputed by JAGS (`.imputed` for each `.row`). Unlike fresh
+# draws from predict(), they are conditional on all observed data, including later rows in AR/MA models.
 imputed_draws = function(object, ndraws = NULL) {
   mcmclist_draws(object)  # Validate the fit and availability of posterior draws.
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)

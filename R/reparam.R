@@ -12,20 +12,16 @@
 #   <name>_<suffix>_ ~ dist(location * width + shift, scale * width)
 #   <name> = (<name>_<suffix>_ - derive) / width
 #
-# The following are sampled as values that stay in place when a change point moves.
-# All dpars except ar and ma follow the same rules.
+# The auxiliary nodes are values that stay in place when a change point moves:
+# - Segment 1 (suffix "mid"): the intercept (and e.g. `stateb` in `1 + state * x`) as the
+#   value at the expected midpoint of segment 1 under the default change point prior.
+# - Disjoined segments ("end"): the intercept as the value at the segment end.
+# - Joined segments: the lowest-degree x-term as the value at the segment end ("end"),
+#   and further x-terms, e.g., I(x^2), as their rise over the segment ("rise").
 #
-# - Segment 1: The intercept as the value at a fixed point, the expected midpoint of
-#   segment 1 under the default change point prior, min(x) + (max(x) - min(x)) / (2 * K).
-#   Likewise for other coefficients with x-terms, e.g., `stateb` in `1 + state * x`.
-# - Joined segments: The lowest-degree x-term as the value at the segment end, and
-#   further x-terms (e.g., I(x^2)) as their rise over the segment.
-# - Disjoined segments: The intercept as the value at the segment end.
-#
-# Only default dnorm() and dt() priors without truncation are reparameterized, except
-# that the segment-1 intercept may also have a truncated or dunif() prior.
-# Segments bounded by group-level change points are skipped because their data use
-# group-specific widths.
+# Only default dnorm() and dt() priors without truncation qualify (the segment-1 intercept
+# also with truncation or dunif()). AR/MA and segments bounded by group-level change
+# points are skipped.
 add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
   # Sample `name` via the auxiliary node <name>_<suffix>_ (see the formulas above)
   sampled_as = c(
@@ -78,8 +74,7 @@ add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
     # x-terms without other variables, in the segment that defines them
     slopes = own[own$x_degree > 0 & own_pure & own$segment == own$definition_segment, ]
 
-    # Segment 1: the intercept as the value at a fixed point. Likewise for other coefficients
-    # with x-terms, e.g., `stateb` with `stateb.x` in `1 + state * x` (see get_x_partners()).
+    # Segment 1: the intercept and x-term partners (see get_x_partners()) at the expected midpoint
     for (coef in own$name[own$segment == 1 & own$x_degree == 0]) {
       terms = get_x_partners(own, coef)
       if (nrow(terms) > 0 && is_reparam_prior(coef, segment_1 = TRUE)) {

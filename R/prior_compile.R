@@ -210,7 +210,7 @@ resolve_prior_ast = function(expr, context) {
     return(if (func_name == "n_cp") context$n_cp else context$n_segments)
   }
 
-  # Return names cp_0 and cp_K for which is the data range within which all change points are located.
+  # In change point priors, min(x) and max(x) are the JAGS nodes cp_0 and cp_K
   if (isTRUE(context$cp_limits) && func_name %in% c("min", "max") && identical(args, list(as.name(context$par_x))))
     return(as.name(paste0("cp_", if (func_name == "min") 0 else context$n_segments)))
 
@@ -305,7 +305,10 @@ prior_kind = function(parsed, all_names) {
 }
 
 
-# Compile one prior into its resolved value and user-facing metadata.
+# Compile one prior into a row of the prior table:
+# - value, parsed: resolved for JAGS, keeping cp_0 and cp_K for the ends of the observed range in change point priors.
+# - prior, bounds: resolved for prior_summary(), with numbers for cp_0 and cp_K.
+# - rule: the specified prior, e.g., with `sd(y)`.
 compile_prior_record = function(parameter, parsed, all_names, context, source,
                                  description = NULL) {
   kind = prior_kind(parsed, all_names)

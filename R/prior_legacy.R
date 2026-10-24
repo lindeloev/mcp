@@ -1,9 +1,7 @@
 # Legacy prior compatibility -----------------------------------------------
 
-# This is the complete translation layer for data constants released before
-# readable prior expressions. Keeping token, value, and replacement together
-# makes the compatibility contract explicit and prevents the three views from
-# drifting apart.
+# The deprecated data constants in priors (e.g., MINX), their values, and their
+# replacement rules (e.g., min(x)). All legacy translations use this one table.
 legacy_prior_map = function(context) {
   x = context$data[[context$par_x]]
   y = context$data[[context$y_col]]
@@ -71,6 +69,7 @@ legacy_prior_value = function(name, context) {
 }
 
 
+# Add the values of deprecated constants in custom `jags_code` to the JAGS data
 legacy_prior_jags_data = function(jags_data, jags_code, context) {
   map = legacy_prior_map(context)
   used = map$token[vapply(map$token, function(token) {

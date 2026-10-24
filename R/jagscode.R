@@ -1,5 +1,5 @@
-# ABOUT: These functions "pad" the linear predictors from get_formula_jags()
-# resulting in a full JAGS model
+# ABOUT: Assemble the full JAGS model around the linear predictors from
+# get_formula_jags(): priors, GARMA recursion, link functions, and likelihood
 # -----------------
 
 # JAGS names for the per-observation nodes used by the family's likelihood code,
@@ -156,12 +156,7 @@ get_jags_code = function(model_tables, prior_table, family) {
       jags_code = paste0(jags_code, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_garma_[i_]")
   }
 
-
-  ###############
-  # OTHER STUFF #
-  ###############
-
-  # Finish up
+  # Close the likelihood loop and the model
   paste0(jags_code, "
   }
 }")
@@ -176,9 +171,8 @@ get_jags_code = function(model_tables, prior_table, family) {
 # - sampled_as: what `node` is, for the JAGS comment; NA where `node` is the parameter.
 # - min_length: minimum length of the segment that ends at each change point, in cp_order_.
 #   NA for other parameters.
-# Nodes other than the parameter itself are for dinvgamma() and group-level change points here,
-# and for the reparameterizations in add_reparams().
-# - group_names: names of group-level parameters.
+# Here, `node` differs from the parameter for dinvgamma() priors and group-level change
+# points. add_reparams() adds more. `group_names` are the group-level parameters.
 add_nodes = function(prior_table, cps, group_names) {
   prior_table$node = ifelse(prior_table$kind == "distribution", prior_table$parameter, NA_character_)
   prior_table$node_prior = prior_table$parsed
@@ -214,6 +208,8 @@ add_nodes = function(prior_table, cps, group_names) {
   }
   locations = character()  # Earlier group-level change points sampled as locations, e.g., c("cp_1 + cp_1_id[" = "cp_1_id_location[")
   for (j in seq_len(nrow(cps))) {
+    # Population-level change points: dirichlet() is uniform here, and lower bounds at the
+    # previous change point become cp_0 with a minimum length
     i = cp_rows[j]
     parsed = prior_table$parsed[[i]]
     prior_table$min_length[i] = "0"

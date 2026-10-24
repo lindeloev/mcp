@@ -1,6 +1,5 @@
-# ABOUT: Group-level ("random") predictor effects: detecting
-# `(... | group)` terms in a predictor formula and parsing them into
-# group-effect coefficient definitions.
+# ABOUT: Group-level ("random") effects in the predictor part: detecting
+# `(... | group)` terms and parsing them into group-level coefficient definitions.
 # ------------------------------------------------------------
 
 # Is a formula term a group-level term?
@@ -18,7 +17,7 @@ get_group_terms = function(form) {
 }
 
 
-# Identify a complete group block using ordinary formula expansion and its group
+# Key that is identical for equivalent group-level terms, e.g., `(x + 1 || id)` and `(1 + x || id)`
 group_block_key = function(term) {
   expr = str2lang(term)
   attrs = attributes(stats::terms(stats::as.formula(call("~", expr[[2]]))))
@@ -69,6 +68,7 @@ parse_predictor_group_term = function(
   assert_unique_predictor_names(coefficient)
   has_coefficients = nrow(coefficient) > 0
 
+  # A turn-off like `(0 | id)`: one row without coefficients
   if (!has_coefficients) {
     return(tibble::tibble(
       dpar = dpar,
@@ -159,22 +159,10 @@ get_predictor_group_definitions_segment = function(
 }
 
 
-# Get information about group-level parameters
-#
-# Returns parameters and data columns given parameter name(s), model part(s),
-# or column(s).
-#
-# - pars: `NULL`/`FALSE` for nothing. `TRUE` for all. A character vector
-#   containing `"cp"`, `"predictor"`, exact group-level parameter names, or
-#   `*` wildcards matching parameter names.
-# - cols: `NULL`/`FALSE` for nothing. `TRUE` for all. A vector of grouping
-#   column names for specifics. Usually provided via `facet_by` elsewhere.
-# Returns: A list. See details.
-#   
-# Returns a list with
-# * `pars`: Character vector of parameter names, or `NULL` if empty.
-# * `cols`: Character vector of data column names, or `NULL` if empty.
-# * `groups`: The selected parameter names, split by data column.
+# Select group-level parameters by name/part (`pars`) or grouping column (`cols`, e.g., from `facet_by`).
+# Each is `NULL`/`FALSE` for none or `TRUE` for all. `pars` also takes `"cp"`, `"predictor"`,
+# parameter names, and `*` wildcards.
+# Returns list(pars, cols, groups), where `groups` is `pars` split by grouping column.
 unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
   checkmate::assert_multi_class(pars, c("logical", "character"), null.ok = TRUE)
   checkmate::assert_multi_class(cols, c("logical", "character"), null.ok = TRUE)
@@ -230,7 +218,7 @@ unpack_group_effects = function(fit, pars = NULL, cols = NULL) {
 }
 
 
-# Check the hierarchy before drawing a group effect. Change-point deviations are
+# Check the hierarchy before drawing a group-level deviation. Change-point deviations are
 # drawn from their default bounded normal, so user-specified priors are not supported.
 assert_generatable_group_prior = function(fit, name, sd_name) {
   prior_table = fit$.internal$prior_table

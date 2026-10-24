@@ -205,11 +205,9 @@ get_median_inits = function(prior) {
 }
 
 
-# Initial values for the change points with a prior distribution, except those in `user_inits`.
-# Equispaced in the observed range of x (`x_range`) with room for minimum segment lengths, then moved the least
-# possible to be within the lower and upper bounds of their priors and ordered. Fixed change points and the
-# user's initial values stay where they are. Sampler fails at init if impossible values are chosen because
-# it is incompatible with the 1 ~ dbern(...) ordering node.
+# Initial values for the change points with a prior distribution, except those in `user_inits`:
+# equispaced in the observed range (`x_range`) with room for minimum segment lengths, then moved the
+# least possible to respect their bounds and order. JAGS fails to initialize if they violate cp_order_.
 # - cp_rows: Rows of the prior table for the population-level change points, in order.
 get_cp_inits = function(cp_rows, x_range, user_inits = list()) {
   n_cp = nrow(cp_rows)
@@ -217,7 +215,7 @@ get_cp_inits = function(cp_rows, x_range, user_inits = list()) {
     return(list())
 
   # Lower and upper bounds (dunif() or T()) and minimum segment length (see add_nodes()).
-  # Fixed change points and user-supplied initial values are bounded by themselves.
+  # Constant change points and user-supplied initial values are bounded by themselves.
   env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n_cp + 1)))
   evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
   is_free = !is.na(cp_rows$node)
@@ -257,7 +255,7 @@ assert_jags_namespace = function(data_names, family, segments, parameters, jags_
   group_cols = unique(stats::na.omit(parameters$group_col))
   dpars = family$dpar_specs$dpar
 
-  # Public parameters and fixed data range endpoints share one namespace.
+  # Parameters and the ends of the observed range (cp_0 and cp_K) share one namespace.
   parameter_names = c(paste0("cp_", c(0, nrow(segments))), parameters$parameter)
 
   # Data helpers are always present; model helpers occur only in generated code.

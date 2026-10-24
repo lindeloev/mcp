@@ -178,13 +178,13 @@ interpolate_newdata = function(fit, by = NULL, x_values = NULL, at = NULL, arma 
     get_predictor_cols(fit)
   )
   by = unique(c(categorical_cols, intersect(setdiff(group_cols, series_col), by)))
-  # Numeric group IDs are discrete even when they are not requested
-  # for evaluation, so never interpolate them as continuous predictors.
   by_grid = if (length(by) == 0) {
     data.frame(.row = 1)[, FALSE, drop = FALSE]
   } else {
     lapply(fit$data[, by, drop = FALSE], unique) |> expand.grid()
   }
+  # Numeric group IDs are discrete even when they are not requested
+  # for evaluation, so never interpolate them as continuous predictors.
   continuous_at = get_continuous_at(
     fit$data, data_columns, at, unique(c(group_cols, series_col))
   )

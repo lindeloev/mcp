@@ -76,6 +76,14 @@ as_mcpfamily = function(x) {
 }
 
 
+# Complete and validate an mcpfamily from the parts that each mcpfamily_*() supplies:
+# - dpar_specs: one row per dpar (see new_dpar_spec()).
+# - default_prior: one row per dpar and par_type. `condition` selects priors for a dpar
+#   with ("modeled") or without ("constant") its own formula, e.g., sigma(1 + x).
+# - response: auxiliary data columns (e.g., trials()) and how to validate and present the response.
+# - r: R functions for predictions, log_lik(), etc. (see assert_mcpfamily()).
+# - backends$jags: the likelihood in JAGS code and when to use the JAGS glm module.
+# - garma: the observed response for AR/MA on the link scale, bounded by `threshold`. NULL if unsupported.
 new_mcpfamily = function(family, dpar_specs = family$dpar_specs,
                          default_prior = family$default_prior,
                          response = family$response, 
@@ -233,13 +241,10 @@ mcpfamily_gaussian = function(family) {
         # No weight
         paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2)")
       } else {
-        # The weighted normal contributes sigma^-1 from its normalizing term.
-        # Raising the likelihood to weight w requires adding -(w - 1) * log(sigma)
-        # to the log-likelihood. Computing dexp(sigma^(1 - w)) directly underflows/overflows
-        # for large weights. Instead, we use the Poisson zeros trick on the log scale:
-        # P(Z = 0) from dpois(phi) contributes -phi to the log-likelihood.
-        # Setting phi = (w - 1) * log(sigma) + |w - 1| * 50 ensures phi >= 0 for any
-        # reasonable sigma (e^-50 to e^50). The constant offset cancels out in MCMC.
+        # Precision w / sigma^2 raises the kernel to weight w. The normalizing term needs
+        # an extra -(w - 1) * log(sigma), added with the Poisson zeros trick (see
+        # jags_weighted_likelihood()). The constant |w - 1| * 50 keeps phi >= 0 for
+        # sigma within e^-50 to e^50 and cancels out in MCMC.
         c(
           "# Gaussian likelihood raised to the observation weight",
           paste0("likelihood_weight_[i_] = 1 + response_observed_[i_] * (", weights, " - 1)  # Ensures weight 1 if missing data"),

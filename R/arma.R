@@ -34,15 +34,13 @@ unpack_arma = function(expr) {
   if (length(formula_index) > 1 || any(component_arg_names[formula_index] %notin% c("", "formula")))
     stop(component, "() accepts only `order`, an optional formula, `threshold`, and `series`.")
 
-  # GET ORDER
+  # Order
   order = suppressWarnings(as.numeric(deparse1(component_args[[1]])))
-
-  # Check the order
   if (is.na(order))
     stop("Wrong specification of order in '", term, "'. Must be ", component, "(order) or ", component, "(order, formula) where order is a non-negative integer.")
   checkmate::assert_int(order, lower = 0, .var.name = term)
 
-  # GET FORMULA AND THRESHOLD AND SERIES
+  # Formula
   if (order == 0) {
     if (length(formula_index) == 1)
       stop("Formula cannot be specified when order = 0 in '", term, "'.")
@@ -54,6 +52,7 @@ unpack_arma = function(expr) {
     formula = 1
   }
 
+  # Threshold and series
   if (length(threshold_index) == 1) {
     threshold = suppressWarnings(as.numeric(deparse1(component_args[[threshold_index]])))
     if (length(threshold) != 1 || is.na(threshold) || !is.finite(threshold) || threshold <= 0 || threshold >= 1)
@@ -211,7 +210,7 @@ has_missing_garma_history = function(fit, data = fit$data) {
     return(FALSE)
 
   # Missing values in the history of later observed values (per series)
-  # (e.g., c(1, NA, 3) --> TRUE; c(1, 3, NA, NA) --> FALSE
+  # (e.g., c(1, NA, 3) --> TRUE; c(1, 3, NA, NA) --> FALSE)
   series = if (is.null(cols$series) || is.null(data[[cols$series]])) rep(1, length(y)) else data[[cols$series]]
   has_missing_history = vapply(split(y, series), function(series_y) {
     missing_rows = which(is.na(series_y))
@@ -257,7 +256,6 @@ get_imputed_response = function(fit, y, draw_ids) {
 
 
 # Warn about model-checking limitations for AR/MA models
-# - fit: An mcpfit object.
 # - arma: Whether AR and MA effects are used in the evaluation (logical).
 # - check: Currently only "information_criterion".
 warn_arma_check = function(fit, arma, check) {
@@ -326,9 +324,11 @@ warn_arma_fit = function(fit, ndraws = 500, nrows = 100, diagnostics = list()) {
   if (!any(enabled))
     return(invisible(NULL))
 
+  # Evaluate the AR/MA coefficients for evenly spaced rows and draws
   rows = unique(round(seq(1, nrow(fit$data), length.out = min(nrows, nrow(fit$data)))))
   newdata = fit$data[rows, , drop = FALSE]
   draws = as.matrix(.subset2(fit, "mcmc_post"))
+
   # Spread the check over all retained post-warmup draws and chains.
   keep = unique(round(seq(1, nrow(draws), length.out = min(ndraws, nrow(draws)))))
   smoke_fit = fit
@@ -405,6 +405,8 @@ get_garma_jags_code = function(ar_order, ma_order, par_x, series = FALSE) {
   if (max_order == 0)
     stop_github("get_garma_jags_code() requires a positive AR or MA order.")
 
+  # The AR/MA terms of `row`, using up to `available_*` lags. As in simulate_garma(),
+  # AR multiplies the lagged link-scale residuals and MA the lagged innovations.
   get_terms = function(row, available_ar, available_ma) {
     terms = character()
     term_lags = integer()
@@ -430,6 +432,7 @@ get_garma_jags_code = function(ar_order, ma_order, par_x, series = FALSE) {
   # Apply GARMA recursion to link-scale residuals
   resid_garma_[1] = 0"
 
+  # The first rows have fewer lags
   if (max_order >= 2) {
     for (i in 2:max_order) {
       jags_code = paste0(
@@ -484,8 +487,12 @@ simulate_garma = function(link_mu, ar, ma, threshold, family, dpars, data = list
   generate = is.null(y)
   y = matrix(if (generate) NA_real_ else y, nrow(link_mu), ncol(link_mu))
   link_y = matrix(family$linkfun(family$garma$observed_r(y, data, threshold)), nrow(y))
+
+  # Link-scale residuals: resid_abs from link_mu, resid_ma (innovations) after also
+  # subtracting the AR/MA terms in resid_garma
   resid_abs = resid_ma = resid_garma = matrix(0, nrow(y), ncol(y))
 
+  # Step through time, evaluating each position for all series at once
   position = sequence(runs$lengths)
   for (rows in split(seq_along(position), position)) {
     current_position = position[rows[1]]

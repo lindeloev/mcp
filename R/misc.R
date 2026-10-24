@@ -144,12 +144,8 @@ format_bad_pars = function(parameter, bad) {
 }
 
 
-# Warn about poorly mixed posterior chains.
-# Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow Vehtari et al. (2021).
-# - convergence: A convergence_table() of the posterior draws.
-# - diagnostics: A resolved diagnostics configuration.
-# - constant_pars: Names of parameters with constant priors.
-# - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
+# Warn about poorly mixed posterior chains. The default thresholds (rhat > 1.01, bulk/tail
+# ESS < 400) follow Vehtari et al. (2021). Arguments as in check_convergence().
 warn_nonconvergence = function(convergence, diagnostics = list(), constant_pars = character(), check_rhat = TRUE) {
   diagnostics = resolve_diagnostics(diagnostics)
   if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))

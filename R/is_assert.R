@@ -1,7 +1,7 @@
 # ABOUT: These functions are used internally for defensive programming.
 # -----------------
 
-# Check if object is an mcp family
+# Is `x` a family object, e.g., gaussian() or an mcpfamily?
 is_family = function(x) {
   if (inherits(x, "family") == FALSE)
     return(FALSE)
@@ -71,9 +71,7 @@ assert_rank = function(x, segment, dpar) {
 }
 
 
-# Asserts whether the data contains these cols and that all of them does not contained fail_funcs values
-# This applies checks to multiple columns in data.
-# Typical fail_funcs would be c(is.na, is.nan, is.infinite)
+# Check that `data` has `cols` and that none of their values fail `fail_funcs`, e.g., c(is.na, is.infinite)
 assert_data_cols = function(data, cols, fail_funcs = c()) {
   missing_cols = setdiff(cols, colnames(data))
   if (length(missing_cols) > 0)
@@ -82,7 +80,7 @@ assert_data_cols = function(data, cols, fail_funcs = c()) {
   # Only work with the specified columns now
   data = data[, cols, drop = FALSE]
   for (fail_func in fail_funcs) {
-    failed_cols = colnames(data)[unlist(lapply(data, function(x) any(fail_func(x))))]  # Character vector of columns that
+    failed_cols = colnames(data)[unlist(lapply(data, function(x) any(fail_func(x))))]
     if (length(failed_cols) > 0) {
       # Fail with informative message
       fail_name = if (identical(fail_func, is.na)) "is.na" else
@@ -178,17 +176,17 @@ assert_response_data = function(family, segments, data, response_required = TRUE
 }
 
 
-# Fixed constant dpars must be within their support (e.g., sigma > 0) without relying
+# Constant dpars, e.g., sigma_1 = 2, must be within their support (sigma > 0) without relying
 # on the numerical floor used for observation-level calculations.
-assert_fixed_dpars = function(prior_table, predictors, family) {
+assert_constant_dpars = function(prior_table, predictors, family) {
   bounds = get_constant_dpar_bounds(family)
   for (dpar in names(bounds)) {
-    fixed = prior_table$parameter %in% predictors$name[predictors$dpar == dpar] & prior_table$kind == "constant"
-    values = suppressWarnings(as.numeric(prior_table$value[fixed]))
+    is_constant = prior_table$parameter %in% predictors$name[predictors$dpar == dpar] & prior_table$kind == "constant"
+    values = suppressWarnings(as.numeric(prior_table$value[is_constant]))
     if (any(values <= bounds[[dpar]])) {
-      bad_parameters = prior_table$parameter[fixed][values <= bounds[[dpar]]]
+      bad_parameters = prior_table$parameter[is_constant][values <= bounds[[dpar]]]
       stop(
-        "Fixed `", dpar, "` parameter(s) must be greater than ", bounds[[dpar]], ": ",
+        "Constant priors on `", dpar, "` must be greater than ", bounds[[dpar]], ": ",
         and_collapse(bad_parameters), "."
       )
     }

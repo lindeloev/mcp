@@ -310,7 +310,7 @@ canonicalize_segment = function(form, i, default_response = NULL) {
 #' Unpacks y variable name
 #'
 #' @inheritParams mcp
-#' @param form_y Character representation of formula
+#' @param form_y The left-hand side, e.g., `y | trials(N)`, as a string or expression. NA for segments 2+.
 #' @param i Segment number
 #' @return A one-row tibble with the response and auxiliary-data columns.
 #' @noRd
@@ -322,7 +322,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
   aux_names = unique(c("trials", "weights", family_aux))
   response = stats::setNames(as.list(rep(NA_character_, length(aux_names) + 1)), c("y", aux_names))
 
-  # If NA and not segment 1, just return empty
+  # Segments 2+ have no response
   if (is.na(form_y)) {
     if (i == 1)
       stop("A response must be defined in segment 1, e.g., 'y ~ 1'")
@@ -331,7 +331,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
   }
 
 
-  # Split by |
+  # Split `y | trials(N)` into the response and auxiliary terms
   y_split = strsplit(form_y, "\\|")[[1]]
   if (length(y_split) > 2)
     stop("There can only be zero or one pipe in response. Got '", form_y, "' in segment ", i)
@@ -345,6 +345,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
     stop("The response must be a data column name. Got '", y_col, "' in segment ", i, ". Transform it in the data before fitting, e.g., `data$y_log = log(data$y)`.", call. = FALSE)
   response$y = y_col
 
+  # AUXILIARY: only the family's terms are allowed after the pipe
   term_labels = character()
   if (length(y_split) == 2) {
     rhs = y_split[2]
@@ -358,6 +359,7 @@ unpack_y = function(form_y, i, family, env = parent.frame()) {
       )
   }
 
+  # The data column inside each auxiliary term, e.g., "N" in trials(N)
   for (name in family_aux) {
     term_index = stringr::str_detect(term_labels, paste0("^", name, "\\("))
     got_term = any(term_index)

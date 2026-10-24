@@ -8,7 +8,7 @@ bad_sigma = list(
 test_bad(bad_sigma)
 
 
-test_that("fixed residual SDs must be positive", {
+test_that("constant residual SDs must be positive", {
   data = data.frame(x = 1:4, y = 0)
 
   expect_error(
@@ -16,7 +16,7 @@ test_that("fixed residual SDs must be positive", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
     ),
-    "Fixed `sigma` parameter(s) must be greater than 0: sigma_1.",
+    "Constant priors on `sigma` must be greater than 0: sigma_1.",
     fixed = TRUE
   )
   expect_error(
@@ -24,7 +24,7 @@ test_that("fixed residual SDs must be positive", {
       list(y ~ 1), data,
       par_x = "x", prior = list(sigma_1 = -1), sample = FALSE
     ),
-    "Fixed `sigma` parameter(s) must be greater than 0: sigma_1.",
+    "Constant priors on `sigma` must be greater than 0: sigma_1.",
     fixed = TRUE
   )
   expect_silent(

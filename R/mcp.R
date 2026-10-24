@@ -244,8 +244,7 @@ mcp = function(
       stop("The response column '", y_col, "' must be numeric or logical. Got ", class(data[[y_col]])[1], ".", call. = FALSE)
   }
 
-  # Plain named lists are the v0.4 JAGS-string prior format. Future classed
-  # sampler-agnostic prior objects can dispatch before this legacy path.
+  # Check prior
   validate_prior_v1(prior)
 
   # Transform family to mcpfamily. Accepts "poisson", poisson, and poisson() like glm().
@@ -307,7 +306,7 @@ mcp = function(
   # Make prior
   assert_prior_not_shared(prior, predictor_occurrences, group_occurrences)
   prior_table = get_prior_table(segments, cps, predictor_definitions, group_definitions, family, prior, data, predictor_tables$design_specs, reparam)
-  assert_fixed_dpars(prior_table, predictor_definitions, family)
+  assert_constant_dpars(prior_table, predictor_definitions, family)
 
   # Assemble model metadata used by fitted-model methods
   data_columns = c(

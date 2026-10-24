@@ -118,16 +118,9 @@ summarise_pars = function(draws, width, convergence = NULL) {
 }
 
 
-# Internal function for summary.mcpfit, fixef.mcpfit, and ranef.mcpfit
-#
-# - fit: An \code{\link{mcpfit}}` object.
-# - scope: Which parameter scope to summarise: population-level parameters
-#   or group-level deviations.
-# - role: Optional parameter role to select within `scope`.
-# - verbose: Logical. Include the `segment` and `dpar` columns.
-# Returns: A tibble with summaries for each model parameter. With
-#   `verbose = TRUE`, rows are labeled with `segment` and `dpar` columns (see
-#   `summary.mcpfit`).
+# The summary table of summary(), fixef(), and ranef(): population-level parameters or group-level
+# deviations (`scope`), optionally only some `role`s and `dpar`s. `verbose` adds the `segment` and
+# `dpar` columns (see summary.mcpfit()).
 get_summary = function(fit, width, scope = c("population", "group"), role = NULL,
                        dpar = NULL, prior = FALSE, verbose = FALSE) {
   # Check arguments
@@ -186,10 +179,8 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   draws = posterior::subset_draws(draws, variable = get_cols)
   estimates = summarise_pars(draws, width, convergence = if (!prior) cached_convergence(fit))
 
-  # Order rows and add `segment`/`dpar` using the canonical parameter table
-  # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
-  # their base name; ties (levels of the same group-level effect) preserve their
-  # incoming factor-level order from draws.
+  # Order rows like mcp_pars() and add `segment`/`dpar`. Group-level deviations, e.g., "cp_1_id[A]",
+  # match by name without the level and keep their factor-level order from the draws.
   base_name = sub("\\[.*\\]$", "", estimates$parameter)
   match_idx = match(base_name, pars$parameter)
   estimates$segment = pars$segment[match_idx]
@@ -330,7 +321,7 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
     paste0("  ", format(seq_along(forms)), ": ", forms)
   )
 
-  # Data
+  # Summary table and diagnostics
   if (!is.null(draws)) {
     result = get_summary(fit, width, scope = "population", prior = prior, verbose = verbose)
     pars = mcp_pars(fit)
@@ -657,7 +648,7 @@ confint.mcpfit = function(object, parm, level = 0.95, prior = FALSE, ...) {
   if (!all(parm %in% population))
     stop("`parm` must name population-level parameters.", call. = FALSE)
 
-  # Compute credible interval
+  # Central intervals
   probs = c((1 - level) / 2, 1 - (1 - level) / 2)
   draws = posterior::as_draws_matrix(posterior_draws(
     object, prior = prior

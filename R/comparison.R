@@ -406,11 +406,12 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
 }
 
 
-# Validate the deliberately small expression language used by Savage-Dickey tests.
+# Check that a Savage-Dickey test is an affine contrast of parameters, e.g., `2 * x_1 - x_2 = 0.5`
 validate_savage_dickey_expression = function(expression, parameters) {
   sides = strsplit(expression, "=", fixed = TRUE)[[1]]
   sides = stringr::str_trim(sides)
 
+  # Recursively check whether `x` is affine (`valid`) and whether it has no parameters (`constant`)
   inspect = function(x) {
     if (is.numeric(x) && length(x) == 1)
       return(list(valid = TRUE, constant = TRUE))
