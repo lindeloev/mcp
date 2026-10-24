@@ -108,8 +108,8 @@ thin_post_draws = function(fit, ndraws) {
   indices = pmax(1L, as.integer(round(
     (seq_len(iter_per_chain) - 0.5) * n_iter_min / iter_per_chain
   )))
-  subset_chains = function(draws) coda::mcmc.list(lapply(draws, function(ch) {
-    coda::mcmc(ch[indices, , drop = FALSE])
+  subset_chains = function(draws) coda::mcmc.list(lapply(draws, function(chain_draws) {
+    coda::mcmc(chain_draws[indices, , drop = FALSE])
   }))
   fit$mcmc_post = subset_chains(mcmc_post)
   if (!is.null(fit$.internal$imputed_response))
@@ -125,9 +125,9 @@ validate_loglik_ndraws = function(fit, ndraws) {
     return(NULL)
 
   mcmc_post = .subset2(fit, "mcmc_post")
-  n_draws = sum(vapply(mcmc_post, nrow, integer(1)))
-  if (ndraws > n_draws)
-    stop("`ndraws` cannot exceed the ", n_draws, " available posterior draws.")
+  available_draws = sum(vapply(mcmc_post, nrow, integer(1)))
+  if (ndraws > available_draws)
+    stop("`ndraws` cannot exceed the ", available_draws, " available posterior draws.")
   as.integer(ndraws)
 }
 

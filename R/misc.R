@@ -67,31 +67,31 @@ resolve_diagnostics = function(diagnostics = list()) {
 
 
 # Check MCMC diagnostic criteria for a summary data.frame.
-# - results: A data.frame with a `parameter` column and optionally `rhat`, `ess_bulk`, `ess_tail`.
+# - convergence: A data.frame with a `parameter` column and optionally `rhat`, `ess_bulk`, `ess_tail`.
 # - diagnostics: Resolved or partial diagnostics list.
-# - fixed_pars: Parameter names for constant params (e.g. "x_2" for x_2 = 5)
+# - constant_pars: Names of parameters with constant priors, e.g., "x_2" for x_2 = 5.
 # - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
-check_convergence = function(results, diagnostics = list(), fixed_pars = character(), check_rhat = TRUE) {
+check_convergence = function(convergence, diagnostics = list(), constant_pars = character(), check_rhat = TRUE) {
   diagnostics = resolve_diagnostics(diagnostics)
-  if (nrow(results) == 0)
+  if (nrow(convergence) == 0)
     return(list(bad = logical(0), bad_names = character(0), n_bad = 0L, thresholds = ""))
 
-  base_name = sub("\\[.*\\]$", "", results$parameter)
-  is_fixed = results$parameter %in% fixed_pars | base_name %in% fixed_pars
+  base_name = sub("\\[.*\\]$", "", convergence$parameter)
+  is_constant = convergence$parameter %in% constant_pars | base_name %in% constant_pars
 
-  check_rhat = check_rhat && !is.null(diagnostics$rhat) && "rhat" %in% names(results)
-  check_bulk = !is.null(diagnostics$ess_bulk) && "ess_bulk" %in% names(results)
-  check_tail = !is.null(diagnostics$ess_tail) && "ess_tail" %in% names(results)
+  check_rhat = check_rhat && !is.null(diagnostics$rhat) && "rhat" %in% names(convergence)
+  check_bulk = !is.null(diagnostics$ess_bulk) && "ess_bulk" %in% names(convergence)
+  check_tail = !is.null(diagnostics$ess_tail) && "ess_tail" %in% names(convergence)
 
-  bad = rep(FALSE, nrow(results))
+  bad = rep(FALSE, nrow(convergence))
   if (check_rhat)
-    bad = bad | is.na(results$rhat) | results$rhat > diagnostics$rhat
+    bad = bad | is.na(convergence$rhat) | convergence$rhat > diagnostics$rhat
   if (check_bulk)
-    bad = bad | is.na(results$ess_bulk) | results$ess_bulk < diagnostics$ess_bulk
+    bad = bad | is.na(convergence$ess_bulk) | convergence$ess_bulk < diagnostics$ess_bulk
   if (check_tail)
-    bad = bad | is.na(results$ess_tail) | results$ess_tail < diagnostics$ess_tail
+    bad = bad | is.na(convergence$ess_tail) | convergence$ess_tail < diagnostics$ess_tail
 
-  bad = bad & !is_fixed
+  bad = bad & !is_constant
 
   thresholds = c(
     if (check_rhat) paste0("rhat > ", diagnostics$rhat),
@@ -101,7 +101,7 @@ check_convergence = function(results, diagnostics = list(), fixed_pars = charact
 
   list(
     bad = bad,
-    bad_names = results$parameter[bad],
+    bad_names = convergence$parameter[bad],
     n_bad = sum(bad),
     thresholds = paste(thresholds, collapse = " or ")
   )
@@ -123,9 +123,9 @@ convergence_table = function(draws) {
 
 # The convergence_table() of the posterior draws, cached by mcp(). NULL if the draws changed since then.
 cached_convergence = function(fit) {
-  cache = fit$.internal$convergence
-  if (!is.null(cache) && identical(cache$hash, rlang::hash(mcmclist_draws(fit, error = FALSE))))
-    cache$table
+  convergence = fit$.internal$convergence
+  if (!is.null(convergence) && identical(convergence$hash, rlang::hash(mcmclist_draws(fit, error = FALSE))))
+    convergence$table
 }
 
 
@@ -148,22 +148,22 @@ format_bad_pars = function(parameter, bad) {
 # Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow Vehtari et al. (2021).
 # - convergence: A convergence_table() of the posterior draws.
 # - diagnostics: A resolved diagnostics configuration.
-# - fixed_pars: Parameter names intentionally fixed to constants.
+# - constant_pars: Names of parameters with constant priors.
 # - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
-warn_nonconvergence = function(convergence, diagnostics = list(), fixed_pars = character(), check_rhat = TRUE) {
+warn_nonconvergence = function(convergence, diagnostics = list(), constant_pars = character(), check_rhat = TRUE) {
   diagnostics = resolve_diagnostics(diagnostics)
   if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))
     return(invisible(NULL))
 
-  conv = check_convergence(convergence, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
-  if (conv$n_bad == 0)
+  convergence_check = check_convergence(convergence, diagnostics, constant_pars = constant_pars, check_rhat = check_rhat)
+  if (convergence_check$n_bad == 0)
     return(invisible(NULL))
 
-  has_group = any(conv$bad & grepl("[", convergence$parameter, fixed = TRUE))
+  has_group = any(convergence_check$bad & grepl("[", convergence$parameter, fixed = TRUE))
   warning(
     "Some parameters may not have converged well:\n",
-    "  * ", conv$thresholds, ": ",
-    format_bad_pars(convergence$parameter, conv$bad), "\n",
+    "  * ", convergence_check$thresholds, ": ",
+    format_bad_pars(convergence$parameter, convergence_check$bad), "\n",
     "Inspect `summary(fit)`", if (has_group) ", `ranef(fit)`,", " and `plot_pars(fit)`, and consider increasing ",
     "`iter`/`warmup`, set inits manually, or simplifying the model.",
     call. = FALSE
@@ -216,8 +216,8 @@ get_mixture_quantiles = function(dpars, data, probs, family, rate = FALSE) {
   quantiles = vapply(seq_len(nrow(dpars$mu)), function(row) {
     row_dpars = lapply(dpars, function(value) value[row, ])
     row_data = lapply(data, `[`, row)
-    q = vapply(probs, function(p) find_mixture_quantile(family, row_dpars, row_data, p), numeric(1))
-    family$response$observed(q, row_data, rate)
+    row_quantiles = vapply(probs, function(p) find_mixture_quantile(family, row_dpars, row_data, p), numeric(1))
+    family$response$observed(row_quantiles, row_data, rate)
   }, numeric(length(probs)))
   matrix(quantiles, ncol = length(probs), byrow = TRUE)
 }

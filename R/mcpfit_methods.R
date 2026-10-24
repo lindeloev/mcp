@@ -350,18 +350,18 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
       convergence = convergence_table(draws)
     check_rhat = !is.null(diagnostics$rhat) && coda::nchain(draws) >= 2
     prior_table = fit$.internal$prior_table
-    fixed_pars = prior_table$parameter[prior_table$kind == "constant"]
-    conv = check_convergence(convergence, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
+    constant_pars = prior_table$parameter[prior_table$kind == "constant"]
+    convergence_check = check_convergence(convergence, diagnostics, constant_pars = constant_pars, check_rhat = check_rhat)
     is_group = grepl("[", convergence$parameter, fixed = TRUE)
-    n_bad_population = sum(conv$bad & !is_group)
+    n_bad_population = sum(convergence_check$bad & !is_group)
     if (n_bad_population > 0) {
       param_str = if (n_bad_population == 1) "1 parameter shows" else paste0(n_bad_population, " parameters show")
-      footer = c(footer, paste0("Warning: ", param_str, " poor convergence (", conv$thresholds, ")."))
+      footer = c(footer, paste0("Warning: ", param_str, " poor convergence (", convergence_check$thresholds, ")."))
     }
-    if (any(conv$bad & is_group)) {
+    if (any(convergence_check$bad & is_group)) {
       footer = c(footer, paste0(
-        "Warning: Group-level deviations show poor convergence (", conv$thresholds, "): ",
-        format_bad_pars(convergence$parameter, conv$bad & is_group), "."
+        "Warning: Group-level deviations show poor convergence (", convergence_check$thresholds, "): ",
+        format_bad_pars(convergence$parameter, convergence_check$bad & is_group), "."
       ))
     }
   } else {
@@ -462,8 +462,8 @@ ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ..
 coef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
   assert_width(width)
-  pars = mcp_pars(object, scope = "group")
-  if (nrow(pars) == 0)
+  group_pars = mcp_pars(object, scope = "group")
+  if (nrow(group_pars) == 0)
     stop("The model has no group-level effects. Use `fixef(fit)` for population-level coefficients.", call. = FALSE)
 
   # Sum population-level and group-level draws for each group level
@@ -471,17 +471,17 @@ coef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...
   columns = posterior::variables(draws)
   sums = list()
   rows = list()
-  for (i in seq_len(nrow(pars))) {
-    population = if (is.na(pars$population_parameter[i])) 0 else draws[[pars$population_parameter[i]]]
-    group_columns = columns[startsWith(columns, paste0(pars$parameter[i], "["))]
+  for (i in seq_len(nrow(group_pars))) {
+    population = if (is.na(group_pars$population_parameter[i])) 0 else draws[[group_pars$population_parameter[i]]]
+    group_columns = columns[startsWith(columns, paste0(group_pars$parameter[i], "["))]
     sums[group_columns] = lapply(group_columns, function(column) population + draws[[column]])
     rows[[i]] = tibble::tibble(
-      parameter = sub(paste0("_", pars$group_col[i], "$"), "", pars$parameter[i]),
-      group_col = pars$group_col[i],
+      parameter = sub(paste0("_", group_pars$group_col[i], "$"), "", group_pars$parameter[i]),
+      group_col = group_pars$group_col[i],
       level = sub("^.*?\\[(.*)\\]$", "\\1", group_columns),
-      segment = pars$segment[i],
-      dpar = pars$dpar[i],
-      .population = pars$population_parameter[i],
+      segment = group_pars$segment[i],
+      dpar = group_pars$dpar[i],
+      .population = group_pars$population_parameter[i],
       .column = group_columns
     )
   }

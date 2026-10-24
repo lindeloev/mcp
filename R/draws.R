@@ -229,17 +229,17 @@ mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = 
     draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
 
   # Columns of the selected group-level deviations at the selected levels
-  group_nodes = unlist(lapply(names(groups), function(col) {
-    levels = if (is.null(newdata)) unique(fit$data[[col]]) else unique(newdata[[col]])
-    novel = setdiff(levels, fit$data[[col]])
+  group_nodes = unlist(lapply(names(groups), function(group_col) {
+    group_levels = if (is.null(newdata)) unique(fit$data[[group_col]]) else unique(newdata[[group_col]])
+    novel = setdiff(group_levels, fit$data[[group_col]])
     if (length(novel) > 0)
       stop(
-        "`newdata` has level(s) of the grouping factor '", col, "' that are not in the fitted data: ",
+        "`newdata` has level(s) of the grouping factor '", group_col, "' that are not in the fitted data: ",
         and_collapse(paste0("'", novel, "'")), ". Use `group_effects = FALSE` (similar to `re_formula = NA` in `posterior_*()`) ",
         "to predict without group-level effects, or `fit$simulate()` to simulate new groups.",
         call. = FALSE
       )
-    paste0(rep(groups[[col]], each = length(levels)), "[", levels, "]")
+    paste0(rep(groups[[group_col]], each = length(group_levels)), "[", group_levels, "]")
   }))
   draws = dplyr::select(draws, dplyr::all_of(c(".chain", ".iteration", ".draw", mcp_pars(fit, scope = "population")$parameter, group_nodes)))
   draws[, setdiff(mcp_pars(fit, scope = "group")$parameter, unlist(groups))] = 0
@@ -254,11 +254,11 @@ mcp_draws = function(fit, group = TRUE, prior = FALSE, ndraws = NULL, newdata = 
 draws_to_pars = function(draws, data, groups) {
   is_par = !grepl("[", names(draws), fixed = TRUE) & names(draws) %notin% c(".chain", ".iteration", ".draw")
   pars = as.list(draws[is_par])
-  for (col in names(groups)) {
-    levels = unique(data[[col]])
-    rows = match(data[[col]], levels)
-    for (name in groups[[col]])
-      pars[[name]] = t(unname(as.matrix(draws[paste0(name, "[", levels, "]")])))[rows, , drop = FALSE]
+  for (group_col in names(groups)) {
+    group_levels = unique(data[[group_col]])
+    group_indices = match(data[[group_col]], group_levels)
+    for (name in groups[[group_col]])
+      pars[[name]] = t(unname(as.matrix(draws[paste0(name, "[", group_levels, "]")])))[group_indices, , drop = FALSE]
   }
   pars
 }
@@ -272,19 +272,19 @@ draws_to_pars = function(draws, data, groups) {
 imputed_draws = function(object, ndraws = NULL) {
   mcmclist_draws(object)  # Validate the fit and availability of posterior draws.
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-  imputed = object$.internal$imputed_response
-  if (is.null(imputed))
+  imputed_response = object$.internal$imputed_response
+  if (is.null(imputed_response))
     stop("No retained posterior imputations are available in this fit.", call. = FALSE)
 
-  draws = tibble::as_tibble(posterior::as_draws_df(posterior::as_draws_array(imputed)))
+  draws = tibble::as_tibble(posterior::as_draws_df(posterior::as_draws_array(imputed_response)))
   if (!is.null(ndraws))
     draws = dplyr::sample_n(draws, ndraws)
-  rows = object$.internal$imputed_response_rows
-  spec = tibble::tibble(
-    .name = paste0(mcp_columns(object)$response, "[", rows, "]"),
+  imputed_response_rows = object$.internal$imputed_response_rows
+  pivot_spec = tibble::tibble(
+    .name = paste0(mcp_columns(object)$response, "[", imputed_response_rows, "]"),
     .value = ".imputed",
-    .row = rows
+    .row = imputed_response_rows
   )
-  tidyr::pivot_longer_spec(draws, spec) %>%
+  tidyr::pivot_longer_spec(draws, pivot_spec) %>%
     dplyr::relocate(".chain", ".iteration", ".draw")
 }

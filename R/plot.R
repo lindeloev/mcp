@@ -138,31 +138,30 @@ get_plot = function(x,
   lines = min(lines, available_draws)
 
   # Useful vars
-  yvar = data_columns$response
-  by = plot_by
-  group_pars = unpack_group_effects(fit, cols = by)$pars
-  if (is.null(group_pars))
-    group_pars = FALSE
+  y_col = data_columns$response
+  group_effects = unpack_group_effects(fit, cols = plot_by)$pars
+  if (is.null(group_effects))
+    group_effects = FALSE
 
   ############################
   # MAKE NEWDATA AND PREDICT #
   ############################
   needs_arma = uses_garma(fit, arma, "fitted", dpar)
-  newdata = interpolate_newdata(fit, by = by, at = at, arma = needs_arma, prior = prior)
+  newdata = interpolate_newdata(fit, by = plot_by, at = at, arma = needs_arma, prior = prior)
 
   # Evaluate like fitted() and predict(). The response is in newdata for AR/MA models, so drop it.
   local_pp_eval = function(type, summary, ndraws) {
     pp_eval(
       fit, newdata, summary = summary, type = type, width = width, rate = rate, prior = prior,
-      dpar = if (type == "fitted") dpar, group_effects = group_pars, arma = needs_arma, ndraws = ndraws, scale = scale
+      dpar = if (type == "fitted") dpar, group_effects = group_effects, arma = needs_arma, ndraws = ndraws, scale = scale
     ) %>%
-      dplyr::select(-dplyr::any_of(yvar))
+      dplyr::select(-dplyr::any_of(y_col))
   }
 
   # Fitted lines need only `lines` draws, selected jointly across all curves. Values are in the response column.
   eval_lines = if (lines > 0) {
     local_pp_eval("fitted", summary = FALSE, ndraws = lines) %>%
-      dplyr::rename("{yvar}" := dplyr::all_of(get_value_col("fitted", dpar, scale))) %>%
+      dplyr::rename("{y_col}" := dplyr::all_of(get_value_col("fitted", dpar, scale))) %>%
       add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
 
@@ -173,7 +172,7 @@ get_plot = function(x,
       tidyr::pivot_longer(c(".lower", ".upper"), names_to = "quantile", values_to = value_col) %>%
       add_plot_groups(curve_by = curve_by, color_by = color_by)
   }
-  fitted_data = if (show_fitted) get_interval("fitted", yvar)
+  fitted_data = if (show_fitted) get_interval("fitted", y_col)
   predict_data = if (show_predict) get_interval("predict", ".prediction")
   plot_newdata = add_plot_groups(newdata, curve_by = curve_by, color_by = color_by)
 
@@ -243,7 +242,7 @@ get_plot = function(x,
 
   # Add intervals?
   if (show_fitted) {
-    gg = gg + geom_quantiles(fitted_data, yvar, use_color, color = "red", lty = "dashed", lwd = 0.85)
+    gg = gg + geom_quantiles(fitted_data, y_col, use_color, color = "red", lty = "dashed", lwd = 0.85)
   }
   if (show_predict) {
     gg = gg + geom_quantiles(predict_data, ".prediction", use_color, color = "#009E73", lty = "dashed", lwd = 0.85)
@@ -259,9 +258,9 @@ get_plot = function(x,
     } else if (show_predict) {
       limits_y = range(predict_data$.prediction)
     } else if (show_fitted) {
-      limits_y = range(dplyr::pull(fitted_data, yvar))
-    } else if (yvar %in% names(eval_lines)) {
-      limits_y = range(dplyr::pull(eval_lines, yvar))
+      limits_y = range(dplyr::pull(fitted_data, y_col))
+    } else if (y_col %in% names(eval_lines)) {
+      limits_y = range(dplyr::pull(eval_lines, y_col))
     } else {
       stop_github("Failed to draw change point density for this plot.")
     }
@@ -559,12 +558,12 @@ geom_cp_density = function(fit, facet_by, prior, limits_y, use_color = FALSE) {
 #' @param ... Arguments passed to geom_line
 #' @return A `ggplot2::geom_line` object.
 #' @noRd
-geom_quantiles = function(data_quantiles, yvar, use_color = TRUE, color = NULL, ...) {
+geom_quantiles = function(data_quantiles, y_col, use_color = TRUE, color = NULL, ...) {
   if (use_color) {
-    mapping = ggplot2::aes(y = .data[[yvar]], group = interaction(.data$quantile, .data$.group), color = .data$.color)
+    mapping = ggplot2::aes(y = .data[[y_col]], group = interaction(.data$quantile, .data$.group), color = .data$.color)
     ggplot2::geom_line(mapping = mapping, data = data_quantiles, ...)
   } else {
-    mapping = ggplot2::aes(y = .data[[yvar]], group = interaction(.data$quantile, .data$.group))
+    mapping = ggplot2::aes(y = .data[[y_col]], group = interaction(.data$quantile, .data$.group))
     ggplot2::geom_line(mapping = mapping, data = data_quantiles, color = color, ...)
   }
 }

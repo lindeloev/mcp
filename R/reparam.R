@@ -83,7 +83,7 @@ add_reparams = function(prior_table, predictors, cps, context, reparam = TRUE) {
     for (coef in own$name[own$segment == 1 & own$x_degree == 0]) {
       terms = get_x_partners(own, coef)
       if (nrow(terms) > 0 && is_reparam_prior(coef, segment_1 = TRUE)) {
-        x_max = max(context$data[[context$x_name]], na.rm = TRUE)
+        x_max = max(context$data[[context$par_x]], na.rm = TRUE)
         at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
         set_aux(coef, "mid", shift = x_terms_at(terms, at), derive = x_terms_at(terms, at))
       }

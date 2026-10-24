@@ -31,10 +31,10 @@ default_cp_specs = function(cps, context) {
   if (n_cp == 0)
     return(empty_prior_specs())
 
-  specs = list()
+  prior_specs = list()
   for (j in seq_len(nrow(cps))) {
     name = cps$name[j]
-    specs[[name]] = tibble::tibble(
+    prior_specs[[name]] = tibble::tibble(
       parameter = name,
       code = "dunif(min(.x), max(.x))",
       description = paste0("Uniform within the observed range of ", context$x_display),
@@ -48,14 +48,14 @@ default_cp_specs = function(cps, context) {
 
     sd_name = cps$sd_name[j]
     group_name = cps$group_name[j]
-    specs[[sd_name]] = tibble::tibble(
+    prior_specs[[sd_name]] = tibble::tibble(
       parameter = sd_name,
       code = "dnorm(0, (max(.x) - min(.x)) / (2 * (n_cp() + 1))) T(0, )",
       description = "Group-level change-point SD before truncation",
       source = "default"
     )
 
-    specs[[group_name]] = tibble::tibble(
+    prior_specs[[group_name]] = tibble::tibble(
       parameter = group_name,
       code = paste0("dnorm(0, ", sd_name, ") T(", paste(group_cp_truncation(cps, j, "min(.x)", "max(.x)"), collapse = ", "), ")"),
       description = "Group-level change-point deviations, truncated between the neighboring change points",
@@ -63,7 +63,7 @@ default_cp_specs = function(cps, context) {
     )
   }
 
-  dplyr::bind_rows(specs)
+  dplyr::bind_rows(prior_specs)
 }
 
 
@@ -349,8 +349,8 @@ assert_prior_not_shared = function(prior, predictors, group_predictors) {
 }
 
 
-overlay_user_prior_specs = function(specs, prior, cps, context, predictors, family) {
-  name_matches = names(prior) %in% specs$parameter
+overlay_user_prior_specs = function(prior_specs, prior, cps, context, predictors, family) {
+  name_matches = names(prior) %in% prior_specs$parameter
   if (any(!name_matches)) {
     stop(
       "Prior(s) were specified for parameter name(s) that are not part of the model: ",
@@ -366,10 +366,10 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
       stop("All or none of the change point priors must be `dirichlet(alpha)`.")
     source_desc = and_collapse(paste0("`", user_cp_names, "`"))
     for (u_name in setdiff(cps$name, user_cp_names)) {
-      i = match(u_name, specs$parameter)
-      specs$parsed[[i]] = prior[[user_cp_names[1]]]
-      specs$source[i] = "user"
-      specs$description[i] = paste0("Inherited from user-specified ", source_desc)
+      i = match(u_name, prior_specs$parameter)
+      prior_specs$parsed[[i]] = prior[[user_cp_names[1]]]
+      prior_specs$source[i] = "user"
+      prior_specs$description[i] = paste0("Inherited from user-specified ", source_desc)
     }
   }
 
@@ -405,10 +405,10 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
   }
 
   for (name in names(prior)) {
-    i = match(name, specs$parameter)
-    specs$parsed[[i]] = prior[[name]]
-    specs$source[i] = "user"
-    specs$description[i] = if (name %in% auto_truncated && name %in% cps$name) {
+    i = match(name, prior_specs$parameter)
+    prior_specs$parsed[[i]] = prior[[name]]
+    prior_specs$source[i] = "user"
+    prior_specs$description[i] = if (name %in% auto_truncated && name %in% cps$name) {
       paste0("User-specified prior, truncated to the observed range of ", context$x_display)
     } else if (name %in% auto_truncated) {
       "User-specified prior with required bounds added by mcp"
@@ -419,13 +419,13 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 
   # Change points with a prior distribution are ordered (see get_jags_code())
   if (nrow(cps) > 1) {
-    is_ordered = specs$parameter %in% cps$name & vapply(specs$parsed, function(parsed) !is.na(parsed$dist), logical(1))
-    description = dplyr::coalesce(specs$description[is_ordered], "User-specified prior")
-    specs$description[is_ordered] = paste0(description, ", restricted to ordered change points")
+    is_ordered = prior_specs$parameter %in% cps$name & vapply(prior_specs$parsed, function(parsed) !is.na(parsed$dist), logical(1))
+    description = dplyr::coalesce(prior_specs$description[is_ordered], "User-specified prior")
+    prior_specs$description[is_ordered] = paste0(description, ", restricted to ordered change points")
     if (length(user_cp_names) == 0)
-      specs$description[is_ordered] = "Flat Dirichlet on the segment lengths"
+      prior_specs$description[is_ordered] = "Flat Dirichlet on the segment lengths"
   }
-  specs
+  prior_specs
 }
 
 
@@ -448,16 +448,16 @@ get_x_partners = function(predictors, name) {
 # coefficients remain at x = 0 (as in lm()), so their priors are conditional on the
 # coefficients' x-terms, e.g., "dnorm(mean(y) - x_1 * min(x), 2.5 * sd(y))" or
 # "dnorm(0 - stateb.x_1 * min(x), ...)". Other predictors are at 0.
-add_intercept_references = function(specs, predictors, context) {
+add_intercept_references = function(prior_specs, predictors, context) {
   if (context$x_min == 0)
-    return(specs)
+    return(prior_specs)
 
   coefs = predictors[predictors$segment == 1 & predictors$x_degree == 0 & predictors$dpar %notin% c("ar", "ma"), ]
   for (i in seq_len(nrow(coefs))) {
-    row = match(coefs$name[i], specs$parameter)
-    if (is.na(row) || specs$source[row] != "default")
+    row = match(coefs$name[i], prior_specs$parameter)
+    if (is.na(row) || prior_specs$source[row] != "default")
       next
-    parsed = specs$parsed[[row]]
+    parsed = prior_specs$parsed[[row]]
     if (parsed$dist %notin% c("dnorm", "dt", "dunif"))
       next
 
@@ -467,9 +467,9 @@ add_intercept_references = function(specs, predictors, context) {
 
     # Subtract the x-terms at min(x) from the location and the truncation bounds
     reference = paste0(" - ", terms$name, " * min(", context$x_display, ")", x_power(terms$x_degree), collapse = "")
-    specs$parsed[[row]] = shift_prior(parsed, function(arg) if (arg == "0") reference else paste0(arg, reference))
+    prior_specs$parsed[[row]] = shift_prior(parsed, function(arg) if (arg == "0") reference else paste0(arg, reference))
     what = if (coefs$prior_type[i] == "Intercept") "value" else "difference"
-    specs$description[row] = paste0(specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
+    prior_specs$description[row] = paste0(prior_specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
   }
-  specs
+  prior_specs
 }

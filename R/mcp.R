@@ -232,16 +232,16 @@ mcp = function(
   model_vars = unique(c(unlist(lapply(model, all.vars)), par_x, series))  # In formula order
   assert_model_data(data, par_x, unlist(vars[c("predictor", "group", "offset", "series")]))
   assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
-  for (col in vars$group) {
-    if (is.numeric(data[[col]]) && any(data[[col]] != floor(data[[col]])))
-      stop("Grouping factor '", col, "' must be integer, character, or factor.")
+  for (group_col in vars$group) {
+    if (is.numeric(data[[group_col]]) && any(data[[group_col]] != floor(data[[group_col]])))
+      stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
   }
   data = data[, model_vars]  # Remove unused data
-  for (col in vars$response) {
-    if (is.logical(data[[col]]))
-      data[[col]] = as.numeric(data[[col]])
-    if (!is.numeric(data[[col]]))
-      stop("The response column '", col, "' must be numeric or logical. Got ", class(data[[col]])[1], ".", call. = FALSE)
+  for (y_col in vars$response) {
+    if (is.logical(data[[y_col]]))
+      data[[y_col]] = as.numeric(data[[y_col]])
+    if (!is.numeric(data[[y_col]]))
+      stop("The response column '", y_col, "' must be numeric or logical. Got ", class(data[[y_col]])[1], ".", call. = FALSE)
   }
 
   # Plain named lists are the v0.4 JAGS-string prior format. Future classed
@@ -325,15 +325,15 @@ mcp = function(
     predictors = dplyr::select(predictor_occurrences, -"matrix_data"),
     group_predictors = dplyr::select(group_occurrences, -"matrix_data"),
     parameters = parameters,
-    design_specs = lapply(predictor_tables$design_specs, function(spec) {
-      spec$offset_data = NULL
-      environment(spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
-      spec
+    design_specs = lapply(predictor_tables$design_specs, function(design_spec) {
+      design_spec$offset_data = NULL
+      environment(design_spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
+      design_spec
     })
   )
 
   # Fitted-model methods evaluate the designs from .GlobalEnv, so formula functions must be reachable from there
-  formula_functions = unique(unlist(lapply(model_tables$design_specs, function(spec) called_functions(attr(spec$terms, "predvars")))))
+  formula_functions = unique(unlist(lapply(model_tables$design_specs, function(design_spec) called_functions(attr(design_spec$terms, "predvars")))))
   unreachable = formula_functions[!vapply(formula_functions, exists, logical(1), envir = globalenv(), mode = "function")]
   if (length(unreachable) > 0)
     stop(
@@ -409,9 +409,9 @@ mcp = function(
 
     # Diagnostics check - also for single-chain fits
     # Cache it for summary() and ranef(), which are slow to recompute it for many group-level deviations.
-    fixed_pars = prior_table$parameter[prior_table$kind == "constant"]
+    constant_pars = prior_table$parameter[prior_table$kind == "constant"]
     convergence = list(hash = rlang::hash(mcmc_post), table = convergence_table(mcmc_post))
-    warn_nonconvergence(convergence$table, diagnostics, fixed_pars = fixed_pars, check_rhat = coda::nchain(mcmc_post) >= 2)
+    warn_nonconvergence(convergence$table, diagnostics, constant_pars = constant_pars, check_rhat = coda::nchain(mcmc_post) >= 2)
   } else {
     mcmc_post = NULL
     mcmc_imputed = NULL

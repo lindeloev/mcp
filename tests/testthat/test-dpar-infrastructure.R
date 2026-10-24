@@ -200,7 +200,7 @@ test_that("only dpars with a numerical floor are floored", {
   expect_match(fit$jags_code, "shape_\\[i_\\] = link_shape_\\[i_\\]\n")
   expect_false(grepl("max\\(1e", fit$jags_code))
 
-  dpars = evaluate_model(fit, get_model_data(fit, data), list(Intercept_1 = 0, shape_1 = 1e-8), n_draws = 1, type = "fitted")$dpars
+  dpars = evaluate_model(fit, get_model_data(fit, data), list(Intercept_1 = 0, shape_1 = 1e-8), ndraws = 1, type = "fitted")$dpars
   expect_equal(as.vector(dpars$shape), rep(1e-8, nrow(data)))
 })
 
@@ -468,7 +468,7 @@ test_that("quantiles stay separate for rows and categorical curves sharing x", {
     add_plot_groups(curve_by = "group")
   quantile_layer = geom_quantiles(
     quantiles,
-    yvar = rlang::sym(".epred"),
+    y_col = rlang::sym(".epred"),
     use_color = TRUE
   )
   expect_equal(nrow(quantile_layer$data), 4)

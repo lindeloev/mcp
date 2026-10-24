@@ -114,13 +114,13 @@ get_formula_vars = function(model) {
         add(role, all.vars(expr))
       return(invisible(NULL))
     }
-    fun = deparse1(expr[[1]])
-    if (fun %in% c("offset", "stats::offset")) {
+    func_name = deparse1(expr[[1]])
+    if (func_name %in% c("offset", "stats::offset")) {
       add("offset", all.vars(expr))
-    } else if (fun %in% c("|", "||")) {
+    } else if (func_name %in% c("|", "||")) {
       walk(expr[[2]], role)
       add("group", all.vars(expr[[3]]))
-    } else if (fun %in% c("ar", "ma")) {
+    } else if (func_name %in% c("ar", "ma")) {
       arma = unpack_arma(expr)
       if (!is.na(arma$series))
         add("series", arma$series)

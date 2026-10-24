@@ -70,30 +70,30 @@ populate_design_columns = function(table, evaluated_designs) {
 #'   * `response`: Named list of family response auxiliaries, e.g., `trials`.
 #' @noRd
 get_model_data = function(fit, newdata) {
-  tables = get_fit_model_tables(fit)
-  columns = mcp_columns(fit)
+  model_tables = get_fit_model_tables(fit)
+  cols = mcp_columns(fit)
   newdata = relevel_newdata(as.data.frame(newdata), fit)
 
   # Evaluate each fitted design once. x-terms are multiplied by x measured from the change point later.
-  designs = lapply(tables$design_specs, function(spec) {
-    if (!is.null(spec$local_x_name))
-      newdata[[spec$local_x_name]] = 1
-    get_fitted_design(data = newdata, spec = spec)
+  designs = lapply(model_tables$design_specs, function(design_spec) {
+    if (!is.null(design_spec$local_x_name))
+      newdata[[design_spec$local_x_name]] = 1
+    get_fitted_design(data = newdata, design_spec = design_spec)
   })
-  offset_specs = Filter(function(spec) isTRUE(spec$has_offset), tables$design_specs)
+  offset_specs = Filter(function(design_spec) isTRUE(design_spec$has_offset), model_tables$design_specs)
 
   list(
-    x = newdata[[columns$par_x]],
+    x = newdata[[cols$par_x]],
     matrix = get_predictor_matrix(
-      populate_design_columns(tables$predictors, designs),
-      populate_design_columns(tables$group_predictors, designs)
+      populate_design_columns(model_tables$predictors, designs),
+      populate_design_columns(model_tables$group_predictors, designs)
     ),
     offsets = stats::setNames(
-      lapply(names(offset_specs), function(id) as.numeric(designs[[id]]$offset)),
+      lapply(names(offset_specs), function(design_id) as.numeric(designs[[design_id]]$offset)),
       vapply(offset_specs, `[[`, character(1), "offset_name")
     ),
-    series = if (!is.null(columns$series)) newdata[[columns$series]],
-    response = get_family_response_data(fit$family, tables$segments, newdata)
+    series = if (!is.null(cols$series)) newdata[[cols$series]],
+    response = get_family_response_data(fit$family, model_tables$segments, newdata)
   )
 }
 
@@ -111,18 +111,18 @@ get_model_data = function(fit, newdata) {
 #' @return A list with `value`, a rows x draws matrix of the requested `type`, and `dpars`,
 #'   the rows x draws distributional parameters on the response scale.
 #' @noRd
-evaluate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
+evaluate_model = function(fit, data, pars, ndraws, y = NULL, type = "predict",
                           rate = FALSE, dpar = "epred", arma = TRUE, scale = "response") {
   family = fit$family
-  tables = get_fit_model_tables(fit)
-  links = evaluate_formula(tables, family, data, pars, n_draws)
+  model_tables = get_fit_model_tables(fit)
+  links = evaluate_formula(model_tables, family, data, pars, ndraws)
 
   # Distributional parameters on the response scale, with numerical floors as in the JAGS code
   dpars = lapply(stats::setNames(nm = family$dpar_specs$dpar), function(name) {
-    spec = get_dpar_spec(family, name)
-    value = get_link_function(spec$link, inverse = TRUE)(links[[name]])
-    if (!is.na(spec$floor))
-      value[] = pmax(spec$floor, value)
+    dpar_spec = get_dpar_spec(family, name)
+    value = get_link_function(dpar_spec$link, inverse = TRUE)(links[[name]])
+    if (!is.na(dpar_spec$floor))
+      value[] = pmax(dpar_spec$floor, value)
     value
   })
 
@@ -137,7 +137,7 @@ evaluate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
   if (arma && is_arma(fit)) {
     if (is.null(y) && type != "predict")
       stop("The response is required to evaluate GARMA terms.")
-    threshold = unique(stats::na.omit(tables$predictors$threshold))
+    threshold = unique(stats::na.omit(model_tables$predictors$threshold))
     garma = simulate_garma(
       links$mu, get_lags(links, "ar"), get_lags(links, "ma"), threshold, family, dpars,
       data = data$response, y = y, series = data$series
@@ -157,7 +157,7 @@ evaluate_model = function(fit, data, pars, n_draws, y = NULL, type = "predict",
       family$response$observed(generated, data$response, rate)
     }
   )
-  list(value = matrix(value, nrow(links$mu), n_draws), dpars = dpars)
+  list(value = matrix(value, nrow(links$mu), ndraws), dpars = dpars)
 }
 
 
@@ -243,7 +243,7 @@ fit_simulate = function(fit,
     group = newdata[[cps$group_col[group_cps[1]]]]
     group_levels = unique(group)
     group_rows = match(group_levels, group)
-    group_index = match(group, group_levels)
+    group_indices = match(group, group_levels)
     cp_values = lapply(args[cps$name], function(value) {
       rep(value, length.out = nrow(newdata))[group_rows]
     })
@@ -273,7 +273,7 @@ fit_simulate = function(fit,
 
       location = simulate_truncated_normal(population, args[[cp$sd_name]], lower, upper)
       cp_locations[[cp$group_name]] = location
-      args[[cp$group_name]] = (location - population)[group_index]
+      args[[cp$group_name]] = (location - population)[group_indices]
       simulated[[cp$group_name]] = args[[cp$group_name]]
       args[[cp$sd_name]] = NULL
     }
@@ -304,9 +304,9 @@ fit_simulate = function(fit,
   data = get_model_data(fit, newdata)
   pars = lapply(args, function(value) if (length(value) == 1) value else matrix(value))
   if (.type == "predict" && .arma && is_arma(fit))
-    warn_arma_simulation(evaluate_formula(model_tables, fit$family, data, pars, n_draws = 1))
+    warn_arma_simulation(evaluate_formula(model_tables, fit$family, data, pars, ndraws = 1))
   simulated_y = as.vector(evaluate_model(
-    fit, data, pars, n_draws = 1, type = .type, rate = .rate, dpar = .dpar, arma = .arma, scale = .scale
+    fit, data, pars, ndraws = 1, type = .type, rate = .rate, dpar = .dpar, arma = .arma, scale = .scale
   )$value)
 
   # add_simulated etc. and return

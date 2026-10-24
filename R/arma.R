@@ -205,15 +205,15 @@ has_missing_garma_history = function(fit, data = fit$data) {
     return(FALSE)
 
   # No missing values in columns
-  columns = mcp_columns(fit)
-  y = data[[columns$response]]
+  cols = mcp_columns(fit)
+  y = data[[cols$response]]
   if (is.null(y) || !anyNA(y))
     return(FALSE)
 
   # Missing values in the history of later observed values (per series)
   # (e.g., c(1, NA, 3) --> TRUE; c(1, 3, NA, NA) --> FALSE
-  series = if (is.null(columns$series) || is.null(data[[columns$series]])) rep(1, length(y)) else data[[columns$series]]
-  garma_missing_vec = vapply(split(y, series), function(series_y) {
+  series = if (is.null(cols$series) || is.null(data[[cols$series]])) rep(1, length(y)) else data[[cols$series]]
+  has_missing_history = vapply(split(y, series), function(series_y) {
     missing_rows = which(is.na(series_y))
     observed_rows = which(!is.na(series_y))
 
@@ -221,7 +221,7 @@ has_missing_garma_history = function(fit, data = fit$data) {
       length(observed_rows) > 0 &&
       min(missing_rows) < max(observed_rows)
   }, logical(1))
-  any(garma_missing_vec)
+  any(has_missing_history)
 }
 
 
@@ -248,10 +248,10 @@ assert_loglik_garma_history = function(fit, data = fit$data, arma = TRUE,
 # - y: The response of the fitted data, one value per row.
 # - draw_ids: `.draw` indices of the draws, i.e., rows of the stacked posterior chains.
 get_imputed_response = function(fit, y, draw_ids) {
-  rows = fit$.internal$imputed_response_rows
-  nodes = paste0(mcp_columns(fit)$response, "[", rows, "]")
+  imputed_response_rows = fit$.internal$imputed_response_rows
+  nodes = paste0(mcp_columns(fit)$response, "[", imputed_response_rows, "]")
   y = matrix(y, length(y), length(draw_ids))
-  y[rows, ] = t(as.matrix(fit$.internal$imputed_response)[draw_ids, nodes, drop = FALSE])
+  y[imputed_response_rows, ] = t(as.matrix(fit$.internal$imputed_response)[draw_ids, nodes, drop = FALSE])
   y
 }
 
@@ -390,20 +390,20 @@ warn_arma_simulation = function(links) {
 #' Get JAGS code for GARMA residual recursion
 #'
 #' @param ar_order,ma_order Positive integer or `NA` when absent.
-#' @param x_name Character. Name of some vector that has the length of the dataset.
+#' @param par_x Character. The change-point variable, used for the length of the dataset.
 #' @param series Whether generated lags must remain within `series_id_`.
 #' @return Character JAGS code
 #' @noRd
-get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
+get_garma_jags_code = function(ar_order, ma_order, par_x, series = FALSE) {
   ar_order = ifelse(is.na(ar_order), 0, ar_order)
   ma_order = ifelse(is.na(ma_order), 0, ma_order)
   checkmate::assert_int(ar_order, lower = 0)
   checkmate::assert_int(ma_order, lower = 0)
-  checkmate::assert_string(x_name)
+  checkmate::assert_string(par_x)
   checkmate::assert_flag(series)
   max_order = max(ar_order, ma_order)
   if (max_order == 0)
-    stop_github("get_garma_jagscode() requires a positive AR or MA order.")
+    stop_github("get_garma_jags_code() requires a positive AR or MA order.")
 
   get_terms = function(row, available_ar, available_ma) {
     terms = character()
@@ -426,22 +426,22 @@ get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
     paste0(terms, collapse = " +\n              ")
   }
 
-  jagscode = "
+  jags_code = "
   # Apply GARMA recursion to link-scale residuals
   resid_garma_[1] = 0"
 
   if (max_order >= 2) {
     for (i in 2:max_order) {
-      jagscode = paste0(
-        jagscode, "\n  resid_garma_[", i, "] = ",
+      jags_code = paste0(
+        jags_code, "\n  resid_garma_[", i, "] = ",
         get_terms(i, min(ar_order, i - 1), min(ma_order, i - 1))
       )
     }
   }
 
   paste0(
-    jagscode,
-    "\n  for (i_ in ", max_order + 1, ":length(", x_name, ")) {",
+    jags_code,
+    "\n  for (i_ in ", max_order + 1, ":length(", par_x, ")) {",
     "\n    resid_garma_[i_] = ", get_terms("i_", ar_order, ma_order),
     "\n  }"
   )
@@ -450,7 +450,7 @@ get_garma_jagscode = function(ar_order, ma_order, x_name, series = FALSE) {
 
 
 # Build the observation-threshold node used by GARMA terms. One threshold applies to all segments.
-get_garma_threshold_jagscode = function(predictors) {
+get_garma_threshold_jags_code = function(predictors) {
   threshold = unique(stats::na.omit(predictors$threshold))
   if (length(threshold) == 0)
     return("")
@@ -488,10 +488,10 @@ simulate_garma = function(link_mu, ar, ma, threshold, family, dpars, data = list
 
   position = sequence(runs$lengths)
   for (rows in split(seq_along(position), position)) {
-    p = position[rows[1]]
-    for (lag in seq_len(min(length(ar), p - 1)))
+    current_position = position[rows[1]]
+    for (lag in seq_len(min(length(ar), current_position - 1)))
       resid_garma[rows, ] = resid_garma[rows, ] + ar[[lag]][rows, ] * resid_abs[rows - lag, ]
-    for (lag in seq_len(min(length(ma), p - 1)))
+    for (lag in seq_len(min(length(ma), current_position - 1)))
       resid_garma[rows, ] = resid_garma[rows, ] + ma[[lag]][rows, ] * resid_ma[rows - lag, ]
 
     # A fresh series draws each response given the generated history

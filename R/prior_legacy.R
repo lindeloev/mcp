@@ -5,8 +5,8 @@
 # makes the compatibility contract explicit and prevents the three views from
 # drifting apart.
 legacy_prior_map = function(context) {
-  x = context$data[[context$x_name]]
-  y = context$data[[context$y_name]]
+  x = context$data[[context$par_x]]
+  y = context$data[[context$y_col]]
   tibble::tibble(
     token = c("MINX", "MAXX", "MEANX", "SDX", "MINY", "MAXY", "MEANY", "SDY", "N_CP"),
     value = c(

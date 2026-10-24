@@ -12,15 +12,15 @@
 #'
 #' @param form A one-sided predictor formula.
 #' @param data A data frame used to fit the design.
-#' @param spec An optional fitted specification returned by this function.
+#' @param design_spec An optional fitted specification returned by this function.
 #' @return A list with `matrix`, `offset` (`NULL` without `offset()`), and `spec`.
 #' @noRd
-get_fitted_design = function(form = NULL, data, spec = NULL) {
+get_fitted_design = function(form = NULL, data, design_spec = NULL) {
   # Construct model.frame. na.pass prevents silent row omission so we can throw an informative error below
-  if (is.null(spec)) {
+  if (is.null(design_spec)) {
     frame = stats::model.frame(form, data, na.action = stats::na.pass)
   } else {
-    frame = stats::model.frame(spec$terms, data, xlev = spec$xlevels, na.action = stats::na.pass)
+    frame = stats::model.frame(design_spec$terms, data, xlev = design_spec$xlevels, na.action = stats::na.pass)
   }
 
   # Transformations can introduce bad values on otherwise OK non-transformed data
@@ -28,12 +28,12 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
   if (any(has_na_inf))
     stop("Predictor transformation resulted in NA or non-finite values: ", and_collapse(names(frame)[has_na_inf]), ".")
 
-  if (is.null(spec)) {
+  if (is.null(design_spec)) {
     fitted_terms = attr(frame, "terms")
     matrix = stats::model.matrix(fitted_terms, frame)
     offset = stats::model.offset(frame)
     factor_cols = vapply(frame, function(x) is.factor(x) || is.character(x), logical(1))
-    spec = list(
+    design_spec = list(
       terms = fitted_terms,
       xlevels = lapply(frame[factor_cols], function(x) if (is.factor(x)) levels(x) else levels(factor(x))),
       contrasts = attr(matrix, "contrasts"),
@@ -42,10 +42,10 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
     )
   } else {
     matrix = stats::model.matrix(
-      spec$terms, frame, contrasts.arg = spec$contrasts
+      design_spec$terms, frame, contrasts.arg = design_spec$contrasts
     )
     offset = stats::model.offset(frame)
-    if (!identical(colnames(matrix), spec$columns))
+    if (!identical(colnames(matrix), design_spec$columns))
       stop("The model matrix for `newdata` does not match the fitted model.")
   }
 
@@ -55,7 +55,7 @@ get_fitted_design = function(form = NULL, data, spec = NULL) {
   if (!is.null(offset) && any(!is.finite(offset)))
     stop("Evaluated offset contains non-finite values.")
 
-  list(matrix = matrix, offset = offset, spec = spec)
+  list(matrix = matrix, offset = offset, spec = design_spec)
 }
 
 
@@ -329,9 +329,9 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   }
 
   # Verify that rewriting local_x preserved matrix values and numerical rank
-  mat = design$matrix
-  if (!identical(dim(mat), dim(source_design$matrix)) ||
-      !isTRUE(all.equal(unname(mat), unname(source_design$matrix))))
+  design_matrix = design$matrix
+  if (!identical(dim(design_matrix), dim(source_design$matrix)) ||
+      !isTRUE(all.equal(unname(design_matrix), unname(source_design$matrix))))
     stop_github("Rewriting x-terms to be measured from the change point changed the model matrix.")
   if (check_rank == TRUE)
     assert_rank(source_design$matrix, segment, dpar)
@@ -362,7 +362,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # Multi-column bases often include arguments and namespaces in their matrix
   # names. Name both the position within the basis and the segment explicitly.
   is_basis = grepl("[,=]|::", matrix_name)
-  term_index = attr(mat, "assign")[is_basis]
+  term_index = attr(design_matrix, "assign")[is_basis]
   basis_name = formula_terms[term_index]
   basis_name = sub("^.*::", "", basis_name)
   basis_name = gsub("[^A-Za-z0-9]+", "_", basis_name)
@@ -374,7 +374,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   name = make_parameter_name(gsub(" ", "", name, fixed = TRUE))
 
   # is_dummy
-  is_dummy = apply(mat, 2, function(x) all(x %in% c(0, 1)))
+  is_dummy = apply(design_matrix, 2, function(x) all(x %in% c(0, 1)))
 
 
   ################
@@ -383,7 +383,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 
   # x-terms (bare par_x and supported powers) are measured from the change point. The
   # model-matrix assign vector maps expanded factor columns back to terms.
-  x_degree = c(0L, local$degree)[attr(mat, "assign") + 1L]
+  x_degree = c(0L, local$degree)[attr(design_matrix, "assign") + 1L]
   checkmate::assert_integerish(x_degree, lower = 0, .var.name = "exponents in formula")
 
 
@@ -395,9 +395,9 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
   # Evaluate the same fitted design with the local factor set to one. This is
   # exact at zeros and lets model.matrix handle interactions and contrasts.
   local_data[[local$name]] = 1
-  mat_without_x = get_fitted_design(data = local_data, spec = design$spec)$matrix
+  design_matrix_without_x = get_fitted_design(data = local_data, design_spec = design$spec)$matrix
 
-  if (ncol(mat_without_x) == 0) {
+  if (ncol(design_matrix_without_x) == 0) {
     if (isTRUE(design$spec$has_offset)) {
       # Offset-only segment with no estimated coefficients (e.g., ~ 0 + offset(z));
       # return a placeholder row to carry design_spec into model_tables$design_specs
@@ -434,9 +434,9 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
     order = order_value,
     x_degree = x_degree,
     design_id = design_id,
-    design_col = seq_len(ncol(mat_without_x)),
-    design_spec = rep(list(design$spec), ncol(mat_without_x)),
-    matrix_data = lapply(seq_len(ncol(mat_without_x)), function(i) mat_without_x[, i])
+    design_col = seq_len(ncol(design_matrix_without_x)),
+    design_spec = rep(list(design$spec), ncol(design_matrix_without_x)),
+    matrix_data = lapply(seq_len(ncol(design_matrix_without_x)), function(i) design_matrix_without_x[, i])
   )
 
   # Return
@@ -695,14 +695,14 @@ get_predictors_segment = function(components, segment, family, data, par_x, chec
   #############################
   dpar_pars = list()
   for (dpar in family$dpar_specs$dpar) {
-    spec = get_dpar_spec(family, dpar)
+    dpar_spec = get_dpar_spec(family, dpar)
     dpar_form = components[[dpar]]
 
     # An implicit dpar includes an intercept in segment 1 and is joined in
     # later segments until the user includes another dpar intercept.
-    if (is.null(dpar_form) && spec$implicit && segment == 1) {
+    if (is.null(dpar_form) && dpar_spec$implicit && segment == 1) {
       dpar_form = stats::as.formula("~1", env = environment(components$mu))
-    } else if (!is.null(dpar_form) && segment == 1 && spec$require_initial_predictor && is_empty_initial_predictor(dpar_form)) {
+    } else if (!is.null(dpar_form) && segment == 1 && dpar_spec$require_initial_predictor && is_empty_initial_predictor(dpar_form)) {
       stop(
         "`", dpar, "(0)` cannot be the initial predictor for family = ", family$family,
         "(). Include an initial predictor, such as `", dpar, "(1)` or `", dpar, "(0 + x)`.",

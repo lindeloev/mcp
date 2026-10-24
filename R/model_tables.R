@@ -46,9 +46,9 @@ get_segment_tables = function(model, data, family, par_x) {
   ###########################
 
   # Response variables
-  derived_y = unique(stats::na.omit(segments$y))
-  if (length(derived_y) != 1)
-    stop("There should be exactly one response variable. Found ", and_collapse(derived_y), " across segments.")
+  y_cols = unique(stats::na.omit(segments$y))
+  if (length(y_cols) != 1)
+    stop("There should be exactly one response variable. Found ", and_collapse(y_cols), " across segments.")
 
   # Group-level effects
   cp_group_cols = unique(stats::na.omit(segments$cp_group_col))
@@ -217,8 +217,8 @@ mcp_columns = function(fit) {
 # Get column names that serve as predictors in the model
 get_predictor_cols = function(fit) {
   model_tables = get_fit_model_tables(fit)
-  design_vars = unlist(lapply(model_tables$design_specs, function(spec) {
-    if (!is.null(spec$terms)) all.vars(spec$terms) else character()
+  design_vars = unlist(lapply(model_tables$design_specs, function(design_spec) {
+    if (!is.null(design_spec$terms)) all.vars(design_spec$terms) else character()
   }))
   unique(c(mcp_columns(fit)$par_x, setdiff(design_vars, ".mcp_local_x")))
 }
@@ -235,12 +235,12 @@ definition_rows = function(table) {
 # includes an intercept for every dpar with x-terms in it. Excludes change points with group-level
 # change points.
 get_disjoined_cps = function(fit) {
-  tables = get_fit_model_tables(fit)
-  terms = dplyr::bind_rows(tables$predictors, tables$group_predictors)
-  cps = tables$cps[is.na(tables$cps$group_col), ]
+  model_tables = get_fit_model_tables(fit)
+  terms = dplyr::bind_rows(model_tables$predictors, model_tables$group_predictors)
+  cps = model_tables$cps[is.na(model_tables$cps$group_col), ]
   is_disjoined = vapply(cps$segment, function(segment) {
-    this = terms[terms$segment == segment, ]
-    all(this$dpar[this$x_degree > 0] %in% this$dpar[this$par_type == "Intercept"])
+    segment_terms = terms[terms$segment == segment, ]
+    all(segment_terms$dpar[segment_terms$x_degree > 0] %in% segment_terms$dpar[segment_terms$par_type == "Intercept"])
   }, logical(1))
   cps$name[is_disjoined]
 }

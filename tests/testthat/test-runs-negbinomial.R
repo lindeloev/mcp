@@ -98,7 +98,7 @@ test_that("negative-binomial R evaluation matches stats", {
 
   loglik = evaluate_model(
     fit, get_model_data(fit, data), list(Intercept_1 = log(mu), x_1 = 0, shape_1 = shape),
-    n_draws = 1, y = data$y, type = "loglik"
+    ndraws = 1, y = data$y, type = "loglik"
   )$value
   expect_equal(
     as.numeric(loglik),

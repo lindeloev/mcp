@@ -63,12 +63,12 @@ pp_check.mcpfit = function(
     checkmate::assert_data_frame(newdata)
     eval_data = data.frame(newdata)
   }
-  y_column = mcp_columns(fit)$response
-  assert_data_cols(eval_data, y_column)
+  y_col = mcp_columns(fit)$response
+  assert_data_cols(eval_data, y_col)
   if (!is.null(facet_by))
     assert_data_cols(eval_data, facet_by)
 
-  y_all = as.numeric(eval_data[, y_column])  # strip simulated data of attributes
+  y_all = as.numeric(eval_data[, y_col])  # strip simulated data of attributes
   observed_rows = which(!is.na(y_all))
   if (length(observed_rows) == 0)
     stop("`pp_check()` requires at least one observed response.")

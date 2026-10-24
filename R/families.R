@@ -620,9 +620,9 @@ known_dpar_wrappers = function() {
 # Lower bounds of constant (unmodeled) dpars on their parameter scale, e.g., c(sigma = 0).
 # Bounds that the link already enforces (e.g., log(0) = -Inf) are omitted.
 get_constant_dpar_bounds = function(family) {
-  specs = family$dpar_specs[!family$dpar_specs$modeled & !is.na(family$dpar_specs$lower), ]
-  bounds = vapply(seq_len(nrow(specs)), function(i) get_link_function(specs$link[i])(specs$lower[i]), numeric(1))
-  stats::setNames(bounds, specs$dpar)[is.finite(bounds)]
+  dpar_specs = family$dpar_specs[!family$dpar_specs$modeled & !is.na(family$dpar_specs$lower), ]
+  bounds = vapply(seq_len(nrow(dpar_specs)), function(i) get_link_function(dpar_specs$link[i])(dpar_specs$lower[i]), numeric(1))
+  stats::setNames(bounds, dpar_specs$dpar)[is.finite(bounds)]
 }
 
 
@@ -682,10 +682,10 @@ assert_dpar_specs = function(x) {
 
 # Return the single specification row for one distributional parameter.
 get_dpar_spec = function(family, dpar) {
-  spec = family$dpar_specs[family$dpar_specs$dpar == dpar, , drop = FALSE]
-  if (nrow(spec) != 1)
+  dpar_spec = family$dpar_specs[family$dpar_specs$dpar == dpar, , drop = FALSE]
+  if (nrow(dpar_spec) != 1)
     stop_github("Expected exactly one dpar specification for '", dpar, "'.")
-  spec
+  dpar_spec
 }
 
 
@@ -751,15 +751,15 @@ get_mcplink = function(link) {
 
 # Return the JAGS function name for a link or inverse link.
 get_link_str = function(link, inverse = FALSE) {
-  obj = get_mcplink(link)
-  if (inverse) obj$jags_linkinv else obj$jags_link
+  mcplink = get_mcplink(link)
+  if (inverse) mcplink$jags_linkinv else mcplink$jags_link
 }
 
 
 # Return the executable R function for a link or inverse link.
 get_link_function = function(link, inverse = FALSE) {
-  obj = get_mcplink(link)
-  if (inverse) obj$linkinv else obj$linkfun
+  mcplink = get_mcplink(link)
+  if (inverse) mcplink$linkinv else mcplink$linkfun
 }
 
 

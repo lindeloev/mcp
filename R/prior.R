@@ -51,7 +51,7 @@ get_prior_table = function(segments, cps, predictors, group_predictors, family, 
     )
 
   # Begin building actual prior
-  specs = dplyr::bind_rows(
+  prior_specs = dplyr::bind_rows(
     default_cp_specs(cps, context),
     default_predictor_specs(predictors, family, context),
     default_group_specs(group_predictors, family)
@@ -60,15 +60,15 @@ get_prior_table = function(segments, cps, predictors, group_predictors, family, 
   # Parse default and specified priors once. A constant response (e.g., a placeholder before
   # simulating data) has no scale. Use 1 instead, as rstanarm does for non-Gaussian families.
   if (!isTRUE(context$y_sd > 0))
-    specs$code = gsub("sd\\(\\.y( - offset(_[0-9]+)?)?\\)", "1", specs$code)
-  specs$parsed = lapply(instantiate_prior_template(specs$code, context), parse_prior)
-  specs$code = NULL
+    prior_specs$code = gsub("sd\\(\\.y( - offset(_[0-9]+)?)?\\)", "1", prior_specs$code)
+  prior_specs$parsed = lapply(instantiate_prior_template(prior_specs$code, context), parse_prior)
+  prior_specs$code = NULL
   prior = lapply(prior, parse_prior)
 
   compile = function(prior) {
-    specs = overlay_user_prior_specs(specs, prior, cps, context, predictors, family)
-    specs = add_intercept_references(specs, predictors, context)
-    compile_prior_specs(specs, specs$parameter, context)
+    prior_specs = overlay_user_prior_specs(prior_specs, prior, cps, context, predictors, family)
+    prior_specs = add_intercept_references(prior_specs, predictors, context)
+    compile_prior_specs(prior_specs, prior_specs$parameter, context)
   }
   prior_table = compile(prior)
 
@@ -76,9 +76,9 @@ get_prior_table = function(segments, cps, predictors, group_predictors, family, 
   # are treated as defaults (not specified). This ensures default optimizations remain active.
   # Compare at 15 digits because R's parser can be 1 ulp off for 17-digit numbers on some platforms (macOS arm64).
   if (length(prior) > 0) {
-    defaults = compile(list())
+    default_prior_table = compile(list())
     value = function(prior_table) format_prior_display(prior_table$value[match(names(prior), prior_table$parameter)], digits = 15)
-    is_default = value(prior_table) == value(defaults)
+    is_default = value(prior_table) == value(default_prior_table)
     if (any(is_default))
       prior_table = compile(prior[!is_default])
   }

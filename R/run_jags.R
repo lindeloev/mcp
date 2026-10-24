@@ -43,7 +43,7 @@ run_jags = function(jags_code,
       # Compile model silently. Adapt separately to keep the progress bar.
       jags_connection = textConnection(jags_code)
       on.exit(close(jags_connection), add = TRUE)
-      jm = rjags::jags.model(
+      jags_model = rjags::jags.model(
         file = jags_connection,
         data = jags_data,
         inits = inits,
@@ -52,14 +52,14 @@ run_jags = function(jags_code,
         quiet = TRUE
       )
       progress_bar = if (quiet) "none" else getOption("jags.pb")
-      if (!rjags::adapt(jm, n.iter = n.adapt, end.adaptation = TRUE, progress.bar = progress_bar))
+      if (!rjags::adapt(jags_model, n.iter = n.adapt, end.adaptation = TRUE, progress.bar = progress_bar))
         warning("Adaptation incomplete")
 
       # Ensure requested warmup iterations are discarded even if JAGS skips adaptation
-      burnin = n.adapt - jm$iter()
+      burnin = n.adapt - jags_model$iter()
       if (burnin > 0) {
         stats::update(
-          object = jm,
+          object = jags_model,
           n.iter = burnin,
           progress.bar = progress_bar
         )
@@ -67,7 +67,7 @@ run_jags = function(jags_code,
 
       # Sample and return
       rjags::coda.samples(
-        model = jm,
+        model = jags_model,
         variable.names = pars,
         n.iter = n.iter,
         quiet = quiet
@@ -91,7 +91,7 @@ run_jags = function(jags_code,
   if (is.null(seed))
     seed = sample.int(.Machine$integer.max, 1)
   inits = get_jags_inits(inits, seed, n.chains, sample)
-  inits = lapply(inits, function(ch) c(ch, default_inits[setdiff(names(default_inits), names(ch))]))
+  inits = lapply(inits, function(chain_inits) c(chain_inits, default_inits[setdiff(names(default_inits), names(chain_inits))]))
 
   if (n_workers == 1) {
     draws = do_sampling(
@@ -157,9 +157,9 @@ get_jags_inits = function(inits, seed, n.chains, sample) {
   rng_seed = as.integer((as.double(seed) - 1 + chain * 1327217884) %% .Machine$integer.max + 1)
 
   lapply(seq_len(n.chains), function(i) {
-    ch = inits[[i]]
-    ch[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
-    c(ch, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = rng_seed[i]))
+    chain_inits = inits[[i]]
+    chain_inits[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
+    c(chain_inits, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = rng_seed[i]))
   })
 }
 
@@ -194,12 +194,12 @@ get_median_inits = function(prior) {
   inits = list()
   for (name in names(prior)) {
     parsed = prior[[name]]
-    a = vapply(parsed$args, as_number, numeric(1), USE.NAMES = FALSE)
+    args = vapply(parsed$args, as_number, numeric(1), USE.NAMES = FALSE)
     bounds = c(-Inf, Inf)
     is_bounded = nzchar(parsed$trunc)
     bounds[is_bounded] = vapply(parsed$trunc[is_bounded], as_number, numeric(1), USE.NAMES = FALSE)
-    if (!anyNA(a) && !anyNA(bounds))
-      inits[[name]] = prior_quantile(parsed$dist, a, bounds, 0.5)
+    if (!anyNA(args) && !anyNA(bounds))
+      inits[[name]] = prior_quantile(parsed$dist, args, bounds, 0.5)
   }
   inits
 }
@@ -212,17 +212,17 @@ get_median_inits = function(prior) {
 # it is incompatible with the 1 ~ dbern(...) ordering node.
 # - cp_rows: Rows of the prior table for the population-level change points, in order.
 get_cp_inits = function(cp_rows, x_range, user_inits = list()) {
-  n = nrow(cp_rows)
-  if (n == 0)
+  n_cp = nrow(cp_rows)
+  if (n_cp == 0)
     return(list())
 
   # Lower and upper bounds (dunif() or T()) and minimum segment length (see add_nodes()).
   # Fixed change points and user-supplied initial values are bounded by themselves.
-  env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n + 1)))
+  env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n_cp + 1)))
   evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
   is_free = !is.na(cp_rows$node)
-  lower = upper = min_lengths = numeric(n)
-  for (i in seq_len(n)) {
+  lower = upper = min_lengths = numeric(n_cp)
+  for (i in seq_len(n_cp)) {
     fixed = c(user_inits[[cp_rows$parameter[i]]], if (cp_rows$kind[i] == "constant") as.numeric(cp_rows$value[i]), NA)[1]
     bounds = if (is_free[i]) get_prior_bounds(cp_rows$node_prior[[i]])
     min_lengths[i] = evaluate(cp_rows$min_length[i], 0)
@@ -232,19 +232,19 @@ get_cp_inits = function(cp_rows, x_range, user_inits = list()) {
 
   # Keep 1% of the range of x from the bounds and neighboring change points, but within narrow priors
   margin = pmin(0.01 * diff(x_range), (upper - lower) / 3)
-  spacing = min_lengths + c(0, pmax(margin[-1], margin[-n]))
+  spacing = min_lengths + c(0, pmax(margin[-1], margin[-n_cp]))
   lower = lower + margin
   upper = upper - margin
 
   # Earliest and latest positions of ordered change points within these bounds
-  for (i in seq_len(n)[-1])
+  for (i in seq_len(n_cp)[-1])
     lower[i] = max(lower[i], lower[i - 1] + spacing[i])
-  for (i in rev(seq_len(n)[-1]))
+  for (i in rev(seq_len(n_cp)[-1]))
     upper[i - 1] = min(upper[i - 1], upper[i] - spacing[i])
   if (any(lower > upper))
     stop("The change point priors (and initial values) leave no room for ordered change points. Check the lower and upper bounds (in dunif() or T()), minimum segment lengths, and initial values of the change points.", call. = FALSE)
 
-  target = x_range[1] + cumsum(min_lengths) + max((diff(x_range) - sum(min_lengths)) / (n + 1), 0) * seq_len(n)
+  target = x_range[1] + cumsum(min_lengths) + max((diff(x_range) - sum(min_lengths)) / (n_cp + 1), 0) * seq_len(n_cp)
   inits = stats::setNames(as.list(pmin(pmax(target, lower), upper)), cp_rows$parameter)
   inits[is_free & cp_rows$parameter %notin% names(user_inits)]
 }
@@ -328,24 +328,24 @@ get_jags_data = function(data, family, segments, predictors, group_predictors, p
   if (!is.null(series))
     jags_data$series_id_ = as.integer(factor(data[[series]], levels = unique(data[[series]])))
 
-  for (col in group_cols) {
+  for (group_col in group_cols) {
     # Add metadata for the grouping-factor levels.
-    tmp = paste0("n_unique_", col)
-    group_levels = levels(factor(data[[col]]))
-    jags_data[[tmp]] = length(group_levels)
+    n_unique_name = paste0("n_unique_", group_col)
+    group_levels = levels(factor(data[[group_col]]))
+    jags_data[[n_unique_name]] = length(group_levels)
 
     # Index grouping levels in a separate node so the grouping column can also
     # be par_x, the response, etc. Levels are recovered using recover_levels()
-    jags_data[[paste0(col, "_index_")]] = as.numeric(factor(data[[col]], levels = group_levels))
+    jags_data[[paste0(group_col, "_index_")]] = as.numeric(factor(data[[group_col]], levels = group_levels))
   }
 
   # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
   jags_data$rhs_matrix_ = get_predictor_matrix(predictors, group_predictors)
 
   # Add any offset vectors to JAGS data
-  for (spec in design_specs) {
-    if (isTRUE(spec$has_offset)) {
-      jags_data[[spec$offset_name]] = spec$offset_data
+  for (design_spec in design_specs) {
+    if (isTRUE(design_spec$has_offset)) {
+      jags_data[[design_spec$offset_name]] = design_spec$offset_data
     }
   }
 

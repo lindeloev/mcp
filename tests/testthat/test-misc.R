@@ -710,9 +710,9 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   expect_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100)), "stuck")
 
   # Intentionally fixed parameter does not trigger warning (including indexed group deviations)
-  expect_no_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100), fixed_pars = "stuck"))
+  expect_no_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100), constant_pars = "stuck"))
   stuck_group = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "Intercept_1_id[A]"))))
-  expect_no_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100), fixed_pars = "Intercept_1_id"))
+  expect_no_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100), constant_pars = "Intercept_1_id"))
   expect_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100)), "Intercept_1_id \\(1 of 1 levels\\).*ranef\\(fit\\)")
 
   # Group-level deviations are counted by level instead of listed

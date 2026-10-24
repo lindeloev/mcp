@@ -46,28 +46,28 @@ display_data_name = function(x) {
 
 # Collect data and model summaries used to resolve symbolic prior templates.
 prior_context = function(data, segments, design_specs = list()) {
-  x_name = segments$x[1]
-  y_name = segments$y[1]
-  x = data[[x_name]]
+  par_x = segments$x[1]
+  y_col = segments$y[1]
+  x = data[[par_x]]
 
   # mu offsets are available as `offset` or `offset_<segment>` in prior expressions.
   # `offsets` names the symbol for each segment, e.g., c(`1` = "offset_1", `2` = "offset_2").
-  mu_offsets = Filter(function(s) isTRUE(s$has_offset) && identical(s$dpar, "mu") && any(s$offset_data != 0), design_specs)
+  mu_offsets = Filter(function(design_spec) isTRUE(design_spec$has_offset) && identical(design_spec$dpar, "mu") && any(design_spec$offset_data != 0), design_specs)
   offsets = character()
-  for (s in mu_offsets) {
-    data[[paste0("offset_", s$segment)]] = s$offset_data
-    data$offset = s$offset_data
-    offsets[[as.character(s$segment)]] = if (length(mu_offsets) == 1) "offset" else paste0("offset_", s$segment)
+  for (design_spec in mu_offsets) {
+    data[[paste0("offset_", design_spec$segment)]] = design_spec$offset_data
+    data$offset = design_spec$offset_data
+    offsets[[as.character(design_spec$segment)]] = if (length(mu_offsets) == 1) "offset" else paste0("offset_", design_spec$segment)
   }
 
   list(
     data = data,
-    x_name = x_name,
-    y_name = y_name,
-    x_display = display_data_name(x_name),
-    y_display = display_data_name(y_name),
+    par_x = par_x,
+    y_col = y_col,
+    x_display = display_data_name(par_x),
+    y_display = display_data_name(y_col),
     x_min = min(x, na.rm = TRUE),
-    y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_name]]), na.rm = TRUE)),
+    y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_col]]), na.rm = TRUE)),
     offsets = offsets,
     n_cp = nrow(segments) - 1,
     n_segments = nrow(segments)
@@ -180,8 +180,8 @@ allowed_data_expression = function(expr, data_names) {
     return(as.character(expr) %in% c(data_names, "Inf", "pi"))
   if (!is.call(expr))
     return(FALSE)
-  fun = as.character(expr[[1]])
-  if (fun %notin% c(
+  func_name = as.character(expr[[1]])
+  if (func_name %notin% c(
     "+", "-", "*", "/", "^", "(", "log", "exp", "sqrt", "abs",
     "min", "max", "pmin", "pmax", "round", "ifelse", "<="
   )) return(FALSE)
@@ -200,26 +200,26 @@ resolve_prior_ast = function(expr, context) {
   if (!is.call(expr))
     return(expr)
 
-  fun = as.character(expr[[1]])
+  func_name = as.character(expr[[1]])
   args = as.list(expr)[-1]
   data_names = names(context$data)
 
-  if (fun %in% c("n_cp", "n_segments")) {
+  if (func_name %in% c("n_cp", "n_segments")) {
     if (length(args) != 0)
-      stop("`", fun, "()` does not take arguments in prior expressions.")
-    return(if (fun == "n_cp") context$n_cp else context$n_segments)
+      stop("`", func_name, "()` does not take arguments in prior expressions.")
+    return(if (func_name == "n_cp") context$n_cp else context$n_segments)
   }
 
   # Return names cp_0 and cp_K for which is the data range within which all change points are located.
-  if (isTRUE(context$cp_limits) && fun %in% c("min", "max") && identical(args, list(as.name(context$x_name))))
-    return(as.name(paste0("cp_", if (fun == "min") 0 else context$n_segments)))
+  if (isTRUE(context$cp_limits) && func_name %in% c("min", "max") && identical(args, list(as.name(context$par_x))))
+    return(as.name(paste0("cp_", if (func_name == "min") 0 else context$n_segments)))
 
   summaries = c("min", "max", "mean", "median", "sd", "mad")
-  if (fun %in% summaries && length(args) == 1 && allowed_data_expression(args[[1]], data_names)) {
+  if (func_name %in% summaries && length(args) == 1 && allowed_data_expression(args[[1]], data_names)) {
     data_env = list2env(as.list(context$data), parent = baseenv())
     values = eval(args[[1]], envir = data_env)
     return(as.numeric(switch(
-      fun,
+      func_name,
       min = min(values, na.rm = TRUE),
       max = max(values, na.rm = TRUE),
       mean = mean(values, na.rm = TRUE),
@@ -260,14 +260,14 @@ resolve_prior = function(parsed, context) {
 
 
 # Quantile of a prior in mcp's parameterization (scale, not precision) with numeric
-# arguments `a` and truncation `bounds`. Returns NULL for unsupported distributions.
-prior_quantile = function(dist, a, bounds, prob) {
+# arguments `args` and truncation `bounds`. Returns NULL for unsupported distributions.
+prior_quantile = function(dist, args, bounds, prob) {
   q_p = switch(dist,
-    dnorm = list(function(p) stats::qnorm(p, a[1], a[2]), function(x) stats::pnorm(x, a[1], a[2])),
-    dt = list(function(p) a[1] + a[2] * stats::qt(p, a[3]), function(x) stats::pt((x - a[1]) / a[2], a[3])),
-    dbeta = list(function(p) stats::qbeta(p, a[1], a[2]), function(x) stats::pbeta(x, a[1], a[2])),
-    dgamma = list(function(p) stats::qgamma(p, a[1], a[2]), function(x) stats::pgamma(x, a[1], a[2])),
-    dunif = list(function(p) stats::qunif(p, a[1], a[2]), function(x) stats::punif(x, a[1], a[2]))
+    dnorm = list(function(p) stats::qnorm(p, args[1], args[2]), function(x) stats::pnorm(x, args[1], args[2])),
+    dt = list(function(p) args[1] + args[2] * stats::qt(p, args[3]), function(x) stats::pt((x - args[1]) / args[2], args[3])),
+    dbeta = list(function(p) stats::qbeta(p, args[1], args[2]), function(x) stats::pbeta(x, args[1], args[2])),
+    dgamma = list(function(p) stats::qgamma(p, args[1], args[2]), function(x) stats::pgamma(x, args[1], args[2])),
+    dunif = list(function(p) stats::qunif(p, args[1], args[2]), function(x) stats::punif(x, args[1], args[2]))
   )
   if (is.null(q_p))
     return(NULL)
@@ -286,7 +286,7 @@ describe_prior_bounds = function(parsed, context = list()) {
   if (!identical(bounds, c("-Inf", "Inf")))
     return(paste0("[", bounds[1], ", ", bounds[2], "]"))
   if (parsed$dist == "dirichlet")
-    return(paste0("[", paste(vapply(range(context$data[[context$x_name]], na.rm = TRUE), format_prior_number, character(1)), collapse = ", "), "]"))
+    return(paste0("[", paste(vapply(range(context$data[[context$par_x]], na.rm = TRUE), format_prior_number, character(1)), collapse = ", "), "]"))
   if (parsed$dist == "dbeta") return("[0, 1]")
   if (parsed$dist %in% c("dgamma", "dinvgamma", "dexp", "dlnorm", "dweib")) return("[0, Inf]")
   "none"
@@ -357,13 +357,13 @@ compile_prior_record = function(parameter, parsed, all_names, context, source,
 
 
 # Compile all symbolic prior specifications into the final prior table.
-compile_prior_specs = function(specs, all_names, context) {
+compile_prior_specs = function(prior_specs, all_names, context) {
   required = c("parameter", "parsed", "description", "source")
-  assert_data_cols(specs, required)
-  records = lapply(seq_len(nrow(specs)), function(i) {
+  assert_data_cols(prior_specs, required)
+  records = lapply(seq_len(nrow(prior_specs)), function(i) {
     compile_prior_record(
-      specs$parameter[i], specs$parsed[[i]], all_names, context, specs$source[i],
-      specs$description[i]
+      prior_specs$parameter[i], prior_specs$parsed[[i]], all_names, context, prior_specs$source[i],
+      prior_specs$description[i]
     )
   })
   dplyr::bind_rows(records)

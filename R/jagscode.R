@@ -25,22 +25,22 @@ get_jags_family_context = function(segments) {
 
 #' Make JAGS code for Multiple Change Point model
 #'
-#' @param tables Model tables, as in `get_fit_model_tables(fit)`.
+#' @param model_tables Model tables, as in `get_fit_model_tables(fit)`.
 #' @param prior_table Resolved priors and metadata from `get_prior_table()`.
 #' @param family An mcpfamily object.
 #' @return String. A JAGS model.
 #' @noRd
-get_jags_code = function(tables, prior_table, family) {
-  segments = tables$segments
-  group_predictors = definition_rows(tables$group_predictors)
-  par_x = tables$data_columns$par_x
-  ar_order = get_arma_order(tables$predictors, "ar")
-  ma_order = get_arma_order(tables$predictors, "ma")
+get_jags_code = function(model_tables, prior_table, family) {
+  segments = model_tables$segments
+  group_predictors = definition_rows(model_tables$group_predictors)
+  par_x = model_tables$data_columns$par_x
+  ar_order = get_arma_order(model_tables$predictors, "ar")
+  ma_order = get_arma_order(model_tables$predictors, "ma")
 
-  # Begin building JAGS model. `mm` is short for "mcp model".
+  # Begin building JAGS model.
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
   K = max(segments$segment)
-  mm = paste0("model {
+  jags_code = paste0("model {
   # Change points
   cp_0 = min(", par_x, ")\n")
 
@@ -50,29 +50,29 @@ get_jags_code = function(tables, prior_table, family) {
   # Each change point keeps its specified prior, and cp_order_ restricts them to ordered
   # change points with any minimum segment lengths (see add_nodes()). Group-level change
   # points come right after their population-level change point.
-  cps = tables$cps
-  row = function(name) prior_table[match(name, prior_table$parameter), ]
+  cps = model_tables$cps
+  prior_row = function(name) prior_table[match(name, prior_table$parameter), ]
   for (j in seq_len(nrow(cps))) {
-    mm = paste0(mm, get_prior_str(row(cps$name[j])))
+    jags_code = paste0(jags_code, get_prior_str(prior_row(cps$name[j])))
     if (!is.na(cps$group_col[j]))
-      mm = paste0(mm, get_prior_str(row(cps$sd_name[j])), get_prior_str(row(cps$group_name[j]), cps$group_col[j]))
+      jags_code = paste0(jags_code, get_prior_str(prior_row(cps$sd_name[j])), get_prior_str(prior_row(cps$group_name[j]), cps$group_col[j]))
   }
-  mm = paste0(mm, "  cp_", K, " = max(", par_x, ")\n")
+  jags_code = paste0(jags_code, "  cp_", K, " = max(", par_x, ")\n")
 
   # Observed nodes (data: cp_order_ = 1 and cp_weight_ = 0) that restrict the priors above
-  cp_rows = row(cps$name)
+  cp_rows = prior_row(cps$name)
   if (nrow(cps) > 1) {
     min_lengths = cp_rows$min_length
     steps = paste0("step(cp_", 2:nrow(cps), " - cp_", 2:nrow(cps) - 1, ifelse(min_lengths[-1] == "0", "", paste0(" - ", min_lengths[-1])), ")")
-    mm = paste0(mm, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(min_lengths != "0")) " with minimum segment lengths", "\n")
+    jags_code = paste0(jags_code, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(min_lengths != "0")) " with minimum segment lengths", "\n")
   }
   alpha = if (nrow(cps) > 0 && cp_rows$parsed[[1]]$dist %in% "dirichlet") as.numeric(cp_rows$parsed[[1]]$args) else 1  # %in% is FALSE for dist = NA
   if (alpha != 1) {
     # Zeros trick: dpois(0 | lambda) adds -lambda = (alpha - 1) * sum(log(segment length / range of x)) to the log density
     log_lengths = paste0("log((cp_", seq_len(K), " - cp_", seq_len(K) - 1, ") / (cp_", K, " - cp_0))", collapse = " + ")
-    mm = paste0(mm, "  cp_weight_ ~ dpois(-", format_prior_number(alpha - 1), " * (", log_lengths, "))  # dirichlet(", format_prior_number(alpha), ") weight on the segment lengths\n")
+    jags_code = paste0(jags_code, "  cp_weight_ ~ dpois(-", format_prior_number(alpha - 1), " * (", log_lengths, "))  # dirichlet(", format_prior_number(alpha), ") weight on the segment lengths\n")
   }
-  mm = paste0(mm, "
+  jags_code = paste0(jags_code, "
   # Priors for population-level effects\n")
 
   ################
@@ -83,11 +83,11 @@ get_jags_code = function(tables, prior_table, family) {
   group_cols = stats::setNames(group_predictors$group_col, group_predictors$name)
   is_group = prior_table$parameter %in% names(group_cols)
   for (i in which(!is_cp & !is_group))
-    mm = paste0(mm, get_prior_str(prior_table[i, ]))
+    jags_code = paste0(jags_code, get_prior_str(prior_table[i, ]))
   if (any(!is_cp & is_group)) {
-    mm = paste0(mm, "\n  # Priors for group-level effects\n")
+    jags_code = paste0(jags_code, "\n  # Priors for group-level effects\n")
     for (i in which(!is_cp & is_group))
-      mm = paste0(mm, get_prior_str(prior_table[i, ], group_cols[[prior_table$parameter[i]]]))
+      jags_code = paste0(jags_code, get_prior_str(prior_table[i, ], group_cols[[prior_table$parameter[i]]]))
   }
 
 
@@ -96,49 +96,49 @@ get_jags_code = function(tables, prior_table, family) {
   #########
   has_arma_terms = !is.na(ar_order) || !is.na(ma_order)
   if (has_arma_terms)
-    mm = paste0(mm, get_garma_jagscode(ar_order, ma_order, par_x, series = !is.null(tables$data_columns$series)))
+    jags_code = paste0(jags_code, get_garma_jags_code(ar_order, ma_order, par_x, series = !is.null(model_tables$data_columns$series)))
 
 
   ###########
   # FORMULA #
   ###########
-  mm = paste0(mm, "
+  jags_code = paste0(jags_code, "
   # Model and likelihood
   for (i_ in 1:length(", par_x, ")) {")
 
   # Add JAGS code for fitted values and indent it
-  mm = paste0(mm, gsub("\n", "\n    ", get_formula_jags(tables, family, stats::setNames(prior_table$node, prior_table$parameter))))
+  jags_code = paste0(jags_code, gsub("\n", "\n    ", get_formula_jags(model_tables, family, stats::setNames(prior_table$node, prior_table$parameter))))
 
 
   ##############
   # LIKELIHOOD #
   ##############
   context = get_jags_family_context(segments)
-  mm = paste0(mm, "\n\n    # Likelihood for family = ", family$family, "()
+  jags_code = paste0(jags_code, "\n\n    # Likelihood for family = ", family$family, "()
     ")
 
   # Transform link-scale predictors to distribution-scale parameters. These are
   # deterministic JAGS nodes and are not monitored by default.
   for (dpar in family$dpar_specs$dpar) {
-    spec = get_dpar_spec(family, dpar)
+    dpar_spec = get_dpar_spec(family, dpar)
     link_code = paste0("link_", dpar, "_[i_]")
     if (dpar == "mu" && has_arma_terms)
       link_code = paste0(link_code, " + resid_garma_[i_]")
 
-    linkinv_str = get_link_str(spec$link, inverse = TRUE)
+    linkinv_str = get_link_str(dpar_spec$link, inverse = TRUE)
     response_code = ifelse(
       linkinv_str == "",
       link_code,
       paste0(linkinv_str, "(", link_code, ")")
     )
-    if (!is.na(spec$floor))  # Numerical floor, as in evaluate_model()
-      response_code = paste0("max(", format(spec$floor, scientific = TRUE), ", ", response_code, ")")
+    if (!is.na(dpar_spec$floor))  # Numerical floor, as in evaluate_model()
+      response_code = paste0("max(", format(dpar_spec$floor, scientific = TRUE), ", ", response_code, ")")
 
-    mm = paste0(mm, dpar, "_[i_] = ", response_code, "\n    ")
+    jags_code = paste0(jags_code, dpar, "_[i_] = ", response_code, "\n    ")
   }
 
   likelihood = family$backends$jags$likelihood(context)
-  mm = paste0(mm, paste(likelihood, collapse = "\n    "))
+  jags_code = paste0(jags_code, paste(likelihood, collapse = "\n    "))
 
   # Compute link-scale residuals for GARMA
   if (has_arma_terms) {
@@ -146,14 +146,14 @@ get_jags_code = function(tables, prior_table, family) {
     linkfun_str = get_link_str(family$link)
     garma_link_y = if (linkfun_str == "") "garma_y_[i_]" else
       paste0(linkfun_str, "(garma_y_[i_])")
-    mm = paste0(
-      mm,
+    jags_code = paste0(
+      jags_code,
       "\n    garma_y_[i_] = ", garma_y,
       "\n    garma_link_y_[i_] = ", garma_link_y
     )
-    mm = paste0(mm, "\n    resid_abs_[i_] = garma_link_y_[i_] - link_mu_[i_]")
+    jags_code = paste0(jags_code, "\n    resid_abs_[i_] = garma_link_y_[i_] - link_mu_[i_]")
     if (!is.na(ma_order))
-      mm = paste0(mm, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_garma_[i_]")
+      jags_code = paste0(jags_code, "\n    resid_ma_[i_] = garma_link_y_[i_] - link_mu_[i_] - resid_garma_[i_]")
   }
 
 
@@ -162,7 +162,7 @@ get_jags_code = function(tables, prior_table, family) {
   ###############
 
   # Finish up
-  paste0(mm, "
+  paste0(jags_code, "
   }
 }")
 }

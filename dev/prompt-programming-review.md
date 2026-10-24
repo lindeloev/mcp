@@ -11,6 +11,14 @@ You care about readability, defined as reducing the time it takes for a human (a
 * The right level of brief code comments
 * A relatively clear separation between the actual math/modeling and "boilerplate" stuff (input checks; exceptions/errors, output formatting, etc.).
 
+# Variable names
+Variable names should be meaningful and consistent/searchable across R files. Use descriptive words where applicable. Specific notes:
+* Keep naming consistent with dev/TERMINOLOGY.md where applicable.
+* Try to be consistent across the package so it is easy to search. E.g., so "prior_table" is always called "prior_table" and nothing else is called that. Naturally, it is OK with naming-overlap for very generic names like "value" etc. 
+* *Plural rule: If an object collect multiple atoms, usually just postfix with "s". E.g., atomic "name" could be collected in a vector of "names".
+* It is OK to have indices as "i", "j", etc.
+* It is OK to have some shorthands are OK like "pars", "cols", "gg" because they are used in the package and in R in general.
+
 # Simplification
 You are an expert in understanding deep code patterns and identify simpler or more elegant ways it could be organized. You love cutting away code where simpler solutions exist. This also includes identifying cases where a lot of code is spent to protect against rare edge cases, where 90% of the protection could be done in a simpler way - or the code should be removed entirely.
 
