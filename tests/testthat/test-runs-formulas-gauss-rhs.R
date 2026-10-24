@@ -106,7 +106,7 @@ test_that("redefinitions replace complete formula terms", {
     par_x = "x",
     check_rank = FALSE
   )
-  first_terms = predictors$segment == 1 & predictors$par_type != "Intercept" & predictors$x_factor == "1"
+  first_terms = predictors$segment == 1 & predictors$par_type != "Intercept" & predictors$x_degree == 0
 
   expect_true(all(predictors$next_segment[first_terms] == 2L))
   expect_equal(
@@ -289,13 +289,13 @@ test_that("transformations use the original par_x while segment bases stay local
   )
   table = get_predictors(fit$model, data, fit$family, par_x = "x")
 
-  expect_equal(table$x_factor[table$matrix_name == "sin(x)"], "1")
+  expect_equal(table$x_degree[table$matrix_name == "sin(x)"], 0L)
   expect_equal(
     unname(table$matrix_data[[which(table$matrix_name == "sin(x)")]]),
     sin(data$x)
   )
-  expect_equal(table$x_factor[table$matrix_name == "x"], "x")
-  expect_equal(table$x_factor[table$matrix_name == "I(x^2)"], "x^2")
+  expect_equal(table$x_degree[table$matrix_name == "x"], 1L)
+  expect_equal(table$x_degree[table$matrix_name == "I(x^2)"], 2L)
 
   fitted = fit$simulate(
     fit,
@@ -318,7 +318,7 @@ test_that("par_x is recognized as an exact formula symbol", {
   fit = mcp(list(y ~ 0 + axb), data, par_x = "a.b", sample = FALSE)
   predictor = dplyr::filter(get_predictors(fit$model, data, fit$family, par_x = "a.b"), .data$dpar == "mu")
 
-  expect_equal(predictor$x_factor, "1")
+  expect_equal(predictor$x_degree, 0L)
   expect_equal(unname(predictor$matrix_data[[1]]), data$axb)
 })
 
@@ -327,7 +327,7 @@ test_that("x-free interactions are evaluated directly at zero", {
   fit = mcp(list(y ~ 0 + x:z), data, par_x = "x", sample = FALSE)
   predictor = dplyr::filter(get_predictors(fit$model, data, fit$family, par_x = "x"), .data$dpar == "mu")
 
-  expect_equal(predictor$x_factor, "x")
+  expect_equal(predictor$x_degree, 1L)
   expect_equal(unname(predictor$matrix_data[[1]]), data$z)
 
   segmented = mcp(list(y ~ 0, ~ 0 + x:z), data, par_x = "x", sample = FALSE)

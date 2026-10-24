@@ -506,7 +506,7 @@ test_that("Various character group IDs work in mcp_draws, fitted, and predict", 
 
   # Check mcp_draws selects the exact draw columns of all levels
   draws = mcp_draws(fit, ndraws = 2)
-  raw = as_draws_df(fit)
+  raw = tibble::as_tibble(as_draws_df(fit))  # Plain columns; subsetting a draws_df drops its metadata with a warning
   effects = mcp_pars(fit, scope = "group")
   for (i in seq_len(nrow(effects))) {
     nodes = paste0(effects$parameter[i], "[", unique(opaque_data[[effects$group_col[i]]]), "]")

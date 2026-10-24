@@ -69,19 +69,17 @@ default_cp_specs = function(cps, context) {
 
 # Standard deviation of one model-matrix column for autoscaled priors (rstanarm).
 # x-terms use the change-point variable: sd(x) and sd((x - min(x))^p) for powers.
-default_predictor_scale = function(matrix_data, x_factor) {
+default_predictor_scale = function(matrix_data, x_degree) {
   values = stats::na.omit(as.numeric(matrix_data))
   n_unique = length(unique(values))
   # For x-terms, a 0/1 indicator (as in x:state) only selects rows, so the column sd is close to sd(x).
   # Other two-valued columns, e.g., z in {100, 200}, carry units and are scaled.
   is_indicator = all(values %in% c(0, 1))
-  data_scale = if (n_unique <= 1 || (is_indicator && x_factor != "1")) 1 else stats::sd(values)
+  data_scale = if (n_unique <= 1 || (is_indicator && x_degree > 0)) 1 else stats::sd(values)
 
   parts = character()
-  if (x_factor != "1") {
-    degree = x_degree(x_factor)
-    parts = if (degree == 1) "sd(.x)" else paste0("sd((.x - min(.x))^", degree, ")")
-  }
+  if (x_degree > 0)
+    parts = if (x_degree == 1) "sd(.x)" else paste0("sd((.x - min(.x))^", x_degree, ")")
   if (data_scale != 1)
     parts = c(parts, format_prior_number(data_scale))
   if (length(parts) == 0)
@@ -112,9 +110,9 @@ filter_default_conditions = function(defaults, family) {
 
 
 # Replace predictor_scale() in default prior strings with each coefficient's scale.
-fill_predictor_scale = function(prior, matrix_data, x_factor) {
+fill_predictor_scale = function(prior, matrix_data, x_degree) {
   vapply(seq_along(prior), function(i) {
-    gsub("predictor_scale()", default_predictor_scale(matrix_data[[i]], x_factor[i]), prior[i], fixed = TRUE)
+    gsub("predictor_scale()", default_predictor_scale(matrix_data[[i]], x_degree[i]), prior[i], fixed = TRUE)
   }, character(1))
 }
 
@@ -128,7 +126,7 @@ fill_predictor_scale = function(prior, matrix_data, x_factor) {
 # gives jumps from where the earlier segment left off, which keep the contrast prior.
 get_prior_type = function(predictors) {
   key = paste(predictors$dpar, predictors$order)
-  joins = predictors$par_type == "Intercept" | predictors$x_factor != "1"
+  joins = predictors$par_type == "Intercept" | predictors$x_degree > 0
   starts_at_zero = vapply(seq_len(nrow(predictors)), function(i) {
     !any(joins & key == key[i] & predictors$segment < predictors$segment[i])
   }, logical(1))
@@ -138,7 +136,7 @@ get_prior_type = function(predictors) {
     all(abs(Reduce(`+`, columns) - 1) < 1e-8, na.rm = TRUE)
   }, logical(1))
 
-  is_factor_intercept = predictors$par_type == "dummy" & predictors$x_factor == "1" & starts_at_zero & sums_to_one[term]
+  is_factor_intercept = predictors$par_type == "dummy" & predictors$x_degree == 0 & starts_at_zero & sums_to_one[term]
   replace(predictors$par_type, is_factor_intercept, "Intercept")
 }
 
@@ -167,7 +165,7 @@ default_predictor_specs = function(predictors, family, context) {
   joined$description[is_adjusted] = paste0(joined$description[is_adjusted], "; adjusted for the offset")
   joined$prior = fill_offset(joined$prior, offset)
 
-  joined$prior = fill_predictor_scale(joined$prior, joined$matrix_data, joined$x_factor)
+  joined$prior = fill_predictor_scale(joined$prior, joined$matrix_data, joined$x_degree)
 
   tibble::tibble(
     parameter = joined$name,
@@ -195,7 +193,7 @@ default_group_specs = function(group_predictors, family) {
     )
   }
 
-  joined$group_sd_prior = fill_predictor_scale(joined$group_sd_prior, joined$matrix_data, joined$x_factor)
+  joined$group_sd_prior = fill_predictor_scale(joined$group_sd_prior, joined$matrix_data, joined$x_degree)
   coefficient_description = ifelse(
     joined$par_type == "Intercept",
     "intercept",
@@ -437,7 +435,7 @@ overlay_user_prior_specs = function(specs, prior, cps, context, predictors, fami
 get_x_partners = function(predictors, name) {
   i = match(name, predictors$name)
   own = predictors$matrix_data[[i]]
-  candidates = predictors[predictors$segment == 1 & predictors$dpar == predictors$dpar[i] & predictors$x_factor != "1", ]
+  candidates = predictors[predictors$segment == 1 & predictors$dpar == predictors$dpar[i] & predictors$x_degree > 0, ]
   is_partner = vapply(candidates$matrix_data, function(values) {
     (predictors$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE)) || isTRUE(all.equal(values, own))
   }, logical(1))
@@ -454,7 +452,7 @@ add_intercept_references = function(specs, predictors, context) {
   if (context$x_min == 0)
     return(specs)
 
-  coefs = predictors[predictors$segment == 1 & predictors$x_factor == "1" & predictors$dpar %notin% c("ar", "ma"), ]
+  coefs = predictors[predictors$segment == 1 & predictors$x_degree == 0 & predictors$dpar %notin% c("ar", "ma"), ]
   for (i in seq_len(nrow(coefs))) {
     row = match(coefs$name[i], specs$parameter)
     if (is.na(row) || specs$source[row] != "default")
@@ -468,8 +466,7 @@ add_intercept_references = function(specs, predictors, context) {
       next
 
     # Subtract the x-terms at min(x) from the location and the truncation bounds
-    power = ifelse(terms$x_factor == "x", "", sub("x", "", terms$x_factor, fixed = TRUE))
-    reference = paste0(" - ", terms$name, " * min(", context$x_display, ")", power, collapse = "")
+    reference = paste0(" - ", terms$name, " * min(", context$x_display, ")", x_power(terms$x_degree), collapse = "")
     specs$parsed[[row]] = shift_prior(parsed, function(arg) if (arg == "0") reference else paste0(arg, reference))
     what = if (coefs$prior_type[i] == "Intercept") "value" else "difference"
     specs$description[row] = paste0(specs$description[row], "; on the ", what, " at min(", context$x_display, ")")

@@ -240,7 +240,7 @@ get_disjoined_cps = function(fit) {
   cps = tables$cps[is.na(tables$cps$group_col), ]
   is_disjoined = vapply(cps$segment, function(segment) {
     this = terms[terms$segment == segment, ]
-    all(this$dpar[this$x_factor != "1"] %in% this$dpar[this$par_type == "Intercept"])
+    all(this$dpar[this$x_degree > 0] %in% this$dpar[this$par_type == "Intercept"])
   }, logical(1))
   cps$name[is_disjoined]
 }

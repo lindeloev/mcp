@@ -11,7 +11,7 @@
 # `dpar` names the linear predictor, e.g., "mu", "sigma", or "ar1" for the first AR lag.
 # - tables: Model tables, as in `get_fit_model_tables(fit)`.
 get_formula_terms = function(tables) {
-  columns = c("dpar", "order", "segment", "next_segment", "x_factor", "matrix_col", "name")
+  columns = c("dpar", "order", "segment", "next_segment", "x_degree", "matrix_col", "name")
 
   # Offsets apply in their own segment only
   offsets = Filter(function(spec) isTRUE(spec$has_offset), tables$design_specs)
@@ -22,7 +22,7 @@ get_formula_terms = function(tables) {
     order = field("order", integer(1)),
     segment = segment,
     next_segment = ifelse(segment < nrow(tables$segments), segment + 1L, NA_integer_),
-    x_factor = "1",
+    x_degree = 0L,
     offset = field("offset_name", character(1))
   )
 
@@ -30,14 +30,12 @@ get_formula_terms = function(tables) {
   terms$dpar = paste0(terms$dpar, tidyr::replace_na(as.character(terms$order), ""))
   terms$start = terms$segment - 1L
   terms$end = terms$next_segment - 1L
-  terms[c("dpar", "segment", "start", "end", "x_factor", "matrix_col", "name", "group_col", "offset")]
+  terms[c("dpar", "segment", "start", "end", "x_degree", "matrix_col", "name", "group_col", "offset")]
 }
 
 
-# Power of x (measured from the change point) in an `x_factor`: "1" is 0, "x" is 1, and "x^3" is 3.
-x_degree = function(x_factor) {
-  as.integer(ifelse(x_factor == "1", "0", ifelse(x_factor == "x", "1", sub("x^", "", x_factor, fixed = TRUE))))
-}
+# Exponent for x-terms of degree `x_degree` in JAGS code, e.g., "" for x and "^3" for x^3.
+x_power = function(x_degree) ifelse(x_degree > 1, paste0("^", x_degree), "")
 
 
 #' Write the JAGS code for the linear predictors of all dpars
@@ -77,17 +75,20 @@ get_formula_jags = function(tables, family, nodes) {
            ifelse(seq_len(K) > 1, paste0(" - ", cp_at(seq_len(K) - 1)), ""), collapse = "")
   )
 
-  # One sum per dpar. Coefficients sharing a segment, x-factor, and end are one inprod().
+  # One sum per dpar. Coefficients sharing a segment, x-degree, and end are one inprod().
   formula_dpar = function(dpar) {
     dpar_terms = terms[terms$dpar == dpar, ]
     coefficients = dpar_terms[is.na(dpar_terms$offset), ] %>%
-      dplyr::mutate(name = ifelse(is.na(.data$group_col), .data$name, paste0(.data$name, "[", .data$group_col, "_index_[i_]]"))) %>%
-      dplyr::group_by(.data$segment, .data$x_factor, .data$end) %>%
+      dplyr::mutate(
+        name = ifelse(is.na(.data$group_col), .data$name, paste0(.data$name, "[", .data$group_col, "_index_[i_]]")),
+        x_code = ifelse(.data$x_degree == 0, "1", paste0("x_local_", .data$segment, "_[i_]", x_power(.data$x_degree)))
+      ) %>%
+      dplyr::group_by(.data$segment, .data$x_degree, .data$end) %>%
       dplyr::summarise(
         code = paste0(
           "  ", applies(dplyr::first(.data$start), dplyr::first(.data$end)),
           " * inprod(rhs_matrix_[i_, c(", paste0(.data$matrix_col, collapse = ", "), ")], c(", paste0(.data$name, collapse = ", "), "))",
-          " * ", sub("x", paste0("x_local_", dplyr::first(.data$segment), "_[i_]"), dplyr::first(.data$x_factor), fixed = TRUE)
+          " * ", dplyr::first(.data$x_code)
         ),
         .groups = "drop"
       )
@@ -145,18 +146,18 @@ evaluate_formula = function(tables, family, data, pars, n_draws) {
     pmin(x, cp_at(s)) - if (s > 1) cp_at(s - 1) else 0
   })
 
-  # Sum the terms of each dpar. As in the JAGS code, terms sharing a segment, end, and x-factor
+  # Sum the terms of each dpar. As in the JAGS code, terms sharing a segment, end, and x-degree
   # are summed before multiplying by x and by where they apply. Dpars without terms are zero.
   dpars = unique(c(terms$dpar, family$dpars))
   lapply(stats::setNames(nm = dpars), function(dpar) {
     link = matrix(0, n_rows, n_draws)
     dpar_terms = terms[terms$dpar == dpar, ]
-    for (group in split(dpar_terms, paste(dpar_terms$segment, dpar_terms$end, dpar_terms$x_factor))) {
+    for (group in split(dpar_terms, paste(dpar_terms$segment, dpar_terms$end, dpar_terms$x_degree))) {
       inprod = 0
       for (i in seq_len(nrow(group)))
         inprod = inprod + if (is.na(group$offset[i])) value(group$name[i], data$matrix[, group$matrix_col[i]]) else data$offsets[[group$offset[i]]]
-      if (group$x_factor[1] != "1")
-        inprod = inprod * x_local[[group$segment[1]]]^x_degree(group$x_factor[1])
+      if (group$x_degree[1] > 0)
+        inprod = inprod * x_local[[group$segment[1]]]^group$x_degree[1]
       applies = (x >= cp_at(group$start[1])) * (if (is.na(group$end[1])) 1 else x < cp_at(group$end[1]))
       link = link + applies * inprod
     }

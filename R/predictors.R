@@ -228,7 +228,7 @@ empty_predictors = function() {
     term_key = character(),
     par_type = character(),
     order = integer(),
-    x_factor = character(),
+    x_degree = integer(),
     design_id = character(),
     design_col = integer(),
     design_spec = list(),
@@ -260,7 +260,7 @@ empty_predictors = function() {
 #'     coefficient. Multi-column terms share one key.
 #'   - `par_type`: One of "Intercept", "dummy", or "slope". Used for setting priors and for change point indicator func.
 #'   - `order`: positive integer or NA. Only relevant for `ar` and `ma`.
-#'   - `x_factor`: `"1"`, `"x"`, or `"x^k"`. How the coefficient is multiplied by x measured from the change point.
+#'   - `x_degree`: The power of x (measured from the change point) that multiplies the coefficient, e.g., 0 for none and 2 for `x^2`.
 #'   - `design_id`: key of the fitted component formula that produced the row.
 #'   - `design_col`: column occupied by the row in that component's model matrix.
 #'   - `matrix_data`: column of the design matrix less the `par_x` term.
@@ -378,17 +378,13 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
 
 
   ################
-  # GET X_FACTOR #
+  # GET X_DEGREE #
   ################
 
   # x-terms (bare par_x and supported powers) are measured from the change point. The
   # model-matrix assign vector maps expanded factor columns back to terms.
-  local_degree = c(0L, local$degree)[attr(mat, "assign") + 1L]
-  checkmate::assert_integerish(local_degree, lower = 0, .var.name = "exponents in formula")
-  x_factor = ifelse(
-    local_degree == 0L, "1",
-    ifelse(local_degree == 1L, "x", paste0("x^", local_degree))
-  )
+  x_degree = c(0L, local$degree)[attr(mat, "assign") + 1L]
+  checkmate::assert_integerish(x_degree, lower = 0, .var.name = "exponents in formula")
 
 
 
@@ -413,7 +409,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
         term_key = "(offset)",
         par_type = "offset",
         order = order_value,
-        x_factor = "1",
+        x_degree = 0L,
         design_id = design_id,
         design_col = NA_integer_,
         matrix_data = list(numeric(nrow(data))),
@@ -436,7 +432,7 @@ get_predictors_dpar = function(data, form_rhs, segment, dpar, par_x, order = NUL
       TRUE ~ "slope"
     ),
     order = order_value,
-    x_factor = x_factor,
+    x_degree = x_degree,
     design_id = design_id,
     design_col = seq_len(ncol(mat_without_x)),
     design_spec = rep(list(design$spec), ncol(mat_without_x)),
@@ -645,7 +641,7 @@ get_shared_predictors = function(data, form_rhs, segment, dpar, par_x, order = N
   if (check_rank) {
     coefficients = result[result$par_type != "offset", , drop = FALSE]
     matrix = do.call(cbind, lapply(seq_len(nrow(coefficients)), function(i) {
-      coefficients$matrix_data[[i]] * data[[par_x]]^x_degree(coefficients$x_factor[i])
+      coefficients$matrix_data[[i]] * data[[par_x]]^coefficients$x_degree[i]
     }))
     colnames(matrix) = coefficients$matrix_name
     assert_rank(matrix, segment, dpar)
@@ -807,7 +803,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     arma_resets
   )
   predictors$next_segment = get_next_segment(
-    population_key, predictors$segment, joins = is_intercept | predictors$x_factor != "1",
+    population_key, predictors$segment, joins = is_intercept | predictors$x_degree > 0,
     population_resets, n_segments
   )
 
@@ -836,7 +832,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
       dplyr::select(
         "population_name", "name", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "order",
-        "x_factor", "design_id", "design_col", "matrix_col", "matrix_data",
+        "x_degree", "design_id", "design_col", "matrix_col", "matrix_data",
         "design_spec", "definition_segment"
       )
 
@@ -853,7 +849,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     )
     group_predictors$next_segment = get_next_segment(
       group_key(group_predictors), group_predictors$segment,
-      joins = group_predictors$x_factor != "1", group_resets, n_segments
+      joins = group_predictors$x_degree > 0, group_resets, n_segments
     )
   }
 
@@ -867,7 +863,7 @@ get_predictor_tables = function(model, data, family, par_x, check_rank = TRUE) {
     group_predictors = tibble::tibble(
       population_name = character(), name = character(), group_col = character(), segment = integer(),
       dpar = character(), sd_name = character(), par_type = character(), matrix_name = character(),
-      order = integer(), x_factor = character(), design_id = character(), design_col = integer(),
+      order = integer(), x_degree = integer(), design_id = character(), design_col = integer(),
       matrix_col = integer(), matrix_data = list(), definition_segment = integer(), next_segment = integer()
     )
 

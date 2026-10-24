@@ -133,7 +133,7 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
     tables$group_predictors,
     c(
       "population_name", "name", "group_col", "segment", "dpar",
-      "sd_name", "par_type", "matrix_name", "order", "x_factor", "design_id",
+      "sd_name", "par_type", "matrix_name", "order", "x_degree", "design_id",
       "design_col", "matrix_col", "definition_segment", "next_segment"
     )
   )
