@@ -698,22 +698,26 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   diagnostics_off = capture.output(summary(fit_bad, diagnostics = convergence_off))
   expect_false(any(grepl("poor convergence", diagnostics_off)))
 
-  expect_warning(warn_nonconvergence(raw_post, strict), "rhat > 1.01")
-  expect_no_warning(warn_nonconvergence(raw_post, convergence_off))
+  expect_warning(warn_nonconvergence(convergence_table(raw_post), strict), "rhat > 1.01")
+  expect_no_warning(warn_nonconvergence(convergence_table(raw_post), convergence_off))
 
   # Single chain ESS diagnostics trigger warnings
   single_chain_post = coda::as.mcmc.list(coda::mcmc(matrix(rnorm(50), ncol = 1, dimnames = list(NULL, "a"))))
-  expect_warning(warn_nonconvergence(single_chain_post, list(ess_bulk = 100)), "ess_bulk < 100")
+  expect_warning(warn_nonconvergence(convergence_table(single_chain_post), list(ess_bulk = 100), check_rhat = FALSE), "ess_bulk < 100")
 
   # Stuck parameter triggers warning
   stuck_post = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "stuck"))))
-  expect_warning(warn_nonconvergence(stuck_post, list(ess_bulk = 100)), "stuck")
+  expect_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100)), "stuck")
 
   # Intentionally fixed parameter does not trigger warning (including indexed group deviations)
-  expect_no_warning(warn_nonconvergence(stuck_post, list(ess_bulk = 100), fixed_pars = "stuck"))
+  expect_no_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100), fixed_pars = "stuck"))
   stuck_group = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "Intercept_1_id[A]"))))
-  expect_no_warning(warn_nonconvergence(stuck_group, list(ess_bulk = 100), fixed_pars = "Intercept_1_id"))
-  expect_warning(warn_nonconvergence(stuck_group, list(ess_bulk = 100)), "Intercept_1_id\\[A\\]")
+  expect_no_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100), fixed_pars = "Intercept_1_id"))
+  expect_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100)), "Intercept_1_id \\(1 of 1 levels\\).*ranef\\(fit\\)")
+
+  # Group-level deviations are counted by level instead of listed
+  parameter = c("cp_1", "Intercept_1_id[A]", "Intercept_1_id[B]", "Intercept_1_id[C]", "x_1_id[A]")
+  expect_equal(format_bad_pars(parameter, c(TRUE, TRUE, FALSE, TRUE, FALSE)), "cp_1 and Intercept_1_id (2 of 3 levels)")
 
   # Stuck parameter (undefined Rhat/ESS) triggers summary footer warning
   fit_stuck = fit_nowarn
@@ -723,6 +727,23 @@ test_that("diagnostic settings control fit warnings and summary footers", {
   fit_stuck$mcmc_post = post_stuck
   stuck_summary = capture.output(summary(fit_stuck, diagnostics = list(rhat = 1.01)))
   expect_true(any(grepl("poor convergence", stuck_summary)))
+
+  # Changed draws are not summarised with the convergence cached by mcp()
+  expect_false(is.null(cached_convergence(fit_nowarn)))
+  expect_null(cached_convergence(fit_stuck))
+
+  # Poorly mixed group-level deviations are counted by level in the summary footer
+  fit_group = mcp_example("group_mu", sample = "none", plot = FALSE)
+  levels_id = levels(factor(fit_group$data$id))
+  columns = c(mcp_pars(fit_group, scope = "population")$parameter, paste0("Intercept_1_id[", levels_id, "]"), paste0("stateB_1_id[", levels_id, "]"))
+  fit_group$mcmc_post = coda::mcmc.list(lapply(1:2, function(chain) {
+    draws = matrix(rnorm(2000 * length(columns)), ncol = length(columns), dimnames = list(NULL, columns))
+    draws[, "Intercept_1_id[id_01]"] = chain
+    coda::mcmc(draws)
+  }))
+  group_summary = capture.output(summary(fit_group, diagnostics = list(ess_bulk = NULL, ess_tail = NULL)))
+  expect_true(any(grepl("Group-level deviations show poor convergence (rhat > 1.01): Intercept_1_id (1 of 9 levels).", group_summary, fixed = TRUE)))
+  expect_false(any(grepl("parameters? shows? poor convergence", group_summary)))
 
   ex_fit = mcp_example("intercepts", sample = "none")
   expect_s3_class(ex_fit, "mcpfit")

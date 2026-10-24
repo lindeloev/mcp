@@ -408,11 +408,14 @@ mcp = function(
 
 
     # Diagnostics check - also for single-chain fits
+    # Cache it for summary() and ranef(), which are slow to recompute it for many group-level deviations.
     fixed_pars = prior_table$parameter[prior_table$kind == "constant"]
-    warn_nonconvergence(mcmc_post, diagnostics, fixed_pars = fixed_pars)
+    convergence = list(hash = rlang::hash(mcmc_post), table = convergence_table(mcmc_post))
+    warn_nonconvergence(convergence$table, diagnostics, fixed_pars = fixed_pars, check_rhat = coda::nchain(mcmc_post) >= 2)
   } else {
     mcmc_post = NULL
     mcmc_imputed = NULL
+    convergence = NULL
   }
 
   # Sample prior
@@ -473,6 +476,7 @@ mcp = function(
       prior_table = prior_table,
       prior_format = "jags_string_v1",
       diagnostics = diagnostics,
+      convergence = convergence,
       custom_jags_code = custom_jags_code,
       imputed_response = mcmc_imputed,
       imputed_response_rows = if (is.null(mcmc_imputed)) integer() else missing_response_rows

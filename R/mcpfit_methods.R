@@ -95,20 +95,22 @@ add_sim_match = function(estimates, sim, fit) {
 }
 
 
-# Parameter estimates and diagnostics of each variable in `draws`, as in summary.mcpfit
-summarise_pars = function(draws, width) {
+# Parameter estimates and diagnostics of each variable in `draws`, as in summary.mcpfit.
+# - convergence: A convergence_table() covering `draws`. Computed if NULL.
+summarise_pars = function(draws, width, convergence = NULL) {
   tail_prob = (1 - width) / 2
+  if (is.null(convergence))
+    convergence = convergence_table(draws)
+
   posterior::summarise_draws(
     draws,
     mean = base::mean,
     sd = stats::sd,
     lower = function(x) stats::quantile(x, tail_prob, names = FALSE),
-    upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE),
-    rhat = posterior::rhat,
-    ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
-    ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
+    upper = function(x) stats::quantile(x, 1 - tail_prob, names = FALSE)
   ) %>%
     dplyr::rename(parameter = "variable") %>%
+    dplyr::left_join(convergence, by = "parameter") %>%
     dplyr::mutate(
       ess_bulk = round(.data$ess_bulk),
       ess_tail = round(.data$ess_tail)
@@ -182,7 +184,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
   }
 
   draws = posterior::subset_draws(draws, variable = get_cols)
-  estimates = summarise_pars(draws, width)
+  estimates = summarise_pars(draws, width, convergence = if (!prior) cached_convergence(fit))
 
   # Order rows and add `segment`/`dpar` using the canonical parameter table
   # built in mcp(). Group-level columns (e.g. "cp_1_id[A]") are matched by
@@ -334,25 +336,33 @@ summarize_mcpfit = function(object, width = 0.95, digits = 2, prior = FALSE, ver
     pars = mcp_pars(fit)
     cp_names = pars$parameter[pars$part == "cp" & pars$scope == "population"]
 
-    # Convergence warning footer
+    # Convergence warning footer. Counts group-level deviations by level, which are summarised in ranef().
     footer = character()
-    all_res = result
     group_names = mcp_pars(fit, scope = "group")$parameter
     if (length(group_names) > 0) {
-      ran_res = get_summary(fit, width, scope = "group", prior = prior, verbose = verbose)
       footer = paste0(
         "Group-level effects: ", paste(group_names, collapse = ", "),
         ". Use `ranef(fit)` to inspect deviations by level."
       )
-      all_res = dplyr::bind_rows(all_res, ran_res)
     }
+    convergence = if (!prior) cached_convergence(fit)
+    if (is.null(convergence))
+      convergence = convergence_table(draws)
     check_rhat = !is.null(diagnostics$rhat) && coda::nchain(draws) >= 2
     prior_table = fit$.internal$prior_table
     fixed_pars = prior_table$parameter[prior_table$kind == "constant"]
-    conv = check_convergence(all_res, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
-    if (conv$n_bad > 0) {
-      param_str = if (conv$n_bad == 1) "1 parameter shows" else paste0(conv$n_bad, " parameters show")
+    conv = check_convergence(convergence, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
+    is_group = grepl("[", convergence$parameter, fixed = TRUE)
+    n_bad_population = sum(conv$bad & !is_group)
+    if (n_bad_population > 0) {
+      param_str = if (n_bad_population == 1) "1 parameter shows" else paste0(n_bad_population, " parameters show")
       footer = c(footer, paste0("Warning: ", param_str, " poor convergence (", conv$thresholds, ")."))
+    }
+    if (any(conv$bad & is_group)) {
+      footer = c(footer, paste0(
+        "Warning: Group-level deviations show poor convergence (", conv$thresholds, "): ",
+        format_bad_pars(convergence$parameter, conv$bad & is_group), "."
+      ))
     }
   } else {
     result = tibble::tibble()

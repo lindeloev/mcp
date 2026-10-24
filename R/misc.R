@@ -108,35 +108,63 @@ check_convergence = function(results, diagnostics = list(), fixed_pars = charact
 }
 
 
-# Warn about poorly mixed posterior chains.
-# Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow Vehtari et al. (2021).
-# - mcmc_post: An mcmc.list of posterior draws.
-# - diagnostics: A resolved diagnostics configuration.
-# - fixed_pars: Parameter names intentionally fixed to constants.
-warn_nonconvergence = function(mcmc_post, diagnostics = list(), fixed_pars = character()) {
-  diagnostics = resolve_diagnostics(diagnostics)
-  if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))
-    return(invisible(NULL))
-
-  check_rhat = !is.null(diagnostics$rhat) && coda::nchain(mcmc_post) >= 2
-
-  results = posterior::summarise_draws(
-    posterior::as_draws_df(mcmc_post),
+# rhat and bulk/tail ESS of each variable in `draws` (an mcmc.list or posterior draws object).
+# Unrounded. Shared by the fit-time warning, summary(), fixef(), and ranef().
+convergence_table = function(draws) {
+  posterior::summarise_draws(
+    posterior::as_draws_array(draws),
     rhat = posterior::rhat,
     ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
     ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
   ) %>%
     dplyr::rename(parameter = "variable")
+}
 
-  conv = check_convergence(results, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
+
+# The convergence_table() of the posterior draws, cached by mcp(). NULL if the draws changed since then.
+cached_convergence = function(fit) {
+  cache = fit$.internal$convergence
+  if (!is.null(cache) && identical(cache$hash, rlang::hash(mcmclist_draws(fit, error = FALSE))))
+    cache$table
+}
+
+
+# Name the `parameter`s that are `bad`, counting group-level deviations by level instead of listing them,
+# e.g., "cp_1 and Intercept_1_id (37 of 300 levels)".
+format_bad_pars = function(parameter, bad) {
+  base_name = sub("\\[.*\\]$", "", parameter)
+  is_group = base_name != parameter
+  labels = vapply(unique(base_name[bad]), function(name) {
+    is_level = is_group & base_name == name
+    if (!any(is_level))
+      return(name)
+    paste0(name, " (", sum(bad & is_level), " of ", sum(is_level), " levels)")
+  }, character(1))
+  and_collapse(labels)
+}
+
+
+# Warn about poorly mixed posterior chains.
+# Thresholds (rhat > 1.01, bulk/tail ESS < 400) follow Vehtari et al. (2021).
+# - convergence: A convergence_table() of the posterior draws.
+# - diagnostics: A resolved diagnostics configuration.
+# - fixed_pars: Parameter names intentionally fixed to constants.
+# - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
+warn_nonconvergence = function(convergence, diagnostics = list(), fixed_pars = character(), check_rhat = TRUE) {
+  diagnostics = resolve_diagnostics(diagnostics)
+  if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))
+    return(invisible(NULL))
+
+  conv = check_convergence(convergence, diagnostics, fixed_pars = fixed_pars, check_rhat = check_rhat)
   if (conv$n_bad == 0)
     return(invisible(NULL))
 
+  has_group = any(conv$bad & grepl("[", convergence$parameter, fixed = TRUE))
   warning(
     "Some parameters may not have converged well:\n",
     "  * ", conv$thresholds, ": ",
-    and_collapse(conv$bad_names), "\n",
-    "Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing ",
+    format_bad_pars(convergence$parameter, conv$bad), "\n",
+    "Inspect `summary(fit)`", if (has_group) ", `ranef(fit)`,", " and `plot_pars(fit)`, and consider increasing ",
     "`iter`/`warmup`, set inits manually, or simplifying the model.",
     call. = FALSE
   )
