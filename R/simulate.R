@@ -41,7 +41,7 @@ relevel_newdata = function(newdata, fit) {
 }
 
 
-# Fill `matrix_data` in a `coefs` or `group_coefs` table from the evaluated designs (see get_model_data())
+# Fill `matrix_data` in a `coefs` or `group_coefs` table from the evaluated designs (see evaluate_designs())
 populate_design_columns = function(table, evaluated_designs) {
   table$matrix_data = vector("list", nrow(table))
   for (design_id in unique(stats::na.omit(table$design_id))) {
@@ -55,6 +55,30 @@ populate_design_columns = function(table, evaluated_designs) {
   }
 
   table
+}
+
+
+# Evaluate the fitted designs on `data`, both for JAGS data and for predictions. Returns the
+# design matrix with columns in `matrix_col` order and the named list of offsets, e.g., `offset_mu_1_`.
+# x-terms are multiplied by x measured from the change point later.
+evaluate_designs = function(model_tables, data) {
+  designs = lapply(model_tables$design_specs, function(design_spec) {
+    if (!is.null(design_spec$local_x_name))
+      data[[design_spec$local_x_name]] = 1
+    get_fitted_design(data = data, design_spec = design_spec)
+  })
+  offset_specs = Filter(function(design_spec) isTRUE(design_spec$has_offset), model_tables$design_specs)
+
+  list(
+    matrix = get_predictor_matrix(
+      populate_design_columns(model_tables$coefs, designs),
+      populate_design_columns(model_tables$group_coefs, designs)
+    ),
+    offsets = stats::setNames(
+      lapply(names(offset_specs), function(design_id) as.numeric(designs[[design_id]]$offset)),
+      vapply(offset_specs, `[[`, character(1), "offset_name")
+    )
+  )
 }
 
 
@@ -73,25 +97,12 @@ get_model_data = function(fit, newdata) {
   model_tables = get_fit_model_tables(fit)
   data_columns = mcp_columns(fit)
   newdata = relevel_newdata(as.data.frame(newdata), fit)
-
-  # Evaluate each fitted design once. x-terms are multiplied by x measured from the change point later.
-  designs = lapply(model_tables$design_specs, function(design_spec) {
-    if (!is.null(design_spec$local_x_name))
-      newdata[[design_spec$local_x_name]] = 1
-    get_fitted_design(data = newdata, design_spec = design_spec)
-  })
-  offset_specs = Filter(function(design_spec) isTRUE(design_spec$has_offset), model_tables$design_specs)
+  designs = evaluate_designs(model_tables, newdata)
 
   list(
     x = newdata[[data_columns$par_x]],
-    matrix = get_predictor_matrix(
-      populate_design_columns(model_tables$coefs, designs),
-      populate_design_columns(model_tables$group_coefs, designs)
-    ),
-    offsets = stats::setNames(
-      lapply(names(offset_specs), function(design_id) as.numeric(designs[[design_id]]$offset)),
-      vapply(offset_specs, `[[`, character(1), "offset_name")
-    ),
+    matrix = designs$matrix,
+    offsets = designs$offsets,
     series = if (!is.null(data_columns$series)) newdata[[data_columns$series]],
     response = get_family_response_data(fit$family, data_columns, newdata)
   )

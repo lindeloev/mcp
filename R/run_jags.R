@@ -8,11 +8,7 @@
 sample_jags = function(model_tables, prior_table, family, data, sample, chains, iter, warmup, inits, jags_code, custom_jags_code, seed, quiet) {
   data_columns = model_tables$data_columns
   parameters = model_tables$parameters
-  jags_data = get_jags_data(
-    data, family, nrow(model_tables$cps) + 1, data_columns, model_tables$coefs, model_tables$group_coefs, parameters, jags_code,
-    generated = !custom_jags_code,
-    design_specs = model_tables$design_specs
-  )
+  jags_data = get_jags_data(data, family, model_tables, jags_code, generated = !custom_jags_code)
 
   # Monitor model parameters and, for generated JAGS code, latent responses
   all_pars = prior_table$parameter
@@ -363,15 +359,12 @@ assert_jags_namespace = function(data_names, family, n_segments, parameters, jag
 #'
 #' @inheritParams run_jags
 #' @param data A tibble
-#' @param n_segments The number of segments.
-#' @param data_columns Data-column roles, as returned by `mcp_columns()`.
-#' @param coefs The `coefs` table from `get_coef_tables()`.
-#' @param group_coefs The `group_coefs` table from `get_coef_tables()`.
-#' @param parameters The parameters table from `get_pars_table()`.
-#' @param design_specs Named fitted design specifications.
+#' @param model_tables Model tables, as in `get_fit_model_tables(fit)`.
 #' @noRd
-get_jags_data = function(data, family, n_segments, data_columns, coefs, group_coefs, parameters, jags_code,
-                          generated = TRUE, design_specs = list()) {
+get_jags_data = function(data, family, model_tables, jags_code, generated = TRUE) {
+  data_columns = model_tables$data_columns
+  parameters = model_tables$parameters
+  n_segments = nrow(model_tables$cps) + 1
   group_cols = unique(stats::na.omit(parameters$group_col))
   series = data_columns$series
 
@@ -397,19 +390,14 @@ get_jags_data = function(data, family, n_segments, data_columns, coefs, group_co
     jags_data[[paste0(group_col, "_index_")]] = as.numeric(factor(data[[group_col]], levels = group_levels))
   }
 
-  # Predictor design matrix. Keep the JAGS data name for custom-code compatibility.
-  jags_data$rhs_matrix_ = get_predictor_matrix(coefs, group_coefs)
-
-  # Add any offset vectors to JAGS data
-  for (design_spec in design_specs) {
-    if (isTRUE(design_spec$has_offset)) {
-      jags_data[[design_spec$offset_name]] = design_spec$offset_data
-    }
-  }
+  # Predictor design matrix and offsets, evaluated like predictions. Keep the JAGS data name for custom-code compatibility.
+  designs = evaluate_designs(model_tables, data)
+  jags_data$rhs_matrix_ = designs$matrix
+  jags_data[names(designs$offsets)] = designs$offsets
 
   # Compatibility for custom JAGS code written with the released data
   # constants. Generated code and newly resolved priors no longer need these.
-  context = prior_context(data, data_columns, n_segments, design_specs)
+  context = prior_context(data, data_columns, n_segments, model_tables$design_specs)
   jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
 
   if (generated && !is.null(data_columns$weights)) {  # Zeros trick (see jags_weighted_likelihood())
