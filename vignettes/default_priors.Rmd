@@ -190,7 +190,7 @@ The segment lengths are a linear function of the change points, so the same dens
 
 # Default priors on group-level effects
 
-Each group-level effect has a population-level SD parameter. Group-level deviations in the predictor part use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. The SD receives the `brms` half-Student-t prior on the response scale, except for log, logit, and probit links and inside `sigma()` and `shape()` (see the table above). Slope SDs are divided by $\operatorname{sd}(\text{column})$, like the population-level slopes. For distributional parameters, deviations and SD are on that parameter's link scale (for example, effects inside `sigma()` are on the log-SD scale).
+Each group-level effect has a population-level SD parameter. Group-level deviations in the predictor part use a zero-mean normal distribution governed by that SD, as in ordinary multilevel regression. With a multi-coefficient `||` term, every independent coefficient has its own SD. For identity links, the SD receives the `brms` half-Student-t prior on the response scale. Log, logit, and probit links and SDs inside `sigma()` and `shape()` use other scales (see the table above). Slope SDs are divided by $\operatorname{sd}(\text{column})$, like the population-level slopes. For distributional parameters, deviations and SD are on that parameter's link scale (for example, effects inside `sigma()` are on the log-SD scale).
 
 ## Group-level change points {#group-level-change-points}
 

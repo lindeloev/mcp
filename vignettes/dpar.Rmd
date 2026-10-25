@@ -242,11 +242,11 @@ Here is an overview of standard distributional parameters across response famili
 - **`shape`**: Overdispersion / shape parameter for `negbinomial()` (modeled on the log-shape scale via `shape(...)`).
 - **`ar()` / `ma()`**: Autoregressive and moving-average serial dependence terms for time-series models ([read more here](../articles/arma.html)). Each lag is a dpar named `ar1`, `ar2`, `ma1`, etc. (see the definition above).
 
-### Inspecting and working with dpars
+## Inspecting and working with dpars
 
-You can inspect the parameters in a fitted model or family object using `mcp_pars(fit)` or `print(fit$prior)`.
+You can inspect the parameters of a model using `mcp_pars(fit)` and their priors using `prior_summary(fit)`.
 
 Many core `mcp` functions take a `dpar` argument to extract or visualize specific distributional parameters:
 
 - **`fitted(fit, dpar = "sigma")` or `fitted(fit, dpar = "shape")`**: Returns fitted values for the target `dpar` evaluated on the response scale.
-- **`plot_dpar(fit, dpar = "sigma")` or `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the distributional parameter over $x$, complete with credible intervals across segments.
+- **`plot_dpar(fit, dpar = "sigma")` or `plot_dpar(fit, dpar = "shape")`**: Plots the distributional parameter along the change-point variable, optionally with a central interval (`interval = "fitted"`).

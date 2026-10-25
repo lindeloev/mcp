@@ -7,7 +7,7 @@
 #'
 #' * *GLMM and distributional regression:* Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families.
 #'   Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., `sigma`, `shape`).
-#' * *Express expert knowledge:* Specify the number of change points, the form of each segment, and constrain
+#' * *Express expert knowledge:* Specify the number of change points, the form of each segment, and restrict
 #'   coefficients via priors. Compare hypotheses using `loo()` and `hypothesis()`.
 #' * *Native feel:* `summary()`, `plot_pars()`, `pp_check()`, and `as_draws_df()` follow the conventions of
 #'   [`brms`](https://paulbuerkner.com/brms/), [`rstanarm`](https://mc-stan.org/rstanarm/), and

@@ -48,7 +48,7 @@ knitr::knit_hooks$set(plot = function(x, options) knitr::hook_plot_md(sub("^man/
 
 - *GLMM and distributional regression:* Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families. Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., `sigma`, `shape`).
 
-- *Express expert knowledge:* Specify the number of change points, the form of each segment, and constrain coefficients via priors. Compare hypotheses using `loo()` and `hypothesis()`.
+- *Express expert knowledge:* Specify the number of change points, the form of each segment, and restrict coefficients via priors. Compare hypotheses using `loo()` and `hypothesis()`.
 
 - *Native feel:* `summary()`, `plot_pars()`, `pp_check()`, and `as_draws_df()` follow the conventions of [`brms`](https://paulbuerkner.com/brms/), [`rstanarm`](https://mc-stan.org/rstanarm/), and [`posterior`](https://mc-stan.org/posterior/articles/posterior.html), adapted to change point regression. Inspect the sampled JAGS model in `fit$jags_code`.
 
@@ -88,7 +88,7 @@ data = mcp_example_data("demo")
 fit = mcp(model, data)
 ```
 
-The change point(s) are the `x` at which data changes from being better predicted by one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be `~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
+The change points are the values of the change-point variable (here `time`) where the model switches from one formula to the next. The first formula is just `response ~ predictors` and the most common formula for segment 2+ would be `~ predictors` (more details [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 You can do change point regression for a large number of models in a syntax that aligns with `lm()`/`glm()`/`brms`. E.g.:
 
@@ -199,7 +199,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 - `mcp` currently supports specific combinations of families (`gaussian()`, `binomial()`, `bernoulli()`, `poisson()`, and `negbinomial()`) and link functions (`identity`, `logit`, `probit`, and `log`).
 
-- On using informative priors to incorporate expert knowledge.
+- Non-default links, e.g., `binomial(link = "identity")`, can imply impossible values. Informative priors can keep the sampler within valid values.
 
 - Use `binomial(link = "logit")` for [binomial change points in mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also relevant for `bernoulli(link = "logit")`.
 
@@ -225,7 +225,7 @@ Modeling [autoregression](https://lindeloev.github.io/mcp/articles/arma.html) an
 
 - `~ 0 + sigma(1)` models an intercept change in standard deviation. `~ 0 + sigma(0 + x)` models increasing/decreasing standard deviation. Explicit `sigma()` formulas use a log link, so their coefficients are on the log-SD scale.
 
-- `~ ar(N)` models Nth order autoregression on residuals. `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
+- `~ ar(N)` models Nth order autoregression on residuals. `~ ar(N, 0 + x)` models increasing/decreasing autocorrelation.
 
 - `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies observation log-likelihood weights (`w > 0`) across all families.
 
