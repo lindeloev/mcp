@@ -1,6 +1,6 @@
 # Test Hypotheses Concerning Individual Parameters
 
-Returns posterior probabilities and Bayes Factors for flexible
+Returns posterior probabilities and Bayes factors for flexible
 hypotheses involving model parameters. The documentation for the
 argument `hypotheses` below shows examples of how to specify hypotheses,
 and [read worked examples on the mcp
@@ -54,8 +54,7 @@ hypothesis(x, hypotheses, width = 0.95, prior = FALSE, ...)
   - `"Intercept_1 > Intercept_2"`: the intercept is greater in segment 1
     than 2.
 
-  - `"x_2 - x_1 <= 3"`: the difference between slope 1 and 2 is less
-    than or equal to 3.
+  - `"x_2 - x_1 <= 3"`: slope 2 minus slope 1 is at most 3.
 
   - `"Intercept_1 > -2 & Intercept_1 < 2"`: Intercept_1 is between -2
     and 2 (an interval hypothesis). This can be useful as a Region Of
@@ -127,13 +126,15 @@ A tibble with a row per hypothesis and the following columns:
   hypotheses, which compare models rather than an event within the
   fitted model.
 
-- `BF` Bayes Factor in favor of the hypothesis. For "=" it is the
-  Savage-Dickey density ratio. For directional hypotheses, it is the
-  posterior odds divided by the prior odds. It is `Inf` (or `0`) when
-  all (or no) posterior draws satisfy the hypothesis, i.e., the evidence
-  exceeds what the number of draws can resolve; increase `iter` for a
-  finite estimate. It is `NA` when `prior = TRUE`, when prior draws are
-  not available (e.g., `sample = "post"`), or when all or no prior draws
+- `BF` is the Bayes factor in favor of the hypothesis. For "=" it is the
+  Savage-Dickey density ratio. It is `0` when all posterior (but not
+  prior) draws lie on one side of the tested value; increase `iter` for
+  a finite estimate. For directional hypotheses, it is the posterior
+  odds divided by the prior odds. It is `Inf` (or `0`) when all (or no)
+  posterior draws satisfy the hypothesis, i.e., the evidence exceeds
+  what the number of draws can resolve; increase `iter` for a finite
+  estimate. It is `NA` when `prior = TRUE`, when prior draws are not
+  available (e.g., `sample = "post"`), or when all or no prior draws
   satisfy the hypothesis.
 
 ## Author

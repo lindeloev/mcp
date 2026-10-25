@@ -286,12 +286,12 @@ model_forecast = c(model, list(
 ))
 ```
 
-Then we set a prior on the new change point `cp_3`. Change point bounds
-that you set are used unchanged by `mcp` (which otherwise defaults to
-set bounds), also beyond the data, so `T(max(time), 170)` places `cp_3`
-after the last observation and before the end of our forecasting horizon
-at `time = 170`. All other parameters keep their default priors. It may
-be helpful to review [priors on change
+Then we set a prior on the new change point `cp_3`. `mcp` uses change
+point bounds that you set unchanged, also beyond the data (without
+bounds, it uses the observed range of `time`), so `T(max(time), 170)`
+places `cp_3` after the last observation and before the end of our
+forecasting horizon at `time = 170`. All other parameters keep their
+default priors. It may be helpful to review [priors on change
 points](https://lindeloev.github.io/mcp/dev/articles/priors.html#cp_prior).
 
 ``` r

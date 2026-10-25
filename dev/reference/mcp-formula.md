@@ -36,7 +36,7 @@ variable, i.e., `time` above):
     Each included term gets a new coefficient (`x_2`, `stateB_2`) or
     reuses an existing one if wrapped in `same()`.
 
-2.  **x-terms are measured from the change point.** `x`, `x:z`,
+2.  **x-terms are measured from the change point.** Only `x`, `x:z`,
     `state:x`, and `I(x^2)` start at zero at the segment's change point
     and stop growing at the next change point.
 
@@ -99,7 +99,10 @@ more](https://lindeloev.github.io/mcp/articles/formulas.html)
   R-side bases ([`scale()`](https://rdrr.io/r/base/scale.html),
   [`poly()`](https://rdrr.io/r/stats/poly.html),
   [`splines::ns()`](https://rdrr.io/r/splines/ns.html)). Bases are
-  evaluated before sampling and reused for `newdata`.
+  evaluated before sampling and reused for `newdata`. Except for
+  `I(x^k)`, transformations of `x` (e.g., `I(x / 2)`) use the original
+  values of `x`, as in [`lm()`](https://rdrr.io/r/stats/lm.html), and do
+  not join.
 
 - `~ 1 + offset(log(exposure))`: Offset with a fixed coefficient of 1.
   If one segment includes an offset, all segments must include one. The

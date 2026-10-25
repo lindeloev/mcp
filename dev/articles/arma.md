@@ -18,8 +18,8 @@ and `ma(0)` also turn it off). A positive-order `ar(p, 0)` or `ma(q, 0)`
 is joined: it continues from where the earlier intercept and x-terms
 (e.g., the `x` in `ar(1, 1 + x)`) left off, for matching lags. Including
 `ar(p)` or `ma(q)` replaces the whole component: if `ar(1)` follows
-`ar(2)`, the lag-2 coefficient is removed in the later segment. Both
-accept a regression formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
+`ar(2)`, lag 2 is turned off in the later segment. Both accept a
+regression formula, such as `ar(1, 1 + x)` or `ma(1, 0 + x)`.
 
 ### GARMA definition
 
@@ -57,11 +57,11 @@ across change points:
   *before* the change point are input into the first \eta_t in the new
   segment, weighted by the new segment’s AR/MA parameters.
 
-- AR/MA lags do not reset between segments; memory flows continuously
-  from one segment into the next. Lags only reset at the very beginning
-  of the dataset, or between independent series when using
-  `series = "column_name"` (see [Multiple time
-  series](#multiple-series)).
+- The lagged residuals are not set to zero at change points; memory
+  flows continuously from one segment into the next. Lags start at zero
+  only at the very beginning of the dataset, or at the start of each
+  independent series when using `series = "column_name"` (see [Multiple
+  time series](#multiple-series)).
 
 - Because change point locations \tau are estimated with posterior
   uncertainty, the change point where AR/MA parameters switch varies
@@ -129,16 +129,16 @@ head(ar_data)
 
 See how this was generated in `mcp_example("ar")$example_code`. We model
 this as a plateau (`1`) with a second-order autoregressive residual
-(`ar(2)`) followed by a joined slope (`0 + time`) with a negative
-first-order autoregressive residual (`ar(1)`):
+(`ar(2)`) followed by a joined plateau (`0`) with a negative first-order
+autoregressive residual (`ar(1)`):
 
 ``` r
 
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
-  ~ 0 + time + ar(1)  # time_2, ar1_2; replaces AR(2) with AR(1)
+  ~ 0 + ar(1)         # ar1_2; replaces AR(2) with AR(1)
 )
-fit = mcp(model, ar_data)
+fit = mcp(model, ar_data, par_x = "time")
 ```
 
 Let’s plot it and we see that AR was strong in the first segment and
@@ -163,20 +163,19 @@ summary(fit)
     ## Draws: 9000 (3 chains with iter = 3000)
     ## Segments:
     ##   1: price ~ 1 + ar(2)
-    ##   2: ~ 0 + time + ar(1)
+    ##   2: ~ 0 + ar(1)
     ## 
     ## Change point parameters:
-    ##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail
-    ##  cp_1        89.1   7.3   75.1   102.9   1.00      808     1387
+    ##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail    sim match
+    ##  cp_1        92.1   6.0   82.6   103.0   1.00     1026     1841 90.0      OK
     ## 
     ## Population-level parameters:
-    ##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail
-    ##  Intercept_1 20.6   1.3   18.2    23.5   1.00     1455     2275
-    ##  time_2      -0.030 0.033 -0.092   0.039 1.00     1919     3400
-    ##  sigma_1      5.11  0.30   4.57    5.74  1.00     4745     4300
-    ##  ar1_1        0.69  0.10   0.49    0.88  1.00     1233     2525
-    ##  ar1_2       -0.28  0.14  -0.55   -0.00  1.00     3425     6201
-    ##  ar2_1        0.181 0.100 -0.013   0.374 1.00     1283     2292
+    ##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail    sim match
+    ##  Intercept_1 19.55  0.54  18.49   20.61  1.00     5811     6807 20.00     OK
+    ##  sigma_1      5.10  0.30   4.55    5.72  1.00     4188     4412  5.00     OK
+    ##  ar1_1        0.682 0.099  0.488   0.879 1.00     1552     3128  0.700    OK
+    ##  ar1_2       -0.30  0.14  -0.58   -0.03  1.00     4688     6952 -0.30     OK
+    ##  ar2_1        0.186 0.098 -0.008   0.377 1.00     1573     2921  0.200    OK
 
 The naming syntax is `[component][order]_[segment]` for intercepts. For
 example, `ar1_2` is the first-order autoregressive coefficient and
@@ -193,7 +192,7 @@ not in the fit.
 For Gaussian GARMA models, `sigma` describes the *innovations*, i.e.,
 the part of the residuals not explained by AR and MA coefficients.
 `sd(fit$data$price)` is therefore generally higher. In this case, the SD
-of raw data in the plateau (`time < 74.5`) is 10.7. As always, it is
+of raw data in the first segment (`time < 90`) is 9.9. As always, it is
 good to assess posteriors and convergence more directly:
 
 ``` r
@@ -227,10 +226,9 @@ e.g., across a segment without AR. `ar(2, 0)` is joined;
 the observation and innovation history continues across change points.
 
 The AR and MA terms apply to link-scale *residuals* from the ordinary
-regression. In time-series jargon, this is a *dynamical* regression
-model where the ordinary regression parameters make up the
-*deterministic* structure. See further comments in the section on priors
-below.
+regression. In time-series jargon, this is a *dynamic* regression model
+where the ordinary regression parameters make up the *deterministic*
+structure. See further comments in the section on priors below.
 
 To control the *direction* of a change, put a one-sided prior on the
 corresponding coefficient, e.g., `ar1_x_1 = "dnorm(0, 1) T(0, )"`. See
@@ -315,7 +313,7 @@ df_panel$y = empty$simulate(
   empty, df_panel,
   cp_1 = 30,         # Change point location
   Intercept_1 = 10,  # Intercept in segment 1
-  time_2 = 0.1,      # Slope for the mean in segment two
+  time_2 = 0.1,      # Slope for the mean in segment 2
   ar1_1 = 0.3,       # First-order AR in segment 1
   ar1_2 = 0.8,       # First-order AR in segment 2
   sigma_1 = 1.5      # Residual sigma; joined in segment 2
@@ -357,8 +355,8 @@ gg_trend / gg_dpar
 ![](arma_files/figure-html/unnamed-chunk-8-1.png)
 
 Within each series, AR/MA memory flows continuously across change
-points. Between series, memory resets to zero so individuals remain
-completely independent.
+points. Between series, the lags start at zero, so the residuals of
+different series are independent.
 
 ## Simulating autocorrelated change point data
 
@@ -553,9 +551,9 @@ hypothesis(fit, "ar1_1 = ar1_2")
     ## Warning: The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.
 
     ## # A tibble: 1 × 7
-    ##   hypothesis         mean    sd lower upper  prob        BF
-    ##   <chr>             <dbl> <dbl> <dbl> <dbl> <dbl>     <dbl>
-    ## 1 ar1_1 - ar1_2 = 0 0.720 0.136 0.452 0.982    NA 0.0000214
+    ##   hypothesis         mean    sd lower upper  prob    BF
+    ##   <chr>             <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    ## 1 ar1_1 - ar1_2 = 0 0.720 0.136 0.452 0.982    NA     0
 
 Notice the warning. We used default priors, so the Savage-Dickey ratio
 is quite meaningless because the prior does not represent our actual

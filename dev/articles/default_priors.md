@@ -94,6 +94,10 @@ General quantities used in the table below:
   replaced by 0.1, as `brms` does for zeros (and \text{offset} = 0 if
   absent)
 
+- As in `brms`, \operatorname{mad}() and the \operatorname{median}() of
+  log-rates are rounded to one decimal. `prior_summary(fit)` shows the
+  resulting values.
+
 [TABLE]
 
 \* For [`poisson()`](https://rdrr.io/r/stats/family.html), these are
@@ -193,14 +197,15 @@ Each group-level effect has a population-level SD parameter. Group-level
 deviations in the predictor part use a zero-mean normal distribution
 governed by that SD, as in ordinary multilevel regression. With a
 multi-coefficient `||` term, every independent coefficient has its own
-SD. The SD receives the `brms` half-Student-t prior on the response
-scale, except for log, logit, and probit links and inside
-[`sigma()`](https://rdrr.io/r/stats/sigma.html) and `shape()` (see the
-table above). Slope SDs are divided by \operatorname{sd}(\text{column}),
-like the population-level slopes. For distributional parameters,
-deviations and SD are on that parameter’s link scale (for example,
-effects inside [`sigma()`](https://rdrr.io/r/stats/sigma.html) are on
-the log-SD scale).
+SD. For identity links, the SD receives the `brms` half-Student-t prior
+on the response scale. Log, logit, and probit links and SDs inside
+[`sigma()`](https://rdrr.io/r/stats/sigma.html) and `shape()` use other
+scales (see the table above). Slope SDs are divided by
+\operatorname{sd}(\text{column}), like the population-level slopes. For
+distributional parameters, deviations and SD are on that parameter’s
+link scale (for example, effects inside
+[`sigma()`](https://rdrr.io/r/stats/sigma.html) are on the log-SD
+scale).
 
 ### Group-level change points
 
@@ -302,12 +307,15 @@ them.
   `Intercept_1` at \min(x), which matters when x is far from zero, e.g.,
   calendar years. Likewise, factor contrasts with their own x-terms get
   their default prior at \min(x), e.g., `stateB_1` in
-  `y ~ 1 + state * x`. User-specified priors on `Intercept_1` apply
-  directly at x = 0. Other predictors are not centered, so the prior
-  applies where they are zero. If such a predictor is far from zero,
-  e.g., age in years, center it before fitting or set a prior on
-  `Intercept_1`. Read more about [the mcp
-  model](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
+  `y ~ 1 + state * x`. When the x-terms are split by factor levels
+  without a common x-term, e.g., `y ~ 1 + x:state`, the prior on
+  `Intercept_1` applies to the average value at \min(x), weighting each
+  level by its share of the data as in \operatorname{mean}(y).
+  User-specified priors on `Intercept_1` apply directly at x = 0. Other
+  predictors are not centered, so the prior applies where they are zero.
+  If such a predictor is far from zero, e.g., age in years, center it
+  before fitting or set a prior on `Intercept_1`. Read more about [the
+  mcp model](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
 
 - **x-term interactions:** `rstanarm` scales `x:z` by the SD of the
   model-matrix column, \operatorname{sd}(x \cdot z), which depends on

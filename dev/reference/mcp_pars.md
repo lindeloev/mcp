@@ -42,8 +42,8 @@ describe group-level effects.
 ## Details
 
 Return the canonical parameter definitions for an `mcpfit` object. This
-works before sampling and is the stable way to discover model
-parameters.
+works before sampling, so you can discover the model parameters before
+setting priors or inits.
 
 ## Examples
 

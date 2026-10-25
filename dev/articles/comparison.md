@@ -26,9 +26,10 @@ more items [(Cowan,
 2001)](https://www.ncbi.nlm.nih.gov/pubmed/11515286). We also know that
 memory is not infinite, so as N \rightarrow \infty, it has to plateau.
 
-In other words, on “easy” trials with N \<= capacity items to be
-recalled, we expect a constant high binomial rate. When N \> capacity,
-the rate declines. We specify a prior reflecting our a priori knowledge.
+In other words, on “easy” trials with N \le \text{capacity} items to be
+recalled, we expect a constant high binomial rate. When N \>
+\text{capacity}, the rate declines. We specify a prior reflecting our a
+priori knowledge.
 
 ``` r
 
@@ -111,12 +112,12 @@ plot(fit_default) +
 
 ![](comparison_files/figure-html/unnamed-chunk-6-1.png)
 
-## Bayes Factors using Savage-Dickey density ratios
+## Bayes factors using Savage-Dickey density ratios
 
-You can compute Bayes Factors for point-null hypotheses using
+You can compute Bayes factors for point-null hypotheses using
 [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md).
 For example, let’s compare a model in which the change point in recall
-is fixed at four items with the fitted continuous model:
+is exactly four items with the fitted continuous model:
 
 ``` r
 
@@ -166,7 +167,7 @@ Equality tests are limited to named parameters and affine contrasts such
 as `Intercept_1 - Intercept_2 = 0`. Ratios, parameter products,
 exponentials, and other nonlinear expressions are rejected.
 
-To convert a Bayes Factor to a posterior probability for the point-null
+To convert a Bayes factor to a posterior probability for the point-null
 model, supply your own prior probability for that model. For example:
 
 ``` r
@@ -336,9 +337,9 @@ be preferred.
 
 Also, if the data is reasonably informative (it almost always is),
 LOO-CV is much less influenced by priors than Bayes factors. For LOO,
-the priors can more be thought of as regularization (shrinking estimates
-towards plausible values) than as the point of departure which all our
-inferences are relative to (Bayes Factors).
+the priors can be thought of more as regularization (shrinking estimates
+towards plausible values) than as the point of departure that all
+inferences are relative to (as for Bayes factors).
 
 ### Applied example
 

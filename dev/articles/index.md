@@ -24,6 +24,8 @@
 
 - [Working with
   priors](https://lindeloev.github.io/mcp/dev/articles/priors.md):
+- [Default
+  priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md):
 - [Change point model
   comparison](https://lindeloev.github.io/mcp/dev/articles/comparison.md):
 - [Fits and
@@ -36,7 +38,5 @@
 
 - [From formulas to sampler
   code](https://lindeloev.github.io/mcp/dev/articles/implementation.md):
-- [Default
-  priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md):
 - [Diagnosing and fixing
   problems](https://lindeloev.github.io/mcp/dev/articles/tips.md):

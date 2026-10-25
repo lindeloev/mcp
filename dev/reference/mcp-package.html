@@ -4,7 +4,7 @@ the change points themselves. At its simplest, it feels like lm() with one formu
 flexible, it aims to be brms for change points:
 GLMM and distributional regression: Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families.
 Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., sigma, shape).
-Express expert knowledge: Specify the number of change points, the form of each segment, and constrain
+Express expert knowledge: Specify the number of change points, the form of each segment, and restrict
 coefficients via priors. Compare hypotheses using loo() and hypothesis().
 Native feel: summary(), plot_pars(), pp_check(), and as_draws_df() follow the conventions of
 brms, rstanarm, and
@@ -19,7 +19,7 @@ the change points themselves. At its simplest, it feels like lm() with one formu
 flexible, it aims to be brms for change points:
 GLMM and distributional regression: Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families.
 Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., sigma, shape).
-Express expert knowledge: Specify the number of change points, the form of each segment, and constrain
+Express expert knowledge: Specify the number of change points, the form of each segment, and restrict
 coefficients via priors. Compare hypotheses using loo() and hypothesis().
 Native feel: summary(), plot_pars(), pp_check(), and as_draws_df() follow the conventions of
 brms, rstanarm, and
@@ -66,17 +66,17 @@ See mcp() to fit models, mcp-formula for the model and formula syntax, and mcp-p
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -102,7 +102,7 @@ See mcp() to fit models, mcp-formula for the model and formula syntax, and mcp-p
 the change points themselves. At its simplest, it feels like <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> with one formula per segment. At its most
 flexible, it aims to be <strong><a href="https://paulbuerkner.com/brms/" class="external-link"><code>brms</code></a> for change points</strong>:</p><ul><li><p><em>GLMM and distributional regression:</em> Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families.
 Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., <code>sigma</code>, <code>shape</code>).</p></li>
-<li><p><em>Express expert knowledge:</em> Specify the number of change points, the form of each segment, and constrain
+<li><p><em>Express expert knowledge:</em> Specify the number of change points, the form of each segment, and restrict
 coefficients via priors. Compare hypotheses using <code><a href="loo.mcpfit.html">loo()</a></code> and <code><a href="hypothesis.html">hypothesis()</a></code>.</p></li>
 <li><p><em>Native feel:</em> <code><a href="summary.mcpfit.html">summary()</a></code>, <code><a href="plot_pars.html">plot_pars()</a></code>, <code><a href="pp_check.html">pp_check()</a></code>, and <code><a href="as_draws.mcpfit.html">as_draws_df()</a></code> follow the conventions of
 <a href="https://paulbuerkner.com/brms/" class="external-link"><code>brms</code></a>, <a href="https://mc-stan.org/rstanarm/" class="external-link"><code>rstanarm</code></a>, and
@@ -158,8 +158,8 @@ the paper may be available at that link. Please cite the newest version.</p></li
 <li><p>Carlin, B. P., Gelfand, A. E., &amp; Smith, A. F. (1992). Hierarchical Bayesian Analysis of
 Changepoint Problems. <em>Applied Statistics</em>, 41(2), 389–405. <a href="https://doi.org/10.2307/2347570" class="external-link">doi:10.2307/2347570</a>
 
-Introduced the Gibbs sampling approach for continuous change points in segmented regression
-and hierarchical models, providing the computational foundation used by BUGS and JAGS.</p></li>
+Introduced Gibbs sampling for hierarchical Bayesian change-point models, the computational
+approach that BUGS and JAGS build on.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

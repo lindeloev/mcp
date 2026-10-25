@@ -28,10 +28,10 @@ plateau mean with an increasing standard deviation can be written as
 
 Aligning with `brms` convention, without an explicit
 [`sigma()`](https://rdrr.io/r/stats/sigma.html) formula, the default is
-the intercept-only prior `dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )`
-directly on the residual SD, i.e., an **identity link**. The
-response-calibrated scale adapts to the units of `y`, with a minimum of
-2.5 to avoid an accidentally narrow prior.
+the intercept-only prior `dt(0, max(2.5, mad(y)), 3) T(0, )` directly on
+the residual SD, i.e., an **identity link**. The response-calibrated
+scale adapts to the units of `y`, with a minimum of 2.5 to avoid an
+accidentally narrow prior.
 
 With an explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html)
 formula, the intercept instead defaults to `dt(0, 2.5, 3)` on
@@ -97,10 +97,11 @@ plot(fit, interval = "predict")
 
 ![](dpar_files/figure-html/unnamed-chunk-5-1.png)
 
-We can see all parameters are well recovered (compare `sim` to `mean`).
-Like the other parameters, the `sigma` coefficients are named after the
-segment where they are included. There will always be a
-`sigma_Intercept_1` because `sigma` is required by the likelihood.
+We can see all parameters are well recovered (compare `sim` to `mean`)
+despite poor `rhat` and ESS. Like the other parameters, the `sigma`
+coefficients are named after the segment where they are included. There
+will always be a `sigma_Intercept_1` because `sigma` is required by the
+likelihood.
 
 ``` r
 
@@ -465,10 +466,10 @@ response families:
   here](https://lindeloev.github.io/mcp/dev/articles/arma.md)). Each lag
   is a dpar named `ar1`, `ar2`, `ma1`, etc. (see the definition above).
 
-#### Inspecting and working with dpars
+### Inspecting and working with dpars
 
-You can inspect the parameters in a fitted model or family object using
-`mcp_pars(fit)` or `print(fit$prior)`.
+You can inspect the parameters of a model using `mcp_pars(fit)` and
+their priors using `prior_summary(fit)`.
 
 Many core `mcp` functions take a `dpar` argument to extract or visualize
 specific distributional parameters:
@@ -477,6 +478,6 @@ specific distributional parameters:
   Returns fitted values for the target `dpar` evaluated on the response
   scale.
 - **`plot_dpar(fit, dpar = "sigma")` or
-  `plot_dpar(fit, dpar = "shape")`**: Plots the trajectory of the
-  distributional parameter over x, complete with credible intervals
-  across segments.
+  `plot_dpar(fit, dpar = "shape")`**: Plots the distributional parameter
+  along the change-point variable, optionally with a central interval
+  (`interval = "fitted"`).

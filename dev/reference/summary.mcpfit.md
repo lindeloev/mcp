@@ -140,8 +140,10 @@ zero-mean priors, without these bounds. [Read
 more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
 For simulated data, the summary contains two additional columns so that
-it is easy to inspect whether the model can recover the parameters. Run
-simulation and summary multiple times to get a sense of the robustness.
+it is easy to inspect whether the model can recover the parameters. They
+are shown when the response was simulated using `fit$simulate()` from a
+model with the same parameters, family, and link. Run simulation and
+summary multiple times to get a sense of the robustness.
 
 - `sim` is the value used to generate the data.
 

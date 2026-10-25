@@ -251,22 +251,22 @@ mcp_pars(fit)
 ```
 
     ## # A tibble: 14 × 8
-    ##    parameter   part     scope role  segment dpar  group_col population_parameter
-    ##    <chr>       <chr>    <chr> <chr>   <int> <chr> <chr>     <chr>               
-    ##  1 cp_1        cp       popu… chan…       2 NA    NA        NA                  
-    ##  2 cp_2        cp       popu… chan…       3 NA    NA        NA                  
-    ##  3 Intercept_1 predict… popu… coef…       1 mu    NA        NA                  
-    ##  4 z_1         predict… popu… coef…       1 mu    NA        NA                  
-    ##  5 x.stateA_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  6 x.stateB_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  7 x.stateC_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  8 x.stateD_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  9 Intercept_2 predict… popu… coef…       2 mu    NA        NA                  
-    ## 10 x_2         predict… popu… coef…       2 mu    NA        NA                  
-    ## 11 stateB_2    predict… popu… coef…       2 mu    NA        NA                  
-    ## 12 stateC_2    predict… popu… coef…       2 mu    NA        NA                  
-    ## 13 stateD_2    predict… popu… coef…       2 mu    NA        NA                  
-    ## 14 sigma_1     predict… popu… coef…       1 sigma NA        NA
+    ##    parameter   part      scope      role         segment dpar  group_col population_parameter
+    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
+    ##  1 cp_1        cp        population change_point       2 NA    NA        NA                  
+    ##  2 cp_2        cp        population change_point       3 NA    NA        NA                  
+    ##  3 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
+    ##  4 z_1         predictor population coefficient        1 mu    NA        NA                  
+    ##  5 x.stateA_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  6 x.stateB_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  7 x.stateC_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  8 x.stateD_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  9 Intercept_2 predictor population coefficient        2 mu    NA        NA                  
+    ## 10 x_2         predictor population coefficient        2 mu    NA        NA                  
+    ## 11 stateB_2    predictor population coefficient        2 mu    NA        NA                  
+    ## 12 stateC_2    predictor population coefficient        2 mu    NA        NA                  
+    ## 13 stateD_2    predictor population coefficient        2 mu    NA        NA                  
+    ## 14 sigma_1     predictor population coefficient        1 sigma NA        NA
 
 Thanks to `same()`, there is no `z_2` or `x_3`.
 
@@ -309,10 +309,10 @@ an extra plateau segment:
 
 # Define model with multiple predictors
 model = list(
-  y ~ 1 + x:state + z, # Segment 1: by-state slopes on x, and z
-  ~ 1 + x + state,     # Segment 2: common slope on x, by-state intercepts
-  ~ 0 + I(x^2),        # Segment 3: joined quadratic; state not included
-  ~ 1                  # Segment 4: common intercept for all states
+  y ~ 1 + x:state + z,         # Segment 1: by-state slopes on x, and z
+  ~ 1 + x + state,             # Segment 2: common slope on x, by-state intercepts
+  ~ 0 + I(x^2) + same(state),  # Segment 3: joined quadratic; reuse state contrasts
+  ~ 1                          # Segment 4: common intercept for all states
 )
 
 # Load data and inspect parameters without sampling
@@ -322,25 +322,25 @@ mcp_pars(fit)
 ```
 
     ## # A tibble: 17 × 8
-    ##    parameter   part     scope role  segment dpar  group_col population_parameter
-    ##    <chr>       <chr>    <chr> <chr>   <int> <chr> <chr>     <chr>               
-    ##  1 cp_1        cp       popu… chan…       2 NA    NA        NA                  
-    ##  2 cp_2        cp       popu… chan…       3 NA    NA        NA                  
-    ##  3 cp_3        cp       popu… chan…       4 NA    NA        NA                  
-    ##  4 Intercept_1 predict… popu… coef…       1 mu    NA        NA                  
-    ##  5 z_1         predict… popu… coef…       1 mu    NA        NA                  
-    ##  6 x.stateA_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  7 x.stateB_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  8 x.stateC_1  predict… popu… coef…       1 mu    NA        NA                  
-    ##  9 x.stateD_1  predict… popu… coef…       1 mu    NA        NA                  
-    ## 10 Intercept_2 predict… popu… coef…       2 mu    NA        NA                  
-    ## 11 x_2         predict… popu… coef…       2 mu    NA        NA                  
-    ## 12 stateB_2    predict… popu… coef…       2 mu    NA        NA                  
-    ## 13 stateC_2    predict… popu… coef…       2 mu    NA        NA                  
-    ## 14 stateD_2    predict… popu… coef…       2 mu    NA        NA                  
-    ## 15 xE2_3       predict… popu… coef…       3 mu    NA        NA                  
-    ## 16 Intercept_4 predict… popu… coef…       4 mu    NA        NA                  
-    ## 17 sigma_1     predict… popu… coef…       1 sigma NA        NA
+    ##    parameter   part      scope      role         segment dpar  group_col population_parameter
+    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
+    ##  1 cp_1        cp        population change_point       2 NA    NA        NA                  
+    ##  2 cp_2        cp        population change_point       3 NA    NA        NA                  
+    ##  3 cp_3        cp        population change_point       4 NA    NA        NA                  
+    ##  4 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
+    ##  5 z_1         predictor population coefficient        1 mu    NA        NA                  
+    ##  6 x.stateA_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  7 x.stateB_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  8 x.stateC_1  predictor population coefficient        1 mu    NA        NA                  
+    ##  9 x.stateD_1  predictor population coefficient        1 mu    NA        NA                  
+    ## 10 Intercept_2 predictor population coefficient        2 mu    NA        NA                  
+    ## 11 x_2         predictor population coefficient        2 mu    NA        NA                  
+    ## 12 stateB_2    predictor population coefficient        2 mu    NA        NA                  
+    ## 13 stateC_2    predictor population coefficient        2 mu    NA        NA                  
+    ## 14 stateD_2    predictor population coefficient        2 mu    NA        NA                  
+    ## 15 xE2_3       predictor population coefficient        3 mu    NA        NA                  
+    ## 16 Intercept_4 predictor population coefficient        4 mu    NA        NA                  
+    ## 17 sigma_1     predictor population coefficient        1 sigma NA        NA
 
 Key features of multiple regression models in `mcp`:
 
@@ -397,7 +397,9 @@ posterior interval, posterior probability, and directional Bayes factor.
 [Read more about hypothesis testing in the comparison
 article](https://lindeloev.github.io/mcp/dev/articles/comparison.md).
 Here, the estimate is negative, so the slope is smaller in segment 3
-than in segment 2, with great certainty (`prob = 0`).
+than in segment 2, with great certainty (`prob = 0`). `BF = 0` because
+no posterior draws satisfy the hypothesis, so the evidence exceeds what
+the number of draws can resolve.
 
 If you need the full posterior distribution of the change (e.g., for
 [`quantile()`](https://rdrr.io/r/stats/quantile.html),

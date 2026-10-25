@@ -21,7 +21,7 @@ with one formula per segment. At its most flexible, it aims to be
   `shape`).
 
 - *Express expert knowledge:* Specify the number of change points, the
-  form of each segment, and constrain coefficients via priors. Compare
+  form of each segment, and restrict coefficients via priors. Compare
   hypotheses using
   [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
   and
@@ -87,10 +87,10 @@ data = mcp_example_data("demo")
 fit = mcp(model, data)
 ```
 
-The change point(s) are the `x` at which data changes from being better
-predicted by one formula to the next. The first formula is just
-`response ~ predictors` and the most common formula for segment 2+ would
-be `~ predictors` (more details
+The change points are the values of the change-point variable (here
+`time`) where the model switches from one formula to the next. The first
+formula is just `response ~ predictors` and the most common formula for
+segment 2+ would be `~ predictors` (more details
 [here](https://lindeloev.github.io/mcp/articles/formulas.html)).
 
 You can do change point regression for a large number of models in a
@@ -274,172 +274,82 @@ loo::loo_compare(fit_loo, fit_null_loo)
 ##  model2     -58.2     9.0    1.00
 ```
 
-# Highlights from in-depth guides
+# Learn more
 
 The articles on the [mcp website](https://lindeloev.github.io/mcp/) go
-in-depth with the functionality of `mcp`. Here is an executive summary,
-to give you a quick sense of what mcp can do.
+in-depth with the functionality of `mcp`:
 
-[Understanding mcp
-formulas](https://lindeloev.github.io/mcp/articles/formulas.html):
+**Modeling**
 
-- Parameter names are `Intercept_i` (intercepts), `cp_i` (change
-  points), `x_i` (slopes), `ar*`/`ma*` (autocorrelation), and `sigma_*`
-  (Gaussian residual standard deviation).
+- [Understanding mcp
+  formulas](https://lindeloev.github.io/mcp/articles/formulas.html): how
+  segments connect (joined `~ 0 + x` vs. disjoined `~ 1 + x`), parameter
+  names, `same()`, and the model math.
+- [Group-level (random)
+  effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
+  group-level intercepts, slopes, and change points, e.g., `(1 | id)`
+  and `cp((1 | id))`.
+- [Variance and other distributional
+  parameters](https://lindeloev.github.io/mcp/articles/dpar.html):
+  change points in, e.g., the residual SD using `sigma(1 + x)`.
+- [Time series and
+  autocorrelation](https://lindeloev.github.io/mcp/articles/arma.html):
+  [`ar()`](https://rdrr.io/r/stats/ar.html) and `ma()` terms, including
+  change points in autocorrelation.
 
-- Only terms included in a segment get coefficients there. `~ 0 + ...`
-  is joined: it continues from where the earlier intercept and
-  [x-terms](https://lindeloev.github.io/mcp/articles/formulas.html#how-segments-connect)
-  (`x`, `state:x`, `I(x^2)`) left off. `~ 1 + ...` is disjoined and
-  starts afresh. Use `same(z)` to reuse a coefficient from the preceding
-  segment.
+**Families**
 
-- The change point model is basically an `ifelse` model with ordered
-  change points.
-
-- Generate data for all supported models using `fit$simulate()`. See
-  examples in, e.g., `mcp_example("demo")$example_code`.
-
-[Supported families and link
-functions](https://lindeloev.github.io/mcp/articles/families.html):
-
-- `mcp` currently supports specific combinations of families
-  ([`gaussian()`](https://rdrr.io/r/stats/family.html),
+- [Supported families and link
+  functions](https://lindeloev.github.io/mcp/articles/families.html):
+  [`gaussian()`](https://rdrr.io/r/stats/family.html),
   [`binomial()`](https://rdrr.io/r/stats/family.html),
   [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md),
   [`poisson()`](https://rdrr.io/r/stats/family.html), and
-  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md))
-  and link functions (`identity`, `logit`, `probit`, and `log`).
+  [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md).
+- [Poisson and negative
+  binomial](https://lindeloev.github.io/mcp/articles/poisson.html) and
+  [Binomial and
+  Bernoulli](https://lindeloev.github.io/mcp/articles/binomial.html):
+  worked examples, including rates via
+  [`offset()`](https://rdrr.io/r/stats/offset.html).
 
-- On using informative priors to incorporate expert knowledge.
+**Inference**
 
-- Use `binomial(link = "logit")` for [binomial change points in
-  mcp](https://lindeloev.github.io/mcp/articles/binomial.html). Also
-  relevant for `bernoulli(link = "logit")`.
-
-- Use `negbinomial(link = "log")` or `poisson(link = "log")`. Read more
-  on [Poisson and negative binomial change points in
-  mcp](https://lindeloev.github.io/mcp/articles/poisson.html).
-
-- Get results on the linear-predictor (link) scale rather than the
-  response scale using `plot(fit, scale = "linear")` or
-  `fitted(fit, scale = "linear")`.
-
-[Model comparison and hypothesis
-testing](https://lindeloev.github.io/mcp/articles/comparison.html):
-
-- Do Leave-One-Out Cross-Validation using `loo(fit)` and
-  `loo::loo_compare(loo1, loo2)`.
-
-- Compute Savage-Dickey density ratios using
-  `hypothesis(fit, "cp_1 = 40")`.
-
-[Group-level (random)
-effects](https://lindeloev.github.io/mcp/articles/group_effects.html):
-
-- Model group-level intercepts, slopes, and change points using
-  `(1|id)`, `(0 + x||id)`, or `cp((1|id))`. Get posteriors using
-  `ranef(fit)` for deviations or `coef(fit)` for group-specific values.
-
-- Plot using `plot(fit, facet_by = "my_group")` and
-  `plot_pars(fit, pars = "group", type = "dens_overlay", ncol = 3)`.
-
-- Group-specific change points are restricted to the observed range of
-  `x` and ordered within each group.
-
-Modeling
-[autoregression](https://lindeloev.github.io/mcp/articles/arma.html) and
-distributional parameters like [Gaussian residual standard
-deviation](https://lindeloev.github.io/mcp/articles/dpar.html):
-
-- `~ 0 + sigma(1)` models an intercept change in standard deviation.
-  `~ 0 + sigma(0 + x)` models increasing/decreasing standard deviation.
-  Explicit [`sigma()`](https://rdrr.io/r/stats/sigma.html) formulas use
-  a log link, so their coefficients are on the log-SD scale.
-
-- `~ ar(N)` models Nth order autoregression on residuals.
-  `~ar(N, 0 + x)` models increasing/decreasing autocorrelation.
-
-- `y | weights(w)` (and `y | trials(N) + weights(w)`) specifies
-  observation log-likelihood weights (`w > 0`) across all families.
-
-- You can provide complete models in distributional parameters
-  (currently [`sigma()`](https://rdrr.io/r/stats/sigma.html), `shape()`,
-  and `mu()`) and time-series ([`ar()`](https://rdrr.io/r/stats/ar.html)
-  and `ma()`). For example, `~ x + sigma(1 + x:state)` models an abrupt
-  change followed by by-state slopes in variance.
-
-[Get fitted and predicted values and
-intervals](https://lindeloev.github.io/mcp/articles/predict.html):
-
-- `fitted(fit)` and `predict(fit)` take many arguments to predict
-  in-sample and out-of-sample values and intervals.
-
-- Forecasting with prior knowledge about future change points.
-
-[Plotting](https://lindeloev.github.io/mcp/articles/plotting.html):
-
-- `plot(fit, interval = c("fitted", "predict"))` shows the fit with
-  central intervals. Use `color_by`, `facet_by`, and `at` for models
-  with several predictors.
-
-- [`plot_dpar()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
-  [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+- [Using priors](https://lindeloev.github.io/mcp/articles/priors.html)
+  and [Default
+  priors](https://lindeloev.github.io/mcp/articles/default_priors.html):
+  set and check priors, including on change points.
+- [Hypotheses and model
+  comparison](https://lindeloev.github.io/mcp/articles/comparison.html):
+  [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
+  directional
+  [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
+  tests, and Savage-Dickey Bayes factors.
+- [Fits and
+  predictions](https://lindeloev.github.io/mcp/articles/predict.html):
+  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   and
-  [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
-  plot distributional parameters, parameters, and posterior predictive
-  checks. All return `ggplot2` objects, and
-  [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
-  helps you make your own plots.
+  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  including forecasting with future change points.
+- [Plotting](https://lindeloev.github.io/mcp/articles/plotting.html):
+  [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+  [`plot_dpar()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+  [`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+  [`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md),
+  and your own `ggplot2` plots.
+- [Missing responses and
+  imputation](https://lindeloev.github.io/mcp/articles/missing.html):
+  change points in gaps of the data and imputations of missing
+  responses.
 
-[Using priors](https://lindeloev.github.io/mcp/articles/priors.html):
+**Implementation**
 
-- See priors in `fit$prior` or `prior_summary(fit)` and set priors using
-  `mcp(..., prior = list(cp_1 = "dnorm(0, 1)", cp_2 = "dunif(0, 45)"))`.
-
-- Default priors are the weakly informative, conventional defaults of
-  `rstanarm` for intercepts and coefficients and of `brms` for scale
-  parameters, with a few [documented
-  deviations](https://lindeloev.github.io/mcp/articles/default_priors.html#deviations).
-
-- The default prior on change points is a flat Dirichlet prior on the
-  segment lengths ([read
-  more](https://lindeloev.github.io/mcp/articles/default_priors.html#change-points)).
-
-- Fix parameters to specific values using `cp_1 = 45`. To reuse a
-  coefficient in a later segment, use `same()` in the model, e.g.,
-  `~ 0 + same(x)`.
-
-- Truncate priors using `T(lower, upper)`, e.g.,
-  `Intercept_1 = "dnorm(0, 1) T(0, )"`. Change points are always
-  ordered. Set a minimum segment length using, e.g.,
-  `cp_2 = "dunif(cp_1 + 20, max(x))"`.
-
-- Do prior predictive checks using
-  `mcp(model, data, sample = "prior") |> plot(prior = TRUE)`.
-
-[Missing responses and posterior
-imputation](https://lindeloev.github.io/mcp/articles/missing.html):
-
-- Missing responses are imputed jointly with the parameters.
-
-- Use `fitted(fit) |> filter(is.na(y))` for expected responses and
-  `predict(fit) |> filter(is.na(y))` for posterior imputations.
-
-- On plotting missing responses, asking probabilistic questions about
-  them, etc.
-
-[Tips, tricks, and
-debugging](https://lindeloev.github.io/mcp/articles/tips.html)
-
-- Speed up fitting using
-  `future::plan(future::multisession, workers = 3)`, and/or fewer
-  iterations, `mcp(..., warmup = 500)`.
-
-- Help convergence along using
-  `mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))`.
-
-- Most errors stem from impossible or circularly defined priors.
+- [From formulas to sampler
+  code](https://lindeloev.github.io/mcp/articles/implementation.html):
+  how `mcp` writes the JAGS model in `fit$jags_code`.
+- [Diagnosing and fixing
+  problems](https://lindeloev.github.io/mcp/articles/tips.html):
+  convergence, speed, and common errors.
 
 # Citation
 
@@ -651,6 +561,8 @@ Functions retained for backward compatibility.
 
 - [Working with
   priors](https://lindeloev.github.io/mcp/dev/articles/priors.md):
+- [Default
+  priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md):
 - [Change point model
   comparison](https://lindeloev.github.io/mcp/dev/articles/comparison.md):
 - [Fits and
@@ -663,7 +575,5 @@ Functions retained for backward compatibility.
 
 - [From formulas to sampler
   code](https://lindeloev.github.io/mcp/dev/articles/implementation.md):
-- [Default
-  priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md):
 - [Diagnosing and fixing
   problems](https://lindeloev.github.io/mcp/dev/articles/tips.md):

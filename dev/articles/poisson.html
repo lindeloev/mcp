@@ -64,19 +64,19 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Poisson and negative-binomial change point analysis</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/poisson.Rmd" class="external-link"><code>vignettes/poisson.Rmd</code></a></small>
       <div class="d-none name"><code>poisson.Rmd</code></div>
@@ -206,11 +206,11 @@ the log-rate gives approximately the posterior median of <span class="math inlin
 mean, exponentiate the draws before averaging, e.g.,
 <code>mean(exp(as_draws_df(fit)$Intercept_1))</code>, or use
 <code>fitted(fit)</code>.</p>
-<p>The intercept prior is a normal distribution centered on the rounded
-median of <code>log(n)</code>, with zeros replaced by 0.1 (as in
-<code>brms</code>), and scale equal to the maximum of 2.5 and its
-rounded MAD. Replacing zeros keeps the log finite and the minimum scale
-avoids an accidentally narrow prior.</p>
+<p>The intercept prior is a normal distribution centered on the median
+of <code>log(n)</code>, with zeros replaced by 0.1 (as in
+<code>brms</code>), and scale equal to the maximum of 2.5 and its MAD.
+Replacing zeros keeps the log finite and the minimum scale avoids an
+accidentally narrow prior.</p>
 <p>Coefficients are <a href="../articles/default_priors.html#default-priors-on-regression-parameters">autoscaled
 as in <code>rstanarm</code></a>, e.g.,
 <code>dnorm(0, 2.5 / sd(column))</code>, and group-level SDs default to

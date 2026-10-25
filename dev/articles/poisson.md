@@ -124,11 +124,10 @@ of \lambda, not its mean. For the posterior mean, exponentiate the draws
 before averaging, e.g., `mean(exp(as_draws_df(fit)$Intercept_1))`, or
 use `fitted(fit)`.
 
-The intercept prior is a normal distribution centered on the rounded
-median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale
-equal to the maximum of 2.5 and its rounded MAD. Replacing zeros keeps
-the log finite and the minimum scale avoids an accidentally narrow
-prior.
+The intercept prior is a normal distribution centered on the median of
+`log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale equal to
+the maximum of 2.5 and its MAD. Replacing zeros keeps the log finite and
+the minimum scale avoids an accidentally narrow prior.
 
 Coefficients are [autoscaled as in
 `rstanarm`](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#default-priors-on-regression-parameters),

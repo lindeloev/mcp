@@ -201,7 +201,10 @@ plot_dpar(
   - `"mu"`: The conditional mean (or success probability per trial for
     binomial/bernoulli models), on the link or response scale.
 
-  - `"sigma"`: The standard deviation of the residuals.
+  - `"sigma"`: The standard deviation of the residuals. With
+    [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`, it is the SD of
+    the innovations, i.e., the part of the residuals not explained by
+    the AR/MA terms.
 
   - `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
     coefficient you want to evaluate.
@@ -226,7 +229,8 @@ densities on all available draws.
 
 ## See also
 
-plot_pars plot_dpar pp_check
+[`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+[`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
 
 ## Author
 

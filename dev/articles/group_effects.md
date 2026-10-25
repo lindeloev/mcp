@@ -95,15 +95,15 @@ applies only at the change point where it is included.
 ## Predictor group-level effects
 
 The same syntax in the predictor part gives each group a deviation from
-the population-level intercept:
+the population-level coefficients:
 
 ``` r
 
 model = list(
-  y ~ 1 + (1|id),  # Starts group-level intercept
-  ~ 0 + x,         # (1|id) not included, so group intercepts end at cp_1
-  ~ 1 + (0|id),    # (0|id) turns it off
-  ~0 + same((1|id), as = 1)  # Reuse group-level intercept from segment 1
+  y ~ 1 + (1 + x||id),             # Group-level intercepts and slopes
+  ~ 0 + x,                         # (1 + x||id) not included: group intercepts end at cp_1, group slopes join
+  ~ 0 + (0|id),                    # (0|id) turns off the joined group slopes
+  ~ 0 + same((1 + x||id), as = 1)  # Reuse the group-level intercepts and slopes from segment 1
 )
 ```
 
@@ -211,7 +211,7 @@ empty = mcp(model, data = df, sample = FALSE)
 
 df$y = empty$simulate(empty, df,
   # Population-level:
-  Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
+  Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma_1 = 2,
   
   # Draw group-level deviations with this SD
   cp_1_id_sd = 15)

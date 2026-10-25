@@ -40,17 +40,17 @@ the formula syntax, and the underlying model. See mcp-priors for priors on the r
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -92,7 +92,7 @@ the formula syntax, and the underlying model. See <a href="mcp-priors.html">mcp-
 <p>Three rules govern how segments connect (with <code>x</code> as the change-point variable, i.e., <code>time</code> above):</p><ol><li><p><strong>Only included terms get coefficients.</strong> A segment includes the terms in its formula,
 plus an intercept unless removed with <code>0 +</code>. Each included term gets a new coefficient
 (<code>x_2</code>, <code>stateB_2</code>) or reuses an existing one if wrapped in <code>same()</code>.</p></li>
-<li><p><strong>x-terms are measured from the change point.</strong> <code>x</code>, <code>x:z</code>, <code>state:x</code>, and <code>I(x^2)</code> start at zero
+<li><p><strong>x-terms are measured from the change point.</strong> Only <code>x</code>, <code>x:z</code>, <code>state:x</code>, and <code>I(x^2)</code> start at zero
 at the segment's change point and stop growing at the next change point.</p></li>
 <li><p><strong>Joined or disjoined.</strong> Without an intercept (<code>0 + ...</code>), a segment is <em>joined</em>: it continues
 from where the earlier intercept and x-terms left off. With an intercept, it is <em>disjoined</em>
@@ -120,7 +120,9 @@ not predictions).</p></li>
 <li><p><code>~ 0 + x</code>: Joined slope (no new intercept).</p></li>
 <li><p><code>~ 1</code>: Plateau (intercept only, no slope).</p></li>
 <li><p><code>~ x:state + I(x^2) + exp(z)</code>: Extended terms, interactions, and R-side bases
-(<code><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale()</a></code>, <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code>, <code><a href="https://rdrr.io/r/splines/ns.html" class="external-link">splines::ns()</a></code>). Bases are evaluated before sampling and reused for <code>newdata</code>.</p></li>
+(<code><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale()</a></code>, <code><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly()</a></code>, <code><a href="https://rdrr.io/r/splines/ns.html" class="external-link">splines::ns()</a></code>). Bases are evaluated before sampling and reused for <code>newdata</code>.
+Except for <code>I(x^k)</code>, transformations of <code>x</code> (e.g., <code>I(x / 2)</code>) use the original values of <code>x</code>, as in <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>,
+and do not join.</p></li>
 <li><p><code>~ 1 + offset(log(exposure))</code>: Offset with a fixed coefficient of 1. If one segment includes an offset,
 all segments must include one. The same applies within <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code>, etc., and within <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code>/<code>ma()</code> in the
 segments that include them. <a href="https://lindeloev.github.io/mcp/articles/poisson.html#modeling-rates-using-offset">Read more</a>.</p></li>

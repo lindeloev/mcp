@@ -64,19 +64,19 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Understanding mcp formulas</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/formulas.Rmd" class="external-link"><code>vignettes/formulas.Rmd</code></a></small>
       <div class="d-none name"><code>formulas.Rmd</code></div>
@@ -351,22 +351,22 @@ before sampling:</p>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example_data</a></span><span class="op">(</span><span class="st">"multiple"</span><span class="op">)</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 14 × 8</span></span></span>
-<span><span class="co">##    parameter   part     scope role  segment dpar  group_col population_parameter</span></span>
-<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp       popu… chan…       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp       popu… chan…       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> Intercept_1 predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> z_1         predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> x.stateA_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> x.stateB_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> x.stateC_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> x.stateD_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> Intercept_2 predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span> x_2         predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">11</span> stateB_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateC_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateD_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">14</span> sigma_1     predict… popu… coef…       1 sigma <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
+<span><span class="co">##    parameter   part      scope      role         segment dpar  group_col population_parameter</span></span>
+<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp        population change_point       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp        population change_point       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> Intercept_1 predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> z_1         predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> x.stateA_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> x.stateB_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> x.stateC_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> x.stateD_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> Intercept_2 predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span> x_2         predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">11</span> stateB_2    predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateC_2    predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateD_2    predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">14</span> sigma_1     predictor population coefficient        1 sigma <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <p>Thanks to <code>same()</code>, there is no <code>z_2</code> or
 <code>x_3</code>.</p>
 </div>
@@ -405,10 +405,10 @@ with an extra plateau segment:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define model with multiple predictors</span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">state</span> <span class="op">+</span> <span class="va">z</span>, <span class="co"># Segment 1: by-state slopes on x, and z</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span>,     <span class="co"># Segment 2: common slope on x, by-state intercepts</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>,        <span class="co"># Segment 3: joined quadratic; state not included</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span>                  <span class="co"># Segment 4: common intercept for all states</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">:</span><span class="va">state</span> <span class="op">+</span> <span class="va">z</span>,         <span class="co"># Segment 1: by-state slopes on x, and z</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="va">state</span>,             <span class="co"># Segment 2: common slope on x, by-state intercepts</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="va">state</span><span class="op">)</span>,  <span class="co"># Segment 3: joined quadratic; reuse state contrasts</span></span>
+<span>  <span class="op">~</span> <span class="fl">1</span>                          <span class="co"># Segment 4: common intercept for all states</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load data and inspect parameters without sampling</span></span>
@@ -416,25 +416,25 @@ with an extra plateau segment:</p>
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">ex</span><span class="op">$</span><span class="va">data</span>, par_x <span class="op">=</span> <span class="st">"x"</span>, sample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/mcp_pars.html">mcp_pars</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 17 × 8</span></span></span>
-<span><span class="co">##    parameter   part     scope role  segment dpar  group_col population_parameter</span></span>
-<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp       popu… chan…       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp       popu… chan…       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> cp_3        cp       popu… chan…       4 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> Intercept_1 predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> z_1         predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> x.stateA_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> x.stateB_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> x.stateC_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> x.stateD_1  predict… popu… coef…       1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span> Intercept_2 predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">11</span> x_2         predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateB_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateC_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">14</span> stateD_2    predict… popu… coef…       2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">15</span> xE2_3       predict… popu… coef…       3 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">16</span> Intercept_4 predict… popu… coef…       4 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">17</span> sigma_1     predict… popu… coef…       1 sigma <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
+<span><span class="co">##    parameter   part      scope      role         segment dpar  group_col population_parameter</span></span>
+<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> cp_1        cp        population change_point       2 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 2</span> cp_2        cp        population change_point       3 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 3</span> cp_3        cp        population change_point       4 <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> Intercept_1 predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span> z_1         predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span> x.stateA_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> x.stateB_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span> x.stateC_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> x.stateD_1  predictor population coefficient        1 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span> Intercept_2 predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">11</span> x_2         predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">12</span> stateB_2    predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">13</span> stateC_2    predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">14</span> stateD_2    predictor population coefficient        2 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">15</span> xE2_3       predictor population coefficient        3 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">16</span> Intercept_4 predictor population coefficient        4 mu    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>                  </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">17</span> sigma_1     predictor population coefficient        1 sigma <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre>
 <p>Key features of multiple regression models in <code>mcp</code>:</p>
 <ul>
 <li>
@@ -483,7 +483,9 @@ its central posterior interval, posterior probability, and directional
 Bayes factor. <a href="../articles/comparison.html">Read more about
 hypothesis testing in the comparison article</a>. Here, the estimate is
 negative, so the slope is smaller in segment 3 than in segment 2, with
-great certainty (<code>prob = 0</code>).</p>
+great certainty (<code>prob = 0</code>). <code>BF = 0</code> because no
+posterior draws satisfy the hypothesis, so the evidence exceeds what the
+number of draws can resolve.</p>
 <p>If you need the full posterior distribution of the change (e.g., for
 <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code>, <code><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist()</a></code>, or plotting with
 <code>ggplot2</code>), extract draws, e.g., using

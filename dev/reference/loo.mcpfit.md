@@ -28,7 +28,9 @@ waic(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 
 - ...:
 
-  Must be empty. Reserved for future use.
+  For `loo()`: further arguments passed to
+  [`loo`](https://mc-stan.org/loo/reference/loo.html), e.g., `cores` or
+  `save_psis`. For `waic()`: must be empty.
 
 - ndraws:
 

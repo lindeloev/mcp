@@ -64,19 +64,19 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Group-level (random) effects in mcp</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/group_effects.Rmd" class="external-link"><code>vignettes/group_effects.Rmd</code></a></small>
       <div class="d-none name"><code>group_effects.Rmd</code></div>
@@ -191,13 +191,13 @@ effect applies only at the change point where it is included.</p>
 <h2 id="predictor-group-level-effects">Predictor group-level effects<a class="anchor" aria-label="anchor" href="#predictor-group-level-effects"></a>
 </h2>
 <p>The same syntax in the predictor part gives each group a deviation
-from the population-level intercept:</p>
+from the population-level coefficients:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,  <span class="co"># Starts group-level intercept</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,         <span class="co"># (1|id) not included, so group intercepts end at cp_1</span></span>
-<span>  <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,    <span class="co"># (0|id) turns it off</span></span>
-<span>  <span class="op">~</span><span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Reuse group-level intercept from segment 1</span></span>
+<span>  <span class="va">y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">||</span><span class="va">id</span><span class="op">)</span>,             <span class="co"># Group-level intercepts and slopes</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">x</span>,                         <span class="co"># (1 + x||id) not included: group intercepts end at cp_1, group slopes join</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span><span class="op">|</span><span class="va">id</span><span class="op">)</span>,                    <span class="co"># (0|id) turns off the joined group slopes</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu">same</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">x</span><span class="op">||</span><span class="va">id</span><span class="op">)</span>, as <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>  <span class="co"># Reuse the group-level intercepts and slopes from segment 1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Group-level terms follow the <a href="../articles/formulas.html#how-segments-connect">rules for how
 segments connect</a>, separately for each grouping factor and
@@ -288,7 +288,7 @@ bounds. The deviations are therefore not centered exactly on zero.</p>
 <span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">=</span> <span class="va">empty</span><span class="op">$</span><span class="fu">simulate</span><span class="op">(</span><span class="va">empty</span>, <span class="va">df</span>,</span>
 <span>  <span class="co"># Population-level:</span></span>
-<span>  Intercept_1 <span class="op">=</span> <span class="fl">20</span>, x_2 <span class="op">=</span> <span class="fl">0.5</span>, cp_1 <span class="op">=</span> <span class="fl">50</span>, sigma <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  Intercept_1 <span class="op">=</span> <span class="fl">20</span>, x_2 <span class="op">=</span> <span class="fl">0.5</span>, cp_1 <span class="op">=</span> <span class="fl">50</span>, sigma_1 <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  </span>
 <span>  <span class="co"># Draw group-level deviations with this SD</span></span>
 <span>  cp_1_id_sd <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span>

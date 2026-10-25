@@ -36,17 +36,17 @@
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -223,7 +223,8 @@ can be supplied as explicit scalar design values. Passed to
 <dt id="arg-dpar">dpar<a class="anchor" aria-label="anchor" href="#arg-dpar"></a></dt>
 <dd><p>What distributional parameter to evaluate. E.g.,</p><ul><li><p><code>"epred"</code> (default): Expected response from the full model (or <code>NULL</code> for compatibility with brms etc.).</p></li>
 <li><p><code>"mu"</code>: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.</p></li>
-<li><p><code>"sigma"</code>: The standard deviation of the residuals.</p></li>
+<li><p><code>"sigma"</code>: The standard deviation of the residuals. With <code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code>, it is the SD of the
+innovations, i.e., the part of the residuals not explained by the AR/MA terms.</p></li>
 <li><p><code>"ar1"</code>, <code>"ar2"</code>, <code>"ma1"</code>, <code>"ma2"</code>, etc. depending on which AR or MA
 coefficient you want to evaluate.</p></li>
 </ul></dd>
@@ -246,7 +247,7 @@ densities are simple densities on all available draws.</p>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>plot_pars plot_dpar pp_check</p></div>
+    <div class="dont-index"><p><code><a href="plot_pars.html">plot_pars()</a></code>, <code><a href="pp_check.html">pp_check()</a></code></p></div>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

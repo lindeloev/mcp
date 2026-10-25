@@ -64,19 +64,19 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Working with priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/priors.Rmd" class="external-link"><code>vignettes/priors.Rmd</code></a></small>
       <div class="d-none name"><code>priors.Rmd</code></div>
@@ -233,7 +233,7 @@ effect.</p>
 <span>    Intercept_1 <span class="op">=</span> <span class="fl">20</span>, Intercept_2 <span class="op">=</span> <span class="fl">22</span>, Intercept_3 <span class="op">=</span> <span class="fl">30</span>,  <span class="co"># intercepts</span></span>
 <span>    x_1 <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>, x_2 <span class="op">=</span> <span class="fl">0.5</span>, x_3 <span class="op">=</span> <span class="fl">0</span>,  <span class="co"># slopes</span></span>
 <span>    cp_1 <span class="op">=</span> <span class="fl">35</span>, cp_2 <span class="op">=</span> <span class="fl">70</span>,  <span class="co"># change points</span></span>
-<span>    sigma <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span>    sigma_1 <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##          x        y</span></span>
@@ -274,8 +274,8 @@ effect.</p>
 <ul>
 <li>The intercept <code>Intercept_1</code> was truncated to be below
 10.</li>
-<li>The slope <code>x_1</code> is restricted to the bounds of
-<code><a href="https://rdrr.io/r/stats/Beta.html" class="external-link">dbeta()</a></code>, i.e., between 0 and 1.</li>
+<li>The slope <code>x_1</code> is between 0 and 1, the bounds of
+<code><a href="https://rdrr.io/r/stats/Beta.html" class="external-link">dbeta()</a></code>.</li>
 <li>The slopes <code>x_2</code> and <code>x_3</code> were forced to be
 identical.</li>
 <li>The change point <code>cp_2</code> was a constant, so there is no
@@ -322,10 +322,11 @@ priors above to compare their prior predictive space:</p>
 <p><img src="priors_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 <p>You can see how the manual priors force strictly positive slopes
 (<span class="math inline">x_2 &gt; x_1 &gt; 0</span>) that compound to
-span a much wider vertical range than the defaults, alongside an abrupt
-concerted change at the constant change point <span class="math inline">x = 80</span>. In contrast, the default priors are
-centered on the observed data, with zero-centered slopes and change
-points distributed smoothly across the observed range of <span class="math inline">x</span>.</p>
+span a much wider vertical range than the defaults, and an abrupt change
+at the constant change point <span class="math inline">x = 80</span>. In
+contrast, the default priors are centered on the observed data, with
+zero-centered slopes and change points distributed smoothly across the
+observed range of <span class="math inline">x</span>.</p>
 </div>
 <div class="section level2">
 <h2 id="cp_prior">Priors on change points<a class="anchor" aria-label="anchor" href="#cp_prior"></a>

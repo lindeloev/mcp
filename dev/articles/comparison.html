@@ -64,19 +64,19 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Change point model comparison</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/comparison.Rmd" class="external-link"><code>vignettes/comparison.Rmd</code></a></small>
       <div class="d-none name"><code>comparison.Rmd</code></div>
@@ -136,11 +136,11 @@ average human has almost perfect recall when presented with 1-4 items
 (we remember them all), and then errors begin intruding when presented
 with more items <a href="https://www.ncbi.nlm.nih.gov/pubmed/11515286" class="external-link">(Cowan, 2001)</a>.
 We also know that memory is not infinite, so as <span class="math inline">N \rightarrow \infty</span>, it has to plateau.</p>
-<p>In other words, on “easy” trials with <span class="math inline">N
-&lt;= capacity</span> items to be recalled, we expect a constant high
-binomial rate. When <span class="math inline">N &gt; capacity</span>,
-the rate declines. We specify a prior reflecting our a priori
-knowledge.</p>
+<p>In other words, on “easy” trials with <span class="math inline">N \le
+\text{capacity}</span> items to be recalled, we expect a constant high
+binomial rate. When <span class="math inline">N &gt;
+\text{capacity}</span>, the rate declines. We specify a prior reflecting
+our a priori knowledge.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">recalled</span> <span class="op">|</span> <span class="fu">trials</span><span class="op">(</span><span class="va">items</span><span class="op">)</span> <span class="op">~</span> <span class="fl">1</span>,</span>
@@ -206,11 +206,11 @@ raw data in the middle plot, just to give a sense of the densities.</p>
 <p><img src="comparison_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
-<h2 id="bayes-factors-using-savage-dickey-density-ratios">Bayes Factors using Savage-Dickey density ratios<a class="anchor" aria-label="anchor" href="#bayes-factors-using-savage-dickey-density-ratios"></a>
+<h2 id="bayes-factors-using-savage-dickey-density-ratios">Bayes factors using Savage-Dickey density ratios<a class="anchor" aria-label="anchor" href="#bayes-factors-using-savage-dickey-density-ratios"></a>
 </h2>
-<p>You can compute Bayes Factors for point-null hypotheses using
+<p>You can compute Bayes factors for point-null hypotheses using
 <code><a href="../reference/hypothesis.html">hypothesis()</a></code>. For example, let’s compare a model in which
-the change point in recall is fixed at four items with the fitted
+the change point in recall is exactly four items with the fitted
 continuous model:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">equality</span> <span class="op">=</span> <span class="fu"><a href="../reference/hypothesis.html">hypothesis</a></span><span class="op">(</span><span class="va">fit_default</span>, <span class="st">"cp_1 = 4"</span><span class="op">)</span></span>
@@ -259,7 +259,7 @@ not an event with positive probability in the continuous model.</p></li>
 such as <code>Intercept_1 - Intercept_2 = 0</code>. Ratios, parameter
 products, exponentials, and other nonlinear expressions are
 rejected.</p>
-<p>To convert a Bayes Factor to a posterior probability for the
+<p>To convert a Bayes factor to a posterior probability for the
 point-null model, supply your own prior probability for that model. For
 example:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -405,9 +405,9 @@ it is a net negative for predictive accuracy, and the simpler model will
 be preferred.</p>
 <p>Also, if the data is reasonably informative (it almost always is),
 LOO-CV is much less influenced by priors than Bayes factors. For LOO,
-the priors can more be thought of as regularization (shrinking estimates
-towards plausible values) than as the point of departure which all our
-inferences are relative to (Bayes Factors).</p>
+the priors can be thought of more as regularization (shrinking estimates
+towards plausible values) than as the point of departure that all
+inferences are relative to (as for Bayes factors).</p>
 </div>
 <div class="section level3">
 <h3 id="applied-example">Applied example<a class="anchor" aria-label="anchor" href="#applied-example"></a>

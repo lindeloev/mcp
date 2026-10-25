@@ -37,6 +37,8 @@ fit_void = mcp_example("void", sample = "both")
 
 ![](missing_files/figure-html/unnamed-chunk-3-1.png)
 
+The message confirms that `mcp` detected the missing responses.
+
 Notice that `mcp` can infer change points in regions with no observed
 data. The first change point joins a plateau to a slope. Its location in
 the void is mostly informed by extrapolating the two segments until they

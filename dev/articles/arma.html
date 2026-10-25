@@ -64,19 +64,19 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Time series change points</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/arma.Rmd" class="external-link"><code>vignettes/arma.Rmd</code></a></small>
       <div class="d-none name"><code>arma.Rmd</code></div>
@@ -125,10 +125,9 @@ positive-order <code>ar(p, 0)</code> or <code>ma(q, 0)</code> is joined:
 it continues from where the earlier intercept and x-terms (e.g., the
 <code>x</code> in <code>ar(1, 1 + x)</code>) left off, for matching
 lags. Including <code>ar(p)</code> or <code>ma(q)</code> replaces the
-whole component: if <code>ar(1)</code> follows <code>ar(2)</code>, the
-lag-2 coefficient is removed in the later segment. Both accept a
-regression formula, such as <code>ar(1, 1 + x)</code> or
-<code>ma(1, 0 + x)</code>.</p>
+whole component: if <code>ar(1)</code> follows <code>ar(2)</code>, lag 2
+is turned off in the later segment. Both accept a regression formula,
+such as <code>ar(1, 1 + x)</code> or <code>ma(1, 0 + x)</code>.</p>
 <div class="section level3">
 <h3 id="garma-definition">GARMA definition<a class="anchor" aria-label="anchor" href="#garma-definition"></a>
 </h3>
@@ -165,10 +164,11 @@ continuously across change points:</p>
 new segment, the last <span class="math inline">N</span> observations
 <em>before</em> the change point are input into the first <span class="math inline">\eta_t</span> in the new segment, weighted by the
 new segment’s AR/MA parameters.</p></li>
-<li><p>AR/MA lags do not reset between segments; memory flows
-continuously from one segment into the next. Lags only reset at the very
-beginning of the dataset, or between independent series when using
-<code>series = "column_name"</code> (see <a href="#multiple-series">Multiple time series</a>).</p></li>
+<li><p>The lagged residuals are not set to zero at change points; memory
+flows continuously from one segment into the next. Lags start at zero
+only at the very beginning of the dataset, or at the start of each
+independent series when using <code>series = "column_name"</code> (see
+<a href="#multiple-series">Multiple time series</a>).</p></li>
 <li><p>Because change point locations <span class="math inline">\tau</span> are estimated with posterior
 uncertainty, the change point where AR/MA parameters switch varies
 conditionally across MCMC draws.</p></li>
@@ -229,15 +229,14 @@ function with the “ar” settings:</p>
 <p>See how this was generated in
 <code>mcp_example("ar")$example_code</code>. We model this as a plateau
 (<code>1</code>) with a second-order autoregressive residual
-(<code>ar(2)</code>) followed by a joined slope (<code>0 + time</code>)
-with a negative first-order autoregressive residual
-(<code>ar(1)</code>):</p>
+(<code>ar(2)</code>) followed by a joined plateau (<code>0</code>) with
+a negative first-order autoregressive residual (<code>ar(1)</code>):</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="va">price</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>,  <span class="co"># Intercept_1, ar1_1, ar2_1</span></span>
-<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">time</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>  <span class="co"># time_2, ar1_2; replaces AR(2) with AR(1)</span></span>
+<span>  <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>         <span class="co"># ar1_2; replaces AR(2) with AR(1)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">ar_data</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">ar_data</span>, par_x <span class="op">=</span> <span class="st">"time"</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s plot it and we see that AR was strong in the first segment and
 weaker-but-negative in the second:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -251,20 +250,19 @@ weaker-but-negative in the second:</p>
 <span><span class="co">## Draws: 9000 (3 chains with iter = 3000)</span></span>
 <span><span class="co">## Segments:</span></span>
 <span><span class="co">##   1: price ~ 1 + ar(2)</span></span>
-<span><span class="co">##   2: ~ 0 + time + ar(1)</span></span>
+<span><span class="co">##   2: ~ 0 + ar(1)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Change point parameters:</span></span>
-<span><span class="co">##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  cp_1        89.1   7.3   75.1   102.9   1.00      808     1387</span></span>
+<span><span class="co">##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  cp_1        92.1   6.0   82.6   103.0   1.00     1026     1841 90.0      OK</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Population-level parameters:</span></span>
-<span><span class="co">##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  Intercept_1 20.6   1.3   18.2    23.5   1.00     1455     2275</span></span>
-<span><span class="co">##  time_2      -0.030 0.033 -0.092   0.039 1.00     1919     3400</span></span>
-<span><span class="co">##  sigma_1      5.11  0.30   4.57    5.74  1.00     4745     4300</span></span>
-<span><span class="co">##  ar1_1        0.69  0.10   0.49    0.88  1.00     1233     2525</span></span>
-<span><span class="co">##  ar1_2       -0.28  0.14  -0.55   -0.00  1.00     3425     6201</span></span>
-<span><span class="co">##  ar2_1        0.181 0.100 -0.013   0.374 1.00     1283     2292</span></span></code></pre>
+<span><span class="co">##    parameter   mean    sd  lower   upper rhat ess_bulk ess_tail    sim match</span></span>
+<span><span class="co">##  Intercept_1 19.55  0.54  18.49   20.61  1.00     5811     6807 20.00     OK</span></span>
+<span><span class="co">##  sigma_1      5.10  0.30   4.55    5.72  1.00     4188     4412  5.00     OK</span></span>
+<span><span class="co">##  ar1_1        0.682 0.099  0.488   0.879 1.00     1552     3128  0.700    OK</span></span>
+<span><span class="co">##  ar1_2       -0.30  0.14  -0.58   -0.03  1.00     4688     6952 -0.30     OK</span></span>
+<span><span class="co">##  ar2_1        0.186 0.098 -0.008   0.377 1.00     1573     2921  0.200    OK</span></span></code></pre>
 <p>The naming syntax is <code>[component][order]_[segment]</code> for
 intercepts. For example, <code>ar1_2</code> is the first-order
 autoregressive coefficient and <code>ma1_2</code> the first-order
@@ -280,8 +278,8 @@ the fit.</p>
 <p>For Gaussian GARMA models, <code>sigma</code> describes the
 <em>innovations</em>, i.e., the part of the residuals not explained by
 AR and MA coefficients. <code>sd(fit$data$price)</code> is therefore
-generally higher. In this case, the SD of raw data in the plateau
-(<code>time &lt; 74.5</code>) is 10.7. As always, it is good to assess
+generally higher. In this case, the SD of raw data in the first segment
+(<code>time &lt; 90</code>) is 9.9. As always, it is good to assess
 posteriors and convergence more directly:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, npars <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
@@ -309,7 +307,7 @@ across a segment without AR. <code>ar(2, 0)</code> is joined;
 all cases, the observation and innovation history continues across
 change points.</p>
 <p>The AR and MA terms apply to link-scale <em>residuals</em> from the
-ordinary regression. In time-series jargon, this is a <em>dynamical</em>
+ordinary regression. In time-series jargon, this is a <em>dynamic</em>
 regression model where the ordinary regression parameters make up the
 <em>deterministic</em> structure. See further comments in the section on
 priors below.</p>
@@ -393,7 +391,7 @@ series start and end:</p>
 <span>  <span class="va">empty</span>, <span class="va">df_panel</span>,</span>
 <span>  cp_1 <span class="op">=</span> <span class="fl">30</span>,         <span class="co"># Change point location</span></span>
 <span>  Intercept_1 <span class="op">=</span> <span class="fl">10</span>,  <span class="co"># Intercept in segment 1</span></span>
-<span>  time_2 <span class="op">=</span> <span class="fl">0.1</span>,      <span class="co"># Slope for the mean in segment two</span></span>
+<span>  time_2 <span class="op">=</span> <span class="fl">0.1</span>,      <span class="co"># Slope for the mean in segment 2</span></span>
 <span>  ar1_1 <span class="op">=</span> <span class="fl">0.3</span>,       <span class="co"># First-order AR in segment 1</span></span>
 <span>  ar1_2 <span class="op">=</span> <span class="fl">0.8</span>,       <span class="co"># First-order AR in segment 2</span></span>
 <span>  sigma_1 <span class="op">=</span> <span class="fl">1.5</span>      <span class="co"># Residual sigma; joined in segment 2</span></span>
@@ -428,8 +426,8 @@ series start and end:</p>
 <span><span class="va">gg_trend</span> <span class="op">/</span> <span class="va">gg_dpar</span></span></code></pre></div>
 <p><img src="arma_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 <p>Within each series, AR/MA memory flows continuously across change
-points. Between series, memory resets to zero so individuals remain
-completely independent.</p>
+points. Between series, the lags start at zero, so the residuals of
+different series are independent.</p>
 </div>
 </div>
 </div>
@@ -584,9 +582,9 @@ density ratio test:</p>
 <pre><code><span><span class="co">## Warning: Savage-Dickey Bayes factor was computed using default prior(s) for `ar1_1` and `ar1_2`. Point Bayes factors are sensitive to the prior distribution; consider specifying informed priors.</span></span></code></pre>
 <pre><code><span><span class="co">## Warning: The tested value is in a sparse tail of the prior or posterior draws; the Savage-Dickey estimate may be unreliable.</span></span></code></pre>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
-<span><span class="co">##   hypothesis         mean    sd lower upper  prob        BF</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> ar1_1 - ar1_2 = 0 0.720 0.136 0.452 0.982    <span style="color: #BB0000;">NA</span> 0.000<span style="text-decoration: underline;">021</span>4</span></span></code></pre>
+<span><span class="co">##   hypothesis         mean    sd lower upper  prob    BF</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> ar1_1 - ar1_2 = 0 0.720 0.136 0.452 0.982    <span style="color: #BB0000;">NA</span>     0</span></span></code></pre>
 <p>Notice the warning. We used default priors, so the Savage-Dickey
 ratio is quite meaningless because the prior does not represent our
 actual pre-likelihood beliefs. In any case, if it did, we would conclude

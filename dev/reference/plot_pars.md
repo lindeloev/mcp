@@ -101,7 +101,9 @@ pages.
 
 ## See also
 
-plot_dpar pp_check
+[`plot.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+[`plot_dpar()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+[`pp_check()`](https://lindeloev.github.io/mcp/dev/reference/pp_check.md)
 
 ## Author
 

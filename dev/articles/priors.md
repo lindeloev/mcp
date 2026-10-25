@@ -142,7 +142,7 @@ df$y = empty_default$simulate(empty_default, df,
     Intercept_1 = 20, Intercept_2 = 22, Intercept_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
     cp_1 = 35, cp_2 = 70,  # change points
-    sigma = 5)
+    sigma_1 = 5)
 
 head(df)
 ```
@@ -202,8 +202,8 @@ plot_default + plot_manual
 We see the effects of the priors:
 
 - The intercept `Intercept_1` was truncated to be below 10.
-- The slope `x_1` is restricted to the bounds of
-  [`dbeta()`](https://rdrr.io/r/stats/Beta.html), i.e., between 0 and 1.
+- The slope `x_1` is between 0 and 1, the bounds of
+  [`dbeta()`](https://rdrr.io/r/stats/Beta.html).
 - The slopes `x_2` and `x_3` were forced to be identical.
 - The change point `cp_2` was a constant, so there is no uncertainty
   there. `cp_1` is still ordered before it, i.e., its prior is
@@ -257,10 +257,10 @@ plot_pp_manual + plot_pp_default  # using patchwork
 
 You can see how the manual priors force strictly positive slopes (x_2 \>
 x_1 \> 0) that compound to span a much wider vertical range than the
-defaults, alongside an abrupt concerted change at the constant change
-point x = 80. In contrast, the default priors are centered on the
-observed data, with zero-centered slopes and change points distributed
-smoothly across the observed range of x.
+defaults, and an abrupt change at the constant change point x = 80. In
+contrast, the default priors are centered on the observed data, with
+zero-centered slopes and change points distributed smoothly across the
+observed range of x.
 
 ## Priors on change points
 

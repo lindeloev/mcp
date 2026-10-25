@@ -237,9 +237,8 @@ model features.
 - Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical
   Bayesian Analysis of Changepoint Problems. *Applied Statistics*,
   41(2), 389–405. [doi:10.2307/2347570](https://doi.org/10.2307/2347570)
-  Introduced the Gibbs sampling approach for continuous change points in
-  segmented regression and hierarchical models, providing the
-  computational foundation used by BUGS and JAGS.
+  Introduced Gibbs sampling for hierarchical Bayesian change-point
+  models, the computational approach that BUGS and JAGS build on.
 
 ## Author
 

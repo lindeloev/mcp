@@ -163,10 +163,9 @@ for the LOO weights.
 
 ## See also
 
-[`plot.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-[`predict.mcpfit`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-
-plot_pars plot_dpar pp_check
+[`plot.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
+[`plot_pars()`](https://lindeloev.github.io/mcp/dev/reference/plot_pars.md),
+[`predict.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 
 ## Author
 

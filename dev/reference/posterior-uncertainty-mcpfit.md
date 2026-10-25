@@ -103,7 +103,7 @@ confint(demo_fit, prior = TRUE)
 #> time_3       -1.2460525  1.243472
 #> sigma_1       0.1277497 25.805782
 
-# Include change points, residual SDs, group SDs, and AR/MA parameters.
+# Include change points, residual SDs, group-level SDs, and AR/MA parameters.
 vcov(demo_fit, pars = "population")
 #>                     cp_1         cp_2  Intercept_1        time_2  Intercept_3        time_3       sigma_1
 #> cp_1         2.860236828 -0.023006037  0.479259027  0.0450919199 -0.113947879  7.548661e-03  1.694093e-02

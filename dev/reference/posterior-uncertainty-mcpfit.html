@@ -38,17 +38,17 @@ parameters using posterior or prior draws."><meta property="og:image" content="h
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference"><li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation"><li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -170,7 +170,7 @@ while <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link"
 <span class="r-out co"><span class="r-pr">#&gt;</span> time_3       -1.2460525  1.243472</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sigma_1       0.1277497 25.805782</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Include change points, residual SDs, group SDs, and AR/MA parameters.</span></span></span>
+<span class="r-in"><span><span class="co"># Include change points, residual SDs, group-level SDs, and AR/MA parameters.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">demo_fit</span>, pars <span class="op">=</span> <span class="st">"population"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     cp_1         cp_2  Intercept_1        time_2  Intercept_3        time_3       sigma_1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cp_1         2.860236828 -0.023006037  0.479259027  0.0450919199 -0.113947879  7.548661e-03  1.694093e-02</span>

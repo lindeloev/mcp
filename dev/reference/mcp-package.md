@@ -12,7 +12,7 @@ with one formula per segment. At its most flexible, it aims to be
   `shape`).
 
 - *Express expert knowledge:* Specify the number of change points, the
-  form of each segment, and constrain coefficients via priors. Compare
+  form of each segment, and restrict coefficients via priors. Compare
   hypotheses using
   [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
   and
@@ -112,9 +112,8 @@ for priors.
 - Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical
   Bayesian Analysis of Changepoint Problems. *Applied Statistics*,
   41(2), 389–405. [doi:10.2307/2347570](https://doi.org/10.2307/2347570)
-  Introduced the Gibbs sampling approach for continuous change points in
-  segmented regression and hierarchical models, providing the
-  computational foundation used by BUGS and JAGS.
+  Introduced Gibbs sampling for hierarchical Bayesian change-point
+  models, the computational approach that BUGS and JAGS build on.
 
 ## See also
 

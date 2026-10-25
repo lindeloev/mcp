@@ -61,22 +61,22 @@
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul>
 </li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Default priors</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/default_priors.Rmd" class="external-link"><code>vignettes/default_priors.Rmd</code></a></small>
       <div class="d-none name"><code>default_priors.Rmd</code></div>
@@ -196,6 +196,9 @@ the coefficient’s model-matrix column, as described above.</p></li>
 <li><p>log-rate <span class="math inline">y_{\text{rate}} = \log(y) -
 \text{offset}</span>, with <span class="math inline">y \le 0</span>
 replaced by 0.1, as <code>brms</code> does for zeros (and <span class="math inline">\text{offset} = 0</span> if absent)</p></li>
+<li><p>As in <code>brms</code>, <span class="math inline">\operatorname{mad}()</span> and the <span class="math inline">\operatorname{median}()</span> of log-rates are
+rounded to one decimal. <code>prior_summary(fit)</code> shows the
+resulting values.</p></li>
 </ul>
 <table class="table">
 <colgroup>
@@ -418,10 +421,11 @@ to sampler code</a> for how JAGS samples it, including why <span class="math inl
 Group-level deviations in the predictor part use a zero-mean normal
 distribution governed by that SD, as in ordinary multilevel regression.
 With a multi-coefficient <code>||</code> term, every independent
-coefficient has its own SD. The SD receives the <code>brms</code>
-half-Student-t prior on the response scale, except for log, logit, and
-probit links and inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and <code>shape()</code>
-(see the table above). Slope SDs are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>, like the
+coefficient has its own SD. For identity links, the SD receives the
+<code>brms</code> half-Student-t prior on the response scale. Log,
+logit, and probit links and SDs inside <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> and
+<code>shape()</code> use other scales (see the table above). Slope SDs
+are divided by <span class="math inline">\operatorname{sd}(\text{column})</span>, like the
 population-level slopes. For distributional parameters, deviations and
 SD are on that parameter’s link scale (for example, effects inside
 <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> are on the log-SD scale).</p>
@@ -522,11 +526,16 @@ but computes the scale from <span class="math inline">y</span>.</p></li>
 <span class="math inline">\min(x)</span>, which matters when <span class="math inline">x</span> is far from zero, e.g., calendar years.
 Likewise, factor contrasts with their own x-terms get their default
 prior at <span class="math inline">\min(x)</span>, e.g.,
-<code>stateB_1</code> in <code>y ~ 1 + state * x</code>. User-specified
-priors on <code>Intercept_1</code> apply directly at <span class="math inline">x = 0</span>. Other predictors are not centered, so
-the prior applies where they are zero. If such a predictor is far from
-zero, e.g., age in years, center it before fitting or set a prior on
-<code>Intercept_1</code>. Read more about <a href="../articles/formulas.html">the mcp model</a>.</p></li>
+<code>stateB_1</code> in <code>y ~ 1 + state * x</code>. When the
+x-terms are split by factor levels without a common x-term, e.g.,
+<code>y ~ 1 + x:state</code>, the prior on <code>Intercept_1</code>
+applies to the average value at <span class="math inline">\min(x)</span>, weighting each level by its share of
+the data as in <span class="math inline">\operatorname{mean}(y)</span>.
+User-specified priors on <code>Intercept_1</code> apply directly at
+<span class="math inline">x = 0</span>. Other predictors are not
+centered, so the prior applies where they are zero. If such a predictor
+is far from zero, e.g., age in years, center it before fitting or set a
+prior on <code>Intercept_1</code>. Read more about <a href="../articles/formulas.html">the mcp model</a>.</p></li>
 <li><p><strong>x-term interactions:</strong> <code>rstanarm</code>
 scales <code>x:z</code> by the SD of the model-matrix column, <span class="math inline">\operatorname{sd}(x \cdot z)</span>, which depends
 on the location of <span class="math inline">x</span> and <span class="math inline">z</span>. For example, it is around 1000 for

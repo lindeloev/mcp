@@ -25,7 +25,7 @@ mcp_example_data(name)
   - `"demo"`: Two change points between intercepts and joined/disjoined
     slopes.
 
-  - `"group_mu"`: Group-level predictor deviations (random
+  - `"group_mu"`: Group-level deviations in the predictor part (random
     intercepts/slopes) across a change point.
 
   - `"group_cp"`: Group-level change-point deviations (random effects).

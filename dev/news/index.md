@@ -7,15 +7,15 @@
 - **Multiple regression:** `mcp` now supports several continuous
   predictors, categorical predictors, interactions, etc. for all terms
   on RHS. E.g., `~ 1 + x + x:state + sigma(1 + state) + ar(2, 0 + z)`.
-  Basically, it now aims to “feels” like
+  Basically, it now aims to “feel” like
   [`lm()`](https://rdrr.io/r/stats/lm.html) or
   [`glm()`](https://rdrr.io/r/stats/glm.html) for each distributional
   parameter in each segment. Explore `ex = mcp_example("multiple")` to
   see it in action and read more in [Understanding mcp
   formulas](https://lindeloev.github.io/mcp/articles/formulas.html).
   Default priors follow `rstanarm` and `brms` where possible. With this
-  possibility for more parameters also comes the convenient `same()`
-  which share coefficients across segments - including categorical
+  possibility for more parameters also comes the convenient `same()`,
+  which shares coefficients across segments - including categorical
   predictors and group-level effects ([read
   more](https://lindeloev.github.io/mcp/articles/formulas.html#reusing-coefficients-between-segments)).
 
@@ -75,7 +75,7 @@
     group-specific coefficients and change points, while
     [`ranef()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md)
     returns relative deviations. Fits now also store a proper matched
-    `$call`. Printed summaries now report posterior `sd` and has a new
+    `$call`. Printed summaries now report posterior `sd` and have a new
     layout.
 
 - **Dirichlet is now the default prior on change points:** For
@@ -99,7 +99,7 @@
   mathematical change, parameter posteriors remain essentially identical
   to previous fits for all
   [`mcp_example()`](https://lindeloev.github.io/mcp/dev/reference/mcp_example.md).
-  Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes Factor) on
+  Any `hypothesis(fit, "cp_1 = 20")` (Savage-Dickey Bayes factor) on
   default priors will likely differ, but BF is ill advised on default
   priors anyway - that is why
   [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md)
@@ -215,8 +215,8 @@ been added until we reach 1.0.
 
 - **Parameters and outputs:**
 
-  - `fit$pars` and `fit$mcmc_loglik` was removed and now raises a
-    helpful errors. `fit$pars` is now replaced with `mcp_pars(fit)` and
+  - `fit$pars` and `fit$mcmc_loglik` were removed and now raise helpful
+    errors. `fit$pars` is now replaced with `mcp_pars(fit)` and
     `mcp_columns(fit)`. `fit$mcmc_loglik` is no longer stored - generate
     using `log_lik(fit)`.
 
@@ -270,7 +270,10 @@ been added until we reach 1.0.
     and
     [`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md).
 
-  - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
+  - mcp no longer exports `logit`, `ilogit`, or `probit`.
+    [`phi()`](https://lindeloev.github.io/mcp/dev/reference/mcp-deprecated.md)
+    is deprecated in favor of
+    [`stats::pnorm()`](https://rdrr.io/r/stats/Normal.html).
 
 - **Functions, plotting, and workflow:**
 
@@ -350,8 +353,9 @@ been added until we reach 1.0.
     tests now return `prob = NA` because their Bayes factor is a model
     comparison, not a posterior parameter probability. Density estimates
     are more robust, warn when evaluating Savage-Dickey Bayes factors on
-    default priors, and warn about sparse tails. See [Savage-Dickey
-    Bayes
+    default priors, and warn about sparse tails. A Savage-Dickey `BF` is
+    `0` when no posterior draws lie on one side of the tested value, as
+    for directional hypotheses. See [Savage-Dickey Bayes
     factors](https://lindeloev.github.io/mcp/articles/comparison.html#bayes-factors-using-savage-dickey-density-ratios).
 
   - `mcp(..., adapt = 1000)` is soft-deprecated in favor of

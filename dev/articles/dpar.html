@@ -64,19 +64,19 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
-<li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
     <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
     <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
 <li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
-    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -103,7 +103,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Variance change points and other distributional parameters</h1>
             
-            <h4 data-toc-skip class="date">2026-10-24</h4>
+            <h4 data-toc-skip class="date">2026-10-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/dpar.Rmd" class="external-link"><code>vignettes/dpar.Rmd</code></a></small>
       <div class="d-none name"><code>dpar.Rmd</code></div>
@@ -144,10 +144,10 @@ formulas <a href="../articles/formulas.html">here</a>.</p>
 </h2>
 <p>Aligning with <code>brms</code> convention, without an explicit
 <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formula, the default is the intercept-only prior
-<code>dt(0, max(2.5, round(mad(y), 1)), 3) T(0, )</code> directly on the
-residual SD, i.e., an <strong>identity link</strong>. The
-response-calibrated scale adapts to the units of <code>y</code>, with a
-minimum of 2.5 to avoid an accidentally narrow prior.</p>
+<code>dt(0, max(2.5, mad(y)), 3) T(0, )</code> directly on the residual
+SD, i.e., an <strong>identity link</strong>. The response-calibrated
+scale adapts to the units of <code>y</code>, with a minimum of 2.5 to
+avoid an accidentally narrow prior.</p>
 <p>With an explicit <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> formula, the intercept instead
 defaults to <code>dt(0, 2.5, 3)</code> on <strong>log-SD</strong>, as in
 <code>brms</code>. Contrasts use the same prior, and slopes are scaled
@@ -196,10 +196,11 @@ default plot of the expected response:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, interval <span class="op">=</span> <span class="st">"predict"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="dpar_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
 <p>We can see all parameters are well recovered (compare
-<code>sim</code> to <code>mean</code>). Like the other parameters, the
-<code>sigma</code> coefficients are named after the segment where they
-are included. There will always be a <code>sigma_Intercept_1</code>
-because <code>sigma</code> is required by the likelihood.</p>
+<code>sim</code> to <code>mean</code>) despite poor <code>rhat</code>
+and ESS. Like the other parameters, the <code>sigma</code> coefficients
+are named after the segment where they are included. There will always
+be a <code>sigma_Intercept_1</code> because <code>sigma</code> is
+required by the likelihood.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Family: gaussian</span></span>
@@ -504,11 +505,12 @@ time-series models (<a href="../articles/arma.html">read more here</a>).
 Each lag is a dpar named <code>ar1</code>, <code>ar2</code>,
 <code>ma1</code>, etc. (see the definition above).</li>
 </ul>
-<div class="section level4">
-<h4 id="inspecting-and-working-with-dpars">Inspecting and working with dpars<a class="anchor" aria-label="anchor" href="#inspecting-and-working-with-dpars"></a>
-</h4>
-<p>You can inspect the parameters in a fitted model or family object
-using <code>mcp_pars(fit)</code> or <code>print(fit$prior)</code>.</p>
+<div class="section level3">
+<h3 id="inspecting-and-working-with-dpars">Inspecting and working with dpars<a class="anchor" aria-label="anchor" href="#inspecting-and-working-with-dpars"></a>
+</h3>
+<p>You can inspect the parameters of a model using
+<code>mcp_pars(fit)</code> and their priors using
+<code>prior_summary(fit)</code>.</p>
 <p>Many core <code>mcp</code> functions take a <code>dpar</code>
 argument to extract or visualize specific distributional parameters:</p>
 <ul>
@@ -519,8 +521,8 @@ for the target <code>dpar</code> evaluated on the response scale.</li>
 <li>
 <strong><code>plot_dpar(fit, dpar = "sigma")</code> or
 <code>plot_dpar(fit, dpar = "shape")</code></strong>: Plots the
-trajectory of the distributional parameter over <span class="math inline">x</span>, complete with credible intervals across
-segments.</li>
+distributional parameter along the change-point variable, optionally
+with a central interval (<code>interval = "fitted"</code>).</li>
 </ul>
 </div>
 </div>
