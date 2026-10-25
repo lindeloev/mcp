@@ -223,4 +223,8 @@ test_that("summary() matches simulated disjoined change points between adjacent 
   # Joined in one dpar is joined.
   mixed = list(y ~ 1, ~ 1 + sigma(0 + x))
   expect_identical(get_disjoined_cps(mcp(mixed, data, par_x = "x", sample = FALSE)), character())
+
+  # An x-term joins later segments without that dpar, e.g., sigma as min(x, cp_1). It no longer depends on cp_2.
+  plateau = list(y ~ 1 + sigma(1 + x), ~ 1, ~ 1 + x)
+  expect_identical(get_disjoined_cps(mcp(plateau, data, par_x = "x", sample = FALSE)), "cp_2")
 })

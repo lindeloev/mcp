@@ -258,15 +258,17 @@ definition_rows = function(table) {
 
 
 # Names of population-level change points starting a disjoined segment, i.e., a segment that
-# includes an intercept for every dpar with x-terms in it. Excludes change points with group-level
-# change points.
+# includes an intercept for every dpar with x-terms in it, and which no x-terms from the previous
+# segment join, e.g., `sigma(1 + x)` in segment 1 applies as `min(x, cp_1)` in a segment 2 without sigma().
+# Excludes change points with group-level change points.
 get_disjoined_cps = function(fit) {
   model_tables = get_fit_model_tables(fit)
   terms = dplyr::bind_rows(model_tables$coefs, model_tables$group_coefs)
   cps = model_tables$cps[is.na(model_tables$cps$group_col), ]
   is_disjoined = vapply(cps$segment, function(segment) {
     segment_terms = terms[terms$segment == segment, ]
-    all(segment_terms$dpar[segment_terms$x_degree > 0] %in% segment_terms$dpar[segment_terms$par_type == "Intercept"])
+    joined_x = terms$segment == segment - 1 & terms$x_degree > 0 & dplyr::coalesce(terms$next_segment > segment, TRUE)
+    !any(joined_x) && all(segment_terms$dpar[segment_terms$x_degree > 0] %in% segment_terms$dpar[segment_terms$par_type == "Intercept"])
   }, logical(1))
   cps$name[is_disjoined]
 }
