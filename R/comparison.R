@@ -9,7 +9,8 @@
 #'
 #' @aliases loo LOO loo.mcpfit loo_compare
 #' @param x An \code{\link{mcpfit}} object.
-#' @param ... Further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
+#' @param ... For `loo()`: further arguments passed to \code{\link[loo]{loo}}, e.g., `cores` or `save_psis`.
+#'   For `waic()`: must be empty.
 #' @param ndraws Integer or `NULL`. Target number of posterior draws used for
 #'   the log-likelihood or information criterion. Draws are balanced across
 #'   chains, so the actual number may be rounded. `NULL` uses all draws.
@@ -81,7 +82,6 @@ loo.mcpfit = function(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 
 #' @aliases waic WAIC waic.mcpfit
 #' @describeIn loo.mcpfit Computes WAIC on mcpfit objects
-#' @param ... Must be empty. Reserved for future use.
 #' @export waic
 #' @export
 waic.mcpfit = function(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated()) {
