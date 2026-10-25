@@ -162,12 +162,12 @@ navbar:
         href: articles/plotting.html
       - text: Missing responses and imputation
         href: articles/missing.html
-      - text: Diagnosing and fixing problems
-        href: articles/tips.html
     - text: Implementation
       menu:
       - text: From formulas to sampler code
         href: articles/implementation.html
+      - text: Diagnosing and fixing problems
+        href: articles/tips.html
     - text: Functions
       href: reference/index.html
     - text: News
