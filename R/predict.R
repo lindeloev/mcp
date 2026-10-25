@@ -84,28 +84,21 @@ pp_eval = function(
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
   if (type == "fitted" && (rate || dpar != "epred"))
     aux_operations = setdiff(aux_operations, "epred")
-  aux_columns = get_family_aux_columns(fit$family, data_columns)
-  aux_used = names(get_family_aux_columns(fit$family, data_columns, aux_operations))
-  unused_aux_columns = unname(aux_columns[names(aux_columns) %notin% aux_used])
+  aux_columns = get_family_aux_columns(fit$family, data_columns, aux_operations)
+  aux_used = names(aux_columns)
 
   # Build list of required columns and validate presence in newdata
-  required_cols = colnames(fit$data)  # Only predictive columns were saved in fit$data
-  required_cols = required_cols[required_cols %notin% unused_aux_columns]
-  required_cols = required_cols[required_cols %notin% exclude_group_cols]
-  series_required = !is.null(data_columns$series) && (
-    evaluating_arma ||
-    data_columns$series %in% get_predictor_cols(fit) ||
-    data_columns$series %in% group_info$cols
-  )
-  if (!series_required && !is.null(data_columns$series))
-    required_cols = required_cols[required_cols != data_columns$series]
   response_not_required = type %in% c("fitted", "predict") && !conditional_garma
-  if (response_not_required) {
-    required_cols = required_cols[required_cols != data_columns$response]
-  } else if (data_columns$response %notin% colnames(newdata)) {
+  if (!response_not_required && data_columns$response %notin% colnames(newdata))
     stop("`newdata` must contain a response column named '", data_columns$response, "' for when `arma == TRUE` and/or `type == 'residuals'`")
-  }
-  missing_group_cols = setdiff(intersect(required_cols, group_info$cols), colnames(newdata))
+  required_cols = unique(c(
+    get_predictor_cols(fit),
+    group_info$cols,
+    if (evaluating_arma) data_columns$series,
+    if (!response_not_required) data_columns$response,
+    stats::na.omit(unname(aux_columns))
+  ))
+  missing_group_cols = setdiff(group_info$cols, colnames(newdata))
   if (length(missing_group_cols) > 0)
     stop("These grouping columns are missing from `newdata`: ", and_collapse(missing_group_cols), ". Add them, or set `group_effects = FALSE` for population-level ", type, " values.", call. = FALSE)
   assert_data_cols(newdata, required_cols)

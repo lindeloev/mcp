@@ -278,9 +278,8 @@ assert_dpar = function(dpar, fit, type) {
   if (is.null(dpar))
     dpar = "epred"
 
-  coefs = get_fit_model_tables(fit)$coefs
   allowed_dpars = unique(c(
-    paste0(coefs$dpar, tidyr::replace_na(as.character(coefs$order), "")),   # "mu" "ar1" "ar2" "sigma", etc.
+    stats::na.omit(get_fit_model_tables(fit)$parameters$dpar),   # "mu" "ar1" "ar2" "sigma", etc.
     fit$family$dpar_specs$dpar,  # any model parameters that have no regression terms (~0)
     "epred"
   ))
