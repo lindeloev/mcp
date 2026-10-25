@@ -36,7 +36,7 @@ get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior 
   context = prior_context(data, data_columns, nrow(cps) + 1, design_specs)
   context$cp_names = cps$name
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
-  legacy_prior_constants(prior, context)
+  prior = legacy_prior_constants(prior, context)
   coefs$prior_type = get_prior_type(coefs)
 
   # Disallow cp_0 and cp_K (at least for now)

@@ -193,10 +193,6 @@ allowed_data_expression = function(expr, data_names) {
 resolve_prior_ast = function(expr, context) {
   if (is.numeric(expr))
     return(as.numeric(expr))
-  if (is.name(expr)) {
-    legacy_value = legacy_prior_value(as.character(expr), context)
-    return(if (is.null(legacy_value)) expr else unname(legacy_value))
-  }
   if (!is.call(expr))
     return(expr)
 
@@ -312,7 +308,7 @@ prior_kind = function(parsed, all_names) {
 compile_prior_record = function(parameter, parsed, all_names, context, source,
                                  description = NULL) {
   kind = prior_kind(parsed, all_names)
-  display_original = legacy_translate_prior(format_prior(parsed), context)
+  display_original = format_prior(parsed)
   context$range_as_nodes = kind == "distribution" && parameter %in% context$cp_pars
   resolved = resolve_prior(parsed, context)
   value = format_prior(resolved)

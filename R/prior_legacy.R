@@ -33,39 +33,28 @@ legacy_prior_map = function(context) {
 }
 
 
+# Warn about deprecated constants and translate them to their rules, e.g., MINX to min(x)
 legacy_prior_constants = function(prior, context) {
-  prior_text = unlist(prior[vapply(prior, is.character, logical(1))], use.names = TRUE)
-  if (length(prior_text) == 0)
-    return(invisible(NULL))
+  is_text = vapply(prior, is.character, logical(1))
+  if (!any(is_text))
+    return(prior)
 
   map = legacy_prior_map(context)
   pattern = paste0("\\b(?:", paste(map$token, collapse = "|"), ")\\b")
-  used = unique(unlist(stringr::str_extract_all(prior_text, pattern)))
-  if (length(used) > 0) {
-    warning(
-      "Deprecated prior data constant(s): ", and_collapse(used), ". Use readable data ",
-      "expressions such as `min(", context$x_display, ")`, `sd(", context$y_display,
-      ")`, `max(", context$x_display, ") - min(", context$x_display,
-      ")`, or `n_cp()` instead.",
-      call. = FALSE
-    )
-  }
-  invisible(NULL)
-}
+  used = unique(unlist(stringr::str_extract_all(unlist(prior[is_text]), pattern)))
+  if (length(used) == 0)
+    return(prior)
 
-
-legacy_translate_prior = function(x, context) {
-  map = legacy_prior_map(context)
+  warning(
+    "Deprecated prior data constant(s): ", and_collapse(used), ". Use readable data ",
+    "expressions such as `min(", context$x_display, ")`, `sd(", context$y_display,
+    ")`, `max(", context$x_display, ") - min(", context$x_display,
+    ")`, or `n_cp()` instead.",
+    call. = FALSE
+  )
   for (i in seq_len(nrow(map)))
-    x = stringr::str_replace_all(x, paste0("\\b", map$token[i], "\\b"), map$rule[i])
-  x
-}
-
-
-legacy_prior_value = function(name, context) {
-  map = legacy_prior_map(context)
-  match = match(name, map$token)
-  if (is.na(match)) NULL else map$value[match]
+    prior[is_text] = lapply(prior[is_text], stringr::str_replace_all, paste0("\\b", map$token[i], "\\b"), map$rule[i])
+  prior
 }
 
 

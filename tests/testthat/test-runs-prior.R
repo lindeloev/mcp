@@ -603,7 +603,9 @@ test_that("priors are resolved without changing their parameterization", {
     },
     "Deprecated prior data constant"
   )
-  expect_equal(legacy_fit$prior$cp_1, "dunif(1, 6)")
+  readable_fit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", prior = list(cp_1 = "dunif(min(x), max(x))"), sample = FALSE)
+  expect_identical(legacy_fit$prior, readable_fit$prior)
+  expect_identical(legacy_fit$jags_code, readable_fit$jags_code)
 })
 
 
