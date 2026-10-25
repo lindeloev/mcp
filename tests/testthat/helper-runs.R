@@ -145,8 +145,8 @@ test_runs = function(model,
 
 
 # Evaluate `code`, a call to mcp(), while also monitoring the JAGS node of each dpar for each
-# observation, e.g., `mu_[i_]`, `sigma_[i_]`, and `ar1_[i_]`. Returns the fit with their
-# posterior draws in `attr(fit, "dpar_nodes")` (draws x nodes). Monitoring does not change the draws.
+# observation, e.g., `mu_[i_]`, `sigma_[i_]`, and `ar1_[i_]`, and the JAGS `deviance`. Returns the fit with
+# their posterior draws in `attr(fit, "dpar_nodes")` (draws x nodes). Monitoring does not change the draws.
 with_dpar_nodes = function(code) {
   run_jags = get("run_jags", envir = asNamespace("mcp"))
   nodes = NULL
@@ -155,9 +155,13 @@ with_dpar_nodes = function(code) {
     run_jags = function(jags_code, jags_data, pars, sample, ...) {
       if (sample != "post")
         return(run_jags(jags_code, jags_data, pars, sample, ...))
+      if (!("dic" %in% rjags::list.modules())) {
+        rjags::load.module("dic", quiet = TRUE)
+        on.exit(rjags::unload.module("dic", quiet = TRUE), add = TRUE)
+      }
       dpar_nodes = paste0(unique(stringr::str_match_all(jags_code, "\n\\s*([a-z]+[0-9]*)_\\[i_\\] =")[[1]][, 2]), "_")
-      draws = run_jags(jags_code, jags_data, c(pars, dpar_nodes), sample, ...)
-      is_node = sub("\\[.*", "", coda::varnames(draws)) %in% dpar_nodes
+      draws = run_jags(jags_code, jags_data, c(pars, dpar_nodes, "deviance"), sample, ...)
+      is_node = sub("\\[.*", "", coda::varnames(draws)) %in% c(dpar_nodes, "deviance")
       nodes <<- as.matrix(draws[, is_node, drop = FALSE])
       draws[, !is_node, drop = FALSE]
     },
@@ -169,14 +173,25 @@ with_dpar_nodes = function(code) {
 
 
 # R-side evaluation equals the JAGS model, draw by draw: `fitted(fit, dpar = dpar)` equals the
-# JAGS node `<dpar>_[i_]` for all dpars, including AR/MA lags. Requires `with_dpar_nodes()`.
+# JAGS node `<dpar>_[i_]` for all dpars, including AR/MA lags, and `-2 * log_lik(fit)` summed
+# over rows equals the JAGS `deviance`. Requires `with_dpar_nodes()`.
 expect_jags_coherence = function(fit, label = NULL) {
   nodes = attr(fit, "dpar_nodes")
   testthat::expect_false(is.null(nodes), label = label)
-  for (dpar in unique(sub("_\\[.*", "", colnames(nodes)))) {
+  for (dpar in unique(sub("_\\[.*", "", setdiff(colnames(nodes), "deviance")))) {
     r_values = fitted(fit, dpar = dpar, summary = FALSE, draws_format = "matrix")
     jags_values = nodes[, paste0(dpar, "_[", seq_len(nrow(fit$data)), "]"), drop = FALSE]
     testthat::expect_equal(unname(r_values), unname(jags_values), tolerance = 1e-8, label = paste(paste(label, collapse = " "), dpar))
+  }
+
+  # The JAGS deviance leaves out missing responses. Skip when it includes zeros-trick nodes: those of weighted
+  # likelihoods (see jags_weighted_likelihood()) and the dirichlet weight `cp_weight_`. log_lik() refuses
+  # missing GARMA histories.
+  columns = mcp_columns(fit)
+  has_zeros_trick = !is.null(columns$weights) || grepl("cp_weight_ ~", fit$jags_code, fixed = TRUE)
+  if (!has_zeros_trick && !(is_arma(fit) && anyNA(fit$data[[columns$response]]))) {
+    r_deviance = -2 * rowSums(log_lik(fit, summary = FALSE, draws_format = "matrix"), na.rm = TRUE)
+    testthat::expect_equal(unname(r_deviance), unname(nodes[, "deviance"]), tolerance = 1e-8, label = paste(paste(label, collapse = " "), "deviance"))
   }
 }
 
