@@ -28,7 +28,7 @@ model parameter name; \code{dpar} is its distributional parameter (e.g., \code{"
 }
 \details{
 Return the canonical parameter definitions for an \code{mcpfit} object. This
-works before sampling and is the stable way to discover model parameters.
+works before sampling, so you can discover the model parameters before setting priors or inits.
 }
 \examples{
 # Show every parameter in the model

@@ -27,8 +27,7 @@ draws from \code{mcp(sample = "both")}. For example:
 \itemize{
 \item \code{"cp_1 > 30"}:  the first change point is above 30.
 \item \code{"Intercept_1 > Intercept_2"}: the intercept is greater in segment 1 than 2.
-\item \code{"x_2 - x_1 <= 3"}: the difference between slope 1 and 2 is less
-than or equal to 3.
+\item \code{"x_2 - x_1 <= 3"}: slope 2 minus slope 1 is at most 3.
 \item \code{"Intercept_1 > -2 & Intercept_1 < 2"}: Intercept_1 is between -2 and 2 (an interval hypothesis). This can be useful as a Region Of Practical Equivalence test (ROPE).
 \item \code{"cp_1^2 < 30 | (log(x_1) + log(x_2)) > 5"}: be creative.
 \item \code{"`cp_1_id[John]` > `cp_1_id[Mary]`"}: John's change point is later than Mary's, as estimated
@@ -77,7 +76,7 @@ or the corresponding prior interval when \code{prior = TRUE}.
 probability when \code{prior = TRUE}. It is \code{NA}
 for equality hypotheses, which compare models rather than an event
 within the fitted model.
-\item \code{BF} Bayes Factor in favor  of the hypothesis.
+\item \code{BF} is the Bayes factor in favor of the hypothesis.
 For "=" it is the Savage-Dickey density ratio. It is \code{0} when all posterior
 (but not prior) draws lie on one side of the tested value; increase \code{iter} for a finite estimate.
 For directional hypotheses, it is the posterior odds divided by the
@@ -89,7 +88,7 @@ or no prior draws satisfy the hypothesis.
 }
 }
 \description{
-Returns posterior probabilities and Bayes Factors for flexible hypotheses involving
+Returns posterior probabilities and Bayes factors for flexible hypotheses involving
 model parameters. The documentation for the argument \code{hypotheses} below
 shows examples of how to specify hypotheses, and \href{https://lindeloev.github.io/mcp/articles/comparison.html}{read worked examples on the mcp website}.
 For directional hypotheses, \code{hypothesis} executes the hypothesis string in

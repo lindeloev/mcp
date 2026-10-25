@@ -12,7 +12,7 @@ flexible, it aims to be \strong{\href{https://paulbuerkner.com/brms/}{\code{brms
 \itemize{
 \item \emph{GLMM and distributional regression:} Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families.
 Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., \code{sigma}, \code{shape}).
-\item \emph{Express expert knowledge:} Specify the number of change points, the form of each segment, and constrain
+\item \emph{Express expert knowledge:} Specify the number of change points, the form of each segment, and restrict
 coefficients via priors. Compare hypotheses using \code{loo()} and \code{hypothesis()}.
 \item \emph{Native feel:} \code{summary()}, \code{plot_pars()}, \code{pp_check()}, and \code{as_draws_df()} follow the conventions of
 \href{https://paulbuerkner.com/brms/}{\code{brms}}, \href{https://mc-stan.org/rstanarm/}{\code{rstanarm}}, and
@@ -68,8 +68,8 @@ with multiple change points across generalized linear and time-series models. Ne
 the paper may be available at that link. Please cite the newest version.
 \item Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical Bayesian Analysis of
 Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \doi{10.2307/2347570}
-Introduced the Gibbs sampling approach for continuous change points in segmented regression
-and hierarchical models, providing the computational foundation used by BUGS and JAGS.
+Introduced Gibbs sampling for hierarchical Bayesian change-point models, the computational
+approach that BUGS and JAGS build on.
 }
 }
 \seealso{

@@ -103,8 +103,9 @@ hierarchical zero-mean priors, without these bounds.
 \href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
 
 For simulated data, the summary contains two additional columns so that it
-is easy to inspect whether the model can recover the parameters. Run
-simulation and summary multiple times to get a sense of the robustness.
+is easy to inspect whether the model can recover the parameters. They are shown when the
+response was simulated using \code{fit$simulate()} from a model with the same parameters, family, and link.
+Run simulation and summary multiple times to get a sense of the robustness.
 \itemize{
 \item \code{sim} is the value used to generate the data.
 \item \code{match} is \code{"OK"} if \code{sim} is contained in the central posterior
