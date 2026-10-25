@@ -220,6 +220,16 @@ test_that("same() group-level terms define one hierarchy and simulate one deviat
 })
 
 
+test_that("group-level terms add to population terms included via same()", {
+  data = data.frame(x = 1:12, y = 0, id = rep(c("a", "b"), 6))
+  fit = mcp(list(y ~ 1 + x + (1 | id), ~ same(1) + (1 | id), ~ 1 + (0 + x || id) + same(x, as = 1)),
+    data, par_x = "x", sample = FALSE)
+  pars = mcp_pars(fit, scope = "group")
+  expect_equal(pars$parameter, c("Intercept_1_id", "Intercept_2_id", "x_3_id"))
+  expect_equal(pars$population_parameter, c("Intercept_1", "Intercept_1", "x_1"))
+})
+
+
 test_that("same() group-level slopes keep x measured from the change point, endpoints, and explicit sources", {
   data = data.frame(x = 1:12, y = 0, id = rep(c("a", "b"), 6))
   fit = mcp(list(y ~ 1 + (0 + x || id), ~ 0 + same((0 + x || id)), ~ 0),

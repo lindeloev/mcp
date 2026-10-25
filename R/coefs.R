@@ -791,17 +791,15 @@ get_coef_tables = function(model, data, family, par_x) {
   group_coefs = definitions
   if (nrow(definitions) > 0) {
     # Rows without coefficients are `(0 | group)` turn-offs, which only disjoin (see below).
-    # Link each coefficient to its population counterpart, if there is one.
+    # Link each coefficient to the population-level term included in the same segment, if there is one.
+    # Match occurrences rather than names because `same()` includes a term under its source name.
+    population_terms = coefs |>
+      dplyr::select("dpar", "segment", "order", "matrix_name", "x_degree", population_parameter = "name")
     group_coefs = definitions |>
       dplyr::filter(.data$has_coefficients) |>
-      dplyr::mutate(
-        population_parameter = dplyr::if_else(
-          .data$population_parameter %in% coefs$name,
-          .data$population_parameter,
-          NA_character_
-        ),
-        matrix_col = nrow(coefs) + dplyr::row_number()
-      ) |>
+      dplyr::select(-"population_parameter") |>
+      dplyr::left_join(population_terms, by = c("dpar", "segment", "order", "matrix_name", "x_degree")) |>
+      dplyr::mutate(matrix_col = nrow(coefs) + dplyr::row_number()) |>
       dplyr::select(
         "population_parameter", "name", "group_col", "segment", "dpar",
         "sd_name", "par_type", "matrix_name", "order",
