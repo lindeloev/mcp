@@ -67,7 +67,6 @@ prior_context = function(data, data_columns, n_segments, design_specs = list()) 
     x_display = display_data_name(par_x),
     y_display = display_data_name(y_col),
     x_min = min(x, na.rm = TRUE),
-    y_sd = suppressWarnings(stats::sd(as.numeric(data[[y_col]]), na.rm = TRUE)),
     offsets = offsets,
     n_cp = n_segments - 1,
     n_segments = n_segments

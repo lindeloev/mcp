@@ -58,8 +58,10 @@ get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior 
 
   # Parse default and specified priors once. A constant response (e.g., a placeholder before
   # simulating data) has no scale. Use 1 instead, as rstanarm does for non-Gaussian families.
-  if (!isTRUE(context$y_sd > 0))
-    prior_specs$code = gsub("sd\\(\\.y( - offset(_[0-9]+)?)?\\)", "1", prior_specs$code)
+  # Check each scale on its own quantity, e.g., `sd(.y - offset)` rather than `sd(.y)`.
+  has_scale = function(x) isTRUE(as.numeric(resolve_prior_expression(instantiate_prior_template(x, context), context)) > 0)
+  prior_specs$code = stringr::str_replace_all(prior_specs$code, "sd\\(\\.y( - offset(_[0-9]+)?)?\\)",
+    function(x) ifelse(vapply(x, has_scale, logical(1)), x, "1"))
   prior_specs$parsed = lapply(instantiate_prior_template(prior_specs$code, context), parse_prior)
   prior_specs$code = NULL
   prior = lapply(prior, parse_prior)

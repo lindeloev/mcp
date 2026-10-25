@@ -840,6 +840,14 @@ test_that("a constant response uses unit scale for sd(y)-based default priors", 
   fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
   expect_equal(fit$prior$Intercept_1, "dnorm(2 - x_1 * 1, 2.5)")
   expect_prior(fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(data$x)), ")"))
+
+  # The unit scale applies to the quantity whose SD defines the prior, i.e., y - offset for the intercept
+  data = data.frame(x = 1:10, o = 1:10, y = 2:11)
+  fit = mcp(list(y ~ 1 + offset(o)), data, par_x = "x", sample = FALSE)
+  expect_equal(fit$prior$Intercept_1, "dnorm(1, 2.5)")
+  data$y = 2
+  fit = mcp(list(y ~ 1 + offset(o)), data, par_x = "x", sample = FALSE)
+  expect_prior(fit$prior$Intercept_1, paste0("dnorm(", mean(data$y - data$o), ", ", format_prior_number(2.5 * stats::sd(data$o)), ")"))
 })
 
 
