@@ -316,3 +316,25 @@ is.mcpfit = function(x) {
   lifecycle::deprecate_warn("0.4.0", "is.mcpfit()", "is_mcpfit()")
   is_mcpfit(x)
 }
+
+
+#' Deprecated functions in mcp
+#'
+#' These functions were exported in mcp v0.3.4 and are deprecated in v0.4.0.
+#' They still work but warn and point to their replacements.
+#'
+#' * `phi()`: The inverse probit link. Use [stats::pnorm()].
+#'
+#' @param q Vector of quantiles.
+#' @return A numeric vector of probabilities.
+#' @name mcp-deprecated
+#' @keywords internal
+NULL
+
+# Kept for revdeps (glossa) calling mcp::phi(). LEGACY: remove in mcp 0.5.
+#' @rdname mcp-deprecated
+#' @export
+phi = function(q) {
+  lifecycle::deprecate_warn("0.4.0", "phi()", "stats::pnorm()")
+  stats::pnorm(q)
+}

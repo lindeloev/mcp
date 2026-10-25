@@ -60,7 +60,7 @@ mcp v0.4 is a major breaking change with the aim of remaining relatively stable 
 
   - Tibbles are generally returned instead of data.frame() for readability. Tibbles are data frames, but `x[, "col"]` now returns a one-column tibble instead of a vector. Use `x$col` or `x[["col"]]` to get a vector. This change involves `summary()`, `fixef()`, `ranef()`, `fitted()`, `predict()`, `residuals()`, `hypothesis()`, and `interpolate_newdata()`. 
 
-  - mcp no longer exports `phi`, `logit`, `ilogit`, or `probit`.
+  - mcp no longer exports `logit`, `ilogit`, or `probit`. `phi()` is deprecated in favor of `stats::pnorm()`.
 
 - **Functions, plotting, and workflow:**
 
