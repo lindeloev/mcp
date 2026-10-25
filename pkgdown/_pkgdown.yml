@@ -114,6 +114,7 @@ articles:
   - title: Inference
     contents:
       - priors
+      - default_priors
       - comparison
       - predict
       - plotting
@@ -121,7 +122,6 @@ articles:
   - title: Implementation
     contents:
       - implementation
-      - default_priors
       - tips
 
 redirects:
@@ -150,8 +150,10 @@ navbar:
         href: articles/binomial.html
     - text: Inference
       menu:
-      - text: Priors
+      - text: Using priors
         href: articles/priors.html
+      - text: Default priors
+        href: articles/default_priors.html
       - text: Hypotheses and model comparison
         href: articles/comparison.html
       - text: Fits and predictions
@@ -160,14 +162,12 @@ navbar:
         href: articles/plotting.html
       - text: Missing responses and imputation
         href: articles/missing.html
+      - text: Diagnosing and fixing problems
+        href: articles/tips.html
     - text: Implementation
       menu:
       - text: From formulas to sampler code
         href: articles/implementation.html
-      - text: Default priors
-        href: articles/default_priors.html
-      - text: Tips, tricks, and debugging
-        href: articles/tips.html
     - text: Functions
       href: reference/index.html
     - text: News

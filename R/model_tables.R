@@ -181,7 +181,7 @@ get_pars_table = function(coefs, cps, group_coefs, family) {
 #' `r lifecycle::badge("experimental")`
 #'
 #' Return the canonical parameter definitions for an `mcpfit` object. This
-#' works before sampling and is the stable way to discover model parameters.
+#' works before sampling, so you can discover the model parameters before setting priors or inits.
 #'
 #' @param fit An `mcpfit` object.
 #' @param scope Optional parameter scope(s): `"population"` or `"group"`.

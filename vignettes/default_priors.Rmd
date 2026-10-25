@@ -56,6 +56,8 @@ General quantities used in the table below:
 
 - log-rate $y_{\text{rate}} = \log(y) - \text{offset}$, with $y \le 0$ replaced by 0.1, as `brms` does for zeros (and $\text{offset} = 0$ if absent)
 
+- As in `brms`, $\operatorname{mad}()$ and the $\operatorname{median}()$ of log-rates are rounded to one decimal. `prior_summary(fit)` shows the resulting values.
+
 
 | Parameter & Link | Intercept | Coefficients | Group SD ($\sigma_{\text{group}}$) | Precedent |
 |---|---|---|---|---|

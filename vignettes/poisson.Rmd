@@ -80,7 +80,7 @@ plot_pars(fit)
 
 `poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So the rate is around `r round(exp(result$mean[result$parameter == "Intercept_1"]), 2)` disasters per year in segment 1 and `r round(exp(result$mean[result$parameter == "Intercept_2"]), 2)` in segment 2. Exponentiating the posterior mean of the log-rate gives approximately the posterior median of $\lambda$, not its mean. For the posterior mean, exponentiate the draws before averaging, e.g., `mean(exp(as_draws_df(fit)$Intercept_1))`, or use `fitted(fit)`.
 
-The intercept prior is a normal distribution centered on the rounded median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale equal to the maximum of 2.5 and its rounded MAD. Replacing zeros keeps the log finite and the minimum scale avoids an accidentally narrow prior.
+The intercept prior is a normal distribution centered on the median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale equal to the maximum of 2.5 and its MAD. Replacing zeros keeps the log finite and the minimum scale avoids an accidentally narrow prior.
 
 Coefficients are [autoscaled as in `rstanarm`](../articles/default_priors.html#default-priors-on-regression-parameters), e.g., `dnorm(0, 2.5 / sd(column))`, and group-level SDs default to half-normal priors. These normal priors avoid the infinite expected counts that heavier Student-t tails imply under the log link ([read more](../articles/default_priors.html#deviations)).
 
