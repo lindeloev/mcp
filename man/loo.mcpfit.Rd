@@ -18,7 +18,8 @@
 \arguments{
 \item{x}{An \code{\link{mcpfit}} object.}
 
-\item{...}{Must be empty. Reserved for future use.}
+\item{...}{For \code{loo()}: further arguments passed to \code{\link[loo]{loo}}, e.g., \code{cores} or \code{save_psis}.
+For \code{waic()}: must be empty.}
 
 \item{ndraws}{Integer or \code{NULL}. Target number of posterior draws used for
 the log-likelihood or information criterion. Draws are balanced across

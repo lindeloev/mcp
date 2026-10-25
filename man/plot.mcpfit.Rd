@@ -129,7 +129,8 @@ can be supplied as explicit scalar design values. Passed to
 \itemize{
 \item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
-\item \code{"sigma"}: The standard deviation of the residuals.
+\item \code{"sigma"}: The standard deviation of the residuals. With \code{ar()} or \code{ma()}, it is the SD of the
+innovations, i.e., the part of the residuals not explained by the AR/MA terms.
 \item \code{"ar1"}, \code{"ar2"}, \code{"ma1"}, \code{"ma2"}, etc. depending on which AR or MA
 coefficient you want to evaluate.
 }}
@@ -169,7 +170,7 @@ plot(demo_fit) + theme_bw(15) + ggtitle("Great plot!")
 }
 }
 \seealso{
-plot_pars plot_dpar pp_check
+\code{\link[=plot_pars]{plot_pars()}}, \code{\link[=pp_check]{pp_check()}}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

@@ -32,7 +32,7 @@ Three rules govern how segments connect (with \code{x} as the change-point varia
 \item \strong{Only included terms get coefficients.} A segment includes the terms in its formula,
 plus an intercept unless removed with \verb{0 +}. Each included term gets a new coefficient
 (\code{x_2}, \code{stateB_2}) or reuses an existing one if wrapped in \code{same()}.
-\item \strong{x-terms are measured from the change point.} \code{x}, \code{x:z}, \code{state:x}, and \code{I(x^2)} start at zero
+\item \strong{x-terms are measured from the change point.} Only \code{x}, \code{x:z}, \code{state:x}, and \code{I(x^2)} start at zero
 at the segment's change point and stop growing at the next change point.
 \item \strong{Joined or disjoined.} Without an intercept (\code{0 + ...}), a segment is \emph{joined}: it continues
 from where the earlier intercept and x-terms left off. With an intercept, it is \emph{disjoined}
@@ -75,6 +75,8 @@ not predictions).
 \item \code{~ 1}: Plateau (intercept only, no slope).
 \item \code{~ x:state + I(x^2) + exp(z)}: Extended terms, interactions, and R-side bases
 (\code{scale()}, \code{poly()}, \code{splines::ns()}). Bases are evaluated before sampling and reused for \code{newdata}.
+Except for \code{I(x^k)}, transformations of \code{x} (e.g., \code{I(x / 2)}) use the original values of \code{x}, as in \code{lm()},
+and do not join.
 \item \code{~ 1 + offset(log(exposure))}: Offset with a fixed coefficient of 1. If one segment includes an offset,
 all segments must include one. The same applies within \code{sigma()}, etc., and within \code{ar()}/\code{ma()} in the
 segments that include them. \href{https://lindeloev.github.io/mcp/articles/poisson.html#modeling-rates-using-offset}{Read more}.

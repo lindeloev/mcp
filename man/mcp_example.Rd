@@ -16,7 +16,7 @@ mcp_example_data(name)
 \item \code{"ar"}: One change point in autoregressive residuals (the \code{ar1} dpar)
 \item \code{"binomial"}: Binomial with two change points. Much like \code{"demo"} on a logit scale.
 \item \code{"demo"}: Two change points between intercepts and joined/disjoined slopes.
-\item \code{"group_mu"}: Group-level predictor deviations (random intercepts/slopes) across a change point.
+\item \code{"group_mu"}: Group-level deviations in the predictor part (random intercepts/slopes) across a change point.
 \item \code{"group_cp"}: Group-level change-point deviations (random effects).
 \item \code{"intercepts"}: An intercept-only change point.
 \item \code{"missing"}: Missing data imputation (NAs in response variable y).

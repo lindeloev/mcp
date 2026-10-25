@@ -78,7 +78,8 @@ probability when \code{prior = TRUE}. It is \code{NA}
 for equality hypotheses, which compare models rather than an event
 within the fitted model.
 \item \code{BF} Bayes Factor in favor  of the hypothesis.
-For "=" it is the Savage-Dickey density ratio.
+For "=" it is the Savage-Dickey density ratio. It is \code{0} when all posterior
+(but not prior) draws lie on one side of the tested value; increase \code{iter} for a finite estimate.
 For directional hypotheses, it is the posterior odds divided by the
 prior odds. It is \code{Inf} (or \code{0}) when all (or no) posterior draws satisfy
 the hypothesis, i.e., the evidence exceeds what the number of draws can

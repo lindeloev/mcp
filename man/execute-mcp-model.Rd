@@ -170,7 +170,8 @@ currently requires all such effects (\code{group_effects = TRUE}).}
 \itemize{
 \item \code{"epred"} (default): Expected response from the full model (or \code{NULL} for compatibility with brms etc.).
 \item \code{"mu"}: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
-\item \code{"sigma"}: The standard deviation of the residuals.
+\item \code{"sigma"}: The standard deviation of the residuals. With \code{ar()} or \code{ma()}, it is the SD of the
+innovations, i.e., the part of the residuals not explained by the AR/MA terms.
 \item \code{"ar1"}, \code{"ar2"}, \code{"ma1"}, \code{"ma2"}, etc. depending on which AR or MA
 coefficient you want to evaluate.
 }}
@@ -195,7 +196,9 @@ evaluated quantity otherwise.
 }
 
 For \code{predict()} with built-in families, these are the exact moments and quantiles of the
-posterior predictive distribution (the mixture over posterior draws), so they do not vary with the seed.
+posterior predictive distribution given the evaluated draws (the mixture over draws), so they do not
+vary with the seed. Two exceptions: \code{ndraws} selects draws at random, and \code{arma = "replicate"}
+conditions on randomly generated response histories, i.e., a Monte Carlo approximation.
 
 With \code{prior = TRUE}, these are the analogous prior summaries. mcp's own
 columns are dot-prefixed to avoid collisions with data columns.

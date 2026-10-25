@@ -28,7 +28,7 @@
 #' 1. **Only included terms get coefficients.** A segment includes the terms in its formula,
 #'    plus an intercept unless removed with `0 +`. Each included term gets a new coefficient
 #'    (`x_2`, `stateB_2`) or reuses an existing one if wrapped in `same()`.
-#' 2. **x-terms are measured from the change point.** `x`, `x:z`, `state:x`, and `I(x^2)` start at zero
+#' 2. **x-terms are measured from the change point.** Only `x`, `x:z`, `state:x`, and `I(x^2)` start at zero
 #'    at the segment's change point and stop growing at the next change point.
 #' 3. **Joined or disjoined.** Without an intercept (`0 + ...`), a segment is *joined*: it continues
 #'    from where the earlier intercept and x-terms left off. With an intercept, it is *disjoined*
@@ -65,6 +65,8 @@
 #' * `~ 1`: Plateau (intercept only, no slope).
 #' * `~ x:state + I(x^2) + exp(z)`: Extended terms, interactions, and R-side bases
 #'   (`scale()`, `poly()`, `splines::ns()`). Bases are evaluated before sampling and reused for `newdata`.
+#'   Except for `I(x^k)`, transformations of `x` (e.g., `I(x / 2)`) use the original values of `x`, as in `lm()`,
+#'   and do not join.
 #' * `~ 1 + offset(log(exposure))`: Offset with a fixed coefficient of 1. If one segment includes an offset,
 #'   all segments must include one. The same applies within `sigma()`, etc., and within `ar()`/`ma()` in the
 #'   segments that include them. [Read more](https://lindeloev.github.io/mcp/articles/poisson.html#modeling-rates-using-offset).

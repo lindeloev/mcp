@@ -329,7 +329,8 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'
 #'   * `"epred"` (default): Expected response from the full model (or `NULL` for compatibility with brms etc.).
 #'   * `"mu"`: The conditional mean (or success probability per trial for binomial/bernoulli models), on the link or response scale.
-#'   * `"sigma"`: The standard deviation of the residuals.
+#'   * `"sigma"`: The standard deviation of the residuals. With `ar()` or `ma()`, it is the SD of the
+#'     innovations, i.e., the part of the residuals not explained by the AR/MA terms.
 #'   * `"ar1"`, `"ar2"`, `"ma1"`, `"ma2"`, etc. depending on which AR or MA
 #'     coefficient you want to evaluate.
 #' @param arma How to include AR and MA effects.
@@ -366,7 +367,9 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'      - `.lower` and `.upper`: The lower and upper ends of the central interval given in `width`.
 #'
 #'     For `predict()` with built-in families, these are the exact moments and quantiles of the
-#'     posterior predictive distribution (the mixture over posterior draws), so they do not vary with the seed.
+#'     posterior predictive distribution given the evaluated draws (the mixture over draws), so they do not
+#'     vary with the seed. Two exceptions: `ndraws` selects draws at random, and `arma = "replicate"`
+#'     conditions on randomly generated response histories, i.e., a Monte Carlo approximation.
 #'
 #'     With `prior = TRUE`, these are the analogous prior summaries. mcp's own
 #'     columns are dot-prefixed to avoid collisions with data columns.

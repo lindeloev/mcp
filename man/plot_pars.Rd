@@ -101,7 +101,7 @@ plot_pars(demo_fit, regex_pars = "cp") & theme_gray(15)
 }
 }
 \seealso{
-plot_dpar pp_check
+\code{\link[=plot.mcpfit]{plot.mcpfit()}}, \code{\link[=plot_dpar]{plot_dpar()}}, \code{\link[=pp_check]{pp_check()}}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

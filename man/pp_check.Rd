@@ -108,9 +108,7 @@ pp_check(demo_fit, type = "ecdf_overlay")
 }
 }
 \seealso{
-\code{\link{plot.mcpfit}} \code{\link{predict.mcpfit}}
-
-plot_pars plot_dpar pp_check
+\code{\link[=plot.mcpfit]{plot.mcpfit()}}, \code{\link[=plot_pars]{plot_pars()}}, \code{\link[=predict.mcpfit]{predict.mcpfit()}}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

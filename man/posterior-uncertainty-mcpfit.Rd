@@ -52,7 +52,7 @@ confint(demo_fit, parm = "cp_1")
 confint(demo_fit, parm = c("Intercept_1", "time_2"), level = 0.8)
 confint(demo_fit, prior = TRUE)
 
-# Include change points, residual SDs, group SDs, and AR/MA parameters.
+# Include change points, residual SDs, group-level SDs, and AR/MA parameters.
 vcov(demo_fit, pars = "population")
 
 # Inspect posterior parameter correlations across the full population model.
