@@ -148,7 +148,7 @@ empty = mcp(model, data = df, sample = FALSE)
 
 df$y = empty$simulate(empty, df,
   # Population-level:
-  Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma = 2,
+  Intercept_1 = 20, x_2 = 0.5, cp_1 = 50, sigma_1 = 2,
   
   # Draw group-level deviations with this SD
   cp_1_id_sd = 15)

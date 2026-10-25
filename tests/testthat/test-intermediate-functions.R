@@ -194,6 +194,11 @@ test_that("summary() only compares with values simulated from the same model", {
   fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
   expect_null(get_simulated(fit))
   expect_false(any(c("sim", "match") %in% names(get_summary(fit, width = 0.95))))
+
+  # Same parameters, but another link
+  fit_link = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", family = gaussian(link = "log"), sample = FALSE)
+  expect_setequal(mcp_pars(fit_link)$parameter, mcp_pars(simulating)$parameter)
+  expect_null(get_simulated(fit_link))
 })
 
 test_that("summary() matches simulated disjoined change points between adjacent observed x", {

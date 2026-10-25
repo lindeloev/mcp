@@ -72,7 +72,7 @@ We plot a posterior predictive interval to show the effect of the changing stand
 plot(fit, interval = "predict")
 ```
 
-We can see all parameters are well recovered (compare `sim` to `mean`). Like the other parameters, the `sigma` coefficients are named after the segment where they are included. There will always be a `sigma_Intercept_1` because `sigma` is required by the likelihood.
+We can see all parameters are well recovered (compare `sim` to `mean`) despite poor `rhat` and ESS. Like the other parameters, the `sigma` coefficients are named after the segment where they are included. There will always be a `sigma_Intercept_1` because `sigma` is required by the likelihood.
 
 ```{r, R.options = list(width = 9999)}
 summary(fit)

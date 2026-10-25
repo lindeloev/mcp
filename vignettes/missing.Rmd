@@ -39,6 +39,8 @@ Sometimes the interest is not in recovering individual missing responses, but in
 fit_void = mcp_example("void", sample = "both")
 ```
 
+The message confirms that `mcp` detected the missing responses. 
+
 Notice that `mcp` can infer change points in regions with no observed data. The first change point joins a plateau to a slope. Its location in the void is mostly informed by extrapolating the two segments until they meet, and the uncertainty is greater than in the full data because fewer data inform these trends. In principle, it could be known to great precision if the segments' trends were very well defined.
 
 The second change point is different because segment 3 is disjoined from segment 2. There is nothing in the void that tells where the jump happened, so the change point posterior is roughly uniform across the void. This is true for any gap between data: the narrow gap between two neighboring data points (top panel) also yields a uniform-like posterior, just on a much smaller range.

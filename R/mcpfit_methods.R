@@ -35,11 +35,13 @@ NULL
 
 
 # Parameter values used to simulate the response with `fit$simulate()`, or NULL. Only for fits of the
-# simulating model, i.e., with the same parameters, so that other models are not compared to them.
+# simulating model, i.e., with the same parameters, family, and link, so that other models are not compared to them.
 get_simulated = function(fit) {
-  simulated = as.list(attr(fit$data[, mcp_columns(fit)$response], "simulated"))
+  simulated = attr(fit$data[, mcp_columns(fit)$response], "simulated")
+  same_family = identical(attr(simulated, "family"), fit$family$family) && identical(attr(simulated, "link"), fit$family$link)
+  simulated = as.list(simulated)
   simulated = simulated[vapply(simulated, is.numeric, logical(1))]  # Remove non-numeric
-  if (has_custom_jags_code(fit) || !setequal(names(simulated), mcp_pars(fit)$parameter))
+  if (has_custom_jags_code(fit) || !same_family || !setequal(names(simulated), mcp_pars(fit)$parameter))
     return(NULL)
   simulated
 }
@@ -248,8 +250,9 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 #'  [Read more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 #'
 #'  For simulated data, the summary contains two additional columns so that it
-#'  is easy to inspect whether the model can recover the parameters. Run
-#'  simulation and summary multiple times to get a sense of the robustness.
+#'  is easy to inspect whether the model can recover the parameters. They are shown when the
+#'  response was simulated using `fit$simulate()` from a model with the same parameters, family, and link.
+#'  Run simulation and summary multiple times to get a sense of the robustness.
 #'
 #'   * `sim` is the value used to generate the data.
 #'   * `match` is `"OK"` if `sim` is contained in the central posterior

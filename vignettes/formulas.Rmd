@@ -171,7 +171,7 @@ Reused coefficients are estimated jointly from all segments where they are inclu
 
 [`mcp_pars()`](../reference/mcp_pars.html) lists the parameters that follow from the rules above. You can use it before sampling:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 model = list(
   y ~ 1 + x:state + z,         # Intercept_1, by-state slopes, z_1
     ~ 1 + x + state + same(z), # Intercept_2, x_2, state contrasts; reuse z_1
@@ -204,13 +204,13 @@ Offsets have fixed coefficients: include `offset(log(exposure))` in every segmen
 
 Here is the model from the overview plot at the top of this page, with an extra plateau segment:
 
-```{r}
+```{r, R.options = list(width = 9999)}
 # Define model with multiple predictors
 model = list(
-  y ~ 1 + x:state + z, # Segment 1: by-state slopes on x, and z
-  ~ 1 + x + state,     # Segment 2: common slope on x, by-state intercepts
-  ~ 0 + I(x^2),        # Segment 3: joined quadratic; state not included
-  ~ 1                  # Segment 4: common intercept for all states
+  y ~ 1 + x:state + z,         # Segment 1: by-state slopes on x, and z
+  ~ 1 + x + state,             # Segment 2: common slope on x, by-state intercepts
+  ~ 0 + I(x^2) + same(state),  # Segment 3: joined quadratic; reuse state contrasts
+  ~ 1                          # Segment 4: common intercept for all states
 )
 
 # Load data and inspect parameters without sampling
@@ -235,7 +235,7 @@ First, using `hypothesis()`:
 hypothesis(demo_fit, "time_3 > time_2")
 ```
 
-The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its central posterior interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, the estimate is negative, so the slope is smaller in segment 3 than in segment 2, with great certainty (`prob = 0`).
+The estimate reflects the difference `time_3 - time_2` (how much steeper or flatter the slope became in segment 3), along with its central posterior interval, posterior probability, and directional Bayes factor. [Read more about hypothesis testing in the comparison article](../articles/comparison.html). Here, the estimate is negative, so the slope is smaller in segment 3 than in segment 2, with great certainty (`prob = 0`). `BF = 0` because no posterior draws satisfy the hypothesis, so the evidence exceeds what the number of draws can resolve.
 
 If you need the full posterior distribution of the change (e.g., for `quantile()`, `hist()`, or plotting with `ggplot2`), extract draws, e.g., using `as_draws_df()`, and compute the change in each draw:
 

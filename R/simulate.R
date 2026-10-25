@@ -198,7 +198,7 @@ simulate_truncated_normal = function(mean, sd, lower, upper) {
 #' @inheritParams mcp
 #' @param newdata A data.frame or tibble that should contain the same columns as `fit$data`
 #' @param ... Parameter values of length 1 or `nrow(newdata)`, e.g., `cp_1 = 80, Intercept_1 = -22.5` etc.
-#' @return Numeric vector with attribute "simulated".
+#' @return Numeric vector with attribute "simulated": the parameter values, with attributes "family" and "link".
 #' @noRd
 fit_simulate = function(fit,
                         newdata,
@@ -320,9 +320,12 @@ fit_simulate = function(fit,
     fit, data, pars, ndraws = 1, type = .type, rate = .rate, dpar = .dpar, arma = .arma, scale = .scale
   )$value)
 
-  # Attach the parameter values, including the simulated group-level deviations
+  # Attach the parameter values, including the simulated group-level deviations.
+  # Family and link identify the simulating model together with the parameter names.
+  class(simulated) = c("mcplist", "list")  # for nicer printing
+  attr(simulated, "family") = fit$family$family
+  attr(simulated, "link") = fit$family$link
   attr(simulated_y, "simulated") = simulated
-  class(attr(simulated_y, "simulated")) = c("mcplist", "list")  # for nicer printing
   simulated_y
 }
 

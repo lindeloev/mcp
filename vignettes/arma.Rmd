@@ -71,14 +71,14 @@ ar_data = mcp_example_data("ar")
 head(ar_data)
 ```
 
-See how this was generated in `mcp_example("ar")$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined slope (`0 + time`) with a negative first-order autoregressive residual (`ar(1)`):
+See how this was generated in `mcp_example("ar")$example_code`. We model this as a plateau (`1`) with a second-order autoregressive residual (`ar(2)`) followed by a joined plateau (`0`) with a negative first-order autoregressive residual (`ar(1)`):
 
 ```{r}
 model = list(
   price ~ 1 + ar(2),  # Intercept_1, ar1_1, ar2_1
-  ~ 0 + time + ar(1)  # time_2, ar1_2; replaces AR(2) with AR(1)
+  ~ 0 + ar(1)         # ar1_2; replaces AR(2) with AR(1)
 )
-fit = mcp(model, ar_data)
+fit = mcp(model, ar_data, par_x = "time")
 ```
 
 Let's plot it and we see that AR was strong in the first segment and weaker-but-negative in the second:
@@ -97,7 +97,7 @@ The naming syntax is `[component][order]_[segment]` for intercepts. For example,
 
 Comparing the columns `mean` and `sim` we see that the AR coefficients are reasonably recovered. In fact, the posterior means are typically close to the estimates of `arima(data, order = c(N, 0, 0))` (see below), so the non-perfect fits are mostly due to randomness in the simulation - not in the fit.
 
-For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the plateau (`time < 74.5`) is `r round(sd(fit$data$price[fit$data$time < 74.5]), 1)`. As always, it is good to assess posteriors and convergence more directly:
+For Gaussian GARMA models, `sigma` describes the *innovations*, i.e., the part of the residuals not explained by AR and MA coefficients. `sd(fit$data$price)` is therefore generally higher. In this case, the SD of raw data in the first segment (`time < 90`) is `r round(sd(fit$data$price[fit$data$time < 90]), 1)`. As always, it is good to assess posteriors and convergence more directly:
 
 ```{r, fig.height=9, fig.width=8}
 plot_pars(fit, npars = NULL)

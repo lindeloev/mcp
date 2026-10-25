@@ -83,7 +83,7 @@ df$y = empty_default$simulate(empty_default, df,
     Intercept_1 = 20, Intercept_2 = 22, Intercept_3 = 30,  # intercepts
     x_1 = -0.5, x_2 = 0.5, x_3 = 0,  # slopes
     cp_1 = 35, cp_2 = 70,  # change points
-    sigma = 5)
+    sigma_1 = 5)
 
 head(df)
 ```
