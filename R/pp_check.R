@@ -44,7 +44,11 @@ pp_check.mcpfit = function(
   varying = lifecycle::deprecated(),
   ...
 ) {
-  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "pp_check", "ndraws", "nsamples")
+  if (missing(ndraws) && missing(nsamples)) {
+    ndraws = min(ndraws, count_draws(object, prior = prior))  # Short fits have fewer draws than the default
+  } else {
+    ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "pp_check", "ndraws", "nsamples")
+  }
   group_effects = legacy_arg(group_effects, varying, missing(group_effects), "pp_check", "group_effects", "varying", lifecycle::deprecate_warn)
 
   # Internal mcp naming convention
@@ -55,8 +59,8 @@ pp_check.mcpfit = function(
   checkmate::assert_multi_class(group_effects, c("logical", "character"))
   assert_arma(arma)
   checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-  if (!is.null(ndraws))
-    ndraws = min(ndraws, sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1))))  # Short fits have fewer draws than the default
+  if (!is.null(ndraws) && ndraws > count_draws(fit, prior = prior))
+    stop("`ndraws` cannot exceed the ", count_draws(fit, prior = prior), " available draws.", call. = FALSE)
 
   if (is.null(newdata)) {
     eval_data = fit$data

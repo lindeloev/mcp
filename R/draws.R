@@ -16,6 +16,12 @@ mcmclist_draws = function(fit, prior = FALSE, error = TRUE) {
 }
 
 
+# Number of prior or posterior draws. Like ndraws(fit), but also supporting prior = TRUE.
+count_draws = function(fit, prior = FALSE) {
+  sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1)))
+}
+
+
 # Convert the selected draws to a posterior draws array.
 posterior_draws = function(fit, prior = FALSE, error = TRUE) {
   draws = mcmclist_draws(fit, prior = prior, error = error)
@@ -177,8 +183,7 @@ nchains.mcpfit = function(x, ...) {
 #' @rdname draws-index-mcp
 #' @exportS3Method posterior::ndraws
 ndraws.mcpfit = function(x, ...) {
-  draws = mcmclist_draws(x)
-  sum(vapply(draws, nrow, integer(1)))
+  count_draws(x)
 }
 
 #' @rdname draws-index-mcp

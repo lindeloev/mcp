@@ -114,7 +114,7 @@ apply_test_fit = function(desc, all_models, family = gaussian()) {
 test_matches_simulated = function(fit, min_ess) {
   summaries = rbind(
     get_summary(fit, width = 0.97, scope = "population"),
-    ranef(fit, width = 0.97)
+    get_summary(fit, width = 0.97, scope = "group")
   ) |>
     dplyr::filter(is.na(sim) == FALSE)
 

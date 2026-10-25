@@ -124,8 +124,7 @@ validate_loglik_ndraws = function(fit, ndraws) {
   if (is.null(ndraws))
     return(NULL)
 
-  mcmc_post = .subset2(fit, "mcmc_post")
-  available_draws = sum(vapply(mcmc_post, nrow, integer(1)))
+  available_draws = count_draws(fit)
   if (ndraws > available_draws)
     stop("`ndraws` cannot exceed the ", available_draws, " available posterior draws.")
   as.integer(ndraws)

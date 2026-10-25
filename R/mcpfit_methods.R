@@ -427,6 +427,8 @@ fixef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, dp
 #' @exportS3Method nlme::ranef
 ranef.mcpfit = function(object, width = 0.95, prior = FALSE, verbose = FALSE, ...) {
   rlang::check_dots_empty()
+  if (nrow(mcp_pars(object, scope = "group")) == 0)
+    stop("The model has no group-level effects. Use `fixef(fit)` for population-level coefficients.", call. = FALSE)
   get_summary(object, width, scope = "group", prior = prior, verbose = verbose)
 }
 

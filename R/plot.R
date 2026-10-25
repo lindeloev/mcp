@@ -134,9 +134,9 @@ get_plot = function(x,
   if (!coda::is.mcmc.list(.subset2(fit, "mcmc_post")) && !coda::is.mcmc.list(.subset2(fit, "mcmc_prior")))
     stop("Cannot plot an mcpfit without prior or posterior draws.")
 
-  available_draws = sum(vapply(mcmclist_draws(fit, prior = prior), nrow, integer(1)))  # Like niterations(fit), but also supporting prior = TRUE
-  if (!is.null(ndraws))
-    ndraws = min(ndraws, available_draws)
+  available_draws = count_draws(fit, prior = prior)
+  if (!is.null(ndraws) && ndraws > available_draws)
+    stop("`ndraws` cannot exceed the ", available_draws, " available draws.", call. = FALSE)
   lines = min(lines, available_draws)
 
   # Useful vars
@@ -409,7 +409,11 @@ plot.mcpfit = function(x,
                     q_predict = lifecycle::deprecated(),
                     nsamples = lifecycle::deprecated(),
                     ...) {
-  ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "plot.mcpfit", "ndraws", "nsamples")
+  if (missing(ndraws) && missing(nsamples)) {
+    ndraws = min(ndraws, count_draws(x, prior = prior))  # Short fits have fewer draws than the default
+  } else {
+    ndraws = legacy_arg(ndraws, nsamples, missing(ndraws), "plot.mcpfit", "ndraws", "nsamples")
+  }
   legacy = legacy_plot_interval(interval, width, q_fit, q_predict, missing(interval) && missing(width), "plot.mcpfit")
   which_y = legacy_which_y(list(...), "plot")
   if (missing(rate))
@@ -454,6 +458,8 @@ plot_dpar = function(x,
                      ...) {
   rlang::check_dots_empty()
   interval = match.arg(interval, c("none", "fitted"))
+  if (missing(ndraws))
+    ndraws = min(ndraws, count_draws(x, prior = prior))  # Short fits have fewer draws than the default
 
   get_plot(
     x,

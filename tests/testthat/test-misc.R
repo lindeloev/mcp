@@ -688,7 +688,7 @@ test_that("format.mcpfamily and summary print all family links", {
 test_that("draw-dependent methods require explicit prior selection", {
   fit = demo_fit
   fit$mcmc_post = NULL
-  for (method in list(summary, fitted, predict, residuals, fixef, ranef,
+  for (method in list(summary, fitted, predict, residuals, fixef,
                      as_draws, as_draws_df, coda::as.mcmc,
                      niterations, nchains, ndraws, log_lik, plot, plot_pars)) {
     expect_error(method(fit), "No posterior draws are available", fixed = TRUE)
@@ -706,11 +706,17 @@ test_that("draw-dependent methods require explicit prior selection", {
 
 
 test_that("ndraws is bounded by the available draws", {
-  expect_error(fitted(demo_fit, ndraws = 1001), "`ndraws` cannot exceed the 1000 available draws.", fixed = TRUE)
+  message = "`ndraws` cannot exceed the 1000 available draws."
+  expect_error(fitted(demo_fit, ndraws = 1001), message, fixed = TRUE)
+  expect_error(pp_check(demo_fit, ndraws = 1001), message, fixed = TRUE)
+  expect_error(plot(demo_fit, ndraws = 1001), message, fixed = TRUE)
+  expect_error(plot_dpar(demo_fit, dpar = "sigma", ndraws = 1001), message, fixed = TRUE)
 
-  # pp_check() defaults to more draws than short fits have
+  # Defaults are capped for short fits, which have fewer draws
   short_fit = thin_post_draws(demo_fit, 40)
   expect_s3_class(pp_check(short_fit), "ggplot")
+  expect_s3_class(plot(short_fit, interval = "fitted"), "ggplot")
+  expect_s3_class(plot_dpar(short_fit, dpar = "sigma", interval = "fitted"), "ggplot")
 })
 
 

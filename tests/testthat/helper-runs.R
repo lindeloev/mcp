@@ -343,6 +343,9 @@ test_summary = function(fit, group_cols, prior = FALSE) {
       population_sim = ifelse(is.na(population), 0, simulated[population])
       testthat::expect_equal(group_coefs$sim, unname(population_sim) + group_effects$sim)
     }
+  } else {
+    testthat::expect_error(ranef(fit, prior = prior), "no group-level effects", fixed = TRUE)
+    testthat::expect_error(coef(fit, prior = prior), "no group-level effects", fixed = TRUE)
   }
 }
 
