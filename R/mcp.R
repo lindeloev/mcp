@@ -287,57 +287,17 @@ mcp = function(
   ##################
   # MODEL BUILDING #
   ##################
-  # Build model metadata.
-  # Pass the same canonical segment formulas to all model-building consumers
-  parsed = parse_segments(model, data, family, par_x, series)
-  model = parsed$model
-  cps = parsed$cps
-  data_columns = parsed$data_columns
-  coef_tables = get_coef_tables(model, data, family, par_x)
-  coefs = coef_tables$coefs
-  group_coefs = coef_tables$group_coefs
-  coef_definitions = definition_rows(coefs)
-  group_definitions = definition_rows(group_coefs)
-  family = resolve_dpar_specs(family, coef_tables$components)
-  parameters = get_pars_table(coef_definitions, cps, group_definitions, family)
-  if (nrow(parameters) == 0)
-    stop("The model does not contain any parameters to estimate.", call. = FALSE)
+  built = get_model_tables(model, data, family, par_x, series)
+  model = built$model
+  family = built$family
+  model_tables = built$model_tables
+  coef_definitions = definition_rows(model_tables$coefs)
+  group_definitions = definition_rows(model_tables$group_coefs)
 
   # Make prior
-  assert_prior_on_definitions(prior, coefs, group_coefs)
-  prior_table = get_prior_table(data_columns, cps, coef_definitions, group_definitions, family, prior, data, coef_tables$design_specs, reparam)
+  assert_prior_on_definitions(prior, model_tables$coefs, model_tables$group_coefs)
+  prior_table = get_prior_table(model_tables$data_columns, model_tables$cps, coef_definitions, group_definitions, family, prior, data, model_tables$design_specs, reparam)
   assert_constant_dpars(prior_table, coef_definitions, family)
-
-  # Data-sized design values are only needed to build the model. Fitted-model
-  # methods evaluate the stored design specifications on (new)data instead.
-  model_tables = list(
-    data_columns = data_columns,
-    cps = cps,
-    coefs = dplyr::select(coefs, -"matrix_data"),
-    group_coefs = dplyr::select(group_coefs, -"matrix_data"),
-    parameters = parameters,
-    design_specs = lapply(coef_tables$design_specs, function(design_spec) {
-      design_spec$offset_data = NULL
-      environment(design_spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
-      design_spec
-    })
-  )
-
-  # Fitted-model methods evaluate the designs from .GlobalEnv, so formula functions must be reachable from there
-  formula_functions = unique(unlist(lapply(model_tables$design_specs, function(design_spec) called_functions(attr(design_spec$terms, "predvars")))))
-  unreachable = formula_functions[!vapply(formula_functions, exists, logical(1), envir = globalenv(), mode = "function")]
-  if (length(unreachable) > 0)
-    stop(
-      "Function(s) used in the formulas are not available from the global environment: ", and_collapse(paste0("`", unreachable, "`")),
-      ". Define them in the global environment, or add the transformed column(s) to `data`.",
-      call. = FALSE
-    )
-
-  has_arma = any(coef_definitions$dpar %in% c("ar", "ma"))
-  if (has_arma) {
-    check_arma_model(family, coef_definitions, data_columns, data)
-    warn_arma_not_included(coef_tables$components)
-  }
 
   # Make jags code if it is not provided by the user
   if (!custom_jags_code) {
@@ -349,71 +309,15 @@ mcp = function(
   ##########
   # SAMPLE #
   ##########
-  jags_data = get_jags_data(
-    data, family, length(model), data_columns, coefs, group_coefs, parameters, jags_code,
-    generated = !custom_jags_code,
-    design_specs = coef_tables$design_specs
-  )
+  samples = sample_jags(model_tables, prior_table, family, data, sample, chains, iter, warmup, inits, jags_code, custom_jags_code, seed, quiet)
 
-  # Monitor model parameters and, for generated JAGS code, latent responses
-  all_pars = prior_table$parameter
-  missing_response_rows = which(is.na(data[[data_columns$response]]))
-  imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
-    paste0(data_columns$response, "[", missing_response_rows, "]")
-
-  sample_draws = function(pars, sample) {
-    draws = run_jags(
-      jags_code = jags_code,
-      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, data_columns) else jags_data,
-      pars = pars,
-      sample = sample,
-      n.chains = chains,
-      n.iter = iter,
-      n.adapt = warmup,
-      inits = inits,
-      default_inits = get_default_inits(prior_table, parameters, range(data[[par_x]], na.rm = TRUE), inits, if (custom_jags_code) jags_code),
-      seed = seed,
-      quiet = quiet,
-      use_glm = use_jags_glm(family, group_definitions)
-    ) |>
-      recover_levels(data, parameters[parameters$scope == "group", ])
-
-    class(draws) = "mcmc.list"
-
-    # JAGS sorts nodes alphabetically. Order them like mcp_pars() instead, keeping group levels in factor-level order.
-    draws[, order(match(sub("\\[.*", "", coda::varnames(draws)), parameters$parameter)), drop = FALSE]
-  }
-
-  # Sample posterior
-  if (sample %in% c("post", "both")) {
-    mcmc_post = sample_draws(c(all_pars, imputed_response_nodes), "post")
-
-    # Handle missing data
-    if (length(imputed_response_nodes) > 0) {
-      mcmc_imputed = mcmc_post[, imputed_response_nodes, drop = FALSE]
-      retained_parameter_nodes = setdiff(colnames(mcmc_post[[1]]), imputed_response_nodes)
-      mcmc_post = mcmc_post[, retained_parameter_nodes, drop = FALSE]
-    } else {
-      mcmc_imputed = NULL
-    }
-
-
-    # Diagnostics check - also for single-chain fits
-    # Cache it for summary() and ranef(), which are slow to recompute it for many group-level deviations.
+  # Diagnostics check - also for single-chain fits
+  # Cache it for summary() and ranef(), which are slow to recompute it for many group-level deviations.
+  convergence = NULL
+  if (!is.null(samples$mcmc_post)) {
     constant_pars = prior_table$parameter[prior_table$kind == "constant"]
-    convergence = list(hash = rlang::hash(mcmc_post), table = convergence_table(mcmc_post))
-    warn_nonconvergence(convergence$table, diagnostics, constant_pars = constant_pars, check_rhat = coda::nchain(mcmc_post) >= 2)
-  } else {
-    mcmc_post = NULL
-    mcmc_imputed = NULL
-    convergence = NULL
-  }
-
-  # Sample prior
-  if (sample %in% c("prior", "both")) {
-    mcmc_prior = sample_draws(all_pars, "prior")
-  } else {
-    mcmc_prior = NULL
+    convergence = list(hash = rlang::hash(samples$mcmc_post), table = convergence_table(samples$mcmc_post))
+    warn_nonconvergence(convergence$table, diagnostics, constant_pars = constant_pars, check_rhat = coda::nchain(samples$mcmc_post) >= 2)
   }
 
 
@@ -426,11 +330,21 @@ mcp = function(
     form
   })
 
+  # Data-sized design values are only needed to build the model. Fitted-model
+  # methods evaluate the stored design specifications on (new)data instead.
+  model_tables$coefs = dplyr::select(model_tables$coefs, -"matrix_data")
+  model_tables$group_coefs = dplyr::select(model_tables$group_coefs, -"matrix_data")
+  model_tables$design_specs = lapply(model_tables$design_specs, function(design_spec) {
+    design_spec$offset_data = NULL
+    environment(design_spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
+    design_spec
+  })
+
   # fit$prior in the format of mcp(..., prior), ordered like mcp_pars(). Show the JAGS nodes cp_0 and cp_K
   # as the ends of the observed range, as users specify them.
   range_ends = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, length(model)), "\\b"))
   prior = stats::setNames(as.list(stringr::str_replace_all(prior_table$value, range_ends)), prior_table$parameter)
-  prior = prior[order(match(names(prior), parameters$parameter))]
+  prior = prior[order(match(names(prior), model_tables$parameters$parameter))]
 
   # Class stuff
   class(model) = c("mcplist", "list")
@@ -447,12 +361,12 @@ mcp = function(
     call = matched_call,
 
     # Results
-    mcmc_post = mcmc_post,
-    mcmc_prior = mcmc_prior,
+    mcmc_post = samples$mcmc_post,
+    mcmc_prior = samples$mcmc_prior,
 
     # Extracted model
     jags_code = jags_code,
-    simulate = get_fitsimulate(parameters),
+    simulate = get_fitsimulate(model_tables$parameters),
 
     # For reproducibility and for detecting fits from older mcp versions. JAGS only when sampled.
     version = list(
@@ -471,13 +385,13 @@ mcp = function(
       diagnostics = diagnostics,
       convergence = convergence,
       custom_jags_code = custom_jags_code,
-      imputed_response = mcmc_imputed,
-      imputed_response_rows = if (is.null(mcmc_imputed)) integer() else missing_response_rows
+      imputed_response = samples$imputed_response,
+      imputed_response_rows = if (is.null(samples$imputed_response)) integer() else which(is.na(data[[model_tables$data_columns$response]]))
     )
   )
   class(mcpfit) = "mcpfit"
 
-  if (!is.null(mcmc_post) && has_arma)
+  if (!is.null(samples$mcmc_post) && is_arma(mcpfit))
     warn_arma_fit(mcpfit, diagnostics = diagnostics)
 
   # Return it

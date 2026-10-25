@@ -3,6 +3,48 @@
 
 
 
+# Build the model tables for `mcp()`
+get_model_tables = function(model, data, family, par_x, series = NULL) {
+  # Pass the same canonical segment formulas to all model-building consumers
+  parsed = parse_segments(model, data, family, par_x, series)
+  coef_tables = get_coef_tables(parsed$model, data, family, par_x)
+  coef_definitions = definition_rows(coef_tables$coefs)
+  group_definitions = definition_rows(coef_tables$group_coefs)
+  family = resolve_dpar_specs(family, coef_tables$components)
+  parameters = get_pars_table(coef_definitions, parsed$cps, group_definitions, family)
+  if (nrow(parameters) == 0)
+    stop("The model does not contain any parameters to estimate.", call. = FALSE)
+
+  # Fitted-model methods evaluate the designs from .GlobalEnv, so formula functions must be reachable from there
+  formula_functions = unique(unlist(lapply(coef_tables$design_specs, function(design_spec) called_functions(attr(design_spec$terms, "predvars")))))
+  unreachable = formula_functions[!vapply(formula_functions, exists, logical(1), envir = globalenv(), mode = "function")]
+  if (length(unreachable) > 0)
+    stop(
+      "Function(s) used in the formulas are not available from the global environment: ", and_collapse(paste0("`", unreachable, "`")),
+      ". Define them in the global environment, or add the transformed column(s) to `data`.",
+      call. = FALSE
+    )
+
+  if (any(coef_definitions$dpar %in% c("ar", "ma"))) {
+    check_arma_model(family, coef_definitions, parsed$data_columns, data)
+    warn_arma_not_included(coef_tables$components)
+  }
+
+  list(
+    model = parsed$model,
+    family = family,
+    model_tables = list(
+      data_columns = parsed$data_columns,
+      cps = parsed$cps,
+      coefs = coef_tables$coefs,
+      group_coefs = coef_tables$group_coefs,
+      parameters = parameters,
+      design_specs = coef_tables$design_specs
+    )
+  )
+}
+
+
 #' Parse a list of segment formulas
 #'
 #' Used internally for most mcp functions.

@@ -3,6 +3,64 @@
 # ------------------------------------------------------------------------
 
 
+# Sample the posterior and/or prior using JAGS
+# Holds all JAGS-specific sampling steps for `mcp()`.
+sample_jags = function(model_tables, prior_table, family, data, sample, chains, iter, warmup, inits, jags_code, custom_jags_code, seed, quiet) {
+  data_columns = model_tables$data_columns
+  parameters = model_tables$parameters
+  jags_data = get_jags_data(
+    data, family, nrow(model_tables$cps) + 1, data_columns, model_tables$coefs, model_tables$group_coefs, parameters, jags_code,
+    generated = !custom_jags_code,
+    design_specs = model_tables$design_specs
+  )
+
+  # Monitor model parameters and, for generated JAGS code, latent responses
+  all_pars = prior_table$parameter
+  missing_response_rows = which(is.na(data[[data_columns$response]]))
+  imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
+    paste0(data_columns$response, "[", missing_response_rows, "]")
+
+  sample_draws = function(pars, sample) {
+    draws = run_jags(
+      jags_code = jags_code,
+      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, data_columns) else jags_data,
+      pars = pars,
+      sample = sample,
+      n.chains = chains,
+      n.iter = iter,
+      n.adapt = warmup,
+      inits = inits,
+      default_inits = get_default_inits(prior_table, parameters, range(data[[data_columns$par_x]], na.rm = TRUE), inits, if (custom_jags_code) jags_code),
+      seed = seed,
+      quiet = quiet,
+      use_glm = use_jags_glm(family, definition_rows(model_tables$group_coefs))
+    ) |>
+      recover_levels(data, parameters[parameters$scope == "group", ])
+
+    class(draws) = "mcmc.list"
+
+    # JAGS sorts nodes alphabetically. Order them like mcp_pars() instead, keeping group levels in factor-level order.
+    draws[, order(match(sub("\\[.*", "", coda::varnames(draws)), parameters$parameter)), drop = FALSE]
+  }
+
+  # Sample posterior and split off the missing responses
+  mcmc_post = NULL
+  imputed_response = NULL
+  if (sample %in% c("post", "both")) {
+    mcmc_post = sample_draws(c(all_pars, imputed_response_nodes), "post")
+    if (length(imputed_response_nodes) > 0) {
+      imputed_response = mcmc_post[, imputed_response_nodes, drop = FALSE]
+      mcmc_post = mcmc_post[, setdiff(colnames(mcmc_post[[1]]), imputed_response_nodes), drop = FALSE]
+    }
+  }
+
+  # Sample prior
+  mcmc_prior = if (sample %in% c("prior", "both")) sample_draws(all_pars, "prior")
+
+  list(mcmc_post = mcmc_post, mcmc_prior = mcmc_prior, imputed_response = imputed_response)
+}
+
+
 #' Run parallel MCMC sampling using JAGS.
 #'
 #' @inheritParams mcp
@@ -32,7 +90,7 @@ run_jags = function(jags_code,
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
   do_sampling = function(inits, n.chains) {
-    sample_jags = function() {
+    sample_chains = function() {
       # Samplers are assigned at compile time, so load the glm module here to reach
       # parallel workers too, and unload it again to leave the user's session unchanged.
       if (use_glm && !("glm" %in% rjags::list.modules())) {
@@ -77,9 +135,9 @@ run_jags = function(jags_code,
     # rjags still prints some adaptation notices with quiet = TRUE.
     if (quiet) {
       draws = NULL
-      capture.output({ draws = sample_jags() })
+      capture.output({ draws = sample_chains() })
     } else {
-      draws = sample_jags()
+      draws = sample_chains()
     }
     draws
   }
