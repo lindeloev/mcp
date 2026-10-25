@@ -203,7 +203,8 @@ validate_loglik_ndraws = function(fit, ndraws) {
 #'       for equality hypotheses, which compare models rather than an event
 #'       within the fitted model.
 #'   * `BF` Bayes Factor in favor  of the hypothesis.
-#'       For "=" it is the Savage-Dickey density ratio.
+#'       For "=" it is the Savage-Dickey density ratio. It is `0` when all posterior
+#'       (but not prior) draws lie on one side of the tested value; increase `iter` for a finite estimate.
 #'       For directional hypotheses, it is the posterior odds divided by the
 #'       prior odds. It is `Inf` (or `0`) when all (or no) posterior draws satisfy
 #'       the hypothesis, i.e., the evidence exceeds what the number of draws can
@@ -342,7 +343,8 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
         }
 
         # Draws alone cannot distinguish a valid boundary test from an impossible null.
-        if (all(prior_values >= 0) || all(prior_values <= 0)) {
+        is_prior_one_sided = all(prior_values >= 0) || all(prior_values <= 0)
+        if (is_prior_one_sided) {
           warning(
             "All prior draws lie on one side of the tested equality: ", expression,
             ". The tested value may be at or outside the prior bounds. Kernel smoothing can give a misleading Bayes factor for an impossible value; verify that the null is allowed by the model.",
@@ -355,9 +357,10 @@ hypothesis.mcpfit = function(x, hypotheses, width = 0.95, prior = FALSE, ...) {
           )
         }
 
-        dens_prior = get_density(prior_values, 0)
-        dens_post = get_density(post_values, 0)
-        BF = dens_post / dens_prior
+        # As for directional hypotheses, BF = 0 when no posterior draws resolve the tested value.
+        # Kernel tails would otherwise give arbitrary values like 1e-253.
+        is_unresolved = !is_prior_one_sided && (all(post_values > 0) || all(post_values < 0))
+        BF = if (is_unresolved) 0 else get_density(post_values, 0) / get_density(prior_values, 0)
       }
 
       prob = NA_real_

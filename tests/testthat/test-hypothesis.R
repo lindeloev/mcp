@@ -57,6 +57,8 @@ test_that("hypothesis()", {
   expect_equal(implied$prob, 1)
   expect_true(is.na(implied$BF))
   expect_equal(hypothesis(demo_fit, "cp_1 > 10")$BF, Inf)
+  far_equality = suppressWarnings(hypothesis(demo_fit, "time_2 = 0"))  # No posterior draws below 0
+  expect_equal(far_equality$BF, 0)
 
   prior_directional = hypothesis(fit_asymmetric, directional, prior = TRUE)
   expect_equal(prior_directional$prob, p_prior)
