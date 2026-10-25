@@ -445,7 +445,22 @@ get_x_partners = function(coefs, name) {
   is_partner = vapply(candidates$matrix_data, function(values) {
     (coefs$prior_type[i] == "Intercept" && all(values == 1, na.rm = TRUE)) || isTRUE(all.equal(values, own))
   }, logical(1))
+
+  # If x-terms are split by factor levels without a common x-term, e.g., `1 + x:state`, the intercept's
+  # partners are the 0/1 x-terms, weighted by the share of rows, i.e., the average row like mean(y).
+  candidates$weight = rep(1, nrow(candidates))
+  if (!any(is_partner) && all(own == 1, na.rm = TRUE)) {
+    is_partner = vapply(candidates$matrix_data, function(values) all(values %in% c(0, 1, NA)), logical(1))
+    candidates$weight = vapply(candidates$matrix_data, mean, numeric(1), na.rm = TRUE)
+  }
   candidates[is_partner, ]
+}
+
+
+# Write x-term partners at `at`, e.g., "x_1 * min(x)" or "x.statea_1 * 0.5 * min(x)^2"
+x_partners_at = function(terms, at) {
+  weight = ifelse(terms$weight == 1, "", paste0(" * ", sprintf("%.15g", terms$weight)))
+  paste0(terms$name, weight, " * ", at, x_power(terms$x_degree))
 }
 
 
@@ -472,9 +487,9 @@ add_intercept_references = function(prior_specs, coefs, context) {
       next
 
     # Subtract the x-terms at min(x) from the location and the truncation bounds
-    reference = paste0(" - ", terms$name, " * min(", context$x_display, ")", x_power(terms$x_degree), collapse = "")
+    reference = paste0(" - ", x_partners_at(terms, paste0("min(", context$x_display, ")")), collapse = "")
     prior_specs$parsed[[row]] = shift_prior(parsed, function(arg) if (arg == "0") reference else paste0(arg, reference))
-    what = if (targets$prior_type[i] == "Intercept") "value" else "difference"
+    what = if (targets$prior_type[i] != "Intercept") "difference" else if (all(terms$weight == 1)) "value" else "average value"
     prior_specs$description[row] = paste0(prior_specs$description[row], "; on the ", what, " at min(", context$x_display, ")")
   }
   prior_specs

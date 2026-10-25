@@ -771,6 +771,16 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   ps = prior_summary(contrast_fit, verbose = TRUE)
   expect_match(ps$description[ps$parameter == "stateb_1"], "on the difference at min(x)", fixed = TRUE)
 
+  # x-terms split by factor levels without a common x-term: the average row at min(x), weighted like mean(y)
+  data$state = rep(c("a", "a", "b"), 10)
+  split_fit = mcp(list(y ~ 1 + x:state + sigma(1 + x:state)), data, sample = FALSE)
+  location = "x\\.statea_1 \\* 0\\.666666666666.* \\* 101 - (sigma_)?x\\.stateb_1 \\* 0\\.333333333333.* \\* 101, "
+  expect_match(split_fit$prior$Intercept_1, paste0("- ", location))
+  expect_match(split_fit$prior$sigma_Intercept_1, paste0("-sigma_", location))
+  expect_match(split_fit$jags_code, "Intercept_1_mid_ ~ dnorm(", fixed = TRUE)
+  ps = prior_summary(split_fit, verbose = TRUE)
+  expect_match(ps$description[ps$parameter == "Intercept_1"], "on the average value at min(x)", fixed = TRUE)
+
   # User-specified intercept priors stay on the intercept at x = 0
   user_fit = mcp(list(y ~ 1 + x), data, prior = list(Intercept_1 = "dnorm(0, 10)"), sample = FALSE)
   expect_match(user_fit$jags_code, "Intercept_1 ~ dnorm(", fixed = TRUE)

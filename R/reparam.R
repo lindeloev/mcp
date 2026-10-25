@@ -64,7 +64,6 @@ add_reparams = function(prior_table, coefs, cps, context, reparam = TRUE) {
 
   # Helpers to write x-terms, e.g., "xE2_2 * (cp_2 - cp_1)^2"
   width = function(k, x_degree) paste0("(cp_", k, " - cp_", k - 1, ")", x_power(x_degree))
-  x_terms_at = function(terms, at) paste0(terms$name, " * ", at, x_power(terms$x_degree), collapse = " + ")
   K = nrow(cps) + 1
 
   # Each dpar separately. AR/MA are not anchored at change points.
@@ -80,7 +79,8 @@ add_reparams = function(prior_table, coefs, cps, context, reparam = TRUE) {
       if (nrow(terms) > 0 && is_reparam_prior(coef, segment_1 = TRUE)) {
         x_max = max(context$data[[context$par_x]], na.rm = TRUE)
         at = paste0("(", sprintf("%.15g", context$x_min + (x_max - context$x_min) / (2 * K)), ")")
-        set_aux(coef, "mid", shift = x_terms_at(terms, at), derive = x_terms_at(terms, at))
+        shift = paste0(x_partners_at(terms, at), collapse = " + ")
+        set_aux(coef, "mid", shift = shift, derive = shift)
       }
     }
 
