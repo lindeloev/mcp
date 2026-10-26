@@ -8,12 +8,19 @@
 \method{print}{mcplist}(x, ...)
 }
 \arguments{
-\item{x}{An \code{\link{mcpfit}} object.}
+\item{x}{An \code{\link{mcpfit}} object, or an \code{mcpsummary} returned by \code{summary()}.}
 
-\item{...}{Currently ignored}
+\item{...}{Must be empty. Reserved for future use.}
+}
+\value{
+\code{x}, invisibly.
 }
 \description{
 Shows a list in a more condensed format using \code{str(list)}.
+}
+\examples{
+print(demo_fit$model)
+print(demo_fit$prior)
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

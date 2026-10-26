@@ -4,45 +4,32 @@
 \name{mcpfit-class}
 \alias{mcpfit-class}
 \alias{mcpfit}
-\title{Class \code{mcpfit} of models fitted with the \pkg{mcp} package}
+\title{Class \code{mcpfit} of Models Fitted with the \pkg{mcp} Package}
 \description{
 Models fitted with the \code{\link[mcp:mcp]{mcp}} function are represented as
 an \code{mcpfit} object which contains the user input (model, data, family),
 derived model characteristics (prior, parameter names, and jags code), and
-the fit (prior and/or posterior mcmc samples).
+the fit (prior and/or posterior MCMC draws).
 }
 \details{
 See \code{methods(class = "mcpfit")} for an overview of available methods.
 
-User-provided information (see \code{\link{mcp}} for more details):
+Components:
+\itemize{
+\item \code{call}: The matched call to \code{mcp()}.
+\item \code{model}: A list of user-provided formulas.
+\item \code{data}: The user-provided data frame reduced to model-used columns.
+\item \code{family}: An \code{mcpfamily} object.
+\item \code{prior}: A named list of priors.
+\item \code{mcmc_post} and \code{mcmc_prior}: \code{\link[coda]{mcmc.list}} objects with
+posterior and prior draws, respectively. Do not access these directly;
+use as_draws(fit) or similar.
+\item \code{jags_code}: A string with JAGS code; use \code{cat(fit$jags_code)} to show it.
+\href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more}.
+\item \code{simulate}: A function to simulate data from supplied parameter values.
+\item \code{version}: A named list of \link{package_version}s for \code{mcp}, \code{R}, \code{rjags},
+and \code{jags}, e.g., \code{fit$version$mcp >= "0.4.0"}. \code{rjags} and \code{jags} are
+\code{NULL} for fits with \code{sample = "none"}. \code{NULL} for fits made with mcp < 0.4.0.
+\item \code{.internal}: Information used internally by mcp.
 }
-\section{Slots}{
-
-\describe{
-\item{\code{model}}{A list of formulas, making up the model.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{data}}{A data frame.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{family}}{An \code{mcpfamily} object.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{prior}}{A named list.
-Provided by user. See \code{\link{mcp}} for more details.}
-
-\item{\code{mcmc_post}}{An \code{\link[coda]{mcmc.list}} object with posterior samples.}
-
-\item{\code{mcmc_prior}}{An \code{\link[coda]{mcmc.list}} object with prior samples.}
-
-\item{\code{mcmc_loglik}}{An \code{\link[coda]{mcmc.list}} object with samples of log-likelihood.}
-
-\item{\code{pars}}{A list of character vectors of model parameter names.}
-
-\item{\code{jags_code}}{A string with jags code. Use \code{cat(fit$jags_code)} to show it.}
-
-\item{\code{simulate}}{A method to simulate and predict data.}
-
-\item{\code{.other}}{Information that is used internally by mcp.}
-}}
-
+}

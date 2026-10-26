@@ -8,3 +8,4 @@ pkgdown
 tests
 vignettes
 fix_twittercard.R
+R/mcp_example.R

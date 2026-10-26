@@ -1,0 +1,92 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Development versions (.9000) are published under /dev/; release versions
+# are published at the site root.
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - 'vignettes/**'
+      - 'pkgdown/**'
+      - 'man/**'
+      - 'DESCRIPTION'
+      - 'README.md'
+      - 'README.Rmd'
+      - 'NEWS.md'
+      - '.github/workflows/pkgdown.yaml'
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'vignettes/**'
+      - 'pkgdown/**'
+      - 'man/**'
+      - 'DESCRIPTION'
+      - 'README.md'
+      - 'README.Rmd'
+      - 'NEWS.md'
+      - '.github/workflows/pkgdown.yaml'
+  workflow_dispatch:
+
+name: pkgdown
+
+permissions: read-all
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+
+    # Prevent simultaneous deployments from overwriting one another.
+    concurrency:
+      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, any::segmented, local::.
+          needs: website
+
+      - name: Render README
+        run: rmarkdown::render("README.Rmd", output_format = "github_document", quiet = TRUE)
+        shell: Rscript {0}
+
+      - name: Build collage
+        run: Rscript vignettes/_figures/mcp_showcase.R
+
+      - name: Build site
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        env:
+          PKGDOWN_DEV_MODE: ${{ github.ref_name == 'main' && 'release' || 'devel' }}
+        shell: Rscript {0}
+
+      # Each branch cleans only its own part of gh-pages: main the root (except dev/), dev only dev/.
+      - name: Deploy release site to GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref_name == 'main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          clean: true
+          clean-exclude: dev
+          branch: gh-pages
+          folder: docs
+
+      - name: Deploy dev site to GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref_name != 'main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          clean: true
+          branch: gh-pages
+          folder: docs/dev
+          target-folder: dev

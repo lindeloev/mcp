@@ -3,19 +3,28 @@
 # Hidden stuff
 ^mcp\.Rproj$
 ^\.Rproj\.user$
+^\.Rprofile$
 .covrignore
 
 # Folders
-docs
-^man/figures
-^vignettes$
-^pkgdown$
+^docs$
+^dev$
 ^data-raw$
+^pkgdown$
 ^revdep$
+^vignettes$
 
 # Files
+^README\.Rmd$
+AGENTS.md
+^CONTRIBUTING\.md$
 cran-comments.md
-logo.png
 ^CRAN-RELEASE$
+^CRAN-SUBMISSION$
 fix_twittercard.R
 ^\.github$
+logo.png
+^\.lintr$
+^\.vscode$
+^man/figures/README-
+^man/figures/logo_200px\.png$

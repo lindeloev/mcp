@@ -1,16 +1,31 @@
+# Folders
+docs/
+pkgdown/assets/mcp_showcase.png
+pkgdown/assets/mcp_showcase_small.png
+dev/*
+!dev/LEARNINGS.md
+!dev/DECISIONS.md
+!dev/TERMINOLOGY.md
+!dev/prompt*
+
+# Hidden
+.lintr
 .Rproj.user
+.Renviron
 .Rhistory
 .Rprofile
+.vscode
+
+# Test leftovers
+tests/testthat/_snaps/**/*.new.svg
+tests/*.Rout.fail
+
+# Files
+AGENTS.md
+CRAN-SUBMISSION
+dev/TODO.md
 fix_twittercard.R
-vignettes/arma_cache
-vignettes/binomial_cache
-vignettes/comparison_cache
-vignettes/families_cache
-vignettes/formulas_cache
-vignettes/packages_cache
-vignettes/poisson_cache
-vignettes/predict_cache
-vignettes/priors_cache
-vignettes/tips_cache
-vignettes/variance_cache
-vignettes/varying_cache
+man/figures/README-*
+revdep/
+vignettes/*_cache/
+vignettes/*_files/

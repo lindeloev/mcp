@@ -1,0 +1,235 @@
+##########################################################
+# Direct tests of interpolate_newdata() and fit$simulate() #
+##########################################################
+# These intermediate functions are otherwise only exercised indirectly
+# (via plot()/fitted()/predict() and test_arma_simulation() in helper-runs.R).
+
+test_that("interpolate_newdata() combines categorical and continuous predictors", {
+  data = data.frame(
+    x = c(1, 2, 3, 1, 2, 3),
+    z = c(2, 4, 6, 8, 10, 12),
+    group = rep(c("A", "B"), each = 3),
+    y = 0
+  )
+  fit = mcp(
+    list(y ~ 1 + z + group),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  newdata = interpolate_newdata(fit, x_values = c(1, 2, 3))
+
+  # Categorical levels are combined factorially with x, continuous
+  # predictors are held at their observed means.
+  expect_equal(nrow(newdata), 6)
+  expect_setequal(unique(newdata$group), c("A", "B"))
+  expect_equal(unique(newdata$z), mean(data$z))
+
+  custom = interpolate_newdata(fit, x_values = 1:3, at = list(z = 4))
+  expect_equal(unique(custom$z), 4)
+  expect_error(interpolate_newdata(fit, at = list(x = 2)), "Invalid: 'x'.", fixed = TRUE)
+  expect_error(interpolate_newdata(fit, at = list(z = 1:2)), "must be a single number")
+
+  population = mcp_pars(fit, scope = "population")$parameter
+  draws = matrix(0, 1, length(population), dimnames = list(NULL, population))
+  draws[, "z_1"] = 2
+  draws[, "sigma_1"] = 1
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  plotted = plot(fit, at = list(z = 4), lines = 1)
+  expect_match(plotted$labels$caption, "z = 4", fixed = TRUE)
+  expect_equal(unique(ggplot2::ggplot_build(plotted)$data[[2]]$y), 8)
+})
+
+
+test_that("interpolate_newdata() includes ordered factors", {
+  data = data.frame(
+    x = rep(1:3, 2),
+    ordered_group = ordered(rep(c("low", "high"), each = 3)),
+    y = 0
+  )
+  fit = mcp(list(y ~ 1 + ordered_group), data, par_x = "x", sample = FALSE)
+
+  newdata = interpolate_newdata(fit, x_values = 1:2)
+
+  expect_setequal(unique(newdata$ordered_group), c("low", "high"))
+})
+
+
+test_that("interpolate_newdata() carries the observed response for AR/MA models", {
+  data = data.frame(x = 1:5, y = c(1, 2, 3, 4, 5))
+  fit = mcp(
+    list(y ~ ar(1)),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  newdata = interpolate_newdata(fit)
+
+  expect_equal(nrow(newdata), nrow(data))
+  expect_equal(newdata[[mcp_columns(fit)$response]], data$y)
+
+  # Observed predictor values are used, so the caption does not claim they are held constant
+  data$z = c(2, 5, 3, 8, 1)
+  fit = mcp(list(y ~ 1 + z + ar(1)), data, par_x = "x", sample = FALSE)
+  population = mcp_pars(fit, scope = "population")$parameter
+  draws = matrix(0, 1, length(population), dimnames = list(NULL, population))
+  draws[, "sigma_1"] = 1
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  expect_null(plot(fit, lines = 1)$labels$caption)
+})
+
+test_that("interpolate_newdata() does not invent response auxiliaries", {
+  data = data.frame(x = 1:3, N = c(4, 10, 6), y = 0)
+  fit = mcp(
+    list(y | trials(N) ~ 1),
+    data,
+    family = binomial(),
+    par_x = "x",
+    sample = FALSE
+  )
+  draws = matrix(0, 1, 1, dimnames = list(NULL, "Intercept_1"))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  newdata = interpolate_newdata(fit, x_values = 1:3)
+  expect_false("N" %in% names(newdata))
+  expect_equal(interpolate_newdata(fit, x_values = 1:3, at = list(N = 4))$N, rep(4, 3))
+  expect_error(interpolate_newdata(fit, at = list(N = 2.5)), "N.*integerish")
+  expect_error(fitted(fit, newdata, width = 0, rate = TRUE), "strictly between 0 and 1")
+  expect_error(predict(fit, rate = TRUE, width = 1), "strictly between 0 and 1")
+  expect_true(all(c(".lower", ".upper") %in% names(fitted(fit, newdata, width = 0.5, rate = TRUE))))
+  plot_none = plot(fit, lines = 0, interval = "none", cp_dens = FALSE)
+  plot_interval = plot(fit, lines = 0, interval = "fitted", cp_dens = FALSE)
+  expect_gt(length(plot_interval$layers), length(plot_none$layers))
+  expect_identical(plot_none$labels$y, "Success probability")
+  expect_error(plot(fit, rate = FALSE), "requires explicit values for N")
+  expect_s3_class(plot(fit, rate = FALSE, at = list(N = 4), cp_dens = FALSE), "ggplot")
+  expect_error(
+    predict(fit, newdata, summary = FALSE, rate = FALSE),
+    "missing from the data: N",
+    fixed = TRUE
+  )
+})
+
+test_that("fit$simulate() reproduces the deterministic linear predictor at .type = 'fitted'", {
+  data = data.frame(x = 1:5, y = 0)
+  fit = mcp(
+    list(y ~ 1 + x),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  simulated = fit$simulate(
+    fit,
+    data,
+    Intercept_1 = 2,
+    x_1 = 3,
+    sigma_1 = 1,
+    .type = "fitted"
+  )
+
+  expect_equal(as.numeric(simulated), 2 + 3 * data$x)
+  expect_false(fit$.internal$custom_jags_code)
+})
+
+test_that("custom JAGS code warns R-side evaluation and suppresses simulated-truth comparisons", {
+  data = data.frame(x = 1:5, y = 0)
+  generated = mcp(list(y ~ 1 + x), data, par_x = "x", sample = FALSE)
+  fit = mcp(
+    list(y ~ 1 + x),
+    data,
+    par_x = "x",
+    jags_code = generated$jags_code,
+    sample = FALSE
+  )
+  draws = matrix(
+    c(2, 3, 1),
+    nrow = 1,
+    dimnames = list(NULL, c("Intercept_1", "x_1", "sigma_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  expect_warning(
+    fit$simulate(fit, data, Intercept_1 = 2, x_1 = 3, sigma_1 = 1, .type = "fitted"),
+    "Custom `jags_code`"
+  )
+  simulated = suppressWarnings(
+    fit$simulate(fit, data, Intercept_1 = 2, x_1 = 3, sigma_1 = 1, .type = "fitted")
+  )
+  fit$data$y = simulated
+
+  expect_warning(fitted(fit, summary = FALSE), "Custom `jags_code`")
+  capture.output({ summary_fit = summary(fit) })
+  expect_false(any(c("sim", "match") %in% names(summary_fit)))
+  expect_false(any(c("sim", "match") %in% names(fixef(fit))))
+})
+
+test_that("fit$simulate() errors with a helpful message on the pre-v0.4 calling convention", {
+  data = data.frame(x = 1:5, y = 0)
+  fit = mcp(
+    list(y ~ 1 + x),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  expect_error(
+    fit$simulate(1:5, data),
+    "install_github"
+  )
+})
+
+test_that("summary() only compares with values simulated from the same model", {
+  data = data.frame(x = 1:20, y = 0)
+  simulating = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", sample = FALSE)
+  data$y = simulating$simulate(simulating, data, cp_1 = 10, Intercept_1 = 0, x_2 = 1, sigma_1 = 1)
+  simulating$data = data
+  expect_setequal(names(get_simulated(simulating)), mcp_pars(simulating)$parameter)
+
+  # A different model fitted to the simulated data shares Intercept_1 and sigma_1, but not cp_1 and x_2
+  fit = mcp(list(y ~ 1), data, par_x = "x", sample = FALSE)
+  draws = matrix(1:20, 10, 2, dimnames = list(NULL, c("Intercept_1", "sigma_1")))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+  expect_null(get_simulated(fit))
+  expect_false(any(c("sim", "match") %in% names(get_summary(fit, width = 0.95))))
+
+  # Same parameters, but another link
+  fit_link = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", family = gaussian(link = "log"), sample = FALSE)
+  expect_setequal(mcp_pars(fit_link)$parameter, mcp_pars(simulating)$parameter)
+  expect_null(get_simulated(fit_link))
+})
+
+test_that("summary() matches simulated disjoined change points between adjacent observed x", {
+  data = data.frame(x = 1:100, y = 0)
+  get_match = function(model, sim_values) {
+    fit = mcp(model, data, par_x = "x", sample = FALSE)
+    fit$data$y = do.call(fit$simulate, c(list(fit = fit, newdata = data, .type = "fitted"), sim_values))
+    population = mcp_pars(fit, scope = "population")$parameter
+    draws = matrix(unlist(sim_values[population]), 101, length(population), byrow = TRUE, dimnames = list(NULL, population))
+    draws[, "cp_1"] = seq(49.01, 49.99, length.out = 101)  # The likelihood is flat in (49, 50] for disjoined
+    fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+    summary_fit = get_summary(fit, width = 0.95)
+    summary_fit$match[summary_fit$parameter == "cp_1"]
+  }
+
+  # Disjoined: sim = 50 is between the same observed x as the interval, while 49 is not.
+  disjoined = list(y ~ 1, ~ 1 + x)
+  expect_identical(get_disjoined_cps(mcp(disjoined, data, par_x = "x", sample = FALSE)), "cp_1")
+  expect_identical(get_match(disjoined, list(cp_1 = 50, Intercept_1 = 0, Intercept_2 = 5, x_2 = 1, sigma_1 = 1)), "OK")
+  expect_identical(get_match(disjoined, list(cp_1 = 49, Intercept_1 = 0, Intercept_2 = 5, x_2 = 1, sigma_1 = 1)), "")
+
+  # Joined: the change point is identified within the gap, so sim must be in the interval.
+  joined = list(y ~ 1, ~ 0 + x)
+  expect_identical(get_disjoined_cps(mcp(joined, data, par_x = "x", sample = FALSE)), character())
+  expect_identical(get_match(joined, list(cp_1 = 50, Intercept_1 = 0, x_2 = 1, sigma_1 = 1)), "")
+
+  # Joined in one dpar is joined.
+  mixed = list(y ~ 1, ~ 1 + sigma(0 + x))
+  expect_identical(get_disjoined_cps(mcp(mixed, data, par_x = "x", sample = FALSE)), character())
+
+  # An x-term joins later segments without that dpar, e.g., sigma as min(x, cp_1). It no longer depends on cp_2.
+  plateau = list(y ~ 1 + sigma(1 + x), ~ 1, ~ 1 + x)
+  expect_identical(get_disjoined_cps(mcp(plateau, data, par_x = "x", sample = FALSE)), "cp_2")
+})

@@ -1,0 +1,741 @@
+# Link functions
+test_that("Link functions", {
+  # Do not clamp extreme values (matching JAGS ilogit, phi, exp)
+  fam_b = bernoulli("logit")
+  expect_equal(fam_b$linkinv(-40), stats::plogis(-40))
+  fam_p = bernoulli("probit")
+  expect_equal(fam_p$linkinv(-10), stats::pnorm(-10))
+  fam_pois = as_mcpfamily(poisson("log"))
+  expect_equal(fam_pois$linkinv(-40), exp(-40))
+  fam_bin = as_mcpfamily(binomial("logit"))
+  expect_equal(fam_bin$linkinv(-40), stats::plogis(-40))
+})
+
+test_that("log_lik evaluates unclamped mathematical inverse links", {
+  data = data.frame(x = 1:3, y = c(1, 0, 1))
+  fit = suppressWarnings(mcp(
+    list(y ~ 1), data, par_x = "x",
+    family = bernoulli("logit"),
+    prior = list(Intercept_1 = -40),
+    sample = "prior", chains = 1, iter = 10, warmup = 5, quiet = TRUE, seed = 42
+  ))
+  ll = log_lik(fit, prior = TRUE)
+  expect_equal(unname(ll[1, 1]), -40)
+  expect_equal(unname(ll[1, 2]), log1p(-stats::plogis(-40)))
+})
+
+test_that("families", {
+  expect_true(is_mcpfamily(bernoulli()))
+  expect_false(is_mcpfamily(gaussian()))
+
+  # Like glm(), accept the family function or its name
+  df = data.frame(x = 1:10, y = 1:10)
+  for (family in list(poisson, "poisson", negbinomial, "negbinomial")) {
+    fit = mcp(list(y ~ 1), df, family = family, par_x = "x", sample = FALSE)
+    expect_equal(fit$family$family, if (identical(family, poisson) || identical(family, "poisson")) "poisson" else "negbinomial")
+  }
+})
+
+
+test_that("mcpfit model accessors follow standard R conventions", {
+  data = data.frame(x = 1:5, y = c(1, 2, NA, 4, 5), unused = 6:10)
+  expect_message(
+    {
+      fit = mcp(list(y ~ 1 + x), data, sample = FALSE)
+    },
+    "NA values detected in 'y'",
+    fixed = TRUE
+  )
+
+  expect_identical(names(fit)[1:5], c("model", "data", "prior", "family", "call"))
+  expect_type(fit$call, "language")
+  expect_identical(fit$call[[1]], quote(mcp))
+  expect_identical(family(fit), fit$family)
+  expect_equal(nobs(fit), 4)
+  expect_equal(nobs(fit, use.fallback = TRUE), 4)  # As called by, e.g., stats::sigma()
+  expect_identical(model.frame(fit), fit$data)
+  expect_identical(formula(fit), fit$model)
+  expect_identical(formula(fit, segment = 1), fit$model[[1]])
+  expect_equal(mcp_columns(fit)$par_x, "x")
+  expect_equal(mcp_columns(fit)$response, "y")
+
+  population = mcp_pars(fit, scope = "population")$parameter
+  fixed = with(mcp_pars(fit, scope = "population", role = "coefficient"), parameter[dpar == "mu"])
+  values = matrix(seq_len(3 * length(population)), nrow = 3)
+  colnames(values) = population
+  prior_values = values^2
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
+  fit$mcmc_prior = coda::mcmc.list(coda::mcmc(prior_values))
+  expect_equal(vcov(fit), stats::cov(values[, fixed, drop = FALSE]))
+  expect_equal(vcov(fit, prior = TRUE), stats::cov(prior_values[, fixed, drop = FALSE]))
+  expect_equal(vcov(fit, correlation = TRUE), stats::cor(values[, fixed, drop = FALSE]))
+  expect_equal(vcov(fit, pars = "population"), stats::cov(values))
+  expect_error(vcov(fit, pars = "nonexistent"))
+  expected_intervals = t(vapply(
+    population,
+    function(parameter) stats::quantile(values[, parameter], c(0.025, 0.975), names = FALSE),
+    numeric(2)
+  ))
+  colnames(expected_intervals) = c("2.5 %", "97.5 %")
+  expect_equal(confint(fit), expected_intervals)
+
+  prior_intervals = t(vapply(
+    population,
+    function(parameter) stats::quantile(prior_values[, parameter], c(0.025, 0.975), names = FALSE),
+    numeric(2)
+  ))
+  colnames(prior_intervals) = c("2.5 %", "97.5 %")
+  expect_equal(confint(fit, prior = TRUE), prior_intervals)
+
+  fit$mcmc_post = NULL
+  expect_error(vcov(fit), "No posterior draws are available", fixed = TRUE)
+  expect_error(confint(fit), "No posterior draws are available", fixed = TRUE)
+  expect_equal(vcov(fit, prior = TRUE), stats::cov(prior_values[, fixed, drop = FALSE]))
+})
+
+
+test_that("fixef() and vcov() select distributional-parameter coefficients", {
+  data = data.frame(x = 1:5, y = 0)
+  fit = mcp(list(y ~ 1 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
+  pars = mcp_pars(fit, scope = "population")
+  values = matrix(seq_len(3 * nrow(pars)), nrow = 3, dimnames = list(NULL, pars$parameter))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(values))
+  sigma_names = pars$parameter[pars$dpar == "sigma" & pars$scope == "population" & pars$role == "coefficient"]
+
+  expect_setequal(fixef(fit, dpar = "sigma")$parameter, sigma_names)
+  expect_equal(vcov(fit, dpar = "sigma"), stats::cov(values[, sigma_names, drop = FALSE]))
+})
+
+
+test_that("unimplemented generics fail helpfully", {
+  expect_error(update(demo_fit, iter = 100), "Call `mcp()` again instead", fixed = TRUE)
+})
+
+
+test_that("model metadata uses aligned table names and group-effect selectors", {
+  data = data.frame(
+    x = 1:6,
+    y = c(2, 4, 3, 8, 7, 9),
+    id = rep(c("a", "b"), each = 3)
+  )
+  fit = mcp(list(y ~ 1, ~ cp((1 | id)) + 1), data, par_x = "x", sample = FALSE)
+  tables = get_fit_model_tables(fit)
+
+  expect_named(
+    tables,
+    c(
+      "data_columns", "cps", "coefs", "group_coefs",
+      "parameters", "design_specs"
+    )
+  )
+  expect_named(tables$data_columns, c("par_x", "response", "series", "weights"))
+  expect_named(
+    tables$group_coefs,
+    c(
+      "population_parameter", "name", "group_col", "segment", "dpar",
+      "sd_name", "par_type", "matrix_name", "order", "x_degree", "design_id",
+      "design_col", "matrix_col", "definition_segment", "next_segment"
+    )
+  )
+  expect_equal(nrow(tables$group_coefs), 0)  # Group-level change points are only in `cps`
+  expect_named(
+    tables$parameters,
+    c("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
+  )
+  expect_true(all(tables$parameters$part %in% c("cp", "predictor")))
+  expect_true(all(tables$parameters$scope %in% c("population", "group")))
+  expect_true(all(tables$parameters$role %in% c("change_point", "coefficient", "group_sd")))
+  expect_equal(mcp_pars(fit, scope = "group", role = "change_point")$parameter, "cp_1_id")  # Role is independent of scope
+  expect_equal(mcp_pars(fit), tables$parameters)
+  group = mcp_pars(fit, scope = "group")$parameter
+
+  expect_equal(unpack_group_effects(fit, pars = "cp")$pars, group)
+  expect_null(unpack_group_effects(fit, pars = "predictor")$pars)
+  expect_equal(
+    unpack_group_effects(fit, pars = group)$pars,
+    group
+  )
+  expect_error(unpack_group_effects(fit, pars = "unknown"), "Unknown group-effect")
+})
+
+
+test_that("mcp_pars() and mcp_columns() are family-neutral metadata accessors", {
+  data = data.frame(x = 1:8, y = c(1, 0, 3, 2, 4, 1, 5, 3))
+  fit = mcp(
+    list(y ~ 1 + x + shape(1 + x)),
+    data,
+    family = negbinomial(),
+    sample = FALSE
+  )
+
+  parameters = mcp_pars(fit)
+  expect_true(all(c("shape_Intercept_1", "shape_x_1") %in% parameters$parameter))
+  expect_equal(parameters$dpar[parameters$parameter == "shape_x_1"], "shape")
+  expect_equal(mcp_columns(fit)$par_x, "x")
+  expect_equal(mcp_columns(fit)$response, "y")
+  expect_false("pars" %in% names(fit))
+  expect_error(fit$pars, "mcp_pars(fit)", fixed = TRUE)
+  expect_error(fit[["pars"]], "mcp_pars(fit)", fixed = TRUE)
+  expect_error(fit$mcmc_loglik, "log_lik(fit)", fixed = TRUE)
+  expect_error(criterion(demo_fit), "loo(fit)", fixed = TRUE)
+  expect_error(get_segment_table(demo_fit$model), "mcp_pars(fit)", fixed = TRUE)
+  expect_error(mcp(list(y ~ 1), data.frame(x = 1:4, y = 1:4), family = Gamma(), par_x = "x", sample = FALSE), "not supported by mcp")
+
+  binomial_fit = mcp(
+    list(y | trials(N) ~ 1),
+    data.frame(x = 1:4, y = 0:3, N = 3),
+    family = binomial(), par_x = "x", sample = FALSE
+  )
+  expect_equal(mcp_columns(binomial_fit)$trials, "N")
+
+  # Runtime methods read the authoritative tables.
+  expect_equal(
+    as.numeric(fit$simulate(
+      fit, data.frame(x = 1:2),
+      Intercept_1 = 0, x_1 = 0, shape_Intercept_1 = 0, shape_x_1 = 0,
+      .type = "fitted"
+    )),
+    c(1, 1)
+  )
+  expect_equal(interpolate_newdata(fit, x_values = 1:2)$x, 1:2)
+})
+
+
+test_that("summary, fixef, and ranef select parameter roles consistently", {
+  data = data.frame(
+    x = 1:8,
+    y = c(1, 2, 4, 3, 5, 6, 8, 7),
+    id = rep(c("a", "b"), each = 4)
+  )
+  fit = mcp(
+    list(y ~ 1 + ar(1) + (1 | id), ~ cp((1 | id)) + 1 + ar(0)),
+    data, par_x = "x", sample = FALSE
+  )
+  pars = mcp_pars(fit)
+  expect_equal(pars$dpar[pars$parameter == "ar1_1"], "ar1")
+  expect_true(all(is.na(pars$dpar[pars$part == "cp"])))
+  expect_equal(pars$group_col[pars$parameter == "cp_1_id"], "id")
+  expect_equal(pars$population_parameter[pars$parameter == "cp_1_id"], "cp_1")
+  group_draws = unlist(lapply(pars$parameter[pars$scope == "group"], function(name) {
+    paste0(name, "[", c("a", "b"), "]")
+  }))
+  draw_names = c(pars$parameter[pars$scope == "population"], group_draws)
+  draws = matrix(seq_len(3 * length(draw_names)), nrow = 3, dimnames = list(NULL, draw_names))
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  capture.output({ summary_result = summary(fit) })
+  expect_setequal(summary_result$parameter, pars$parameter[pars$scope == "population"])
+  expect_setequal(
+    fixef(fit)$parameter,
+    pars$parameter[pars$scope == "population" & pars$role == "coefficient" & pars$dpar == "mu"]
+  )
+  expect_equal(fixef(fit, dpar = "ar1")$parameter, "ar1_1")
+  expect_equal(colnames(vcov(fit, dpar = "ar1")), "ar1_1")
+  expect_setequal(ranef(fit)$parameter, group_draws)
+})
+
+
+test_that("binomial example can be constructed without sampling", {
+  fit = mcp_example("binomial", sample = "none", plot = FALSE)
+  expect_s3_class(fit, "mcpfit")
+  expect_true(all(fit$data$y <= fit$data$N))
+})
+
+test_that("example_code runs standalone", {
+  fit = mcp_example("demo", sample = "none", plot = FALSE)
+  env = new.env(parent = globalenv())
+  eval(str2expression(fit$example_code), envir = env)
+  expect_equal(env$fit$data, fit$data)
+})
+
+test_that("group_mu example contains independent factor effects", {
+  fit = mcp_example("group_mu", sample = "none", plot = FALSE)
+  expect_s3_class(fit, "mcpfit")
+  expect_type(fit$call, "language")
+  expect_s3_class(fit$example_code, "mcptext")
+  expect_equal(get_fit_model_tables(fit)$cps$name, "cp_1")
+  expect_equal(
+    mcp_pars(fit, scope = "group")$parameter,
+    c("Intercept_1_id", "stateB_1_id")
+  )
+  expect_match(fit$example_code, "state || id", fixed = TRUE)
+  expect_equal(length(unique(fit$data$id)), 9)
+  simulated = attr(fit$data$y, "simulated")
+  expect_equal(simulated$Intercept_1_id_sd, 2)
+  expect_equal(simulated$stateB_1_id_sd, 2)
+  expect_length(unique(simulated$Intercept_1_id), 9)
+})
+
+test_that("Simple mcpfit methods", {
+  expect_equal(ndraws(demo_fit), 1000)
+  expect_identical(variables(demo_fit), posterior::variables(as_draws(demo_fit)))
+  expect_equal(niterations(demo_fit), 500)
+  expect_equal(nchains(demo_fit), 2)
+
+  expect_true(is_mcpfit(demo_fit))
+  expect_false(is_mcpfit(mtcars))
+
+  # coef() without group-level effects points to fixef()
+  expect_error(coef(demo_fit), "fixef(fit)", fixed = TRUE)
+
+  # Base R coercions return plain draws, like rstanarm and brms, so bayesplot works on the fit
+  expect_identical(class(as.matrix(demo_fit)), c("matrix", "array"))
+  expect_identical(as.matrix(demo_fit), unclass(as_draws_matrix(demo_fit)))
+  expect_identical(posterior::nchains(posterior::as_draws_matrix(as.matrix(demo_fit))), nchains(demo_fit))  # Chain-aware rhat etc.
+  expect_equal(as.array(demo_fit, prior = TRUE), unclass(as_draws_array(demo_fit, prior = TRUE)))
+  expect_identical(colnames(as.data.frame(demo_fit)), mcp_pars(demo_fit)$parameter)
+  expect_s3_class(bayesplot::mcmc_trace(demo_fit, pars = "cp_1"), "ggplot")
+})
+
+test_that("posterior draws accessor preserves the stored chains", {
+  expect_identical(as_draws, posterior::as_draws)
+  expect_identical(as_draws_df, posterior::as_draws_df)
+  expect_identical(as_draws_array, posterior::as_draws_array)
+  expect_identical(as_draws_matrix, posterior::as_draws_matrix)
+  expect_identical(as_draws_rvars, posterior::as_draws_rvars)
+
+  draws_array = as_draws_array(demo_fit)
+  draws_df = as_draws_df(demo_fit)
+  draws_matrix = as_draws_matrix(demo_fit)
+  mcmc = coda::as.mcmc(demo_fit)
+
+  expect_s3_class(draws_array, "draws_array")
+  expect_s3_class(draws_df, "draws_df")
+  expect_s3_class(draws_matrix, "draws_matrix")
+  expect_s3_class(mcmc, "mcmc.list")
+
+  raw = .subset2(demo_fit, "mcmc_post")
+  expect_equal(
+    dim(draws_array),
+    c(nrow(raw[[1]]), length(raw), ncol(raw[[1]]))
+  )
+  expect_equal(posterior::variables(draws_array), colnames(raw[[1]]))
+
+  prior_only = demo_fit
+  prior_only$mcmc_post = NULL
+  expect_error(as_draws(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_df(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_array(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_matrix(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_error(as_draws_rvars(prior_only), "No posterior draws are available", fixed = TRUE)
+  expect_s3_class(as_draws(prior_only, prior = TRUE), "draws_array")
+
+  if (requireNamespace("tidybayes", quietly = TRUE)) {
+    expect_error(
+      tidybayes::tidy_draws(prior_only),
+      "No posterior draws are available",
+      fixed = TRUE
+    )
+    expect_s3_class(tidybayes::tidy_draws(prior_only, prior = TRUE), "tbl_df")
+
+    td = tidybayes::tidy_draws(demo_fit)
+    expect_s3_class(td, "tbl_df")
+    expect_true("Intercept_1" %in% names(td))
+
+    expect_false(inherits(td, "draws"))
+    expect_no_warning((sd_df = tidybayes::spread_draws(demo_fit, Intercept_1, cp_1)))
+    expect_s3_class(sd_df, "tbl_df")
+    expect_true(all(c("Intercept_1", "cp_1") %in% names(sd_df)))
+
+    # mcp's own generics, callable without rstantools
+    newdata = demo_fit$data[1:3, , drop = FALSE]
+    expect_equal(dim(posterior_epred(demo_fit, newdata, draws = 2)), c(2, 3))
+    expect_equal(dim(posterior_predict(demo_fit, newdata, draws = 2)), c(2, 3))
+    expect_equal(dim(posterior_linpred(demo_fit, newdata = newdata, draws = 2)), c(2, 3))
+
+    if (requireNamespace("rstantools", quietly = TRUE)) {
+      expect_equal(dim(rstantools::posterior_epred(demo_fit, newdata, draws = 2)), c(2, 3))
+      expect_equal(dim(rstantools::posterior_predict(demo_fit, newdata, draws = 2)), c(2, 3))
+      expect_equal(dim(rstantools::posterior_linpred(demo_fit, newdata = newdata, draws = 2)), c(2, 3))
+
+      predicted_seed_1 = rstantools::posterior_predict(demo_fit, newdata, draws = 5, seed = 1)
+      predicted_seed_1_again = rstantools::posterior_predict(demo_fit, newdata, draws = 5, seed = 1)
+      predicted_seed_2 = rstantools::posterior_predict(demo_fit, newdata, draws = 5, seed = 2)
+      expect_identical(predicted_seed_1, predicted_seed_1_again)
+      expect_false(identical(predicted_seed_1, predicted_seed_2))
+
+      epred_draws = tidybayes::add_epred_draws(newdata, demo_fit, ndraws = 2)
+      predicted_draws = tidybayes::add_predicted_draws(newdata, demo_fit, ndraws = 2)
+      linpred_draws = tidybayes::add_linpred_draws(newdata, demo_fit, ndraws = 2)
+      expect_s3_class(epred_draws, "tbl_df")
+      expect_true(".epred" %in% names(epred_draws))
+      expect_true(".prediction" %in% names(predicted_draws))
+      expect_true(".linpred" %in% names(linpred_draws))
+      expect_equal(nrow(epred_draws), 6)
+      expect_equal(nrow(predicted_draws), 6)
+      expect_equal(nrow(linpred_draws), 6)
+
+      binomial_data = data.frame(x = 1:3, N = c(4, 10, 6), y = 0)
+      binomial_fit = mcp(
+        list(y | trials(N) ~ 1),
+        binomial_data,
+        family = binomial(),
+        par_x = "x",
+        sample = FALSE
+      )
+      binomial_fit$mcmc_post = coda::mcmc.list(coda::mcmc(
+        matrix(0, nrow = 20, ncol = 1, dimnames = list(NULL, "Intercept_1"))
+      ))
+
+      epred = rstantools::posterior_epred(binomial_fit, binomial_data, draws = 2)
+      expect_equal(unname(epred), matrix(rep(binomial_data$N / 2, each = 2), nrow = 2))
+
+      set.seed(42)
+      predicted = rstantools::posterior_predict(binomial_fit, binomial_data, draws = 20)
+      expect_true(all(predicted == floor(predicted)))
+      expect_true(any(predicted > 1))
+
+      tidy_epred = tidybayes::add_epred_draws(binomial_data, binomial_fit, ndraws = 2)
+      expect_equal(sort(unique(tidy_epred$.epred)), sort(binomial_data$N / 2))
+    }
+  }
+})
+
+test_that("summaries use central intervals and posterior diagnostics", {
+  width = 0.8
+  result = fixef(demo_fit, width = width)
+  printed = capture.output(summary(demo_fit, width = width))
+  parameter = result$parameter[[1]]
+  raw = .subset2(demo_fit, "mcmc_post")
+  values = unlist(lapply(raw, function(chain) chain[, parameter]))
+  parameter_matrix = posterior::extract_variable_matrix(
+    posterior_draws(demo_fit),
+    variable = parameter
+  )
+
+  expect_equal(result$lower[[1]], unname(quantile(values, 0.1)))
+  expect_equal(result$upper[[1]], unname(quantile(values, 0.9)))
+  expect_equal(result$sd[[1]], stats::sd(values))
+  expect_equal(result$rhat[[1]], posterior::rhat(parameter_matrix))
+  expect_equal(result$ess_bulk[[1]], round(posterior::ess_bulk(parameter_matrix)))
+  expect_equal(result$ess_tail[[1]], round(posterior::ess_tail(parameter_matrix)))
+  expect_true(all(c("Change point parameters:", "Population-level parameters:") %in% printed))
+  expect_true(any(grepl("\\b[0-9]+\\.[0-9]{2}\\b", printed)))
+  expect_true(any(grepl(" 1\\.0[01] ", printed)))
+  expect_true("sd" %in% names(result))
+  expect_true("parameter" %in% names(result))
+  expect_false(any(c("name", "variable") %in% names(result)))
+  expect_true(all(c("rhat", "ess_bulk", "ess_tail") %in% names(result)))
+  expect_false("n.eff" %in% names(result))
+
+  # summary() returns a printable object instead of printing as a side effect
+  expect_length(capture.output(summary_result <- summary(demo_fit, width = width)), 0)
+  expect_s3_class(summary_result, c("mcpsummary", "tbl_df"))
+  expect_identical(capture.output(print(summary_result)), printed)
+  expect_error(summary(demo_fit, digits = 0), "not >= 1")
+})
+
+test_that("PPC and LOO draws stay aligned", {
+  expect_error(
+    pp_check(demo_fit, ndraws = 2, not_a_bayesplot_argument = TRUE),
+    "not_a_bayesplot_argument",
+    fixed = TRUE
+  )
+  expect_s3_class(
+    pp_check(demo_fit, type = "ribbon", ndraws = NULL, alpha = 0.2),
+    "ggplot"
+  )
+  expect_error(
+    pp_check(demo_fit, type = "loo_intervals", prior = TRUE, ndraws = 2),
+    "LOO predictive checks require posterior draws",
+    fixed = TRUE
+  )
+
+  fit = demo_fit
+  fit$data[[mcp_columns(fit)$response]][2] = NA_real_
+  fit$data$facet = factor(rep(1:2, length.out = nrow(fit$data)))
+
+  expect_s3_class(pp_check(fit, ndraws = 5), "ggplot")
+  loglik = log_lik(fit, ndraws = 10)
+  expect_equal(dim(loglik), c(10, nrow(fit$data) - 1))
+  expect_false(anyNA(loglik))
+
+  loo_result = suppressWarnings(loo(fit, ndraws = 10, save_psis = TRUE))
+  expect_equal(dim(loo_result$psis_object), dim(loglik))
+  expect_equal(attr(loo_result, "dims")[1], 10)
+
+  # Disallow component-selective LOO and WAIC
+  expect_error(suppressWarnings(loo(fit, ndraws = 10, group_effects = FALSE)), "must be used", fixed = TRUE)
+  expect_error(suppressWarnings(loo(fit, ndraws = 10, arma = FALSE)), "must be used", fixed = TRUE)
+  expect_error(waic(fit, group_effects = FALSE), "must be empty", fixed = TRUE)
+  expect_error(waic(fit, arma = FALSE), "must be empty", fixed = TRUE)
+  expect_error(pp_check(fit, type = "loo_intervals", arma = FALSE), "LOO predictive checks evaluate the fitted model", fixed = TRUE)
+  expect_error(pp_check(fit, type = "loo_intervals", arma = "replicate"), "LOO predictive checks evaluate the fitted model", fixed = TRUE)
+
+  # log_lik still supports non-default group_effects and arma as diagnostics
+  ll_group_false = log_lik(fit, ndraws = 10, group_effects = FALSE)
+  expect_equal(dim(ll_group_false), c(10, nrow(fit$data) - 1))
+  ll_arma_false = log_lik(fit, ndraws = 10, arma = FALSE)
+  expect_equal(dim(ll_arma_false), c(10, nrow(fit$data) - 1))
+
+  # loo(ndraws = ...) preserves MCMC chains and recomputes relative_eff
+  loo_sub = suppressWarnings(loo(fit, ndraws = 50, save_psis = TRUE))
+  expect_equal(attr(loo_sub, "dims")[1], 50)
+  expect_false(all(attr(loo_sub$psis_object, "r_eff") == 1))
+  expect_true(is.numeric(attr(loo_sub$psis_object, "r_eff")))
+
+  # loo(ndraws = ...) balances draws across chains and records the actual count.
+  loo_odd = suppressWarnings(loo(fit, ndraws = 59, save_psis = TRUE))
+  expect_equal(nrow(loo_odd$psis_object), 60)
+  expect_equal(attr(loo_odd, "dims")[1], 60)
+
+  expect_s3_class(
+    suppressWarnings(suppressMessages(pp_check(
+      fit,
+      type = "loo_intervals",
+      facet_by = "facet",
+      ndraws = 5
+    ))),
+    "patchwork"
+  )
+})
+
+
+test_that("loo relative_eff avoids underflow on large negative log likelihoods", {
+  df = data.frame(x = 1:5, y = rnorm(5, 10, 1), w = rep(1000, 5))
+  fit = suppressWarnings(mcp(list(y | weights(w) ~ 1), data = df, par_x = "x", chains = 1, iter = 50, quiet = TRUE))
+
+  res = suppressWarnings(loo(fit))
+  expect_false(anyNA(res$diagnostics$r_eff))
+  expect_true(all(is.finite(res$diagnostics$r_eff)))
+})
+
+test_that("diagnostic settings control fit warnings and summary footers", {
+  defaults = resolve_diagnostics()
+  expect_equal(defaults, list(rhat = 1.01, ess_bulk = 400, ess_tail = 400, ar = 0.1, ma = 0.1))
+  custom = resolve_diagnostics(list(ess_bulk = 800, ar = NULL))
+  expect_equal(custom$ess_bulk, 800)
+  expect_null(custom$ar)
+  expect_equal(custom$rhat, defaults$rhat)
+  expect_true(all(vapply(resolve_diagnostics(FALSE), is.null, logical(1))))
+  expect_error(resolve_diagnostics(list(unknown = 1)), "Unknown diagnostic")
+
+  data = data.frame(x = 1:20, y = rnorm(20))
+  model = list(y ~ 1, ~ 1)
+
+  # diagnostics = FALSE suppresses fit warnings and the inherited footer.
+  expect_warning({
+    fit_nowarn = mcp(model, data, par_x = "x", iter = 50, warmup = 50, diagnostics = FALSE, quiet = TRUE)
+  }, "Adaptation incomplete", fixed = TRUE)
+  expect_true(all(vapply(fit_nowarn$.internal$diagnostics, is.null, logical(1))))
+
+  # Force high rhat by modifying posterior draws.
+  fit_bad = fit_nowarn
+  raw_post = .subset2(fit_bad, "mcmc_post")
+  raw_post[[1]][, "cp_1"] = 5
+  raw_post[[2]][, "cp_1"] = 15
+  raw_post[[3]][, "cp_1"] = 25
+  fit_bad$mcmc_post = raw_post
+
+  inherited = capture.output(summary(fit_bad))
+  expect_false(any(grepl("poor convergence", inherited)))
+
+  strict = list(rhat = 1.01, ess_bulk = NULL, ess_tail = NULL)
+  strict_out = capture.output(summary(fit_bad, diagnostics = strict))
+  expect_true(any(grepl("poor convergence.*rhat > 1.01", strict_out)))
+
+  convergence_off = list(rhat = NULL, ess_bulk = NULL, ess_tail = NULL)
+  diagnostics_off = capture.output(summary(fit_bad, diagnostics = convergence_off))
+  expect_false(any(grepl("poor convergence", diagnostics_off)))
+
+  expect_warning(warn_nonconvergence(convergence_table(raw_post), strict), "rhat > 1.01")
+  expect_no_warning(warn_nonconvergence(convergence_table(raw_post), convergence_off))
+
+  # Single chain ESS diagnostics trigger warnings
+  single_chain_post = coda::as.mcmc.list(coda::mcmc(matrix(rnorm(50), ncol = 1, dimnames = list(NULL, "a"))))
+  expect_warning(warn_nonconvergence(convergence_table(single_chain_post), list(ess_bulk = 100), check_rhat = FALSE), "ess_bulk < 100")
+
+  # Stuck parameter triggers warning
+  stuck_post = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "stuck"))))
+  expect_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100)), "stuck")
+
+  # A constant prior does not trigger the warning (including indexed group-level deviations)
+  expect_no_warning(warn_nonconvergence(convergence_table(stuck_post), list(ess_bulk = 100), constant_pars = "stuck"))
+  stuck_group = coda::as.mcmc.list(coda::mcmc(matrix(rep(1, 50), ncol = 1, dimnames = list(NULL, "Intercept_1_id[A]"))))
+  expect_no_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100), constant_pars = "Intercept_1_id"))
+  expect_warning(warn_nonconvergence(convergence_table(stuck_group), list(ess_bulk = 100)), "Intercept_1_id \\(1 of 1 levels\\).*ranef\\(fit\\)")
+
+  # Group-level deviations are counted by level instead of listed
+  parameter = c("cp_1", "Intercept_1_id[A]", "Intercept_1_id[B]", "Intercept_1_id[C]", "x_1_id[A]")
+  expect_equal(format_bad_pars(parameter, c(TRUE, TRUE, FALSE, TRUE, FALSE)), "cp_1 and Intercept_1_id (2 of 3 levels)")
+
+  # Stuck parameter (undefined Rhat/ESS) triggers summary footer warning
+  fit_stuck = fit_nowarn
+  post_stuck = .subset2(fit_stuck, "mcmc_post")
+  for (chain in seq_along(post_stuck))
+    post_stuck[[chain]][, "cp_1"] = 5
+  fit_stuck$mcmc_post = post_stuck
+  stuck_summary = capture.output(summary(fit_stuck, diagnostics = list(rhat = 1.01)))
+  expect_true(any(grepl("poor convergence", stuck_summary)))
+
+  # Changed draws are not summarised with the convergence cached by mcp()
+  expect_false(is.null(cached_convergence(fit_nowarn)))
+  expect_null(cached_convergence(fit_stuck))
+
+  # Poorly mixed group-level deviations are counted by level in the summary footer
+  fit_group = mcp_example("group_mu", sample = "none", plot = FALSE)
+  levels_id = levels(factor(fit_group$data$id))
+  columns = c(mcp_pars(fit_group, scope = "population")$parameter, paste0("Intercept_1_id[", levels_id, "]"), paste0("stateB_1_id[", levels_id, "]"))
+  fit_group$mcmc_post = coda::mcmc.list(lapply(1:2, function(chain) {
+    draws = matrix(rnorm(2000 * length(columns)), ncol = length(columns), dimnames = list(NULL, columns))
+    draws[, "Intercept_1_id[id_01]"] = chain
+    coda::mcmc(draws)
+  }))
+  group_summary = capture.output(summary(fit_group, diagnostics = list(ess_bulk = NULL, ess_tail = NULL)))
+  expect_true(any(grepl("Group-level deviations show poor convergence (rhat > 1.01): Intercept_1_id (1 of 9 levels).", group_summary, fixed = TRUE)))
+  expect_false(any(grepl("parameters? shows? poor convergence", group_summary)))
+
+  ex_fit = mcp_example("intercepts", sample = "none")
+  expect_s3_class(ex_fit, "mcpfit")
+})
+
+test_that("bernoulli accepts logical TRUE/FALSE responses and converts to 0/1", {
+  data_logical = data.frame(
+    x = 1:6,
+    y = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE)
+  )
+  fit = mcp(list(y ~ 1 + x), data = data_logical, family = bernoulli(), sample = FALSE)
+  expect_s3_class(fit, "mcpfit")
+  expect_equal(fit$data$y, c(1, 0, 1, 0, 1, 0))
+})
+
+test_that("posterior_linpred evaluates binomial models on probability scale when transform = TRUE", {
+  data_bin = data.frame(
+    x = c(1, 2, 3),
+    y = c(2, 3, 4),
+    N = c(5, 5, 5)
+  )
+  fit = mcp(list(y | trials(N) ~ 1 + x), data = data_bin, family = binomial(), sample = FALSE)
+  
+  # Mock 1 posterior draw where Intercept_1 = 0, x_1 = 0 -> logit(p) = 0 -> p = 0.5
+  population = mcp_pars(fit, scope = "population")$parameter
+  draws = matrix(rep(0, length(population)), nrow = 1)
+  colnames(draws) = population
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(draws))
+
+  linpred_link = rstantools::posterior_linpred(fit, transform = FALSE)
+  linpred_prob = rstantools::posterior_linpred(fit, transform = TRUE)
+  epred_counts = rstantools::posterior_epred(fit)
+
+  expect_equal(unname(linpred_link), matrix(c(0, 0, 0), nrow = 1))
+  expect_equal(unname(linpred_prob), matrix(c(0.5, 0.5, 0.5), nrow = 1))
+  expect_equal(unname(epred_counts), matrix(c(2.5, 2.5, 2.5), nrow = 1))
+
+  # dpar = "mu" always returns the probability parameter regardless of rate
+  expect_equal(fitted(fit, dpar = "mu", rate = FALSE)$.mean, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, dpar = "mu", rate = TRUE)$.mean, c(0.5, 0.5, 0.5))
+  expect_equal(unname(rstantools::posterior_epred(fit, dpar = "mu")), matrix(c(0.5, 0.5, 0.5), nrow = 1))
+
+  # dpar = "epred" returns counts when rate = FALSE and proportions when rate = TRUE
+  expect_equal(fitted(fit, dpar = "epred", rate = FALSE)$.mean, c(2.5, 2.5, 2.5))
+  expect_equal(fitted(fit, dpar = "epred", rate = TRUE)$.mean, c(0.5, 0.5, 0.5))
+  expect_equal(fitted(fit, rate = FALSE)$.mean, c(2.5, 2.5, 2.5))
+
+  # dpar = "mu" does not require trials column in newdata
+  expect_equal(fitted(fit, newdata = data.frame(x = 1:3), dpar = "mu", rate = FALSE)$.mean, c(0.5, 0.5, 0.5))
+  expect_error(fitted(fit, newdata = data.frame(x = 1:3), dpar = "epred", rate = FALSE), "missing from the data: N")
+
+  # prediction data family validation fails for invalid trials
+  expect_error(predict(fit, newdata = data.frame(x = 1:3, N = -1), rate = FALSE), "Element 1 is not >= 1")
+})
+
+test_that("find_mixture_quantile handles large count means without integer overflow", {
+  family = as_mcpfamily(poisson())
+  dpars = list(mu = c(1e8, 1.5e9))
+  res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = 0.975)
+  expect_true(is.numeric(res) && is.finite(res) && res > 1.5e9)
+  expect_true(mean(stats::ppois(res, dpars$mu)) >= 0.975 && mean(stats::ppois(res - 1, dpars$mu)) < 0.975)
+
+  # Above 2^53, integers are not representable, so the search must stop at a relative tolerance
+  res = mcp:::find_mixture_quantile(family, list(mu = c(1, 1e16)), data = NULL, p = 0.975)
+  expect_equal(res, stats::qpois(0.95, 1e16), tolerance = 1e-9)
+  expect_error(mcp:::find_mixture_quantile(family, list(mu = c(1, Inf)), data = NULL, p = 0.975), "overflowed to Inf")
+})
+
+
+test_that("find_mixture_quantile is accurate regardless of response units", {
+  family = as_mcpfamily(gaussian())
+  for (scale in c(1, 1e6)) {
+    dpars = list(mu = c(0, 6e-5) * scale, sigma = c(2e-5, 2e-5) * scale)
+    for (p in c(0.025, 0.975)) {
+      res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = p)
+      expect_equal(mean(stats::pnorm(res, dpars$mu, dpars$sigma)), p, tolerance = 1e-6)
+    }
+  }
+
+  # One extreme draw widens the bracket to ~1e16 but must not reduce accuracy
+  dpars = list(mu = rep(0, 1000), sigma = c(rep(1, 999), 1e15))
+  res = mcp:::find_mixture_quantile(family, dpars, data = NULL, p = 0.975)
+  expect_equal(mean(stats::pnorm(res, dpars$mu, dpars$sigma)), 0.975, tolerance = 1e-6)
+})
+
+
+test_that("format.mcpfamily and summary print all family links", {
+  fam = as_mcpfamily(stats::gaussian())
+  expect_output({ res = print(fam) }, "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
+  expect_identical(res, fam)
+  expect_error(print(fam, extra = 1), class = "rlang_error")
+
+  data = data.frame(x = 1:10, y = 1:10)
+  fit_gauss = mcp(list(y ~ 1 + x), data, sample = FALSE)
+  expect_output(print(fit_gauss), "Family: gaussian\nLinks: mu = identity; sigma = identity", fixed = TRUE)
+
+  fit_sigma = mcp(list(y ~ 1 + x + sigma(1 + x)), data, sample = FALSE)
+  expect_output(print(fit_sigma), "Family: gaussian\nLinks: mu = identity; sigma = log", fixed = TRUE)
+})
+
+
+test_that("draw-dependent methods require explicit prior selection", {
+  fit = demo_fit
+  fit$mcmc_post = NULL
+  for (method in list(summary, fitted, predict, residuals, fixef,
+                     as_draws, as_draws_df, coda::as.mcmc,
+                     niterations, nchains, ndraws, log_lik, plot, plot_pars)) {
+    expect_error(method(fit), "No posterior draws are available", fixed = TRUE)
+  }
+  expect_no_error(capture.output(summary(fit, prior = TRUE)))
+  expect_s3_class(plot(fit, prior = TRUE), "ggplot")
+  expect_s3_class(plot_pars(fit, prior = TRUE, npars = NULL), "ggplot")
+  expect_output(print(fit), "No posterior draws. Use `summary(fit, prior = TRUE)`", fixed = TRUE)
+  expect_output(print(fit, prior = TRUE), "Change point parameters:", fixed = TRUE)
+  fit$mcmc_prior = NULL
+  expect_error(summary(fit), "No posterior draws are available")
+  expect_error(as_draws(fit, prior = TRUE), "No prior draws are available")
+  expect_no_error(capture.output(print(fit)))
+})
+
+
+test_that("ndraws is bounded by the available draws", {
+  message = "`ndraws` cannot exceed the 1000 available draws."
+  expect_error(fitted(demo_fit, ndraws = 1001), message, fixed = TRUE)
+  expect_error(pp_check(demo_fit, ndraws = 1001), message, fixed = TRUE)
+  expect_error(plot(demo_fit, ndraws = 1001), message, fixed = TRUE)
+  expect_error(plot_dpar(demo_fit, dpar = "sigma", ndraws = 1001), message, fixed = TRUE)
+
+  # Defaults are capped for short fits, which have fewer draws
+  short_fit = thin_post_draws(demo_fit, 40)
+  expect_s3_class(pp_check(short_fit), "ggplot")
+  expect_s3_class(plot(short_fit, interval = "fitted"), "ggplot")
+  expect_s3_class(plot_dpar(short_fit, dpar = "sigma", interval = "fitted"), "ggplot")
+})
+
+
+test_that("an empty inits list means no user inits", {
+  expect_no_error(mcp(demo_fit$model, demo_fit$data, inits = list(), sample = FALSE))
+})
+
+
+
+test_that("generics shared with brms and rstantools dispatch both ways", {
+  skip_if_not_installed("brms")
+  loadNamespace("brms")
+
+  # Their generics find mcp's methods
+  expect_identical(brms::hypothesis(demo_fit, "cp_1 > 30"), hypothesis(demo_fit, "cp_1 > 30"))
+  expect_identical(rstantools::prior_summary(demo_fit), prior_summary(demo_fit))
+  expect_identical(rstantools::log_lik(demo_fit), log_lik(demo_fit))
+
+  # mcp's generics forward other classes, reaching brms's default method
+  not_mcpfit = data.frame(a = 1:3)
+  expect_identical(hypothesis(not_mcpfit, "a > 0"), brms::hypothesis(not_mcpfit, "a > 0"))
+})

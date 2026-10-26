@@ -1,0 +1,150 @@
+test_that("plot_pars() paginates without changing its single-page return", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+
+  plots = lapply(c(5, 7), function(npars) {
+    plot_pars(
+      demo_fit, type = "dens_overlay",
+      npars = npars, ask = FALSE
+    )
+  })
+  pages = plots[[1]]
+  page_sizes = vapply(
+    pages,
+    function(page) length(unique(page[[1]]$data$Parameter)),
+    integer(1)
+  )
+
+  expect_equal(unname(page_sizes), c(5L, 2L))
+  expect_true(all(vapply(pages, inherits, logical(1), what = "ggplot")))
+  expect_s3_class(plots[[2]], "ggplot")
+
+  # npars = NULL and npars = Inf plot all parameters on one page
+  p_null = plot_pars(demo_fit, type = "dens_overlay", npars = NULL)
+  p_inf = plot_pars(demo_fit, type = "dens_overlay", npars = Inf)
+  expect_s3_class(p_null, "ggplot")
+  expect_s3_class(p_inf, "ggplot")
+  expect_equal(length(unique(p_null[[1]]$data$Parameter)), 7L)
+  expect_equal(length(unique(p_inf[[1]]$data$Parameter)), 7L)
+})
+
+test_that("plot_pars() prefers the group selector and supports its deprecated alias", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+
+  fit = unclass(demo_fit)
+  fit$.internal$model_tables$parameters = dplyr::bind_rows(
+    fit$.internal$model_tables$parameters,
+    tibble::tibble(
+      parameter = "group_par", part = "predictor", scope = "group",
+      role = "coefficient", segment = 1L, dpar = "mu", order = NA_integer_,
+      group_col = "group", population_parameter = "Intercept_1"
+    )
+  )
+  for (chain in seq_along(fit$mcmc_post))
+    colnames(fit$mcmc_post[[chain]])[1] = "group_par[1]"
+  class(fit) = class(demo_fit)
+
+  expect_no_warning(
+    group_plot <- plot_pars(fit, pars = "group", type = "dens", ask = FALSE)
+  )
+  expect_warning(
+    varying_plot <- plot_pars(fit, pars = "varying", type = "dens", ask = FALSE),
+    "deprecated"
+  )
+  expect_s3_class(group_plot, "ggplot")
+  expect_s3_class(varying_plot, "ggplot")
+})
+
+test_that("plot_pars() supports bayesplot hex plots", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+
+  expect_no_warning(
+    hex_plot <- plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
+  )
+  expect_s3_class(hex_plot, "ggplot")
+})
+
+test_that("geom_cp_density draws a vertical spike for fixed change points", {
+  # Unclass because accessing fit$mcmc_* elicits a deprecation warning
+  fit = unclass(demo_fit)
+  for (chain in seq_along(fit$mcmc_post)) {
+    fit$mcmc_post[[chain]][, "cp_1"] = 50
+  }
+  class(fit) = class(demo_fit)
+  p = plot(fit)
+  gb = ggplot2::ggplot_build(p)
+  cp_data = gb$data[[length(gb$data)]]
+
+  # cp_1 is fixed at 50, so its x coordinates should be strictly 50
+  cp_1_data = cp_data[cp_data$group %in% c(1, 2), ]
+  expect_true(all(cp_1_data$x == 50))
+
+  # Peak height should match group-level change points (e.g. cp_2)
+  cp_2_data = cp_data[!cp_data$group %in% c(1, 2), ]
+  expect_equal(max(cp_1_data$y), max(cp_2_data$y))
+})
+
+
+test_that("plot() supports exact predictive intervals, deprecates nsamples and q_fit/q_predict, and checks dots", {
+  # Exact predictive interval
+  p = plot(demo_fit, interval = c("fitted", "predict"), lines = 0)
+  expect_s3_class(p, "ggplot")
+
+  # Without lines and using all draws, plot is completely deterministic across consecutive calls
+  p1 = plot(demo_fit, interval = c("fitted", "predict"), lines = 0, ndraws = NULL)
+  p2 = plot(demo_fit, interval = c("fitted", "predict"), lines = 0, ndraws = NULL)
+  expect_equal(p1$layers[[2]]$data, p2$layers[[2]]$data)
+  expect_equal(p1$layers[[3]]$data, p2$layers[[3]]$data)
+
+  # Deprecated nsamples (v0.3.4) is ndraws, not lines
+  expect_warning(
+    p_nsamples <- plot(demo_fit, nsamples = 10),
+    "deprecated"
+  )
+  expect_equal(length(unique(p_nsamples$layers[[2]]$data$.draw)), 25)
+
+  # Deprecated q_fit and q_predict (v0.3.4) translate to central intervals
+  lifecycle::expect_deprecated(plot(demo_fit, q_fit = TRUE, lines = 0))
+  p_q = suppressWarnings(plot(demo_fit, q_fit = TRUE, q_predict = c(0.025, 0.975), lines = 0, ndraws = NULL))
+  expect_equal(p_q$layers[[2]]$data, p1$layers[[2]]$data)
+  expect_equal(p_q$layers[[3]]$data, p1$layers[[3]]$data)
+  expect_error(suppressWarnings(plot(demo_fit, q_fit = 0.5)), "central interval")
+  expect_error(suppressWarnings(plot(demo_fit, q_fit = TRUE, q_predict = c(0.1, 0.9))), "different interval widths")
+  expect_error(plot(demo_fit, interval = "fitted", q_fit = TRUE), "Use only")
+
+  # scale = "linear" in plot.mcpfit
+  p_lin = plot(demo_fit, scale = "linear")
+  expect_s3_class(p_lin, "ggplot")
+
+  # Unknown dots trigger an error
+  expect_error(
+    plot(demo_fit, weird_arg = 123),
+    "Unrecognized argument"
+  )
+  expect_error(
+    plot_dpar(demo_fit, weird_arg = 123),
+    "must be empty"
+  )
+})
+
+
+test_that("GARMA plotting works with categorical predictors", {
+  df = data.frame(
+    time = 1:20,
+    y = rnorm(20),
+    state = rep(c("A", "B"), each = 10)
+  )
+  fit = mcp(
+    list(y ~ 1 + state + ar(1), ~ 1 + ar(0)),
+    data = df, par_x = "time", chains = 1, iter = 10, warmup = 100, quiet = TRUE,
+    diagnostics = FALSE  # Justified because we are not testing convergence here, just plotting
+  )
+
+  expect_s3_class(plot(fit), "ggplot")
+  expect_s3_class(plot(fit, interval = c("fitted", "predict")), "ggplot")
+  expect_s3_class(plot_dpar(fit, "ar1"), "ggplot")
+})
+
+

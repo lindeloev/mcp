@@ -1,0 +1,170 @@
+cp_group_data = data.frame(
+  x = rep(1:10, 3),
+  y = seq_len(30),
+  id = factor(rep(letters[1:3], each = 10)),
+  site = factor(rep(LETTERS[1:3], 10))
+)
+
+
+test_that("group-level change points use one grouping factor", {
+  expect_error(
+    mcp(
+      list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | site)) + 1),
+      cp_group_data,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "must use the same grouping factor"
+  )
+})
+
+
+test_that("group-level change points use absolute locations and sequential bounds", {
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  expect_match(fit$prior$cp_2_id, "cp_1_id\\[id_\\]")
+  expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1")
+  expect_match(fit$jags_code, "cp_1_id\\[id_\\] = cp_1_id_location\\[id_\\] - cp_1")
+  expect_match(fit$jags_code, "cp_2_id_location\\[id_\\].*cp_1_id_location\\[id_\\]")
+  expect_false(grepl("_uncentered", fit$jags_code, fixed = TRUE))
+  expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)  # Population-level change points only
+})
+
+
+test_that("custom normal change-point hierarchies retain model bounds", {
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    prior = list(cp_1_id = "dnorm(0, cp_1_id_sd)"),
+    sample = FALSE
+  )
+  expect_match(fit$prior$cp_1_id, "T(min(x) - cp_1, max(x) - cp_1)", fixed = TRUE)
+  expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1, .*\\) T\\(cp_0, cp_2\\)")
+
+  # Constant priors are not truncated
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    prior = list(cp_2_id = "cp_1_id"),
+    sample = FALSE
+  )
+  expect_equal(fit$prior$cp_2_id, "cp_1_id")
+  expect_match(fit$jags_code, "cp_2_id[id_] = cp_1_id[id_]", fixed = TRUE)
+})
+
+
+test_that("simulation generates bounded hierarchical change-point locations", {
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  expect_true("cp_1_id_sd" %in% names(formals(fit$simulate)))
+  expect_false("cp_1_id" %in% names(formals(fit$simulate)))
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    cp_group_data,
+    cp_1 = 5,
+    cp_1_id_sd = 1,
+    Intercept_1 = 0,
+    Intercept_2 = 0,
+    sigma_1 = 1,
+    .type = "fitted"
+  )
+  deviations = attr(simulated, "simulated")$cp_1_id
+  by_group = vapply(split(deviations, cp_group_data$id), unique, numeric(1))
+  expect_false(isTRUE(all.equal(mean(by_group), 0)))
+  expect_true(all(5 + by_group >= 1 & 5 + by_group <= 10))
+  cp_prior = prior_summary(fit) |> dplyr::filter(.data$parameter == "cp_1_id")
+  expect_equal(cp_prior$bounds, "[1 - cp_1, 10 - cp_1]")
+})
+
+
+test_that("simulation rejects user-specified priors on change-point deviations", {
+  model = list(y ~ 1, ~ cp(1 + (1 | id)) + 1)
+  simulate_with = function(prior) {
+    fit = mcp(model, cp_group_data, par_x = "x", prior = prior, sample = FALSE)
+    fit$simulate(fit, cp_group_data, cp_1 = 5, cp_1_id_sd = 1, Intercept_1 = 0, Intercept_2 = 0, sigma_1 = 1)
+  }
+
+  expect_error(simulate_with(list(cp_1_id = 2)), "user-specified prior")
+  expect_error(simulate_with(list(cp_1_id = "dnorm(2, 0.1)")), "user-specified prior")
+  expect_no_error(simulate_with(list(cp_1_id = "dnorm(0, cp_1_id_sd)")))  # Identical to the default
+
+  # Priors on the population-level change point and the SD are replaced by the arguments
+  expect_no_error(simulate_with(list(cp_1 = "dnorm(5, 1)", cp_1_id_sd = "dnorm(0, 2) T(0, )")))
+})
+
+
+test_that("prior draws keep a single group-level change point in range", {
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    sample = "prior",
+    chains = 1, warmup = 100, iter = 200,
+    seed = 42, quiet = TRUE
+  )
+  draws = as.matrix(.subset2(fit, "mcmc_prior"))
+  deviations = draws[, grep("^cp_1_id\\[", colnames(draws)), drop = FALSE]
+  locations = sweep(deviations, 1, draws[, "cp_1"], "+")
+  expect_true(all(locations >= 1 & locations <= 10))
+})
+
+
+test_that("a grouping column can also be par_x", {
+  year_data = data.frame(year = rep(2001:2010, each = 3), y = seq_len(30))
+  fit = mcp(
+    list(y ~ 1, ~ cp((1 | year)) + 1),
+    year_data,
+    par_x = "year",
+    sample = "prior",
+    chains = 1, warmup = 100, iter = 200,
+    seed = 42, quiet = TRUE
+  )
+  expect_match(fit$jags_code, "cp_1_year_location[year_index_[i_]]", fixed = TRUE)
+  draws = as.matrix(.subset2(fit, "mcmc_prior"))
+  expect_true(all(draws[, "cp_1"] >= 2001 & draws[, "cp_1"] <= 2010))
+  expect_true("cp_1_year[2001]" %in% colnames(draws))
+})
+
+
+test_that("simulation samples adjacent group-level change points in realized order", {
+  fit = mcp(
+    list(y ~ 1, ~ cp(1 + (1 | id)) + 1, ~ cp(1 + (1 | id)) + 1),
+    cp_group_data,
+    par_x = "x",
+    sample = FALSE
+  )
+
+  set.seed(1)
+  result = fit$simulate(
+    fit,
+    cp_group_data,
+    cp_1 = 3,
+    cp_2 = 6,
+    cp_1_id_sd = 10,
+    cp_2_id_sd = 10,
+    Intercept_1 = 0,
+    Intercept_2 = 0,
+    Intercept_3 = 0,
+    sigma_1 = 1,
+    .type = "fitted"
+  )
+  simulation = attr(result, "simulated")
+  cp_1 = 3 + vapply(split(simulation$cp_1_id, cp_group_data$id), unique, numeric(1))
+  cp_2 = 6 + vapply(split(simulation$cp_2_id, cp_group_data$id), unique, numeric(1))
+  expect_true(all(cp_1 < cp_2))
+  expect_true(all(cp_1 >= 1 & cp_2 <= 10))
+})
+

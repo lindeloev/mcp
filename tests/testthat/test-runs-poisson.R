@@ -10,8 +10,8 @@ bad_poisson = list(
   # Does not work with sigma
   list(y ~ 1 + sigma(1)),
 
-  # Does not work with weights
-  list(y | weights(weights_ok) ~ 1)
+  # Coefficient-free model
+  list(y ~ 0)
 )
 
 test_bad(bad_poisson,
@@ -19,21 +19,93 @@ test_bad(bad_poisson,
          family = poisson())
 
 
-good_poisson_essential = list(
-  list(y ~ 1,  # With varying
-       1 + (1|id) ~ 1),
-  list(y ~ 1 + ar(1),
-       ~ 1 + x + ar(2, 1 + x + I(x^3)))
-)
-
-good_poisson_extensive = list(
+good_poisson = list(
   list(y ~ 1),  # one segment
-  list(y ~ 1 + x,  # specified multiple times and with rel()
-       y  ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0)
+  list(y ~ 1 + x,  # response from segment 1
+       ~ 1 + x,
+       ~ 0),
+  list(y ~ 1,  # With group-level change point
+       ~ cp(1 + (1|id)) + 1),
+  list(y ~ 1 + ar(1) + ma(1)),
+  list(y | weights(weights_ok) ~ 1)  # With weights
 )
 
-test_good(good_poisson_essential,
-          good_poisson_extensive,
+test_good(good_poisson,
           data = data_binomial,
           family = poisson())
+
+
+test_that("Poisson JAGS weights implement a likelihood power and sample on ordinary large counts", {
+  # Test reproduction failure case: count of 200 with weight of 2
+  df_pois = data.frame(x = 1:5, y = rep(200, 5), w = 2)
+  fit = mcp(list(y | weights(w) ~ 1), data = df_pois, family = poisson(), par_x = "x", quiet = TRUE)
+  expect_true(is.list(fit$model))
+  capture.output({ summary_fit = summary(fit) })
+  expect_equal(nrow(summary_fit), 1)
+  expect_true(abs(summary_fit$mean[1] - log(200)) < 0.1)
+
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, mu_[i_] - y[i_] * log(mu_[i_]) + loggam(y[i_] + 1))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
+
+  # Check that R-side log_lik() applies the weights directly
+  draws = as.data.frame(fit)
+  expect_equal(
+    unname(log_lik(fit, summary = FALSE)),
+    outer(exp(draws$Intercept_1), df_pois$y, function(mu, y) 2 * stats::dpois(y, lambda = mu, log = TRUE))
+  )
+})
+
+
+test_that("Weighted Poisson targets exact conjugate posterior without clamping", {
+  data_conj = data.frame(x = 1:3, y = 10, w = 1000)
+  fit = mcp(
+    list(y | weights(w) ~ 1),
+    data = data_conj,
+    family = poisson("identity"),
+    prior = list(Intercept_1 = "dgamma(1, 0.1)"),
+    par_x = "x",
+    quiet = TRUE
+  )
+  draws = as.matrix(coda::as.mcmc(fit))[, "Intercept_1"]
+  expect_equal(mean(draws), 10, tolerance = 0.05)
+  # Correct posterior is Gamma(shape = 30001, rate = 3000.1) with SD = 0.0577.
+  # Before the fix, the clamp at -700 caused SD to be ~ 1.82.
+  expect_equal(stats::sd(draws), 0.0577, tolerance = 0.05)
+
+  # Check that weights with missing responses errors cleanly
+  data_na = data.frame(x = 1:3, y = c(10, NA, 10), w = 10)
+  expect_error(
+    mcp(list(y | weights(w) ~ 1), data = data_na, family = poisson(), par_x = "x"),
+    "Weights with missing responses"
+  )
+})
+
+
+test_that("Coefficient-free models error with an informative message", {
+  expect_error(
+    mcp(list(y ~ 0), data.frame(x = 1:6, y = 1:6), family = poisson(), par_x = "x", sample = FALSE),
+    "The model does not contain any parameters to estimate."
+  )
+})
+
+
+test_that("Default Poisson prior does not break prior predictive workflow with seed = 42", {
+  df = data.frame(x = 1:10, y = 5)
+  fit = mcp(list(y ~ 1), data = df, family = poisson(), par_x = "x", sample = "both", seed = 42, iter = 1000, chains = 3, quiet = TRUE)
+  expect_s3_class(pp_check(fit, prior = TRUE, ndraws = NULL), "ggplot")
+})
+
+
+
+
+test_that("Weighted Poisson prior draws retain responses for the zeros trick", {
+  df = data.frame(x = seq_len(30), y = 10, w = 2)
+  fit = mcp(
+    list(y | weights(w) ~ 1), data = df, family = poisson(), par_x = "x",
+    prior = list(Intercept_1 = "dnorm(0, 1)"),
+    sample = "prior", chains = 1, iter = 1000, warmup = 200,
+    seed = 42, diagnostics = FALSE, quiet = TRUE
+  )
+  prior_mean = mean(as.matrix(.subset2(fit, "mcmc_prior"))[, "Intercept_1"])
+  expect_equal(prior_mean, 0, tolerance = 0.2)
+})

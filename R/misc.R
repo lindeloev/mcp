@@ -1,148 +1,222 @@
-# Converts logical(0) to null. Returns x otherwise
+# Converts zero-length vectors to NULL. Returns x otherwise
 logical0_to_null = function(x) {
-  if (length(x) > 0)
-    return(x)
-  else return(NULL)
+  if (length(x) > 0) x
 }
 
 
-#' Extracts the order from ARMA parameter name(s)
-#'
-#' If several names are provided (vector), it returns the maximum. If `pars_arma`
-#' is an empty string, it returns `0`.
-#'
-#' @aliases get_arma_order
-#' @keywords internal
-#' @param pars_arma Character vector
-#' @return integer
-get_arma_order = function(pars_arma) {
-  if (length(pars_arma) > 0) {
-    order_str = sub("(ma|ar)([0-9]+).*", "\\2", pars_arma)
-    order_max = max(as.numeric(order_str))
-    return(order_max)
-  } else {
-    return(0)
+# if((a %in% b) == FALSE) --> if(a %notin% b)
+`%notin%` = Negate(`%in%`)
+
+
+# Whether user-supplied JAGS code may have diverged from mcp's R-side model.
+has_custom_jags_code = function(fit) {
+  isTRUE(fit$.internal$custom_jags_code)
+}
+
+
+# Warn before evaluating an R-side model that was generated from formulas rather
+# than the custom JAGS code used for fitting.
+warn_custom_jags_code = function(fit) {
+  if (has_custom_jags_code(fit)) {
+    warning(
+      "Custom `jags_code` was supplied. mcp's R-side simulations and predictions may not match the fitted JAGS model.",
+      call. = FALSE
+    )
   }
+  invisible(NULL)
 }
 
 
-# Ask reminder questions for CRAN export
-release_questions = function() {
-  c(
-    "TEST: Have you run the extensive tests? options(test_mcp_allmodels = TRUE)",
-    "TEST: Have you run the test of fits? options(test_mcp_fits = TRUE)",
-    "TEST: Have you run `revdepcheck::revdep_check()`?",
+# List of categorical column names and their unique levels
+get_categorical_levels = function(df) {
+  checkmate::assert_data_frame(df)
+  categorical_cols = colnames(df)[vapply(df, function(x) is.factor(x) || is.logical(x) || is.character(x), logical(1))]
+  lapply(df[, categorical_cols, drop = FALSE], unique)
+}
 
-    "DOC: Have you built the README plots and checked them? source('vignettes/figures/make_README_plots.R')",
-    "DOC: Have you re-built the site using pkgdown::build_site() AFTER deleting caches of articles in 'vignettes/*_cache/'?",
-    "DOC: Have you checked all articles and plots after re-building the site?",
-    "DOC: Have you run the script to insert the correct logo.png in the HTML meta?"
+
+# Collapse vector into a string joined by " and "
+and_collapse = function(x) {
+  checkmate::assert_character(x)
+  paste0(x, collapse = " and ")
+}
+
+
+# Merge partial diagnostics with the defaults.
+resolve_diagnostics = function(diagnostics = list()) {
+  defaults = list(
+    rhat = 1.01,
+    ess_bulk = 400,
+    ess_tail = 400,
+    ar = 0.10,
+    ma = 0.10
+  )
+  if (identical(diagnostics, FALSE))
+    return(lapply(defaults, function(x) NULL))
+  if (!is.list(diagnostics))
+    stop("`diagnostics` must be a named list or FALSE.")
+  if (length(diagnostics) > 0 && (is.null(names(diagnostics)) || any(names(diagnostics) == "")))
+    stop("Every element of `diagnostics` must be named.")
+
+  unknown = setdiff(names(diagnostics), names(defaults))
+  if (length(unknown) > 0)
+    stop("Unknown diagnostic(s): ", and_collapse(unknown), ".")
+  defaults[names(diagnostics)] = diagnostics
+  defaults
+}
+
+
+# Check MCMC diagnostic criteria for a summary data.frame.
+# - convergence: A data.frame with a `parameter` column and optionally `rhat`, `ess_bulk`, `ess_tail`.
+# - diagnostics: Resolved or partial diagnostics list.
+# - constant_pars: Names of parameters with constant priors, e.g., "x_2" for x_2 = 5.
+# - check_rhat: Logical. Whether Rhat should be evaluated (FALSE if nchain < 2).
+check_convergence = function(convergence, diagnostics = list(), constant_pars = character(), check_rhat = TRUE) {
+  diagnostics = resolve_diagnostics(diagnostics)
+  if (nrow(convergence) == 0)
+    return(list(bad = logical(0), bad_names = character(0), n_bad = 0L, thresholds = ""))
+
+  base_name = sub("\\[.*\\]$", "", convergence$parameter)
+  is_constant = convergence$parameter %in% constant_pars | base_name %in% constant_pars
+
+  check_rhat = check_rhat && !is.null(diagnostics$rhat) && "rhat" %in% names(convergence)
+  check_bulk = !is.null(diagnostics$ess_bulk) && "ess_bulk" %in% names(convergence)
+  check_tail = !is.null(diagnostics$ess_tail) && "ess_tail" %in% names(convergence)
+
+  bad = rep(FALSE, nrow(convergence))
+  if (check_rhat)
+    bad = bad | is.na(convergence$rhat) | convergence$rhat > diagnostics$rhat
+  if (check_bulk)
+    bad = bad | is.na(convergence$ess_bulk) | convergence$ess_bulk < diagnostics$ess_bulk
+  if (check_tail)
+    bad = bad | is.na(convergence$ess_tail) | convergence$ess_tail < diagnostics$ess_tail
+
+  bad = bad & !is_constant
+
+  thresholds = c(
+    if (check_rhat) paste0("rhat > ", diagnostics$rhat),
+    if (check_bulk) paste0("ess_bulk < ", diagnostics$ess_bulk),
+    if (check_tail) paste0("ess_tail < ", diagnostics$ess_tail)
+  )
+
+  list(
+    bad = bad,
+    bad_names = convergence$parameter[bad],
+    n_bad = sum(bad),
+    thresholds = paste(thresholds, collapse = " or ")
   )
 }
 
 
-#' Remove varying or population terms from a formula
-#'
-#' WARNING: removes response side from the formula
-#'
-#' @aliases remove_terms
-#' @keywords internal
-#' @param form A formula
-#' @param remove Either "varying" or "population". These are removed.
-#' @return A formula
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-remove_terms = function(form, remove) {
-  assert_types(form, "formula")
-  assert_value(remove, allowed = c("varying", "population"))
-
-  # Find terms with "|"
-  attrs = attributes(stats::terms(form))
-  term.labels = attrs$term.labels
-  varying_bool = stringr::str_detect(term.labels, "\\|")
-
-  # Add parenthesis back to them
-  term.labels[varying_bool] = paste0("(", term.labels[varying_bool], ")")
-
-  # Remove non-matching types
-  if (remove == "varying") {
-    term.labels = term.labels[!varying_bool]
-    term.labels = c(attrs$intercept, term.labels)  # Add intercept indicator
-  } else if (remove == "population") {
-    term.labels = term.labels[varying_bool]
-  }
-
-  # Build formula from terms and return
-  if (length(term.labels) == 0) {
-    return(NULL)
-  } else {
-    formula_terms = paste0(term.labels, collapse = " + ")
-    formula_str = paste0("~", formula_terms)
-    return(stats::as.formula(formula_str, env=globalenv()))
-  }
+# rhat and bulk/tail ESS of each variable in `draws` (an mcmc.list or posterior draws object).
+# Unrounded. Shared by the fit-time warning, summary(), fixef(), and ranef().
+convergence_table = function(draws) {
+  posterior::summarise_draws(
+    posterior::as_draws_array(draws),
+    rhat = posterior::rhat,
+    ess_bulk = function(x) suppressWarnings(posterior::ess_bulk(x)),
+    ess_tail = function(x) suppressWarnings(posterior::ess_tail(x))
+  ) |>
+    dplyr::rename(parameter = "variable")
 }
 
 
-#' Takes any formula-like input and returns a formula
-#' @aliases to_formula
-#' @keywords internal
-#' @param form Formula or character (with or without initial tilde/"~")
-#' @return A formula
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-to_formula = function(form) {
-  assert_types(form, "character", "formula")
-  if (is.character(form)) {
-    # Add tilde
-    if (!stringr::str_detect(form, "^(\\s|)~")) {
-      form = paste0("~", form)
+# The convergence_table() of the posterior draws, cached by mcp(). NULL if the draws changed since then.
+cached_convergence = function(fit) {
+  convergence = fit$.internal$convergence
+  if (!is.null(convergence) && identical(convergence$hash, rlang::hash(mcmclist_draws(fit, error = FALSE))))
+    convergence$table
+}
+
+
+# Name the `parameter`s that are `bad`, counting group-level deviations by level instead of listing them,
+# e.g., "cp_1 and Intercept_1_id (37 of 300 levels)".
+format_bad_pars = function(parameter, bad) {
+  base_name = sub("\\[.*\\]$", "", parameter)
+  is_group = base_name != parameter
+  labels = vapply(unique(base_name[bad]), function(name) {
+    is_level = is_group & base_name == name
+    if (!any(is_level))
+      return(name)
+    paste0(name, " (", sum(bad & is_level), " of ", sum(is_level), " levels)")
+  }, character(1))
+  and_collapse(labels)
+}
+
+
+# Warn about poorly mixed posterior chains. The default thresholds (rhat > 1.01, bulk/tail
+# ESS < 400) follow Vehtari et al. (2021). Arguments as in check_convergence().
+warn_nonconvergence = function(convergence, diagnostics = list(), constant_pars = character(), check_rhat = TRUE) {
+  diagnostics = resolve_diagnostics(diagnostics)
+  if (is.null(unlist(diagnostics[c("rhat", "ess_bulk", "ess_tail")])))
+    return(invisible(NULL))
+
+  convergence_check = check_convergence(convergence, diagnostics, constant_pars = constant_pars, check_rhat = check_rhat)
+  if (convergence_check$n_bad == 0)
+    return(invisible(NULL))
+
+  has_group = any(convergence_check$bad & grepl("[", convergence$parameter, fixed = TRUE))
+  warning(
+    "Some parameters may not have converged well:\n",
+    "  * ", convergence_check$thresholds, ": ",
+    format_bad_pars(convergence$parameter, convergence_check$bad), "\n",
+    "Inspect `summary(fit)`", if (has_group) ", `ranef(fit)`,", " and `plot_pars(fit)`, and consider increasing ",
+    "`iter`/`warmup`, set inits manually, or simplifying the model.",
+    call. = FALSE
+  )
+  invisible(NULL)
+}
+
+
+# Design matrix with one column per coefficient in `coefs` and `group_coefs`,
+# ordered by `matrix_col`. The columns are in their `matrix_data`.
+get_predictor_matrix = function(coefs, group_coefs = NULL) {
+  columns = c(coefs$matrix_data, group_coefs$matrix_data)
+  do.call(cbind, columns[order(c(coefs$matrix_col, group_coefs$matrix_col))])
+}
+
+
+# Invert the posterior predictive mixture CDF for a single quantile probability `p`.
+# The mixture quantile lies between the smallest and largest per-draw quantiles.
+find_mixture_quantile = function(family, dpars, data, p) {
+  mix_cdf = function(y) mean(family$r$cdf(y, dpars, data))
+  bracket = range(family$r$quantile(p, dpars, data))
+  if (bracket[1] == bracket[2])
+    return(bracket[1])
+
+  # Continuous: root-finding. extendInt guards against rounding at the bracket ends.
+  if (!isTRUE(family$response$is_discrete))
+    return(stats::uniroot(function(y) mix_cdf(y) - p, bracket, extendInt = "upX", tol = .Machine$double.eps)$root)
+
+  # Discrete: binary search for the smallest integer with mix_cdf(y) >= p.
+  # Above 2^53, doubles cannot represent all integers, so stop at a relative tolerance.
+  lo = bracket[1]
+  hi = bracket[2]
+  while (hi - lo > max(1, hi * 1e-12)) {
+    mid = floor((lo + hi) / 2)
+    if (mix_cdf(mid) >= p) {
+      hi = mid
+    } else {
+      lo = mid + 1
     }
-    form = stats::as.formula(form)
   }
-
-  return(form)
+  if (lo < hi && mix_cdf(lo) < p) hi else lo
 }
 
-#' Expand samples with quantiles
-#'
-#' TO DO: implement using `fitted()` and `predict()` but avoid double-computing the samples? E.g.:
-#' `get_quantiles2 = function(fit, quantiles, facet_by = NULL) {`
-#'   `fitted(fit, probs = c(0.1, 0.5, 0.9), newdata = data.frame(x = c(11, 50, 100))) %>%`
-#'   `tidyr::pivot_longer(tidyselect::starts_with("Q")) %>%`
-#'   `dplyr::mutate(quantile = stringr::str_remove(name, "Q") %>% as.numeric() / 100)`
-#' `}`
-#'
-#' @aliases get_quantiles
-#' @keywords internal
-#' @inheritParams plot.mcpfit
-#' @param samples A tidybayes tibble
-#' @param quantiles Vector of quantiles (0.0 to 1.0)
-#' @param xvar An rlang::sym() with the name of the x-col in `samples`
-#' @param yvar An rlang::sym() with the name of the response col in `samples`
-#' @return A tidybayes long format tibble with the column "quantile"
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-get_quantiles = function(samples, quantiles, xvar, yvar, facet_by = NULL) {
-  # Trick to declare no facet = common group for all
-  if (is.null(facet_by))
-    facet_by = xvar
 
-  # Return data with added quantiles
-  samples %>%
-    tidyr::expand_grid(quantile = quantiles) %>%
-
-    # Now compute the quantile for each parameter, quantile, and (optionally) facet:
-    dplyr::group_by(!!xvar, .data$quantile) %>%
-    dplyr::group_by(!!rlang::sym(facet_by), .add = TRUE) %>%
-    dplyr::summarise(
-      y = stats::quantile(!!yvar, probs = .data$quantile[1])
-    )
+# Exact quantiles of the posterior predictive distribution of each row, i.e., the mixture of
+# the response distributions of all draws. Returns a rows x probs matrix.
+# - dpars: Distributional parameters on the response scale (rows x draws).
+# - data: Response auxiliaries, e.g., `trials`, one value per row.
+get_mixture_quantiles = function(dpars, data, probs, family, rate = FALSE) {
+  quantiles = vapply(seq_len(nrow(dpars$mu)), function(row) {
+    row_dpars = lapply(dpars, function(value) value[row, ])
+    row_data = lapply(data, `[`, row)
+    row_quantiles = vapply(probs, function(p) find_mixture_quantile(family, row_dpars, row_data, p), numeric(1))
+    family$response$observed(row_quantiles, row_data, rate)
+  }, numeric(length(probs)))
+  matrix(quantiles, ncol = length(probs), byrow = TRUE)
 }
-
-# Hack to make R CMD pass for function geom_cp_density()
-utils::globalVariables(c("value", ".chain", "cp_name", "."))
 
 
 #' Print mcplist
@@ -150,15 +224,19 @@ utils::globalVariables(c("value", ".chain", "cp_name", "."))
 #' Shows a list in a more condensed format using `str(list)`.
 #' @aliases print.mcplist
 #' @inheritParams print.mcpfit
+#' @return `x`, invisibly.
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
+#' @examples 
+#' print(demo_fit$model)
+#' print(demo_fit$prior)
 print.mcplist = function(x, ...) {
-  assert_types(x, "list")
-  assert_ellipsis(...)
+  checkmate::assert_list(x)
+  rlang::check_dots_empty()
 
   # For all-formula list (typically fit$model)
-  if (all(sapply(x, is.formula)) == TRUE) {
+  if (all(sapply(x, rlang::is_formula)) == TRUE) {
     cat(paste0("List of ", length(x), "\n"))
     for (i in x) {
       cat(" $ ")
@@ -168,17 +246,18 @@ print.mcplist = function(x, ...) {
     # Other lists
     utils::str(x, vec.len = Inf, give.head = FALSE, give.attr = FALSE)
   }
+  invisible(x)
 }
 
 
-#' Nice printing texts
+#' Nice Printing of Multiline Texts
 #'
-#' Useful for `print(fit$jags_code)`, `print(mcp_demo$call)`, etc.
+#' Useful for `print(fit$jags_code)`, `print(mcp_demo$example_code)`, etc.
 #'
 #' @aliases print.mcptext
 #' @param x Character, often with newlines.
-#' @param ... Currently ignored.
-#' @return NULL
+#' @param ... Must be empty. Reserved for future use.
+#' @return `x`, invisibly.
 #' @export
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -187,314 +266,8 @@ print.mcplist = function(x, ...) {
 #' class(mytext) = "mcptext"
 #' print(mytext)
 print.mcptext = function(x, ...) {
-  assert_types(x, "character")
-  assert_ellipsis(...)
-  cat(x)
-}
-
-
-#' Get example models and data
-#'
-#' @aliases mcp_example
-#' @param name Name of the example. One of:
-#'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
-#'  * `"ar"`: One change point in autoregressive residuals.
-#'  * `"binomial"`: Binomial with two change points. Much like `"demo"` on a logit scale.
-#'  * `"intercepts"`: An intercept-only change point.
-#'  * `rel_prior`: Relative parameterization and informative priors.
-#'  * `"quadratic"`: A change point to a quadratic segment.
-#'  * `"trigonometric"`: Trigonometric/seasonal data and model.
-#'  * `"varying"`: Varying / hierarchical change points.
-#'  * `"variance"`: A change in variance, including a variance slope.
-#' @param sample TRUE (run `fit = mcp(model, data, ...)`) or FALSE.
-#' @return List with
-#'  * `model`: A list of formulas
-#'  * `data`: The simulated data
-#'  * `simulated`: The parameters used for simulating the data.
-#'  * `fit`: an `mcpfit` if `sample = TRUE`,
-#'  * `call`: the code to run the above.
-#' @export
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @examples
-#' \donttest{
-#' ex = mcp_example("demo")
-#' plot(ex$data)  # Plot data
-#' print(ex$simulated)  # See true parameters used to simulate
-#' print(ex$call)  # See how the data was simulated
-#'
-#' # Fit the model. Either...
-#' fit = mcp(ex$model, ex$data)
-#' plot(fit)
-#'
-#' ex_with_fit = mcp_example("demo", sample = TRUE)
-#' plot(ex_with_fit$fit)
-#'}
-mcp_example = function(name, sample = FALSE) {
-  assert_value(name, c("demo", "ar", "binomial", "intercepts", "rel_prior", "quadratic", "trigonometric", "varying", "variance"))
-  data = data.frame()  # To make R CMD Check happy.
-  if (name == "demo") {
-    call = "# Define model
-model = list(
-  response ~ 1,
-  ~ 0 + time,
-  ~ 1 + time
-)
-
-# Simulate data
-empty = mcp(model, sample = FALSE)
-set.seed(40)
-data = tibble::tibble(
-  time = runif(100, 0, 100),
-  response = empty$simulate(
-    time,
-    cp_1 = 30,
-    cp_2 = 70,
-    int_1 = 10,
-    int_3 = 0,
-    sigma = 4,
-    time_2 = 0.5,
-    time_3 = -0.2)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "ar") {
-    call = "# Define model
-model = list(
-  price ~ 1 + ar(2),
-  ~ 0 + time + ar(1)
-)
-
-# Simulate data
-empty = mcp(model, sample = FALSE)
-set.seed(42)
-data = tibble::tibble(
-  time = 1:200,
-  price = empty$simulate(
-    time,
-    cp_1 = 120,
-    int_1 = 20,
-    time_2 = 0.5,
-    sigma_1 = 5,
-    ar1_1 = 0.7,
-    ar2_1 = 0.2,
-    ar1_2 = -0.4)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "binomial") {
-    call = "# Define model
-model = list(
-  y | trials(N) ~ 1,  # constant rate
-  ~ 0 + x,  # joined changing rate
-  ~ 1 + x  # disjoined changing rate
-)
-
-# Simulate data
-empty = mcp(model, family = binomial(), sample = FALSE)
-set.seed(42)
-data = tibble::tibble(
-  x = 1:100,
-  N = sample(10, length(x), replace=TRUE),
-  y = empty$simulate(
-    x = x,
-    N,
-    cp_1 = 30,
-    cp_2 = 70,
-    int_1 = 2,
-    int_3 = 0.4,
-    x_2 = -0.2,
-    x_3 = 0.05)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, family = binomial(), adapt = 5000)
-"
-  } else if (name == "intercepts") {
-    call = "# Define model
-model = list(
-  y ~ 1,
-  ~ 1
-)
-
-# Simulate data
-empty = mcp(model, sample = FALSE, par_x = \"x\")
-set.seed(40)
-data = tibble::tibble(
-  x = runif(100, 0, 100),
-  y = empty$simulate(
-    x,
-    cp_1 = 50,
-    int_1 = 10,
-    int_2 = 20,
-    sigma = 8)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data, par_x = \"x\")"
-  } else if (name == "quadratic") {
-    call = "# Define model
-model = list(
-  y ~ 1,
-  ~ 0 + x + I(x^2)
-)
-
-# Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(42)
-data = tibble::tibble(
-  x = seq(0, 40, by = 0.5),
-  y = empty$simulate(
-    x,
-    cp_1 = 15,
-    int_1 = 10,
-    sigma = 30,
-    x_2 = -30,
-    x_2_E2 = 1.5)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "rel_prior") {
-    call = "# Define model
-model = list(
-  y ~ 1 + x,
-  ~ rel(1) + rel(x),
-  rel(1) ~ 0 + x
-)
-
-# Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(40)
-data = tibble::tibble(
-  x = 1:100,
-  y = empty$simulate(
-    x,
-    cp_1 = 25,
-    cp_2 = 40,
-    int_1 = 25,
-    int_2 = -10,
-    sigma = 7,
-    x_1 = 1,
-    x_2 = -3,
-    x_3 = 0.5)
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "trigonometric") {
-    call = "model = list(
-  y ~ 1 + sin(x),
-  ~ 1 + cos(x) + x
-)
-
-# Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(40)
-data = tibble::tibble(
-  x = seq(0, 35, by = 0.2),
-  y = empty$simulate(
-    x,
-    cp_1 = 17,
-    int_1 = 10,
-    x_1_sin = 10,
-    x_2_cos = 8,
-    int_2 = 10,
-    x_2 = 3,
-    sigma = 3
-  )
-)
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "variance") {
-    call = "# Define model
-model = list(
-  y ~ 1,
-  ~ 0 + sigma(1 + x),
-  ~ 0 + x
-)
-
-# Simulate data
-empty = mcp::mcp(model, sample = FALSE)
-set.seed(30)
-data = tibble::tibble(
-  x = 1:100,
-  y = empty$simulate(
-    x,
-    cp_1 = 25,
-    cp_2 = 75,
-    int_1 = 20,
-    x_3 = 2,
-    sigma_1 = 7,
-    sigma_2 = 25,
-    sigma_x_2 = -0.45)
-  )
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else if (name == "varying") {
-    call = "# Define model
-model = list(
-  y ~ 1 + x,  # intercept + slope
-  1 + (1|id) ~ 0 + x  # joined slope
-)
-
-# Simulate data
-empty = mcp::mcp(model, sample=FALSE)
-data = tibble::tibble(id = c(\"John\", \"Benny\", \"Rose\", \"Cath\", \"Bill\", \"Erin\")) %>%
-  tidyr::expand_grid(x = seq(1, 100, by=4)) %>%
-  dplyr::mutate(
-    id_numeric = as.numeric(as.factor(id)),
-    y = empty$simulate(
-      x,
-      cp_1 = 40,
-      cp_1_id = 7*(id_numeric - mean(id_numeric)),
-      int_1 = 15,
-      x_1 = 3,
-      x_2 = -2,
-      sigma = 25
-    )
-  )
-
-# Run sampling
-if (sample == TRUE)
-  fit = mcp(model, data)"
-  } else {
-    stop("Unknown `name`: ", name)
-  }
-
-  # Run the code
-  eval(parse(text = call))
-
-  # Get stuff ready for return
-  for (i in seq_along(model))
-    environment(model[[i]]) = parent.frame()
-
-  class(call) = c("mcptext", "character")
-  class(model) = c("mcplist", "list")
-
-  last_col = dplyr::pull(data, -1)  # The response column is always the last column
-  simulated = attr(last_col, "simulated")
-
-  if (sample == FALSE)
-    fit = NULL
-
-  return(list(
-    model = model,  # Bind them to global workspace for nicer display
-    data = data,
-    simulated = simulated,  # response is always the last column
-    fit = fit,
-    call = call
-  ))
+  checkmate::assert_string(x)
+  rlang::check_dots_empty()
+  cat(x, "\n", sep = "")
+  invisible(x)
 }

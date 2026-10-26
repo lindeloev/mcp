@@ -2,7 +2,7 @@
 % Please edit documentation in R/families.R
 \name{bernoulli}
 \alias{bernoulli}
-\title{Bernoulli family for mcp}
+\title{Bernoulli Family for mcp}
 \usage{
 bernoulli(link = "logit")
 }
@@ -10,5 +10,12 @@ bernoulli(link = "logit")
 \item{link}{Link function.}
 }
 \description{
-Bernoulli family for mcp
+Binary responses (0 or 1). See \href{https://lindeloev.github.io/mcp/articles/binomial.html}{Binomial and Bernoulli}
+for worked examples.
+}
+\examples{
+# Fit a binary-response model with a probit link
+data = data.frame(time = 1:6, y = c(0, 0, 0, 1, 1, 1))
+fit = mcp(list(y ~ 1), data, family = bernoulli(link = "probit"), par_x = "time", sample = FALSE)
+mcp_pars(fit)$parameter  # Show the parameters of the fitted Bernoulli model
 }

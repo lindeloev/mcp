@@ -2,12 +2,16 @@
 
 on:
   push:
-    branches: [main, master]
+    branches: [dev, main]
   pull_request:
-    branches: [main, master]
+    branches: [dev, main]
   workflow_dispatch:
 
 name: R-CMD-check
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   R-CMD-check:
@@ -21,6 +25,7 @@ jobs:
         config:
           - {os: macos-latest,    r: 'release'}
           - {os: windows-latest,  r: 'release'}
+          - {os: windows-latest,  r: 'devel'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
           - {os: ubuntu-latest,   r: 'oldrel-1'}
@@ -28,54 +33,151 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      MCP_TEST_LEVEL: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'release' || '' }}
+      TESTTHAT_CPUS: 4
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      # JAGS install. Inspired by https://github.com/boydorr/SpARKjags/blob/master/.github/workflows/test-build.yaml
-      # but updated with ignoring certificates and redirects.
-      # JAGS is automatically installed on linux via the rjags package.
-      - name: Install JAGS (if Windows)
-        if: runner.os == 'Windows'
-        run: |
-          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.1.exe
-          wjags.exe /S
-          del wjags.exe
-        shell: cmd
-
-      - name: Install JAGS (if macOS)
-        if: runner.os == 'macOS'
-        # This worked before R 4.3: brew install jags
-        run: |
-          curl -o wjags.pkg -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg
-          sudo installer -pkg wjags.pkg -target /
-          rm wjags.pkg
-
-      # R
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      # JAGS install before installing R dependencies
+      - name: Install JAGS (if Windows)
+        if: runner.os == 'Windows'
+        run: |
+          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.2.exe
+          wjags.exe /S
+          del wjags.exe
+        shell: cmd
+
+      # Install JAGS 4.3.2 matching CRAN rjags 4-17
+      - name: Install JAGS (if macOS)
+        if: runner.os == 'macOS'
+        run: |
+          sudo mkdir -p /usr/local/lib /usr/local/include /usr/local/bin
+          # Ensure any Homebrew JAGS 5 is unlinked
+          brew unlink jags 2>/dev/null || true
+
+          # Official universal installer for JAGS 4.3.2 (arm64 + x86_64) matching CRAN rjags.
+          # SourceForge download URLs require -L to follow redirects and -0 -k to handle mirror handshakes.
+          URLS=(
+            "https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg/download"
+            "https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg"
+            "https://netcologne.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg"
+            "https://deac-fra.dl.sourceforge.net/project/mcmc-jags/JAGS/4.x/Mac%20OS%20X/JAGS-4.3.2.pkg"
+          )
+          for url in "${URLS[@]}"; do
+            echo "Attempting to download JAGS 4.3.2 from $url ..."
+            if curl -L0 -k --retry 3 --connect-timeout 20 -o wjags.pkg "$url" || \
+               curl -L -k --retry 3 --connect-timeout 20 -o wjags.pkg "$url"; then
+              if [ -f wjags.pkg ] && [ $(wc -c < wjags.pkg) -gt 1000000 ]; then
+                echo "Downloaded $(wc -c < wjags.pkg) bytes successfully."
+                break
+              fi
+            fi
+            rm -f wjags.pkg
+          done
+
+          if [ ! -f wjags.pkg ]; then
+            echo "ERROR: Failed to download JAGS-4.3.2.pkg from all mirrors."
+            exit 1
+          fi
+
+          echo "Installing JAGS-4.3.2.pkg..."
+          sudo installer -pkg wjags.pkg -target /
+          rm -f wjags.pkg
+
+          if [ ! -f /usr/local/lib/libjags.4.dylib ]; then
+            echo "ERROR: /usr/local/lib/libjags.4.dylib was not found after installation."
+            exit 1
+          fi
+
+          # Link jags executable to /opt/homebrew/bin if on Apple Silicon runner
+          if [ -d /opt/homebrew/bin ]; then
+            sudo ln -sf /usr/local/bin/jags /opt/homebrew/bin/jags
+          fi
+
+          ls -la /usr/local/lib/libjags*
+          echo "exit" | /usr/local/bin/jags || true
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, any::covr
           needs: check, coverage
 
+      # Install TinyTeX only on one runner to verify PDF manual
+      - uses: r-lib/actions/setup-tinytex@v2
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          args: ${{ (matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release') && 'c("--as-cran")' || 'c("--no-manual", "--as-cran")' }}
 
       # Run test coverage on the fastest-to-run job
       - name: Test coverage
         if: matrix.config.os == 'macos-latest' && matrix.config.r == 'release'
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           covr::codecov(
             quiet = FALSE,
             clean = FALSE,
             install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package")
           )
+        shell: Rscript {0}
+
+  # JAGS 5 needs rjags 5-x, which is not on CRAN yet. Informative only: failures do not fail the workflow.
+  jags5-release:
+    runs-on: macos-latest
+
+    name: macos-latest (release, JAGS 5)
+
+    continue-on-error: true
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      MCP_TEST_LEVEL: release
+      TESTTHAT_CPUS: 4
+      TESTTHAT_MAX_FAILS: Inf
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      # The single-build installer does not create /opt/jags/5.x-current, where rjags 5-x's configure looks for jags.pc.
+      - name: Install JAGS 5
+        run: |
+          brew install pkgconf
+          curl -L --retry 3 -o jags5.pkg "https://sourceforge.net/projects/mcmc-jags/files/JAGS/5.x/macOS/JAGS-5.0.0-vecLib-single-aarch64.pkg/download"
+          echo "134f380f1a945ccfd29342d542761febeff990ab7736cbbaf29ddf3aee2ee148  jags5.pkg" | shasum -a 256 -c
+          sudo installer -pkg jags5.pkg -target /
+          rm jags5.pkg
+          JAGS_PC=$(find /opt/jags /usr/local -name jags.pc 2>/dev/null | head -1)
+          echo "PKG_CONFIG_PATH=$(dirname "$JAGS_PC")" >> "$GITHUB_ENV"
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgload
+          needs: check
+
+      # Replace the CRAN rjags 4-x binary installed above
+      - name: Install rjags 5
+        run: |
+          curl -L --retry 3 -o rjags_5-3.tar.gz "https://sourceforge.net/projects/mcmc-jags/files/rjags/5/Source/rjags_5-3.tar.gz/download"
+          R CMD INSTALL rjags_5-3.tar.gz
+          Rscript -e 'stopifnot(packageVersion("rjags") >= "5")'
+
+      - name: Run tests
+        run: testthat::test_local(reporter = "summary", stop_on_failure = TRUE)
         shell: Rscript {0}

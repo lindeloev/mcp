@@ -2,121 +2,132 @@
 #'
 #' Given a model (a list of segment formulas), `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points
-#' between segments. [See more details and worked examples on the mcp website](https://lindeloev.github.io/mcp/).
-#' All segments must regress on the same x-variable. Change
-#' points are forced to be ordered using truncation of the priors. You can run
-#' `fit = mcp(model, sample=FALSE)` to avoid sampling and the need for
-#' data if you just want to get the priors (`fit$prior`), the JAGS code
-#' `fit$jags_code`, or the R function to simulate data (`fit$simulate`).
+#' between segments. See details or [the mcp website](https://lindeloev.github.io/mcp/).
 #'
 #' @aliases mcp
-#' @param data Data.frame or tibble in long format.
-#' @param model A list of formulas - one for each segment. The first formula
-#'   has the format `response ~ predictors` while the following formulas
-#'   have the format `response ~ changepoint ~ predictors`. The response
-#'   and change points can be omitted (`changepoint ~ predictors` assumes same
-#'   response. `~ predictors` assumes an intercept-only change point). The
-#'   following can be modeled:
+#' @param model A list of formulas, one for each segment, in the format
+#'   `model = list(response ~ predictors, ~ cp(...) + predictors)`, where `cp()` is optional. See [mcp-formula] for how segments connect
+#'   and the full formula syntax. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
+#' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
+#'   with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
+#' @param prior Named list, e.g., `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`. 
+#'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
+#'   `sigma_1`, etc.) and values are a distribution string (e.g., `"dnorm(0, 1) T(0, )"`),
+#'   a constant (e.g., `-2.1`), or the name of another parameter to share its value.
+#'   *OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so `dnorm(0, 0.001)` is a very narrow prior.*
+#'   Weakly informative defaults are used where priors are not specified;
+#'   see them with [prior_summary()]. See [mcp-priors] for the full syntax.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
+#' @param family A supported family and link function:
+#'   * `gaussian(link = "identity")` or `gaussian(link = "log")`
+#'   * `binomial()` or `bernoulli()` with `link = "logit"`, `"probit"`, or `"identity"`
+#'   * `poisson(link = "log")` or `poisson(link = "identity")`
+#'   * `negbinomial(link = "log", link_shape = "log")`
 #'
-#'   * *Regular formulas:* e.g., `~ 1 + x`). [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
-#'
-#'   * *Extended formulas:*, e.g., `~ I(x^2) + exp(x) + sin(x)`. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
-#'
-#'   * *Variance:* e.g., `~sigma(1)` for a simple variance change or
-#'     `~sigma(rel(1) + I(x^2))`) for more advanced variance structures. [Read more](https://lindeloev.github.io/mcp/articles/variance.html)
-#'
-#'   * *Autoregression:* e.g., `~ar(1)` for a simple onset/change in AR(1) or
-#'     `ar(2, 0 + x`) for an AR(2) increasing by `x`. [Read more](https://lindeloev.github.io/mcp/articles/arma.html)
-#'
-#' @param prior Named list. Names are parameter names (`cp_i`, `int_i`, `xvar_i`,
-#'  `sigma``) and the values are either
-#'
-#'  * A JAGS distribution (e.g., `int_1 = "dnorm(0, 1) T(0,)"`) indicating a
-#'      conventional prior distribution. Uninformative priors based on data
-#'      properties are used where priors are not specified. This ensures good
-#'      parameter estimations, but it is a questionable for hypothesis testing.
-#'      `mcp` uses SD (not precision) for dnorm, dt, dlogis, etc. See
-#'      details. Change points are forced to be ordered through the priors using
-#'      truncation, except for uniform priors where the lower bound should be
-#'      greater than the previous change point, `dunif(cp_1, MAXX)`.
-#'  * A numerical value (e.g., `int_1 = -2.1`) indicating a fixed value.
-#'  * A model parameter name (e.g., `int_2 = "int_1"`), indicating that this parameter is shared -
-#'      typically between segments. If two varying effects are shared this way,
-#'      they will need to have the same grouping variable.
-#'  * A scaled Dirichlet prior is supported for change points if they are all set to
-#'      `cp_i = "dirichlet(N)` where `N` is the alpha for this change point and
-#'      `N = 1` is most often used. This prior is less informative about the
-#'      location of the change points than the default uniform prior, but it
-#'      samples less efficiently, so you will often need to set `iter` higher.
-#'      It is recommended for hypothesis testing and for the estimation of more
-#'      than 5 change points. [Read more](https://lindeloev.github.io/mcp/articles/priors.html).
-#' @param family One of `gaussian()`, `binomial()`, `bernoulli()`, or `poission()`.
-#'   Only default link functions are currently supported.
-#' @param par_x String (default: NULL). Only relevant if no segments contains
-#'   slope (no hint at what x is). Set this, e.g., par_x = "time".
+#'   [Read more](https://lindeloev.github.io/mcp/articles/families.html).
+#' @param par_x String. Name of the change-point variable, i.e., the data column
+#'   on which change points are located. `NULL` (default) auto-detects it as the
+#'   only continuous variable in the formulas.
 #' @param sample One of
 #'   * `"post"`: Sample the posterior.
-#'   * `"prior"`: Sample only the prior. Plots, summaries, etc. will
-#'       use the prior. This is useful for prior predictive checks.
+#'   * `"prior"`: Sample only the prior. Use `prior = TRUE` explicitly in
+#'       plots, summaries, and other methods to select prior draws.
 #'   * `"both"`: Sample both prior and posterior. Plots, summaries, etc.
-#'       will default to using the posterior. The prior only has effect when doing
-#'       Savage-Dickey density ratios in \code{\link{hypothesis}}.
+#'       will default to using the posterior. Use `prior = TRUE` to select prior draws.
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
-#'       object without sample. This is useful if you only want to check
-#'       prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
-#' @param cores Positive integer or "all". Number of cores.
-#'
-#'   * `1`: serial sampling. `options(mc.cores = 3)` will dominate `cores = 1`
-#'     but not larger values of `cores`.
-#'   * `>1`: parallel sampling on this number of cores. Ideally set `chains`
-#'     to the same value. Note: `cores > 1` takes a few extra seconds the first
-#'     time it's called but subsequent calls will start sampling immediately.
-#'   * `"all"`: use all cores but one and sets `chains` to the same value. This is
-#'     a convenient way to maximally use your computer's power.
+#'       object without draws (an "empty fit"). This is useful if you only want to check
+#'       prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
+#' @param cores Deprecated and ignored. Configure parallel processing with a
+#'   [future][future::plan] plan instead, for example
+#'   `future::plan(future::multisession, workers = 3)`. With the default future
+#'   plan, chains are sampled sequentially. The argument remains available for
+#'   backwards compatibility.
 #' @param chains Positive integer. Number of chains to run.
 #' @param iter Positive integer. Number of post-warmup draws from each chain.
 #'   The total number of draws is `iter * chains`.
-#' @param adapt Positive integer. Also sometimes called "burnin", this is the
-#'   number of samples used to reach convergence. Set lower for greater speed.
-#'   Set higher if the chains haven't converged yet or look at [tips, tricks, and debugging](https://lindeloev.github.io/mcp/articles/tips.html).
-#' @param inits A list if initial values for the parameters. This can be useful
-#'   if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
-#'   Defaults to `NULL`, i.e., no inits.
-#' @param jags_code String. Pass JAGS code to `mcp` to use directly. This is useful if
-#'   you want to tweak the code in `fit$jags_code` and run it within the `mcp`
-#'   framework.
-#' @details Notes on priors:
-#'   * Order restriction is automatically applied to cp_\* parameters using
-#'       truncation (e.g., `T(cp_1, )`) so that they are in the correct order on the
-#'       x-axis UNLESS you do it yourself. The one exception is for dunif
-#'       distributions where you have to do it as above.
-#'   * In addition to the model parameters, `MINX` (minimum x-value), `MAXX`
-#'       (maximum x-value), `SDX` (etc...), `MINY`, `MAXY`, and `SDY`
-#'       are also available when you set priors. They are used to set uninformative
-#'       default priors.
-#'   * Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-#'       but `mcp` converts to precision under the hood via the sd_to_prec()
-#'       function. So you will see SDs in `fit$prior` but precision ($1/SD^2)
-#'       in `fit$jags_code`
+#' @param warmup Positive integer. Number of initial iterations per chain which
+#'   are discarded before sampling. Set higher if needed for sampler adaptation;
+#'   use diagnostics to assess convergence.
+#' @param adapt Deprecated; use `warmup` instead.
+#' @param inits A named list of initial values for the parameters, e.g., `list(Intercept_1 = 10)`,
+#'   or a list of such lists with one per chain. This can be useful if a model fails to converge
+#'   ([read more](https://lindeloev.github.io/mcp/articles/tips.html)).
+#'   Names must be parameters in [mcp_pars()]. Parameters with constant priors and parameters that are
+#'   reparameterized for faster sampling cannot be initialized (see `mcp_reparam` in [mcp-package]).
+#'   Initial values for change points must be ordered.
+#'   Defaults to `NULL` where all chains start at equally spaced change points and the prior medians.
+#'   User-provided `inits` take precedence.
+#' @param jags_code String. JAGS code to sample instead of the code that `mcp` writes.
+#'   This is an expert option for edits to `fit$jags_code` that keep the parameters in
+#'   [mcp_pars()], the data, and the likelihood.
+#'   Only the parameters in [mcp_pars()] are monitored. R-side simulation and prediction
+#'   methods continue to use the `mcp` formulas (with warning), so `fitted()`, `predict()`,
+#'   `plot()`, `loo()`, etc. are wrong if the custom code changes the formula or likelihood.
+#'   The written JAGS code is not a stable interface and may change between `mcp` versions.
+#'   `jags_code` is planned for deprecation once a future mcp release brings custom families 
+#'   and tooling to run `fit$jags_code` directly in JAGS.
+#'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html) about how `mcp` writes JAGS code.
+#' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
+#'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
+#'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
+#' @param diagnostics Named list of diagnostic warning thresholds. Available
+#'   elements are `rhat = 1.01`, `ess_bulk = 400`, `ess_tail = 400`,
+#'   `ar = 0.10`, and `ma = 0.10`. An empty list uses these defaults; a partial
+#'   list overrides only the supplied values. Set an element to `NULL` to disable
+#'   that diagnostic, or use `FALSE` to disable all configurable diagnostic
+#'   warnings. In [summary.mcpfit()], `NULL` inherits the settings used to fit
+#'   the model, while a list or `FALSE` overrides the diagnostic footer.
+#' @param quiet Logical. Suppress routine JAGS output and mcp sampling-status
+#'   messages? Defaults to `FALSE`. Use `options(mcp_quiet = TRUE)` to change the default for the session.
+#'
+#' @details
+#' Here is the demo model, which ships already fitted as `demo_fit` (see also `mcp_example("demo")`):
+#'
+#' ```r
+#' model = list(
+#'   response ~ 1,  # Plateau in the first segment (Intercept_1)
+#'   ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+#'   ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
+#' )
+#' ```
+#'
+#' \if{html}{\figure{mcp_demo.png}{options: width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}}
+#' \if{latex}{\figure{mcp_demo.png}{options: width=5in}}
+#' \if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
+#'
+#' Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
+#' See [mcp-formula] for the rules of how segments connect, the full formula syntax, and the
+#' underlying model. See [mcp-priors] for how to specify priors.
+#' See [the mcp website](https://lindeloev.github.io/mcp/) for worked examples of all model features.
+#'
+#' @references
+#' * Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
+#'   *OSF Preprints*. \doi{10.31219/osf.io/fzqxv}
+#'   Introduces the `mcp` package, formula syntax, default priors, and workflow for regression
+#'   with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
+#'   the paper may be available at that link. Please cite the newest version.
+#' * Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical Bayesian Analysis of
+#'   Changepoint Problems. *Applied Statistics*, 41(2), 389–405. \doi{10.2307/2347570}
+#'   Introduced Gibbs sampling for hierarchical Bayesian change-point models, the computational
+#'   approach that BUGS and JAGS build on.
 #' @return An \code{\link{mcpfit}} object.
-#' @seealso \code{\link{get_segment_table}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#' @importFrom stats gaussian binomial
 #' @export
 #' @examples
 #' \donttest{
 #' # Define the segments using formulas. A change point is estimated between each formula.
 #' model = list(
-#'   response ~ 1,  # Plateau in the first segment (int_1)
-#'   ~ 0 + time,    # Joined slope (time_2) at cp_1
-#'   ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
+#'   response ~ 1,  # Plateau in the first segment (Intercept_1)
+#'   ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+#'   ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 #' )
 #'
 #' # Fit it and sample the prior too.
-#' # options(mc.cores = 3)  # Uncomment to speed up sampling
-#' ex = mcp_example("demo")  # Simulated data example
-#' demo_fit = mcp(model, data = ex$data, sample = "both")
+#' # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
+#' data = mcp_example_data("demo")  # Simulated data example
+#' demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 #'
 #' # See parameter estimates
 #' summary(demo_fit)
@@ -127,253 +138,261 @@
 #' pp_check(demo_fit)  # Prior/Posterior predictive checks
 #'
 #' # Test a hypothesis
-#' hypothesis(demo_fit, "cp_1 > 10")
+#' hypothesis(demo_fit, "cp_1 > 30")
 #'
 #' # Make predictions
-#' fitted(demo_fit)
-#' predict(demo_fit)
-#' predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
+#' head(fitted(demo_fit))
+#' head(predict(demo_fit))
+#' head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
 #'
 #' # Compare to a one-intercept-only model (no change points) with default prior
 #' model_null = list(response ~ 1)
-#' fit_null = mcp(model_null, data = ex$data, par_x = "time")  # fit another model here
-#' demo_fit$loo = loo(demo_fit)
-#' fit_null$loo = loo(fit_null)
-#' loo::loo_compare(demo_fit$loo, fit_null$loo)
+#' fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
+#' demo_loo = loo(demo_fit)
+#' null_loo = loo(fit_null)
+#' loo_compare(demo_loo, null_loo)
 #'
 #' # Inspect the prior. Useful for prior predictive checks.
 #' summary(demo_fit, prior = TRUE)
 #' plot(demo_fit, prior = TRUE)
 #'
 #' # Show all priors. Default priors are added where you don't provide any
-#' print(demo_fit$prior)
+#' prior_summary(demo_fit)
 #'
 #' # Set priors and re-run
 #' prior = list(
-#'   int_1 = 15,
+#'   Intercept_1 = 15,
 #'   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-#'   cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-#'   int_3 = "int_1"           # Shared intercept between segment 1 and 3
+#'   cp_2 = "dunif(min(time), 80)"   # change point to segment 3 before 80 (and after cp_1).
 #' )
 #'
-#' fit3 = mcp(model, data = ex$data, prior = prior)
+#' fit3 = mcp(model, data = data, prior = prior, seed = 42)
+#'
+#' # Reuse coefficients in later segments using same() (e.g., Intercept_1 in segment 3)
+#' model_same = list(
+#'   response ~ 1,
+#'   ~ 0 + time,
+#'   ~ same(1, as = 1) + time  # Reuse Intercept_1 instead of estimating Intercept_3
+#' )
+#' fit_same = mcp(model_same, data = data, sample = FALSE)
 #'
 #' # Show the JAGS model
 #' demo_fit$jags_code
 #' }
-#'
-mcp = function(model,
-               data = NULL,
-               prior = list(),
-               family = gaussian(),
-               par_x = NULL,
-               sample = "post",
-               cores = 1,
-               chains = 3,
-               iter = 3000,
-               adapt = 1500,
-               inits = NULL,
-               jags_code = NULL) {
+mcp = function(
+  model,
+  data,
+  prior = list(),
+  family = gaussian(),
+  par_x = NULL,
+  sample = "post",
+  chains = 3,
+  iter = 3000,
+  warmup = 1000,
+  inits = NULL,
+  jags_code = NULL,
+  seed = NULL,
+  diagnostics = list(),
+  quiet = getOption("mcp_quiet", FALSE),
+  cores = lifecycle::deprecated(),
+  adapt = lifecycle::deprecated()
+) {
+  custom_jags_code = !is.null(jags_code)
+
+  matched_call = match.call()
 
   ################
   # CHECK INPUTS #
   ################
-
-  # Check data
-  if (is.null(data) && sample %in% c("post", "both"))
-    stop("Cannot sample without data.")
-
-  if (is.null(data) && sample == "prior")
-    stop("Cannot sample prior without data as some default priors depend on data. Possible solution: set priors to be independent of data (no SDY, MEANX, etc.) and provide a bit of mock-up data, which then will have no effect.")
-
-  if (!is.null(data)) {
-    assert_types(data, "data.frame", "tibble")
-    data = data.frame(data)  # Force into data frame
-  }
-
   # Check model
-  assert_types(model, "list")
+  assert_mcpmodel(model)
+  assert_rel(model)
 
-  if (length(model) == 0)
-    stop("At least one segment is needed in `model`")
+  # Check data and data-model correspondence
+  if (missing(data) || is.null(data))
+    stop("`data` is required in mcp() since mcp v0.4.0. Passing data = NULL or omitting data is no longer supported.", call. = FALSE)
 
-  for (segment in model) {
-    if (!inherits(segment, "formula"))
-      stop("all segments must be formulas.")
+  checkmate::assert_data_frame(data)
+  assert_reserved_output_namespace(names(data), context = "data")
+  assert_reserved_offset_namespace(names(data), context = "data")
+  non_syntactic = names(data)[make.names(names(data)) != names(data)]
+  if (length(non_syntactic) > 0)
+    stop(
+      "`data` has non-syntactic column name(s): ",
+      paste0("`", non_syntactic, "`", collapse = ", "), ". Rename them before fitting.",
+      call. = FALSE
+    )
+  data = data.frame(data)
+  vars = get_formula_vars(model)
+  series = logical0_to_null(vars$series)
+  assert_arma_series(data, series)
+
+  checkmate::assert_string(par_x, null.ok = TRUE)
+  par_x = get_par_x(vars, data, par_x)
+  model_vars = unique(c(unlist(lapply(model, all.vars)), par_x, series))  # In formula order
+  assert_model_data(data, par_x, unlist(vars[c("predictor", "group", "offset", "series")]))
+  assert_data_cols(data, cols = model_vars, fail_funcs = c(is.infinite))
+  for (group_col in vars$group) {
+    if (is.numeric(data[[group_col]]) && any(data[[group_col]] != floor(data[[group_col]])))
+      stop("Grouping factor '", group_col, "' must be integer, character, or factor.")
+  }
+  data = data[, model_vars]  # Remove unused data
+  for (y_col in vars$response) {
+    if (is.logical(data[[y_col]]))
+      data[[y_col]] = as.numeric(data[[y_col]])
+    if (!is.numeric(data[[y_col]]))
+      stop("The response column '", y_col, "' must be numeric or logical. Got ", class(data[[y_col]])[1], ".", call. = FALSE)
   }
 
   # Check prior
-  assert_types(prior, "list")
+  validate_prior_v1(prior)
 
-  which_duplicated = duplicated(names(prior))
-  if (any(which_duplicated))
-    stop("`prior` has duplicated entries for the same parameter: ", paste0(names(prior)[which_duplicated]), collapse = ", ")
+  # Transform family to mcpfamily. Accepts "poisson", poisson, and poisson() like glm().
+  if (is.character(family))
+    family = get(family, mode = "function", envir = topenv())
+  if (is.function(family))
+    family = family()
+  if (!is_family(family) && !is_mcpfamily(family))
+    stop("`family` is not a valid family. Should be gaussian(), binomial(), gaussian(link = 'log'), etc.")
 
-  # Check and recode family
-  if (!inherits(family, "family"))
-    stop("`family` is not a valid family. Should be gaussian(), binomial(), etc.")
-
-  family = mcpfamily(family)  # convert to mcp family
+  family = as_mcpfamily(family)
 
   # More checking...
-  assert_types(par_x, "null", "character")
-  assert_value(sample, allowed = c("post", "prior", "both", "none", FALSE))
-  assert_integer(chains, lower = 1)
-  assert_types(inits, "null", "list")
-
-  if (cores != "all") {
-    assert_integer(cores, lower = 1)
-
-    if (cores > chains)
-      message("`cores` is greater than `chains`. Not all cores will be used.")
-
-    # Parallel fails on R version 3.6.0 and lower (sometimes at least).
-    if (cores > 1 && getRversion() < "3.6.1")
-      message("Parallel sampling (`cores` > 1) sometimes err on R versions below 3.6.1. You have ", R.Version()$version.string, ". Consider upgrading if it fails or hangs.")
-  }
+  checkmate::assert(
+    checkmate::check_choice(sample, c("post", "prior", "both", "none")),
+    checkmate::check_false(sample),
+    .var.name = "sample"
+  )
+  legacy_cores(cores)
+  warmup = legacy_arg(warmup, adapt, missing(warmup), "mcp", "warmup", "adapt")
+  checkmate::assert_int(chains, lower = 1)
+  checkmate::assert_int(iter, lower = 1)
+  checkmate::assert_int(warmup, lower = 1)
+  checkmate::assert_list(inits, null.ok = TRUE)
+  if (length(inits) == 0)
+    inits = NULL
+  checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
+  diagnostics = resolve_diagnostics(diagnostics)
+  if (missing(quiet) && identical(Sys.getenv("IN_PKGDOWN"), "true"))
+    quiet = TRUE
+  checkmate::assert_flag(quiet)
+  reparam = getOption("mcp_reparam", TRUE)  # See ?mcp-package
+  checkmate::assert_flag(reparam, .var.name = "getOption(\"mcp_reparam\")")
 
   # jags_code
-  if(!is.null(jags_code))
-    if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
-      stop("`jags_code` must be NULL or a string with a JAGS model, including 'model {...}'.")
+  if (custom_jags_code && (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{")))
+    stop("`jags_code` must be NULL or a string with a JAGS model, containing 'model {...}'.")
 
 
   ##################
   # MODEL BUILDING #
   ##################
-  # Make an abstract table representing the segments and their relations.
-  # ("ST" for "segment table").
-  ST = get_segment_table(model, data, family, par_x)
+  built = get_model_tables(model, data, family, par_x, series)
+  model = built$model
+  family = built$family
+  model_tables = built$model_tables
+  coef_definitions = definition_rows(model_tables$coefs)
+  group_definitions = definition_rows(model_tables$group_coefs)
 
   # Make prior
-  prior = get_prior(ST, family, prior)
-
-  # Make lists of parameters
-  all_pars = names(prior)  # There is a prior for every parameter
-  pars = list(
-    x = unique(ST$x),
-    y = unique(ST$y),
-    trials = logical0_to_null(stats::na.omit(unique(ST$trials))),
-    weights = logical0_to_null(stats::na.omit(unique(ST$weights))),
-    varying = logical0_to_null(c(stats::na.omit(ST$cp_group))),
-    sigma = all_pars[stringr::str_detect(all_pars, "^sigma_")],
-    arma = all_pars[stringr::str_detect(all_pars, "(^ar|^ma)[0-9]")]
-  )
-  pars$reg = all_pars[!all_pars %in% c(pars$varying, pars$sigma, pars$arma)]
-  pars$population = c(pars$reg, pars$sigma, pars$arma)
-
-  # Check parameters
-  # ARMA models
-  if (length(pars$arma) > 0) {
-    if (family$link %in% c("logit", "probit"))
-      message("The current implementation of autoregression can be fragile for link='logit'. In particular, if there are any all-success trials (e.g., 10/10), the only solution is for 'ar' to be 0.00. If fitting succeeds, do a proper assessment of model convergence.")
-
-    if (is.unsorted(data[, pars$x]) && is.unsorted(rev(data[, pars$x])))
-      message("'", pars$x, "' is unordered. Please note that ar() applies in the order of data of the data frame - not the values.")
-  }
-
-  # Make formula_str and simulate
-  formula_str_sim = get_all_formulas(ST, prior, pars$x, ytypes = c("ct", "sigma", "arma"))
-  simulate = get_simulate(formula_str_sim, pars, nrow(ST), family)
+  assert_prior_on_definitions(prior, model_tables$coefs, model_tables$group_coefs)
+  prior_table = get_prior_table(model_tables$data_columns, model_tables$cps, coef_definitions, group_definitions, family, prior, data, model_tables$design_specs, reparam)
+  assert_constant_dpars(prior_table, coef_definitions, family)
 
   # Make jags code if it is not provided by the user
-  if (is.null(jags_code)) {
-    max_arma_order = get_arma_order(pars$arma)
-    formula_str_jags = get_all_formulas(ST, prior, pars$x)
-    jags_code = get_jagscode(prior, ST, formula_str_jags, max_arma_order, family, sample)
+  if (!custom_jags_code) {
+    jags_code = get_jags_code(model_tables, prior_table, family)
+    assert_inits(inits, prior_table$parameter[which(prior_table$node == prior_table$parameter)])
   }
 
 
   ##########
   # SAMPLE #
   ##########
-  # Sample posterior
-  if (sample %in% c("post", "both")) {
-    samples = run_jags(
-      data = data,
-      jags_code = jags_code,
-      pars = c(all_pars, "loglik_"),  # Monitor log-likelihood for loo/waic
-      ST = ST,
-      cores = cores,
-      sample = "post",
-      n.chains = chains,
-      n.iter = iter,
-      n.adapt = adapt,
-      inits = inits
-    )
+  samples = sample_jags(model_tables, prior_table, family, data, sample, chains, iter, warmup, inits, jags_code, custom_jags_code, seed, quiet)
 
-    # Move loglik columns out to it's own list, keeping parameters and loglik apart
-    loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
-    mcmc_loglik = lapply(samples, function(x) x[, loglik_cols])
-    mcmc_post = lapply(samples, function(x) x[, !loglik_cols])
-  }
-
-  # Sample prior
-  if (sample %in% c("prior", "both")) {
-    samples = run_jags(
-      data = data,
-      jags_code = jags_code,
-      pars = all_pars,  # Not loglik
-      ST = ST,
-      cores = cores,
-      sample = "prior",
-      n.chains = chains,
-      n.iter = iter,
-      n.adapt = adapt,
-      inits = inits
-    )
-
-    # Move loglik columns out to it's own list, keeping parameters and loglik apart
-    loglik_cols = stringr::str_starts(colnames(samples[[1]]), 'loglik_')  # detect loglik cols
-    mcmc_prior = lapply(samples, function(x) x[, !loglik_cols])
+  # Diagnostics check - also for single-chain fits
+  # Cache it for summary() and ranef(), which are slow to recompute it for many group-level deviations.
+  convergence = NULL
+  if (!is.null(samples$mcmc_post)) {
+    constant_pars = prior_table$parameter[prior_table$kind == "constant"]
+    convergence = list(hash = rlang::hash(samples$mcmc_post), table = convergence_table(samples$mcmc_post))
+    warn_nonconvergence(convergence$table, diagnostics, constant_pars = constant_pars, check_rhat = coda::nchain(samples$mcmc_post) >= 2)
   }
 
 
   ##########
   # RETURN #
   ##########
-  # Fill in the missing samples
-  if (exists("mcmc_post")) class(mcmc_post) = "mcmc.list"
-  if (exists("mcmc_prior")) class(mcmc_prior) = "mcmc.list"
-  if (exists("mcmc_loglik")) class(mcmc_loglik) = "mcmc.list"
-  if (!exists("mcmc_post")) mcmc_post = NULL
-  if (!exists("mcmc_prior")) mcmc_prior = NULL
-  if (!exists("mcmc_loglik")) mcmc_loglik = NULL
+  # Return canonical formulas attached to .GlobalEnv to avoid environment bloat
+  model = lapply(model, function(form) {
+    environment(form) = globalenv()
+    form
+  })
 
+  # Data-sized design values are only needed to build the model. Fitted-model
+  # methods evaluate the stored design specifications on (new)data instead.
+  model_tables$coefs = dplyr::select(model_tables$coefs, -"matrix_data")
+  model_tables$group_coefs = dplyr::select(model_tables$group_coefs, -"matrix_data")
+  model_tables$design_specs = lapply(model_tables$design_specs, function(design_spec) {
+    design_spec$offset_data = NULL
+    environment(design_spec$terms) = globalenv()  # Like the returned formulas, to avoid environment bloat
+    design_spec
+  })
 
-  model = lapply(ST$form, stats::as.formula, env=globalenv())  # with explicit response and cp
+  # fit$prior in the format of mcp(..., prior), ordered like mcp_pars(). Show the JAGS nodes cp_0 and cp_K
+  # as the ends of the observed range, as users specify them.
+  range_ends = stats::setNames(paste0(c("min(", "max("), display_data_name(par_x), ")"), paste0("\\bcp_", c(0, length(model)), "\\b"))
+  prior = stats::setNames(as.list(stringr::str_replace_all(prior_table$value, range_ends)), prior_table$parameter)
+  prior = prior[order(match(names(prior), model_tables$parameters$parameter))]
+
+  # Class stuff
   class(model) = c("mcplist", "list")
   class(prior) = c("mcplist", "list")
-  class(pars) = c("mcplist", "list")  # for nicer printing
   class(jags_code) = c("mcptext", "character")  # for nicer printing
 
-  # Make mrpfit object
+  # Make mcpfit object
   mcpfit = list(
     # By user (same order as mcp argument)
     model = model,
     data = data,
     prior = prior,
     family = family,
+    call = matched_call,
 
     # Results
-    mcmc_post = mcmc_post,
-    mcmc_prior = mcmc_prior,
-    mcmc_loglik = mcmc_loglik,
-    loo = NULL,
-    waic = NULL,
+    mcmc_post = samples$mcmc_post,
+    mcmc_prior = samples$mcmc_prior,
 
     # Extracted model
-    pars = pars,
     jags_code = jags_code,
-    simulate = simulate,
+    simulate = get_fitsimulate(model_tables$parameters),
+
+    # For reproducibility and for detecting fits from older mcp versions. JAGS only when sampled.
+    version = list(
+      mcp = utils::packageVersion("mcp"),
+      R = getRversion(),
+      rjags = if (sample %in% c("post", "prior", "both")) utils::packageVersion("rjags"),
+      # rjags 5-3 jags.version() errors on official macOS JAGS 5 builds. Update once rjags 5 is on CRAN.
+      jags = if (sample %in% c("post", "prior", "both") && utils::packageVersion("rjags") < "5") rjags::jags.version()
+    ),
 
     # Pass info to *.mcpfit() functions.
     # Not meant to be used by the end user.
-    .other = list(
-      ST = ST
+    .internal = list(
+      model_tables = model_tables,
+      prior_table = prior_table,
+      diagnostics = diagnostics,
+      convergence = convergence,
+      custom_jags_code = custom_jags_code,
+      imputed_response = samples$imputed_response,
+      imputed_response_rows = if (is.null(samples$imputed_response)) integer() else which(is.na(data[[model_tables$data_columns$response]]))
     )
   )
   class(mcpfit) = "mcpfit"
+
+  if (!is.null(samples$mcmc_post) && is_arma(mcpfit))
+    warn_arma_fit(mcpfit, diagnostics = diagnostics)
 
   # Return it
   mcpfit

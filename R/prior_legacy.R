@@ -1,0 +1,78 @@
+# Legacy prior compatibility -----------------------------------------------
+
+# The deprecated data constants in priors (e.g., MINX), their values, and their
+# replacement rules (e.g., min(x)). All legacy translations use this one table.
+legacy_prior_map = function(context) {
+  x = context$data[[context$par_x]]
+  y = context$data[[context$y_col]]
+  tibble::tibble(
+    token = c("MINX", "MAXX", "MEANX", "SDX", "MINY", "MAXY", "MEANY", "SDY", "N_CP"),
+    value = c(
+      min(x, na.rm = TRUE),
+      max(x, na.rm = TRUE),
+      mean(x, na.rm = TRUE),
+      stats::sd(x, na.rm = TRUE),
+      min(y, na.rm = TRUE),
+      max(y, na.rm = TRUE),
+      mean(y, na.rm = TRUE),
+      stats::sd(y, na.rm = TRUE),
+      context$n_cp
+    ),
+    rule = c(
+      paste0("min(", context$x_display, ")"),
+      paste0("max(", context$x_display, ")"),
+      paste0("mean(", context$x_display, ")"),
+      paste0("sd(", context$x_display, ")"),
+      paste0("min(", context$y_display, ")"),
+      paste0("max(", context$y_display, ")"),
+      paste0("mean(", context$y_display, ")"),
+      paste0("sd(", context$y_display, ")"),
+      "n_cp()"
+    )
+  )
+}
+
+
+# Warn about deprecated constants and translate them to their rules, e.g., MINX to min(x)
+legacy_prior_constants = function(prior, context) {
+  is_text = vapply(prior, is.character, logical(1))
+  if (!any(is_text))
+    return(prior)
+
+  map = legacy_prior_map(context)
+  pattern = paste0("\\b(?:", paste(map$token, collapse = "|"), ")\\b")
+  used = unique(unlist(stringr::str_extract_all(unlist(prior[is_text]), pattern)))
+  if (length(used) == 0)
+    return(prior)
+
+  warning(
+    "Deprecated prior data constant(s): ", and_collapse(used), ". Use readable data ",
+    "expressions such as `min(", context$x_display, ")`, `sd(", context$y_display,
+    ")`, `max(", context$x_display, ") - min(", context$x_display,
+    ")`, or `n_cp()` instead.",
+    call. = FALSE
+  )
+  for (i in seq_len(nrow(map)))
+    prior[is_text] = lapply(prior[is_text], stringr::str_replace_all, paste0("\\b", map$token[i], "\\b"), map$rule[i])
+  prior
+}
+
+
+# Add the values of deprecated constants in custom `jags_code` to the JAGS data
+legacy_prior_jags_data = function(jags_data, jags_code, context) {
+  map = legacy_prior_map(context)
+  used = map$token[vapply(map$token, function(token) {
+    stringr::str_detect(jags_code, paste0("\\b", token, "\\b"))
+  }, logical(1))]
+  if (length(used) == 0)
+    return(jags_data)
+
+  warning(
+    "Deprecated prior data constant(s) in custom `jags_code`: ",
+    and_collapse(used), ". Prefer resolved numeric values; see `prior_summary(fit)`.",
+    call. = FALSE
+  )
+  values = stats::setNames(map$value, map$token)
+  jags_data[used] = as.list(values[used])
+  jags_data
+}

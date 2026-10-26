@@ -2,14 +2,33 @@
 % Please edit documentation in R/families.R
 \name{negbinomial}
 \alias{negbinomial}
-\title{Negative binomial for mcp}
+\title{Negative Binomial for mcp}
 \usage{
-negbinomial(link = "log")
+negbinomial(link = "log", link_shape = "log")
 }
 \arguments{
-\item{link}{Link function (Character).}
+\item{link}{Link function for \code{mu}.}
+
+\item{link_shape}{Link function for \code{shape} when it is modeled using \code{shape()}.}
 }
 \description{
-Parameterized as \code{mu} (mean; poisson lambda) and \code{size} (a shape parameter),
-so you can do \code{rnbinom(10, mu = 10, size = 1)}. Read more in the doc for \code{rnbinom},
+Parameterized as \code{mu} (the conditional mean) and \code{shape} (the same quantity
+as \code{size} in \code{rnbinom()}). Thus \code{Var(y) = mu + mu^2 / shape}, which approaches
+the Poisson variance as \code{shape} approaches infinity.
+\href{https://lindeloev.github.io/mcp/articles/poisson.html#negative-binomial-extension}{Read more}.
+}
+\details{
+\code{shape} is required by the likelihood, so it includes an intercept in segment 1.
+Later segments that do not include \code{shape()} are joined. For example, \code{y ~ 1 + x + shape(1 + x)}
+models both the mean and shape. Regression coefficients for both dpars are
+on their link scales, e.g., \code{shape_Intercept_1} and \code{shape_x_1}.
+
+Without \code{shape()}, \code{shape_1} is the shape itself with a \code{dinvgamma(0.4, 0.3)} prior,
+as in \code{brms}, much like the implicit \code{sigma_1} in \code{gaussian()}.
+}
+\examples{
+# Fit an overdispersed count model with the default log links
+data = data.frame(time = 1:6, count = c(1, 2, 8, 3, 12, 5))
+fit = mcp(list(count ~ 1), data, family = negbinomial(), par_x = "time", sample = FALSE)
+mcp_pars(fit)$parameter  # Show the mean and shape parameters
 }

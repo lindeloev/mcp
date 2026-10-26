@@ -19,10 +19,7 @@ bad_binomial = list(
   list(y | trials(N_bad_char) ~ 1),
 
   # Does not work with sigma
-  list(y | trials(N) ~ 1 + sigma(1)),
-
-  # Weights not implemented yet
-  list(y | trials(N) + weights(weights_ok) ~ 1)
+  list(y | trials(N) ~ 1 + sigma(1))
 )
 
 test_bad(bad_binomial,
@@ -30,26 +27,89 @@ test_bad(bad_binomial,
          family = binomial())
 
 
-good_binomial_essential = list(
-  list(y | trials(N) ~ 1,  # With varying
-       1 + (1|id) ~ 1),
-  list(y | trials(N) ~ 1 + ar(1))  # Simple AR(1)
-  #list(y | trials(N) ~ 1,
-  #     1 ~ N)  # N can be both trials and slope. TO DO: Fails in this test because par_x = "x"
-)
-good_binomial_extensive = list(
+good_binomial = list(
   list(y | trials(N) ~ 1),  # one segment
-  list(y | trials(N) ~ 1 + x,  # specified multiple times and with rel()
-       y | trials(N) ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0)
+  list(y | trials(N) ~ 1 + x,  # response from segment 1
+       ~ 1 + x,
+       ~ 0),
+  list(y | trials(N) ~ 1,  # With group-level change point
+       ~ cp(1 + (1|id)) + 1),
+  list(y | trials(N) ~ 1 + ar(1) + ma(1)),
+  list(y | trials(N) ~ 1,
+       ~ N),  # N can be both trials and slope
+  list(y | trials(N) + weights(weights_ok) ~ 1)  # With weights
 )
 
-test_good(good_binomial_essential,
-          good_binomial_extensive,
+test_good(good_binomial,
           data = data_binomial,
           family = binomial())
 
+test_that("binomial and Bernoulli links share weakly regularizing defaults", {
+  # Scale 1.5 for logit and 1 for probit: (approximately) uniform intercepts on the probability scale
+  for (family in list(as_mcpfamily(binomial("logit")), bernoulli("logit"))) {
+    expect_equal(family$default_prior$prior, c("dnorm(0, 1.5)", "dnorm(0, 1.5 / predictor_scale())", "dnorm(0, 1.5 / predictor_scale())"))
+    expect_equal(family$default_prior$group_sd_prior[1], "dt(0, 1.5, 3) T(0, )")
+  }
+  for (family in list(as_mcpfamily(binomial("probit")), bernoulli("probit"))) {
+    expect_equal(family$default_prior$prior, c("dnorm(0, 1)", "dnorm(0, 1 / predictor_scale())", "dnorm(0, 1 / predictor_scale())"))
+    expect_equal(family$default_prior$group_sd_prior[1], "dt(0, 1, 3) T(0, )")
+  }
+})
 
+test_that("binomial responses cannot exceed trials", {
+  invalid_data = data_binomial
+  invalid_data$y[1] = invalid_data$N[1] + 1
+
+  expect_error(
+    mcp(
+      list(y | trials(N) ~ 1),
+      data = invalid_data,
+      family = binomial(),
+      par_x = "x",
+      sample = FALSE
+    ),
+    "responses in 'y' cannot exceed trials in 'N'. Found invalid data in row(s): 1.",
+    fixed = TRUE
+  )
+})
+
+
+
+
+test_that("binomial prediction defaults agree with posterior methods and warn on migration", {
+  withr::local_options(rlib_warning_verbosity = "verbose")
+  data = data.frame(x = 1:3, N = c(4, 10, 6), y = 0)
+  fit = mcp(list(y | trials(N) ~ 1), data, family = binomial(), par_x = "x", sample = FALSE)
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(
+    matrix(0, nrow = 20, ncol = 1, dimnames = list(NULL, "Intercept_1"))
+  ))
+
+  expect_warning((counts = fitted(fit)), "Set `rate = TRUE`")
+  expect_equal(counts$.mean, data$N / 2)
+  expect_warning(predict(fit), "Set `rate = TRUE`")
+  expect_no_warning(fitted(fit, rate = FALSE))
+  expect_no_warning(fitted(fit, rate = TRUE))
+  expect_no_warning(predict(fit, rate = FALSE))
+  expect_no_warning(predict(fit, rate = TRUE))
+  expect_no_warning(fitted(fit, dpar = "mu"))
+  expect_no_warning(fitted(fit, scale = "linear"))
+  expect_no_warning(fitted(fit, newdata = transform(data, N = 1)))
+  expect_no_warning(predict(fit, newdata = transform(data, N = 1)))
+  expect_warning(fitted(fit, dpar = NULL), "Set `rate = TRUE`")
+  expect_equal(residuals(fit)$.mean, data$y - counts$.mean)
+
+  for (rate in c(FALSE, TRUE)) {
+    expected = fitted(fit, rate = rate, summary = FALSE, draws_format = "matrix")
+    expect_no_warning((actual = posterior_epred.mcpfit(fit, rate = rate)))
+    expect_equal(actual, expected)
+    expect_equal(unname(actual[1, ]), if (rate) rep(0.5, 3) else data$N / 2)
+
+    set.seed(42)
+    expected = predict(fit, rate = rate, summary = FALSE, draws_format = "matrix")
+    expect_no_warning((actual = posterior_predict.mcpfit(fit, rate = rate, seed = 42)))
+    expect_equal(actual, expected)
+  }
+})
 
 
 ##################
@@ -69,7 +129,7 @@ bad_bernoulli = list(
   # Does not work with sigma
   list(y_bern ~ 1 + sigma(1)),
 
-  # Weights not implemented yet
+  # Bernoulli does not take trials
   list(y | trials(N) + weights(weights_ok) ~ 1)
 )
 
@@ -78,19 +138,71 @@ test_bad(bad_bernoulli,
          family = bernoulli())
 
 
-good_bernoulli_essential = list(
-  list(y_bern ~ 1,  # With varying
-       1 + (1|id) ~ 1)
-)
-good_bernoulli_extensive = list(
+good_bernoulli = list(
   list(y_bern ~ 1),  # one segment
-  list(y_bern ~ 1 + x,  # specified multiple times and with rel()
-       y_bern ~ 1 ~ rel(1) + rel(x),
-       rel(1) ~ 0)
+  list(y_bern ~ 1 + x,  # response from segment 1
+       ~ 1 + x,
+       ~ 0),
+  list(y_bern ~ 1,  # With group-level change point
+       ~ cp(1 + (1|id)) + 1),
+  list(y_bern | weights(weights_ok) ~ 1),  # With weights
+  list(y_bern ~ 1 + ar(1) + ma(1))  # With AR and MA
 )
 
-test_good(good_bernoulli_essential,
-          good_bernoulli_extensive,
+test_good(good_bernoulli,
           data = data_binomial,
           family = bernoulli())
 
+
+test_that("Binomial JAGS weights implement a likelihood power and sample on ordinary large counts", {
+  # Test reproduction failure case: 1000 successes out of 2000 trials with weight of 2
+  df_bin = data.frame(x = 1:5, y = rep(1000, 5), N = 2000, w = 2)
+  fit = mcp(list(y | trials(N) + weights(w) ~ 1), data = df_bin, family = binomial(), par_x = "x", quiet = TRUE)
+  expect_true(is.list(fit$model))
+  capture.output({ summary_fit = summary(fit) })
+  expect_equal(nrow(summary_fit), 1)
+  expect_true(abs(summary_fit$mean[1] - 0) < 0.1)
+
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(y[i_] + 1) + loggam(N[i_] - y[i_] + 1) - loggam(N[i_] + 1) - y[i_] * log(mu_[i_]) - (N[i_] - y[i_]) * log(1 - mu_[i_]))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
+
+  # Check that R-side log_lik() applies the weights directly
+  draws = as.data.frame(fit)
+  expect_equal(
+    unname(log_lik(fit, summary = FALSE)),
+    outer(stats::plogis(draws$Intercept_1), df_bin$y, function(mu, y) 2 * stats::dbinom(y, size = 2000, prob = mu, log = TRUE))
+  )
+})
+
+
+test_that("Weighted Binomial and Bernoulli target exact conjugate posteriors without clamping or underflow", {
+  # Conjugate Beta-Binomial with large weight
+  data_bin = data.frame(x = 1:3, y = 15, N = 20, w = 1000)
+  fit_bin = mcp(
+    list(y | trials(N) + weights(w) ~ 1),
+    data = data_bin,
+    family = binomial("identity"),
+    prior = list(Intercept_1 = "dbeta(1, 1)"),
+    par_x = "x",
+    quiet = TRUE
+  )
+  draws_bin = as.matrix(coda::as.mcmc(fit_bin))[, "Intercept_1"]
+  expect_equal(mean(draws_bin), 0.75, tolerance = 0.005)
+  # Theoretical SD for Beta(45001, 15001) is ~ 0.001768
+  expect_equal(stats::sd(draws_bin), 0.001768, tolerance = 0.05)
+
+  # Weighted Bernoulli with large weight
+  data_bern = data.frame(x = 1:3, y = c(1, 0, 1), w = 1000)
+  fit_bern = mcp(
+    list(y | weights(w) ~ 1),
+    data = data_bern,
+    family = bernoulli("identity"),
+    prior = list(Intercept_1 = "dbeta(1, 1)"),
+    par_x = "x",
+    quiet = TRUE
+  )
+  draws_bern = as.matrix(coda::as.mcmc(fit_bern))[, "Intercept_1"]
+  # Theoretical Beta(2001, 1001) has mean 0.6666, SD 0.0086
+  expect_equal(mean(draws_bern), 2/3, tolerance = 0.02)
+  expect_equal(stats::sd(draws_bern), 0.0086, tolerance = 0.05)
+})

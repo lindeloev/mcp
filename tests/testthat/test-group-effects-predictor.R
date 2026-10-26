@@ -1,0 +1,683 @@
+group_data = data.frame(
+  x = 1:8,
+  y = c(1, 2, 1, 2, 5, 6, 5, 6),
+  id = rep(c("a", "b"), 4),
+  site = rep(c("north", "south"), each = 4)
+)
+
+coefficient_data = data.frame(
+  x = 1:12,
+  y = rep(c(2, 4, 6), 4),
+  id = rep(c("a", "b", "c"), 4),
+  state = factor(rep(c("A", "B", "C"), each = 4)),
+  z = seq(-1, 1, length.out = 12)
+)
+
+
+test_that("group-level intercepts in the predictor part apply only where included, replace, and turn off", {
+  fit = mcp(
+    list(
+      y ~ 1 + (1 | id),
+      ~ 1,
+      ~ 1 + (0 | id)
+    ),
+    group_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effect = get_fit_model_tables(fit)$group_coefs
+
+  expect_equal(effect$name, "Intercept_1_id")
+  expect_equal(effect$population_parameter, "Intercept_1")
+  expect_equal(effect$next_segment, 2L)
+  expect_equal(effect$dpar, "mu")
+  expect_equal(effect$matrix_col, nrow(get_fit_model_tables(fit)$coefs) + 1L)
+  expect_true(effect$sd_name %in% names(formals(fit$simulate)))
+  expect_false(effect$name %in% names(formals(fit$simulate)))
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    group_data,
+    cp_1 = 2.5,
+    cp_2 = 5.5,
+    Intercept_1 = 0,
+    Intercept_2 = 100,
+    Intercept_3 = 200,
+    sigma_1 = 1,
+    Intercept_1_id_sd = 10,
+    .type = "fitted"
+  )
+  deviation = attr(simulated, "simulated")$Intercept_1_id
+  expect_equal(
+    as.numeric(simulated),
+    c(deviation[1:2], rep(100, 3), rep(200, 3))
+  )
+
+  replacement = mcp(
+    list(y ~ 1 + (1 | id), ~ 1 + (1 || id)),
+    group_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(replacement)$group_coefs
+  expect_equal(effects$name, c("Intercept_1_id", "Intercept_2_id"))
+  expect_equal(effects$next_segment, c(2L, NA_integer_))
+})
+
+
+test_that("group-level intercepts in the predictor part work for family dpars and group-only formulas", {
+  fit = mcp(
+    list(y ~ 0 + (1 | id) + sigma(0 + (1 || id))),
+    group_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_coefs
+
+  expect_equal(effects$name, c("Intercept_1_id", "sigma_Intercept_1_id"))
+  expect_true(all(is.na(effects$population_parameter)))
+  expect_equal(effects$dpar, c("mu", "sigma"))
+  expect_equal(mcp_pars(fit, scope = "group")$parameter, effects$name)
+  expect_equal(
+    mcp_pars(fit, scope = "population")$parameter,
+    c("Intercept_1_id_sd", "sigma_Intercept_1_id_sd")
+  )
+  expect_equal(unpack_group_effects(fit, "predictor")$pars, effects$name)
+  expect_null(unpack_group_effects(fit, "cp")$pars)
+
+  expect_named(
+    fit$prior,
+    c(
+      "Intercept_1_id_sd", "sigma_Intercept_1_id_sd",
+      "Intercept_1_id", "sigma_Intercept_1_id"
+    ),
+    ignore.order = TRUE
+  )
+  expect_match(fit$jags_code, "Intercept_1_id\\[id_\\] ~")
+  expect_match(fit$jags_code, "sigma_Intercept_1_id\\[id_\\] ~")
+  expect_false(grepl("Intercept_1_id_uncentered", fit$jags_code, fixed = TRUE))
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    group_data,
+    Intercept_1_id_sd = 1,
+    sigma_Intercept_1_id_sd = 0.5,
+    .type = "fitted"
+  )
+  simulation = attr(simulated, "simulated")
+  expect_equal(as.numeric(simulated), simulation$Intercept_1_id)
+  expect_equal(simulation$Intercept_1_id_sd, 1)
+  expect_equal(simulation$sigma_Intercept_1_id_sd, 0.5)
+  expect_equal(
+    simulation$Intercept_1_id[group_data$id == "a"],
+    rep(simulation$Intercept_1_id[1], 4)
+  )
+})
+
+
+test_that("double-bar terms expand into independent group coefficients", {
+  fit = mcp(
+    list(
+      y ~ 1 + (state || id),
+      ~ 1,
+      ~ 1 + (0 | id)
+    ),
+    coefficient_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_coefs
+
+  expect_equal(
+    effects$name,
+    c("Intercept_1_id", "stateB_1_id", "stateC_1_id")
+  )
+  expect_equal(
+    effects$population_parameter,
+    c("Intercept_1", NA_character_, NA_character_)
+  )
+  expect_equal(effects$par_type, c("Intercept", "dummy", "dummy"))
+  expect_equal(effects$next_segment, rep(2L, 3))
+  expect_true(all(effects$sd_name %in% names(fit$prior)))
+  expect_match(fit$jags_code, "stateB_1_id\\[id_\\] ~")
+  expect_match(fit$jags_code, "stateC_1_id\\[id_\\] ~")
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    coefficient_data,
+    cp_1 = 4.5,
+    cp_2 = 8.5,
+    Intercept_1 = 1,
+    Intercept_2 = 2,
+    Intercept_3 = 3,
+    sigma_1 = 1,
+    Intercept_1_id_sd = 1,
+    stateB_1_id_sd = 10,
+    stateC_1_id_sd = 100,
+    .type = "fitted"
+  )
+  simulation = attr(simulated, "simulated")
+  intercept_by_id = simulation$Intercept_1_id
+  state_b_by_id = simulation$stateB_1_id
+  state_c_by_id = simulation$stateC_1_id
+  expected = ifelse(
+    coefficient_data$x < 4.5,
+    1 + intercept_by_id +
+      (coefficient_data$state == "B") * state_b_by_id +
+      (coefficient_data$state == "C") * state_c_by_id,
+    ifelse(coefficient_data$x < 8.5, 2, 3)
+  )
+  expect_equal(as.numeric(simulated), as.numeric(expected))
+})
+
+
+test_that("group_effects selects by part, name, and wildcard", {
+  fit = mcp(
+    list(y ~ 1 + (state || id) + sigma(1 + (1 | id)), ~ cp((1 | id)) + 1),
+    coefficient_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  select = function(pars) unpack_group_effects(fit, pars = pars)$pars
+
+  expect_equal(select("state*_1_id"), c("stateB_1_id", "stateC_1_id"))
+  expect_equal(select("cp_*"), select("cp"))
+  expect_equal(select(c("cp", "sigma_*")), c("cp_1_id", "sigma_Intercept_1_id"))
+  expect_equal(select(c("Intercept_1_id", "*_1_id")), mcp_pars(fit, scope = "group")$parameter)
+  expect_error(select(c("x_*", "foo")), "Unknown group-effect selection: x_* and foo.", fixed = TRUE)
+})
+
+
+test_that("double-bar terms support no-intercept factors and numeric slopes", {
+  factor_fit = mcp(
+    list(y ~ 0 + (0 + state || id)),
+    coefficient_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  factor_effects = get_fit_model_tables(factor_fit)$group_coefs
+  expect_equal(
+    factor_effects$name,
+    c("stateA_1_id", "stateB_1_id", "stateC_1_id")
+  )
+  expect_true(all(is.na(factor_effects$population_parameter)))
+  expect_true(all(factor_effects$par_type == "dummy"))
+
+  slope_fit = mcp(
+    list(y ~ 1 + (0 + z || id)),
+    coefficient_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  slope_effect = get_fit_model_tables(slope_fit)$group_coefs
+  expect_equal(slope_effect$name, "z_1_id")
+  expect_equal(slope_effect$par_type, "slope")
+  expect_true(is.na(slope_effect$population_parameter))
+  expect_match(slope_fit$jags_code, "z_1_id\\[id_\\]")
+})
+
+
+test_that("joined group-level slopes apply until an intercept or zero block", {
+  data = data.frame(
+    x = 1:12,
+    y = 0,
+    id = rep(c("a", "b"), 6)
+  )
+  fit = mcp(
+    list(
+      y ~ 0 + (0 + x || id),
+      ~ 0,
+      ~ 0 + (0 + x || id),
+      ~ 0 + (1 || id),
+      ~ 0 + (0 | id)
+    ),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_coefs
+  expect_equal(effects$name, c("x_1_id", "x_3_id", "Intercept_4_id"))
+  expect_equal(effects$next_segment, c(4L, 4L, 5L))
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    data,
+    cp_1 = 2.5, cp_2 = 4.5, cp_3 = 7.5, cp_4 = 9.5,
+    sigma_1 = 1,
+    x_1_id_sd = 1, x_3_id_sd = 10, Intercept_4_id_sd = 100,
+    .type = "fitted"
+  )
+  draws = attr(simulated, "simulated")
+  expected = ifelse(
+    data$x < 2.5,
+    draws$x_1_id * data$x,
+    ifelse(
+      data$x < 4.5,
+      draws$x_1_id * 2.5,
+      ifelse(
+        data$x < 7.5,
+        draws$x_1_id * 2.5 + draws$x_3_id * (data$x - 4.5),
+        ifelse(data$x < 9.5, draws$Intercept_4_id, 0)
+      )
+    )
+  )
+  expect_equal(as.numeric(simulated), as.numeric(expected))
+})
+
+test_that("population-level intercepts end joined group-level slopes of the same dpar", {
+  data = data.frame(
+    x = 1:12,
+    y = 0,
+    id = rep(c("a", "b"), 6)
+  )
+  fit = mcp(
+    list(
+      y ~ 0 + (0 + x || id),
+      ~ 0 + sigma(1),  # A sigma intercept does not end mu group-level slopes
+      ~ 1
+    ),
+    data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_coefs
+  expect_equal(effects$name, "x_1_id")
+  expect_equal(effects$next_segment, 3L)
+
+  set.seed(42)
+  simulated = fit$simulate(
+    fit,
+    data,
+    cp_1 = 2.5, cp_2 = 7.5,
+    sigma_Intercept_1 = 1, sigma_Intercept_2 = 1, Intercept_3 = 0,
+    x_1_id_sd = 1,
+    .type = "fitted"
+  )
+  draws = attr(simulated, "simulated")
+  expected = ifelse(data$x < 2.5, draws$x_1_id * data$x, ifelse(data$x < 7.5, draws$x_1_id * 2.5, 0))
+  expect_equal(as.numeric(simulated), as.numeric(expected))
+})
+
+
+test_that("double-bar coefficient blocks are replaced together", {
+  fit = mcp(
+    list(
+      y ~ 1 + (state || id),
+      ~ 1 + (1 || id)
+    ),
+    coefficient_data,
+    par_x = "x",
+    sample = FALSE
+  )
+  effects = get_fit_model_tables(fit)$group_coefs
+
+  expect_equal(
+    effects$name,
+    c(
+      "Intercept_1_id", "stateB_1_id", "stateC_1_id",
+      "Intercept_2_id"
+    )
+  )
+  expect_equal(effects$next_segment, c(2L, 2L, 2L, NA_integer_))
+})
+
+
+test_that("factor group coefficients sample and predict by level", {
+  set.seed(43)
+  data = expand.grid(
+    id = c("a", "b", "c"),
+    state = factor(c("A", "B", "C")),
+    replicate = 1:2
+  )
+  data$x = seq_len(nrow(data))
+  data$y = 2 +
+    c(a = -1, b = 0, c = 1)[data$id] +
+    (data$state == "B") * c(a = 0.5, b = 1, c = 1.5)[data$id] +
+    stats::rnorm(nrow(data), 0, 0.3)
+
+  expect_warning({
+    fit = mcp(
+      list(y ~ 1 + (state || id)),
+      data,
+      par_x = "x",
+      chains = 1,
+      warmup = 20,
+      iter = 20,
+      diagnostics = FALSE,
+      quiet = TRUE
+    )
+  }, "Adaptation incomplete", fixed = TRUE)
+
+  effects = ranef(fit)
+  expect_equal(nrow(effects), 3 * length(unique(data$id)))
+  expect_true(all(
+    c("Intercept_1_id[a]", "stateB_1_id[a]", "stateC_1_id[a]") %in%
+      effects$parameter
+  ))
+
+  fitted_values = fitted(
+    fit, summary = FALSE, group_effects = "predictor", ndraws = 2
+  )
+  expect_true(all(
+    c(
+      "id", "state", "Intercept_1_id",
+      "stateB_1_id", "stateC_1_id"
+    ) %in% names(fitted_values)
+  ))
+})
+
+
+test_that("group-level effects in the predictor part use existing prediction selectors", {
+  set.seed(42)
+  data = data.frame(
+    x = rep(1:6, 2),
+    id = rep(c("a", "b"), each = 6)
+  )
+  data$y = 3 + ifelse(data$id == "a", -1, 1) + stats::rnorm(12, 0, 0.2)
+  expect_warning({
+    fit = mcp(
+      list(y ~ 1 + (1 | id)),
+      data,
+      par_x = "x",
+      chains = 1,
+      warmup = 20,
+      iter = 20,
+      diagnostics = FALSE,
+      quiet = TRUE
+    )
+  }, "Adaptation incomplete", fixed = TRUE)
+
+  group_effects = fitted(
+    fit, summary = FALSE, group_effects = "predictor", ndraws = 2
+  )
+  expect_true(all(c("id", "Intercept_1_id") %in% names(group_effects)))
+
+  population = fitted(
+    fit,
+    newdata = data.frame(x = 1:3),
+    summary = FALSE,
+    group_effects = FALSE,
+    ndraws = 2
+  )
+  expect_false("id" %in% names(population))
+  expect_true(all(population$Intercept_1_id == 0))
+
+  # brms/lme4-style NA means none. NULL is ambiguous.
+  population_na = fitted(fit, newdata = data.frame(x = 1:3), summary = FALSE, group_effects = NA, ndraws = 2)
+  expect_false("id" %in% names(population_na))
+  expect_error(fitted(fit, group_effects = NULL), "`group_effects` cannot be NULL", fixed = TRUE)
+
+  # Deprecated `varying` maps to `group_effects`
+  lifecycle::expect_deprecated({
+    deprecated = fitted(fit, newdata = data.frame(x = 1:3), summary = FALSE, varying = FALSE, ndraws = 2)
+  })
+  expect_false("id" %in% names(deprecated))
+  expect_error(suppressWarnings(fitted(fit, group_effects = FALSE, varying = FALSE)), "Use only one of `group_effects` and deprecated `varying`.", fixed = TRUE)
+
+  effects = ranef(fit)
+  expect_equal(nrow(effects), length(unique(data$id)))
+  expect_true(all(grepl("^Intercept_1_id\\[", effects$parameter)))
+})
+
+
+test_that("unsupported predictor group structures fail explicitly", {
+  expect_error(
+    mcp(
+      list(y ~ 1 + (1 + x | id)),
+      group_data,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "require `\\|\\|`"
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1 + (site | id)),
+      group_data,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "require `\\|\\|`"
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1 + (1 || id) + (0 + site || id)),
+      group_data,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "Only one predictor group-level term"
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1 + ar(1, 1 + (1 | id))),
+      group_data,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "inside ar\\(\\)"
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1 + (1 | id:site)),
+      group_data,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "plain data-column names"
+  )
+})
+
+
+test_that("shared group-level parameters in priors are correctly indexed", {
+  fit = mcp(
+    list(y ~ 1 + (1 | id), ~ 1 + (1 | id)),
+    group_data,
+    prior = list(Intercept_2_id = "Intercept_1_id"),
+    par_x = "x",
+    sample = FALSE
+  )
+  expect_match(fit$jags_code, "Intercept_2_id\\[id_\\] = Intercept_1_id\\[id_\\]")
+})
+
+
+test_that("Various character group IDs work in mcp_draws, fitted, and predict", {
+  # Character IDs with leading zeros and commas (which break tidybayes bracket parsing)
+  opaque_data = data.frame(
+    x = 1:12,
+    y = rnorm(12),
+    id = rep(c("01", "1", "site,a", "a[b]"), 3),
+    site = rep(c("loc,north", "loc,south", "loc,east"), each = 4)
+  )
+
+  fit = mcp(
+    list(y ~ 1 + (1 + x || id) + (1 | site)),
+    opaque_data,
+    par_x = "x",
+    iter = 50,
+    chains = 1,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  # Check mcp_draws selects the exact draw columns of all levels
+  draws = mcp_draws(fit, ndraws = 2)
+  raw = tibble::as_tibble(as_draws_df(fit))  # Plain columns; subsetting a draws_df drops its metadata with a warning
+  effects = mcp_pars(fit, scope = "group")
+  for (i in seq_len(nrow(effects))) {
+    nodes = paste0(effects$parameter[i], "[", unique(opaque_data[[effects$group_col[i]]]), "]")
+    expect_equal(unname(as.matrix(draws[nodes])), unname(as.matrix(raw[match(draws$.draw, raw$.draw), nodes])))
+  }
+  expect_equal(nrow(draws), 2)
+  expect_false(any(grepl("[", names(mcp_draws(fit, group = FALSE, ndraws = 2)), fixed = TRUE)))
+
+  # Check fitted and predict join without type mismatch
+  fit_res = fitted(fit)
+  expect_equal(fit_res$id, opaque_data$id)
+  expect_equal(fit_res$site, opaque_data$site)
+
+  pred_res = predict(fit)
+  expect_equal(pred_res$id, opaque_data$id)
+  expect_equal(residuals(fit)$id, opaque_data$id)
+  expect_equal(ncol(log_lik(fit)), nrow(opaque_data))
+
+  # The same draw names also support ordered factors, including unused levels.
+  factor_fit = fit
+  factor_fit$data$id = ordered(fit$data$id, levels = c("unused", "a[b]", "1", "01", "site,a"))
+  expect_equal(mcp_draws(factor_fit)[["Intercept_1_id[a[b]]"]], mcp_draws(fit)[["Intercept_1_id[a[b]]"]])
+
+  # Check out-of-sample prediction with newdata
+  nd = data.frame(x = 1:2, id = c("01", "a[b]"), site = c("loc,north", "loc,east"))
+  nd_fit = fitted(fit, newdata = nd)
+  expect_equal(nd_fit$id, nd$id)
+  expect_equal(nd_fit$site, nd$site)
+})
+
+
+test_that("grouping columns that also serve as predictors are retained when group_effects = FALSE", {
+  data = data.frame(
+    x = 1:10,
+    id = factor(rep(c("a", "b"), 5)),
+    y = 1:10
+  )
+  fit = suppressWarnings(mcp(
+    list(y ~ 1 + id + (1 | id)),
+    data, par_x = "x", sample = "prior", chains = 1, iter = 20, warmup = 10, quiet = TRUE, seed = 42
+  ))
+
+  expect_no_error(fitted(fit, prior = TRUE, group_effects = FALSE))
+  expect_no_error(predict(fit, prior = TRUE, group_effects = FALSE))
+  expect_no_error(residuals(fit, prior = TRUE, group_effects = FALSE))
+  expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE)))
+  expect_no_error(ggplot2::ggplot_build(plot(fit, prior = TRUE, facet_by = "id")))
+
+  # Check that population-level differences are preserved when group-level deviations are not included
+  f_novary = fitted(fit, prior = TRUE, group_effects = FALSE)
+  expect_equal(nrow(f_novary), 10)
+  expect_true(all(c("x", "id", ".mean") %in% names(f_novary)))
+})
+
+
+test_that("group-only and offset-only covariates are represented in prediction metadata and subset predictions", {
+  data = data.frame(
+    x = 1:20,
+    y = 1:20,
+    z = rep(c("a", "b"), each = 10),
+    id = rep(1:4, each = 5),
+    stringsAsFactors = FALSE
+  )
+  fit = suppressWarnings(mcp(
+    list(y ~ 1 + (0 + z || id)),
+    data = data,
+    par_x = "x",
+    sample = "prior",
+    chains = 1,
+    iter = 20,
+    quiet = TRUE
+  ))
+
+  # Predictor discovery includes group-only covariates
+  expect_true("z" %in% mcp:::get_predictor_cols(fit))
+
+  # Single-row subset prediction succeeds for character-valued group covariates
+  sub_data = data[1, , drop = FALSE]
+  expect_equal(nrow(fitted(fit, newdata = sub_data, prior = TRUE)), 1)
+  expect_equal(nrow(predict(fit, newdata = sub_data, prior = TRUE)), 1)
+  expect_equal(nrow(residuals(fit, newdata = sub_data, prior = TRUE)), 1)
+
+  # Plotting works without missing term errors
+  expect_s3_class(plot(fit, prior = TRUE), "ggplot")
+
+  # Offset-only covariates are also discovered
+  data_offset = data.frame(x = 1:10, y = 1:10, offset_val = 11:20)
+  fit_offset = suppressWarnings(mcp(
+    list(y ~ 1 + offset(offset_val), ~ 0 + offset(offset_val)),
+    data = data_offset,
+    par_x = "x",
+    sample = FALSE
+  ))
+  expect_true("offset_val" %in% mcp:::get_predictor_cols(fit_offset))
+})
+
+
+test_that("fit$simulate() preserves group-level deviations that share a prior", {
+  group_df = data.frame(
+    x = 1:8,
+    y = c(1, 2, 1, 2, 5, 6, 5, 6),
+    id = rep(c("a", "b"), 4)
+  )
+
+  fit_shared = mcp(
+    list(y ~ 1 + (1 | id), ~ 1 + (1 | id)),
+    group_df,
+    par_x = "x",
+    prior = list(Intercept_2_id = "Intercept_1_id"),
+    sample = FALSE
+  )
+
+  sim_shared = fit_shared$simulate(
+    fit_shared, group_df,
+    cp_1 = 4, Intercept_1 = 1, Intercept_2 = 2, sigma_1 = 1,
+    Intercept_1_id_sd = 10
+  )
+  shared_sim = attr(sim_shared, "simulated")
+  expect_equal(shared_sim$Intercept_1_id, shared_sim$Intercept_2_id)
+})
+
+
+test_that("ranef() preserves grouping-factor level ordering", {
+  df = data.frame(
+    x = 1:30,
+    y = rnorm(30),
+    grp = factor(
+      rep(c("treatment", "control", "placebo"), each = 10),
+      levels = c("treatment", "control", "placebo")
+    )
+  )
+
+  fit = mcp(
+    list(y ~ 1 + (1 | grp)),
+    df,
+    par_x = "x",
+    sample = "prior",
+    iter = 50,
+    warmup = 10,
+    chains = 1,
+    diagnostics = FALSE,
+    quiet = TRUE
+  )
+
+  ran = ranef(fit, prior = TRUE)
+  expect_equal(ran$parameter, paste0("Intercept_1_grp[", levels(df$grp), "]"))
+})
+
+
+test_that("new groups reject hierarchies the R generators cannot reproduce", {
+  model = list(y ~ 1 + (1 | id))
+  prior = list(Intercept_1 = 0, Intercept_1_id = 5, sigma_1 = 1)
+  fit = mcp(model, group_data, par_x = "x", prior = prior,
+            sample = "prior", chains = 1, iter = 20, warmup = 10,
+            seed = 42, diagnostics = FALSE, quiet = TRUE)
+  newdata = data.frame(x = 1, id = "new")
+
+  existing = mcp_draws(fit, newdata = data.frame(x = 1, id = "a"), prior = TRUE)
+  expect_true(all(existing[["Intercept_1_id[a]"]] == 5))
+  expect_error(mcp_draws(fit, newdata = newdata, prior = TRUE),
+               "not in the fitted data: 'new'")
+  expect_error(fit$simulate(fit, newdata, Intercept_1 = 0, sigma_1 = 1,
+                            Intercept_1_id_sd = 1, .type = "fitted"),
+               "Cannot generate group-level deviation 'Intercept_1_id'")
+
+  default_fit = mcp(model, group_data, par_x = "x", sample = "prior",
+                    chains = 1, iter = 20, warmup = 10,
+                    seed = 42, diagnostics = FALSE, quiet = TRUE)
+  expect_error(mcp_draws(default_fit, newdata = newdata, prior = TRUE),
+               "not in the fitted data: 'new'")
+  expect_no_error(default_fit$simulate(default_fit, newdata,
+                                      Intercept_1 = 0, sigma_1 = 1,
+                                      Intercept_1_id_sd = 1, .type = "fitted"))
+})

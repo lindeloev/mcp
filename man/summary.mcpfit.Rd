@@ -4,66 +4,116 @@
 \name{summary.mcpfit}
 \alias{summary.mcpfit}
 \alias{summary}
-\alias{fixef}
+\alias{print.mcpsummary}
 \alias{fixef.mcpfit}
-\alias{fixed.effects}
-\alias{ranef}
+\alias{fixef}
 \alias{ranef.mcpfit}
-\alias{random.effects}
+\alias{ranef}
+\alias{coef.mcpfit}
 \alias{print.mcpfit}
 \alias{print}
 \title{Summarise mcpfit objects}
 \usage{
-\method{summary}{mcpfit}(object, width = 0.95, digits = 2, prior = FALSE, ...)
+\method{summary}{mcpfit}(
+  object,
+  width = 0.95,
+  digits = 2,
+  prior = FALSE,
+  verbose = FALSE,
+  diagnostics = NULL,
+  ...
+)
 
-fixef(object, width = 0.95, prior = FALSE, ...)
+\method{print}{mcpsummary}(x, digits = attr(x, "mcpsummary")$digits, ...)
 
-ranef(object, width = 0.95, prior = FALSE, ...)
+\method{fixef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...)
+
+\method{ranef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
+
+\method{coef}{mcpfit}(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
 \method{print}{mcpfit}(x, ...)
 }
 \arguments{
 \item{object}{An \code{\link{mcpfit}} object.}
 
-\item{width}{Float. The width of the highest posterior density interval
-(between 0 and 1).}
+\item{width}{Float. The width of the central posterior interval (between 0
+and 1).}
 
-\item{digits}{a non-null value for digits specifies the minimum number of
-significant digits to be printed in values. The default, NULL, uses
-getOption("digits"). (For the interpretation for complex numbers see signif.)
-Non-integer values will be rounded down, and only values greater than or
-equal to 1 and no greater than 22 are accepted.}
+\item{digits}{Positive integer. Number of significant digits of \code{sd} when
+printing the summary. Defaults to 2. \code{mean}, \code{lower}, \code{upper}, and \code{sim} are
+rounded to the same decimal places in each row. The returned tibble retains
+the unrounded values.}
 
-\item{prior}{TRUE/FALSE. Summarise prior instead of posterior?}
+\item{prior}{Logical. Summarise prior draws (\code{TRUE}) instead of posterior draws (\code{FALSE}, default)?}
 
-\item{...}{Currently ignored}
+\item{verbose}{Logical. Include the \code{segment} and \code{dpar} columns. Defaults
+to \code{FALSE} for a compact summary.}
 
-\item{x}{An \code{\link{mcpfit}} object.}
+\item{diagnostics}{Named list of diagnostic warning thresholds. Available
+elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
+\code{ar = 0.10}, and \code{ma = 0.10}. An empty list uses these defaults; a partial
+list overrides only the supplied values. Set an element to \code{NULL} to disable
+that diagnostic, or use \code{FALSE} to disable all configurable diagnostic
+warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inherits the settings used to fit
+the model, while a list or \code{FALSE} overrides the diagnostic footer.}
+
+\item{...}{Must be empty. Reserved for future use.}
+
+\item{x}{An \code{\link{mcpfit}} object, or an \code{mcpsummary} returned by \code{summary()}.}
+
+\item{dpar}{Distributional parameter(s) whose regression coefficients to
+return, e.g., \code{"mu"}, \code{"sigma"}, or \code{"ar1"} (see \link{mcp-formula}). For modeled
+distributional parameters such as \code{sigma()}, these coefficients are on the link scale.}
 }
 \value{
-A data frame with parameter estimates and MCMC diagnostics.
-OBS: The change point distributions are often not unimodal and symmetric so
-the intervals can be deceiving Plot them using \code{plot_pars(fit)}.
+An \code{mcpsummary} tibble with parameter estimates and MCMC diagnostics.
+It prints with model information, separate tables for change points and
+population-level parameters, and convergence warnings. Rows
+are ordered by change point first, then \code{mu}, then the other
+distributional parameters, then AR/MA lags - each ascending by
+segment. Note: The change point distributions are often not unimodal and
+symmetric so the intervals can be deceiving. Plot them using
+\code{plot_pars(fit)}.
+
+Columns:
 \itemize{
+\item \code{segment} (only with \code{verbose = TRUE}) is the segment the parameter belongs to.
+For change points, it is the segment that the change point starts, e.g., 2 for \code{cp_1}.
+\item \code{dpar} (only with \code{verbose = TRUE}) is the distributional parameter (e.g., \code{"mu"},
+\code{"sigma"}, or \code{"ar1"}; see \link{mcp-formula}) as accepted by the \code{dpar} argument of
+\code{\link[=fixef.mcpfit]{fixef.mcpfit()}}, \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, etc. It is \code{NA} for change points. See also \code{\link[=mcp_pars]{mcp_pars()}}.
 \item \code{mean} is the posterior mean
-\item \code{lower} is the lower quantile of the highest-density interval (HDI) given in \code{width}.
-\item \code{upper} is the upper quantile.
-\item \code{Rhat} is the Gelman-Rubin convergence diagnostic which is often taken to
-be acceptable if < 1.1. It is computed using \code{\link[coda]{gelman.diag}}.
-\item \code{n.eff} is the effective sample size computed using \code{\link[coda]{effectiveSize}}.
+\item \code{sd} is the posterior standard deviation.
+\item \code{lower} and \code{upper} are the lower and upper ends of the central posterior interval
+given in \code{width}.
+\item \code{rhat} is the rank-normalized split-Rhat convergence diagnostic.
+\item \code{ess_bulk} and \code{ess_tail} are the bulk and tail effective sample sizes.
 Low effective sample sizes are also obvious as poor mixing in trace plots
-(see \code{plot_pars(fit)}). Read how to deal with such problems \href{https://lindeloev.github.io/mcp/articles/tips.html}{here}
-\item \code{ts_err} is the time-series error, taking autoregressive correlation
-into account. It is computed using \code{\link[coda]{spectrum0.ar}}.
+(see \code{plot_pars(fit)}). Read how to deal with such problems in
+\href{https://lindeloev.github.io/mcp/articles/tips.html#convergence}{Diagnosing and fixing problems}.
 }
 
+Group-level change-point deviations (\code{cp_i_id}) follow a hierarchical normal
+distribution around the population-level change point before truncation. The
+group-specific change points are truncated to the observed range of x and ordered, so the
+population-level change point is generally close to their mean, but not exactly.
+Predictor group-level deviations (such as \code{Intercept_1_id}) use standard
+hierarchical zero-mean priors, without these bounds.
+\href{https://lindeloev.github.io/mcp/articles/group_effects.html}{Read more}.
+
 For simulated data, the summary contains two additional columns so that it
-is easy to inspect whether the model can recover the parameters. Run
-simulation and summary multiple times to get a sense of the robustness.
+is easy to inspect whether the model can recover the parameters. They are shown when the
+response was simulated using \code{fit$simulate()} from a model with the same parameters, family, and link.
+Run simulation and summary multiple times to get a sense of the robustness.
 \itemize{
 \item \code{sim} is the value used to generate the data.
-\item \code{match} is \code{"OK"} if \code{sim} is contained in the HDI interval (\code{lower} to
-\code{upper}).
+\item \code{match} is \code{"OK"} if \code{sim} is contained in the central posterior
+interval (\code{lower} to \code{upper}). For change points starting a disjoined
+segment, \code{sim} only needs to be between the same two adjacent observed
+\code{x} as the interval, since the likelihood is identical anywhere between them.
+Group-level deviations in \code{ranef()} are relative to their population-level parameter,
+so they share its error; \code{coef()} checks the group-specific values directly.
 }
 }
 \description{
@@ -71,27 +121,42 @@ Summarise parameter estimates and model diagnostics.
 }
 \section{Functions}{
 \itemize{
-\item \code{fixef()}: Get population-level ("fixed") effects of an \code{\link{mcpfit}} object.
+\item \code{print(mcpsummary)}: Print an \code{mcpsummary} returned by \code{summary()}: model
+information, change point and population-level parameters, and diagnostics.
 
-\item \code{ranef()}: Get varying ("random") effects of an \code{\link{mcpfit}} object.
+\item \code{fixef(mcpfit)}: Population-level coefficients (fixed effects) of \code{mcpfit}.
 
-\item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object.
+\item \code{ranef(mcpfit)}: Group-level deviations (random effects) of \code{mcpfit}.
+Change-point deviations are relative to their population-level change point;
+\verb{cp_i_<group>_sd} (e.g., \code{cp_1_id_sd}) is the SD of their normal distribution before truncation.
+Use \code{coef()} for group-specific values.
+
+\item \code{coef(mcpfit)}: Group-specific coefficients and change points of \code{mcpfit}:
+the population-level parameter plus each group-level deviation, as in \code{lme4} and \code{brms}.
+For example, \code{cp_1} for \code{group_col = "id"} and \code{level = "a"} summarises the draws of
+\code{cp_1 + cp_1_id[a]}, which is the change point of group \code{a}. Deviations without a
+population-level parameter, e.g., from \code{(0 + x || id)}, are added to zero.
+Coefficients of distributional parameters such as \code{sigma()} are on the link scale.
+For simulated data, \code{sim} is the sum of the simulated values.
+
+\item \code{print(mcpfit)}: Print the posterior summary of an \code{\link{mcpfit}} object,
+or the prior summary with \code{prior = TRUE}. Without the requested draws, only the model is shown.
 
 }}
 \examples{
 # Typical usage
 summary(demo_fit)
-summary(demo_fit, width = 0.8, digits = 4)  # Set HDI width
+summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 
-# Get the results as a data frame
+# Get the results as a tibble
 results = summary(demo_fit)
+results$mean
 
-# Varying (random) effects
+# Group-level deviations (random effects)
 # ranef(my_fit)
 
 # Summarise prior
 summary(demo_fit, prior = TRUE)
-
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

@@ -3,17 +3,20 @@
 \encoding{UTF-8}
 \name{print.mcptext}
 \alias{print.mcptext}
-\title{Nice printing texts}
+\title{Nice Printing of Multiline Texts}
 \usage{
 \method{print}{mcptext}(x, ...)
 }
 \arguments{
 \item{x}{Character, often with newlines.}
 
-\item{...}{Currently ignored.}
+\item{...}{Must be empty. Reserved for future use.}
+}
+\value{
+\code{x}, invisibly.
 }
 \description{
-Useful for \code{print(fit$jags_code)}, \code{print(mcp_demo$call)}, etc.
+Useful for \code{print(fit$jags_code)}, \code{print(mcp_demo$example_code)}, etc.
 }
 \examples{
 mytext = "line1 = 2\n line2 = 'horse'"

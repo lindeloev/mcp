@@ -1,39 +1,48 @@
 ---
-title: "Poisson change point analysis"
+title: "Poisson and negative-binomial change point analysis"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Poisson change point analysis}
+  %\VignetteIndexEntry{Poisson and negative-binomial change point analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+editor_options: 
+  markdown: 
+    wrap: none
 ---
 
-The Poisson distribution models the number of events within similar-sized time frames. 
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE)) {
+  pkgload::load_all(export_all = FALSE, quiet = TRUE)
+}
+options(mcp_quiet = TRUE)
+bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_family = "sans"))
+set.seed(42)
+```
 
+The Poisson and negative-binomial distributions model counts observed within comparable units of time, space, or exposure. The worked example below uses Poisson regression; a later section explains the additional `shape` parameter and priors in `negbinomial()`.
 
 # Coal mining disasters
-A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By binning the number of events within each year (fixed time frame), we have something very Poisson-friendly:
 
-```{r, message=FALSE, warning=FALSE}
-# Number of disasters by year
-library(dplyr, warn.conflicts = FALSE)
-df = round(boot::coal) %>% 
-  group_by(date) %>% 
-  count()
+A dataset on coal mining disasters has grown very popular in the change point literature (available in `boot::coal`). It contains a timestamp of each coal mining disaster from 1851 to 1962. By counting the number of events within each year (fixed time frame), we have something very Poisson-friendly. Note that years without disasters must be included as zeros:
+
+```{r}
+# Number of disasters by year, including years with zero disasters (no data rows)
+year = factor(floor(boot::coal$date), levels = 1851:1962)
+df = data.frame(date = 1851:1962, n = as.vector(table(year)))
 
 # See it
 head(df)
 ```
 
-
 The number of events (`n`) as a function of year (`date`) is typically modeled as a change between two intercepts. This is very simple to do in `mcp`:
 
 ```{r}
 library(mcp)
-options(mc.cores = 3)  # Speed up sampling
-set.seed(42)  # Make the script deterministic
+future::plan(future::multisession, workers = 3)
 ```
 
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+```{r}
 model = list(
   n ~ 1,  # intercept-only
   ~ 1  # intercept-only
@@ -44,11 +53,12 @@ fit = mcp(model, data = df, family = poisson(), par_x = "date")
 
 Let us see the two intercepts (lambda in log-units) and the change point (in years):
 
-```{r}
+```{r, R.options = list(width = 9999)}
 result = summary(fit)
+result
 ```
 
-We can see that the model ran well with good convergence and a large number of effective samples. At a first glance, the change point is estimated to lie between the years 1880 and 1895 (approximately).
+We can see that the model ran well with good convergence and large effective sample sizes. At a first glance, the change point is estimated to lie between the years `r round(result$lower[result$parameter == "cp_1"])` and `r round(result$upper[result$parameter == "cp_1"])` (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 
@@ -64,68 +74,108 @@ We can see this more clearly if plotting the posteriors. We include a traceplot 
 plot_pars(fit)
 ```
 
+# Priors for Poisson models
 
-# Priors
-`poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So we see that the mean number of events in segment 1 is `exp(result$mean[2])` (`r exp(result$mean[2])`) and it is `exp(result$mean[3])` (`r exp(result$mean[3])`) for segment 2.
+*[Brief overview of all default priors](../articles/default_priors.html#summary-reference-table)*
 
-Default priors were used. They are normals with a standard deviation of 10. I.e. with 68% probability mass between `exp(10) = 22026` and `exp(-10) = 1 / 22026`:
+`poisson()` defaults to `link = 'log'`, meaning that we have to exponentiate the estimates to get the "raw" Poisson parameter $\lambda$. $\lambda$ has the nice property of being the mean number of events. So the rate is around `r round(exp(result$mean[result$parameter == "Intercept_1"]), 2)` disasters per year in segment 1 and `r round(exp(result$mean[result$parameter == "Intercept_2"]), 2)` in segment 2. Exponentiating the posterior mean of the log-rate gives approximately the posterior median of $\lambda$, not its mean. For the posterior mean, exponentiate the draws before averaging, e.g., `mean(exp(as_draws_df(fit)$Intercept_1))`, or use `fitted(fit)`.
 
-```{r}
-cbind(fit$prior)
+The intercept prior is a normal distribution centered on the median of `log(n)`, with zeros replaced by 0.1 (as in `brms`), and scale equal to the maximum of 2.5 and its MAD. Replacing zeros keeps the log finite and the minimum scale avoids an accidentally narrow prior.
+
+Coefficients are [autoscaled as in `rstanarm`](../articles/default_priors.html#default-priors-on-regression-parameters), e.g., `dnorm(0, 2.5 / sd(column))`, and group-level SDs default to half-normal priors. These normal priors avoid the infinite expected counts that heavier Student-t tails imply under the log link ([read more](../articles/default_priors.html#deviations)).
+
+```{r, R.options = list(width = 9999)}
+prior_summary(fit)
 ```
 
-As always, the prior on the change point forces it to occur in the observed range. These priors are very vague, so update with more informed priors for your particular case, e.g.:
+The default prior on the change point restricts it to the observed range. The coefficient priors are deliberately broad defaults, so update them with more informed priors for your particular case when possible, e.g.:
 
-```{r, cache = TRUE, eval=FALSE}
+```{r, eval=FALSE}
 prior = list(
-  cp_1 = "dnorm(1900, 30) T(MINX, 1925)"
+  cp_1 = "dnorm(1900, 30) T(min(date), 1925)"
 )
-fit_with_prior = mcp(model, data = df, prior, poisson(), par_x = "date")
+fit_with_prior = mcp(model, data = df, family = poisson(), prior = prior, par_x = "date")
 ```
 
+# Negative-binomial extension
+
+`negbinomial()` uses log links for its conditional mean `mu` and, when modeled, its overdispersion `shape`, where $\operatorname{Var}(y) = \mu + \mu^2 / \mathit{shape}$. Its mean priors are the same as for `poisson()`.
+
+When no `shape()` formula is supplied, `shape_1` is the shape itself (like `sigma_1` in `gaussian()`) with an inverse-gamma(0.4, 0.3) prior, matching `brms`. It covers both strong overdispersion and the large-shape Poisson limit.
+
+An explicit `shape()` formula models log-shape. Harmonizing with log-mean coefficients, its intercept and contrasts default to `dnorm(0, 2.5)` and slopes to `dnorm(0, 2.5 / sd(column))` (group SDs default to `dnorm(0, ...) T(0, )`). Where `brms` uses flat coefficients and a Student-t intercept, `mcp` uses proper normal priors to avoid heavy tails that pull shape toward extreme overdispersion. Shape regression can be weakly identified, so informed priors may be useful.
+
+# Modeling rates using `offset()`
+
+When modeling event counts where exposure (e.g., person-years, area, or population size) varies across observations, you can model rates $\lambda = \text{Count} / \text{exposure}$ on the log link by supplying `offset(log(exposure))`:
+
+```{r, eval=FALSE}
+# Example: Event counts over varying observation durations (as here) or population
+model = list(
+  events ~ 1 + year + offset(log(exposure)),  # Segment 1
+  ~ 1 + year + offset(log(exposure))          # Segment 2
+)
+
+fit = mcp(model, data = df, family = poisson())  # implicit link = "log"
+```
+
+`fitted()` returns expected counts given each row's exposure. To get expected rates per unit of exposure, set the exposure to 1 in `newdata`, so that the offset is $\log(1) = 0$:
+
+```{r, eval=FALSE}
+fitted(fit, newdata = transform(df, exposure = 1))
+```
+
+This works the same way for `predict()`, which then returns predicted counts at unit exposure. The `fitted(..., rate = TRUE)` argument does not apply to Poisson or negative-binomial models; it is only for binomial models, where it converts counts to proportions of trials.
+
+Adding a categorical predictor to the model, you can also model rate ratios. When an offset is present, `mcp` automatically shifts the default intercept prior from centering on observed log-counts to observed log-rates ($\log(y) - \text{offset}$), keeping the minimum scale at 2.5.
+
+> **Note on `par_x` vs. cumulative exposure:**  
+> The offset is evaluated per row as local exposure for that observation. If `par_x` represents continuous cumulative time from an origin (e.g., $[0, t_i]$), using `offset(log(par_x))` does **not** integrate piecewise rates across prior segments; instead, the current segment's rate is applied to the total duration. If your data consists of discrete time intervals (bins) of duration $\Delta t_i$, using `offset(log(delta_t))` is valid.
 
 # Model comparison
 
-Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two no-changepoint models and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare. 
+Despite the popularity of this dataset, a question rarely asked is what the evidence is that there is a change point at all. Let us fit two models without change points and use approximate leave-one-out cross-validation to see how the predictive performance of the two models compare.
 
-A flat model and a one-decay model:
+A flat model and a one-decay model. The intercept in `mcp` is at `date = 0`, far from the data, so we measure the decay from the first year (`I(date - 1851)`) to reduce the posterior correlation between intercept and slope. This helps sampling:
 
-```{r, cache = TRUE, results= FALSE, message=FALSE, warning=FALSE}
+```{r}
 # Fit an intercept-only model
 fit_flat = mcp(list(n ~ 1), data = df, family=poisson(), par_x = "date")
-fit_decay = mcp(list(n ~ 1 + date), data = df, family = poisson())
+fit_decay = mcp(list(n ~ 1 + I(date - 1851)), data = df, family = poisson(), par_x = "date")
 
 
 plot(fit_flat) + plot(fit_decay)
 ```
 
-
-Not we compute and compare the LOO ELPDs:
-
-```{r, cache = TRUE, results=FALSE, warning=FALSE, message=FALSE}
-fit$loo = loo(fit)
-fit_flat$loo = loo(fit_flat)
-fit_decay$loo = loo(fit_decay)
-```
-```{r}
-loo::loo_compare(fit$loo, fit_flat$loo, fit_decay$loo)
-```
-
-
-The change point model seems to be preferred with a ratio of around 1.7 over the decay model and 2.5 over the flat model. Another approach is to look at the model weights:
+Now we compute and compare the LOO ELPDs:
 
 ```{r}
-loo_list = list(fit$loo, fit_flat$loo, fit_decay$loo)
+fit_loo = loo(fit)
+fit_flat_loo = loo(fit_flat)
+fit_decay_loo = loo(fit_decay)
+```
+
+```{r}
+loo::loo_compare(fit_loo, fit_flat_loo, fit_decay_loo)
+```
+
+The flat model is clearly worse, with `elpd_diff / se_diff` around 4, so the disaster rate did decrease. The change point model is preferred over the decay model, but the difference is smaller than its standard error. The `diag_elpd` column also flags a few observations with high Pareto $k$ values in the change point model, so its PSIS-LOO estimate is less reliable. Taken together, the data cannot clearly distinguish an abrupt change from a gradual decay. Another approach is to look at the model weights:
+
+```{r}
+loo_list = list(fit_loo, fit_flat_loo, fit_decay_loo)
 loo::loo_model_weights(loo_list, method="pseudobma")
 ```
 
-Again, unsurprisingly, the change point model is preferred and they show the same ranking as implied by `loo_compare`.
+Again, the change point model is preferred and the weights show the same ranking as implied by `loo_compare`, but the decay model retains a non-negligible weight.
 
+# JAGS code for the Poisson example
 
-# JAGS code
-Here is the JAGS code for the full model above.
+Here is the JAGS code for the full Poisson change-point model above.
 
 ```{r}
 fit$jags_code
 ```
 
+```{r cleanup, include=FALSE}
+future::plan(future::sequential)
+```

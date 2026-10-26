@@ -1,0 +1,100 @@
+#################
+# TEST GAUSSIAN STANDARD DEVIATION #
+#################
+bad_sigma = list(
+  list(y ~ 1 + sigma(q))  # variable does not exist
+)
+
+test_bad(bad_sigma)
+
+
+test_that("constant residual SDs must be positive", {
+  data = data.frame(x = 1:4, y = 0)
+
+  expect_error(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = 0), sample = FALSE
+    ),
+    "Constant priors on `sigma` must be greater than 0: sigma_1.",
+    fixed = TRUE
+  )
+  expect_error(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = -1), sample = FALSE
+    ),
+    "Constant priors on `sigma` must be greater than 0: sigma_1.",
+    fixed = TRUE
+  )
+  expect_silent(
+    mcp(
+      list(y ~ 1), data,
+      par_x = "x", prior = list(sigma_1 = 0.0001), sample = FALSE
+    )
+  )
+  expect_silent(
+    mcp(
+      list(y ~ 1 + sigma(1)), data,
+      par_x = "x", prior = list(sigma_Intercept_1 = 0), sample = FALSE
+    )
+  )
+})
+
+
+test_that("distribution priors for fixed residual SDs are truncated at zero", {
+  data = data.frame(x = 1:4, y = 0)
+  fit = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "dnorm(0, 1)"), sample = FALSE
+  )
+
+  expect_equal(fit$prior$sigma_1, "dnorm(0, 1) T(0, )")
+  expect_match(fit$jags_code, "sigma_1 ~ dnorm(0, 1/(1)^2) T(0, )", fixed = TRUE)
+
+  # Already bounded uniform prior is preserved without T()
+  fit_unif_ok = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "dunif(1, 2)"), sample = FALSE
+  )
+  expect_equal(fit_unif_ok$prior$sigma_1, "dunif(1, 2)")
+  expect_match(fit_unif_ok$jags_code, "sigma_1 ~ dunif(1, 2)", fixed = TRUE)
+  expect_false(grepl("sigma_1 ~ dunif.*T\\(", fit_unif_ok$jags_code))
+
+  # Uniform prior reaching below zero has lower bound adjusted
+  fit_unif_zero = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "dunif(-1, 2)"), sample = FALSE
+  )
+  expect_equal(fit_unif_zero$prior$sigma_1, "dunif(0, 2)")
+  expect_match(fit_unif_zero$jags_code, "sigma_1 ~ dunif(0, 2)", fixed = TRUE)
+
+  # Uniform prior without positive values errors
+  expect_error(
+    mcp(list(y ~ 1), data, par_x = "x", prior = list(sigma_1 = "dunif(-2, 0)"), sample = FALSE),
+    "must allow values above 0"
+  )
+
+  # Deterministic expressions are not treated as distributions
+  fit_expr = mcp(
+    list(y ~ 1), data,
+    par_x = "x", prior = list(sigma_1 = "sqrt(4)"), sample = FALSE
+  )
+  expect_equal(fit_expr$prior$sigma_1, "2")
+  expect_match(fit_expr$jags_code, "sigma_1 = 2  # Deterministic expression", fixed = TRUE)
+})
+
+
+good_sigma = list(
+  list(y ~ 1 + sigma(1)),
+  list(y ~ 1 + sigma(1 + (1 | id))),
+  list(y ~ 1 + sigma(1 + (ok_id_factor || id))),
+  list(y ~ 1 + sigma(x + I(x^2))),
+  list(y ~ 1 + sigma(1 + sin(x))),
+  list(y ~ 1,
+       ~ cp(1 + (1|id)) + 1 + I(x^2) + sigma(1 + x)),  # Test with group-level change point and more mcp stuff
+  list(y | weights(weights_ok) ~ 1 + sigma(1 + x),  # With weights
+       ~ 0 + sigma(1 + x))
+)
+
+test_good(good_sigma)

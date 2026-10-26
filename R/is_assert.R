@@ -1,81 +1,294 @@
-# ABOUT: These functions are used internally for for defensive programming.
+# ABOUT: These functions are used internally for defensive programming.
 # -----------------
 
-# Synonym so that assert_types(x, "tibble", "formula") works
-is.tibble = tibble::is_tibble
-is.formula = rlang::is_formula
+# Is `x` a family object, e.g., gaussian() or an mcpfamily?
+is_family = function(x) {
+  if (inherits(x, "family") == FALSE)
+    return(FALSE)
 
-# Asserts whether x is an `mcpfit`
-assert_mcpfit = function(x) {
-  if (!is.mcpfit(x))
-    stop("Expected `mcpfit` but got: ", class(x))
-}
-
-# Asserts whether x contains non-numeric, decimal, or less-than-lower
-assert_integer = function(x, name = NULL, lower = -Inf) {
-  # Recode
-  if (is.null(name))
-    name = substitute(x)
-  x = stats::na.omit(x)
-
-  # Do checks
-  greater_than = ifelse(lower == -Inf, " ", paste0(" >= ", lower, " "))
-  if (!is.numeric(x))
-    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
-
-  if (!all(x == floor(x)) || !all(x >= lower))
-    stop("Only integers", greater_than, "allowed for '", name, "'. Got ", x)
+  checkmate::assert_string(x$family)
+  checkmate::assert_string(x$link)
 
   TRUE
 }
 
-# Asserts whether x is logical
-assert_logical = function(x, max_length = 1) {
-  if (!is.logical(x))
-    stop("`", substitute(x), "` must be logical (TRUE or FALSE). Got ", x)
+# Check that `model` is a list of segment formulas
+assert_mcpmodel = function(model) {
+  checkmate::assert_list(model, min.len = 1)
 
-  if (length(x) > max_length)
-    stop("`", substitute(x), "` must be at most length ", max_length, ". Got length ", length(x))
+  for (segment in model) {
+    if (!inherits(segment, "formula"))
+      stop("All segments must be formulas. This segment is not a formula: ", segment)
+  }
+
+  invisible(model)
 }
 
-# Asserts whether x is one of a set of allowed values
-assert_value = function(x, allowed = c()) {
-  if (!(x %in% allowed)) {
-    allowed[is.character(allowed)] = paste0("'", allowed[is.character(allowed)], "'")  # Add quotes for character values
-    stop("`", substitute(x), "` must be one of ", paste0(allowed, collapse = ", "), ". Got ", x)
+
+# Is this a continuous vector?
+is_continuous = function(x) {
+  is.numeric(x) &&
+    length(unique(stats::na.omit(x))) > 2
+}
+
+
+# Stop with an informative error directing users to GitHub issues
+stop_github = function(...) {
+  stop("This looks like an internal error in mcp. To fix this for you and other users, please raise an issue on https://github.com/lindeloev/mcp/issues with the minimum data/code that reproduces this error:\n", ...)
+}
+
+
+# Require offset() in every segment where a dpar applies if it is in any of them. Offsets usually
+# describe the observation (e.g., exposure), so omitting one in a segment is likely a mistake.
+# Dpars apply in all segments (joined when not included); AR/MA only in segments that include them.
+assert_offsets = function(components, family) {
+  for (dpar in c(family$dpar_specs$dpar, "ar", "ma")) {
+    is_arma = dpar %in% c("ar", "ma")
+    forms = lapply(components, function(x) if (is_arma) x[[dpar]]$form else x[[dpar]])
+    applies = if (is_arma) !vapply(forms, is.null, logical(1)) else rep(TRUE, length(forms))
+    has_offset = vapply(forms, function(form) !is.null(form) && !is.null(attr(stats::terms(form), "offset")), logical(1))
+    missing_segments = which(applies & !has_offset)
+    if (any(has_offset) && length(missing_segments) > 0)
+      stop(
+        "`offset()` must be included in all segments of `", dpar, "` but is missing in segment ",
+        and_collapse(as.character(missing_segments)), ". If you have a use case for omitting it, ",
+        "please request it on https://github.com/lindeloev/mcp/issues",
+        call. = FALSE
+      )
   }
 }
 
 
-# Asserts whether x is one of a set of allowed types.
-# e.g., `assert_types(vec, "numeric", "character", "foo")`
-assert_types = function(x, ...) {
-  types = list(...)
-
-  # Test each function on x
-  passed = logical(length(types))
-  for (i in seq_along(types)) {
-    is.type = eval(parse(text = paste0("is.", types[[i]])))  # From character to is.foo() function
-    passed[i] = is.type(x)
+# Asserts whether matrix x is rank deficient.
+assert_rank = function(x, segment, dpar) {
+  QR = qr(x)
+  if (QR$rank < ncol(x)) {
+    bad_cols = colnames(x)[QR$pivot[(QR$rank+1):ncol(x)]]
+    stop("These terms are perfectly colinear with other terms for ", dpar, " in segment ", segment, ": ", and_collapse(bad_cols), " (the design matrix is rank deficient). Consider checking the data and/or the model.")
   }
 
-  # Return helpful error
-  if (!any(passed == TRUE))
-    stop("`", substitute(x), "` must be ", paste0(types, collapse = " or "), ". Got ", class(x))
+  TRUE
 }
 
-# Asserts whether x is numeric in range
-assert_numeric = function(x, lower = -Inf, upper = Inf) {
-  if (!is.numeric(x))
-    stop("`", substitute(x), "` must be numeric. Got ", class(x))
-  if (any(x < lower) || any(x > upper))
-    stop("`", substitute(x), "` contained value(s) outside the interval (", lower, ", ", upper, ").")
+
+# Check that `data` has `cols` and that none of their values fail `fail_funcs`, e.g., c(is.na, is.infinite)
+assert_data_cols = function(data, cols, fail_funcs = c()) {
+  missing_cols = setdiff(cols, colnames(data))
+  if (length(missing_cols) > 0)
+    stop("These model terms are missing from the data: ", and_collapse(missing_cols))
+
+  # Only work with the specified columns now
+  data = data[, cols, drop = FALSE]
+  for (fail_func in fail_funcs) {
+    failed_cols = colnames(data)[unlist(lapply(data, function(x) any(fail_func(x))))]
+    if (length(failed_cols) > 0) {
+      # Fail with informative message
+      fail_name = if (identical(fail_func, is.na)) "is.na" else
+        if (identical(fail_func, is.nan)) "is.nan" else
+          if (identical(fail_func, is.infinite)) "is.infinite" else "the validation check"
+      stop("The column(s) ", and_collapse(failed_cols), " had values where ", fail_name, " was TRUE.")
+    }
+  }
+
+  TRUE
 }
 
-# Asserts ellipsis. `ellipsis` is a list and `allowed` is a character vector
-assert_ellipsis = function(..., allowed = NULL) {
-  assert_types(allowed, "null", "character")
-  illegal_names = dplyr::setdiff(names(list(...)), allowed)
-  if (length(illegal_names) > 0)
-    stop("The following arguments are not accepted for this function: '", paste0(illegal_names, collapse = "', '"), "'")
+
+# Validate data that define model structure rather than an individual response.
+# Response columns are intentionally excluded because some families support
+# missing responses as latent values during posterior sampling.
+assert_model_data = function(data, par_x, rhs_vars = character(), group_cols = character()) {
+  assert_data_cols(data, rhs_vars, fail_funcs = c(is.na, is.nan))
+  assert_data_cols(
+    data, unique(c(par_x, group_cols)),
+    fail_funcs = c(is.na, is.nan, is.infinite)
+  )
+
+  invisible(TRUE)
 }
+
+
+# Assert that column names do not collide with reserved mcp output names
+# - extra: Additional reserved names, e.g., the evaluated dpar column (`.sigma`).
+assert_reserved_output_namespace = function(col_names, context = "data", extra = NULL) {
+  reserved_output = c(
+    ".mean", ".sd", ".lower", ".upper",
+    ".epred", ".linpred", ".prediction", ".residual", ".loglik",
+    ".draw", ".chain", ".iteration", ".row",
+    extra
+  )
+  collisions = intersect(col_names, reserved_output)
+  if (length(collisions) > 0) {
+    target = if (context == "data") "Data column name(s)" else paste0("`", context, "` column name(s)")
+    action = if (context == "data") "before fitting." else "before evaluation."
+    stop(
+      target, " collide with mcp's reserved output namespace: ",
+      and_collapse(paste0("'", collisions, "'")),
+      ". Rename them ", action
+    )
+  }
+  invisible(TRUE)
+}
+
+
+# Assert that column names do not collide with reserved mcp offset names
+assert_reserved_offset_namespace = function(col_names, context = "data") {
+  collisions = grep("^offset(_[0-9]+)?$", col_names, value = TRUE)
+  if (length(collisions) > 0) {
+    target = if (context == "data") "Data column name(s)" else paste0("`", context, "` column name(s)")
+    action = if (context == "data") "before fitting." else "before evaluation."
+    stop(
+      target, " collide with mcp's reserved offset namespace: ",
+      and_collapse(paste0("'", collisions, "'")),
+      ". Rename them ", action
+    )
+  }
+  invisible(TRUE)
+}
+
+
+# Validate response auxiliaries independently of whether responses themselves
+# are observed. This makes the same family invariants available to model
+# construction and R-side simulation.
+assert_response_data = function(family, data_columns, data, response_required = TRUE, aux_required = NULL) {
+  aux_columns = get_family_aux_columns(family, data_columns)
+  response_data = get_family_response_data(family, data_columns, data)
+
+  # For auxiliaries not required by the operation, supply valid placeholders
+  if (!is.null(aux_required)) {
+    for (aux_name in names(aux_columns)) {
+      if (aux_name %notin% aux_required) {
+        response_data[[aux_name]] = rep(1L, nrow(data))
+      }
+    }
+  }
+
+  # Weights apply to all families
+  weights = response_data$weights
+  if (!is.null(weights) && (!is.numeric(weights) || anyNA(weights) || any(weights <= 0)))
+    stop("All weights must be numeric and greater than zero.")
+
+  y = if (response_required && data_columns$response %in% names(data)) data[[data_columns$response]] else rep(NA_real_, nrow(data))
+  family$response$validate(y, response_data, data_columns)
+
+  invisible(TRUE)
+}
+
+
+# Constant dpars, e.g., sigma_1 = 2, must be within their support (sigma > 0) without relying
+# on the numerical floor used for per-observation calculations.
+assert_constant_dpars = function(prior_table, coefs, family) {
+  bounds = get_constant_dpar_bounds(family)
+  for (dpar in names(bounds)) {
+    is_constant = prior_table$parameter %in% coefs$name[coefs$dpar == dpar] & prior_table$kind == "constant"
+    values = suppressWarnings(as.numeric(prior_table$value[is_constant]))
+    if (any(values <= bounds[[dpar]])) {
+      bad_parameters = prior_table$parameter[is_constant][values <= bounds[[dpar]]]
+      stop(
+        "Constant priors on `", dpar, "` must be greater than ", bounds[[dpar]], ": ",
+        and_collapse(bad_parameters), "."
+      )
+    }
+  }
+
+  invisible(TRUE)
+}
+
+
+# Change-point locations supplied to simulation must use the same ordering as
+# the population-level parameters in the fitted model.
+assert_ordered_population_cps = function(cps, args) {
+  if (nrow(cps) < 2)
+    return(invisible(NULL))
+
+  locations = lapply(cps$name, function(name) args[[name]])
+  n = max(lengths(locations))
+  locations = do.call(cbind, lapply(locations, rep, length.out = n))
+  if (any(locations[, -1, drop = FALSE] <= locations[, -ncol(locations), drop = FALSE]))
+    stop("Population-level change points must remain strictly ordered.")
+
+  invisible(NULL)
+}
+
+
+# Asserts whether `rel` is in a model
+assert_rel = function(model) {
+  has_rel = model |>
+    sapply(formula_to_char) |>
+    stringr::str_detect("(^|[^A-Za-z0-9._])rel\\(") |>
+    any()
+
+  if (has_rel)
+    stop(legacy_mcp_message(
+      "`rel()` model terms were removed in mcp v0.4. Relative parameter estimates can be computed by subtracting posterior draws; there is no replacement for setting relative priors."
+    ), call. = FALSE)
+
+  TRUE
+}
+
+
+# Width of a central interval. 0 and 1 are degenerate intervals, so they are not allowed.
+# - false_ok: Whether `FALSE` (no interval) is allowed.
+assert_width = function(width, name = "width", false_ok = FALSE) {
+  if (false_ok && isFALSE(width))
+    return(invisible(width))
+  checkmate::assert_number(width, .var.name = name)
+  if (width <= 0 || width >= 1)
+    stop("`", name, "` must be strictly between 0 and 1", if (false_ok) ", or `FALSE`", ".", call. = FALSE)
+  invisible(width)
+}
+
+
+# AR/MA handling: TRUE conditions on the observed response history, FALSE omits AR/MA terms,
+# and "replicate" generates fresh response series.
+# - replicate_ok: Whether "replicate" is allowed. It only applies to predictions.
+assert_arma = function(arma, replicate_ok = TRUE) {
+  if (isTRUE(arma) || isFALSE(arma) || (replicate_ok && identical(arma, "replicate")))
+    return(invisible(arma))
+  if (identical(arma, "replicate"))
+    stop('`arma = "replicate"` generates fresh response series, so it applies only to predictions, e.g., `predict()` and `pp_check()`.', call. = FALSE)
+  stop('`arma` must be TRUE, FALSE, or "replicate".', call. = FALSE)
+}
+
+
+# `rate = TRUE` only applies to families with trials, e.g., binomial()
+assert_rate = function(rate, fit) {
+  checkmate::assert_flag(rate)
+  if (rate && !fit$family$response$has_rate)
+    stop(
+      "`rate = TRUE` is not supported for family = ", fit$family$family, "(). It only applies to families with trials, such as binomial(). ",
+      "For rates per unit of exposure in models with `offset(log(exposure))`, set `exposure = 1` in `newdata`.",
+      call. = FALSE
+    )
+}
+
+
+assert_typescale = function(type, scale) {
+  rlang::arg_match0(type, c("predict", "fitted", "residuals", "loglik"))
+  rlang::arg_match0(scale, c("response", "linear"))
+  if (scale == "linear" && type != "fitted")
+    stop("scale = 'linear' is only allowed when type = 'fitted'.")
+
+  TRUE
+}
+
+
+# Check dpar with helpful errors and substitute NULL
+assert_dpar = function(dpar, fit, type) {
+  if (is.null(dpar))
+    dpar = "epred"
+
+  allowed_dpars = unique(c(
+    stats::na.omit(get_fit_model_tables(fit)$parameters$dpar),   # "mu" "ar1" "ar2" "sigma", etc.
+    fit$family$dpar_specs$dpar,  # any model parameters that have no regression terms (~0)
+    "epred"
+  ))
+  checkmate::assert_string(dpar)
+  dpar = rlang::arg_match0(dpar, allowed_dpars)
+
+  if (type != "fitted" && dpar != "epred")
+    stop("dpar = '", dpar, "' is only allowed when type = 'fitted'.")
+
+  dpar
+}
+

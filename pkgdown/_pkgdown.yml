@@ -1,4 +1,9 @@
+development:
+  mode: auto
+
 template:
+  bootstrap: 5
+  math-rendering: katex
   params:
     bootswatch: flatly  # Theme
     ganalytics: UA-1026978-3  # Google Analytics
@@ -19,92 +24,157 @@ url: https://lindeloev.github.io/mcp
 authors:
   Jonas Kristoffer Lindeløv:
     href: http://lindeloev.net
+    linkedin: jonaskl
 
 # Structure of the reference page
 reference:
-  - title: Using mcp
-    desc: Functions for everyday use of mcp.
+
+  - title: Fit and show mcpfit
+    desc: mcp() returns an `mcpfit`. These functions illuminate what this fit contains structurally.
     contents:
       - mcp
+      - mcp_pars
+      - mcp_columns
+      - prior_summary
+      - print.mcplist
+      - print.mcptext
+      - is_mcpfit
+      - model-accessors-mcpfit
+
+  - title: Documentation on mcp()
+    desc: Detailing the model, priors, and R objects
+    contents:
+      - mcp-package
+      - mcp-formula
+      - mcp-priors
+      - mcpfit-class
+
+  - title: Visual summaries
+    desc: Plotting of fits, parameters, and diagnostics.
+    contents:
       - plot.mcpfit
       - plot_pars
       - pp_check
+      - interpolate_newdata
+
+  - title: Textual summaries and statistics
+    desc: Summaries that pertain to the whole `mcpfit` or to specific parameters.
+    contents:
       - summary.mcpfit
-      - ranef
       - fixef
+      - ranef
+      - posterior-uncertainty-mcpfit
+      - hypothesis
+      - loo
+      - waic
+
+  - title: Extract draws or data
+    desc: Per-observation summaries or draws
+    contents:
       - fitted
       - predict
       - residuals
-      - loo
-      - waic
-      - hypothesis
-      - mcp-package
+      - log_lik
+      - posterior_epred.mcpfit
 
-  - title: Axillary functions
-    desc: These are used internally by mcp, but are exposed here since they may be useful for other purposes. Most other useful internal functions deliver the result already in `mcp(segments, sample = FALSE)`, so `mcp()` will be their API.
-    contents:
-      - sd_to_prec
-      - logit
-      - ilogit
-      - probit
-      - phi
-      - is.mcpfit
+      - as_draws.mcpfit
+      - draws-index-mcp
+
+
 
   - title: Families
     desc: Distributional families that are not available in base R.
     contents:
       - bernoulli
       - negbinomial
-      - exponential
 
   - title: Help and demos
-    desc: These datasets were simulated with mcp. There are lnks to the simulation scripts in the documentation for each of them. The simulation values will also show up if you fit a model to one of these dataset and call `summary(fit)`. Analyses of most of these are demonstrated on the [front page](https://lindeloev.github.io/mcp).
+    desc: Some showcases of typical mcp analyses. Most of these are discussed on the [front page](https://lindeloev.github.io/mcp).
     contents:
       - mcp_example
       - demo_fit
 
-  - title: Miscellaneous
-    desc: Stuff you would not usually consult directly.
+  - title: Deprecated
+    desc: Functions retained for backward compatibility.
     contents:
-      - mcpfit-class
-      - print.mcplist
-      - print.mcptext
+      - sd_to_prec
+
+articles:
+  - title: Modeling
+    contents:
+      - formulas
+      - group_effects
+      - dpar
+      - arma
+  - title: Families
+    contents:
+      - families
+      - poisson
+      - binomial
+  - title: Inference
+    contents:
+      - priors
+      - default_priors
+      - comparison
+      - predict
+      - plotting
+      - missing
+  - title: Implementation
+    contents:
+      - implementation
+      - tips
+
+redirects:
+  - ["articles/varying.html", "articles/group_effects.html"]
+  - ["articles/variance.html", "articles/dpar.html"]
 
 navbar:
   left:
-    - text: General usage
+    - text: Modeling
       menu:
       - text: Formulas
         href: articles/formulas.html
-      - text: Priors
-        href: articles/priors.html
-      - text: Hypotheses and model comparison
-        href: articles/comparison.html
-      - text: Random/varying effects
-        href: articles/varying.html
-      - text: Modeling variance
-        href: articles/variance.html
+      - text: Group-level (random) effects
+        href: articles/group_effects.html
+      - text: Variance and other distributional parameters
+        href: articles/dpar.html
       - text: Time series and autocorrelation
         href: articles/arma.html
-      - text: Fits and predictions
-        href: articles/predict.html
-    - text: GLM
+    - text: Families
       menu:
       - text: Supported families and link functions
         href: articles/families.html
-      - text: Poisson
+      - text: Poisson and negative binomial
         href: articles/poisson.html
       - text: Binomial and Bernoulli
         href: articles/binomial.html
-    - text: Other
+    - text: Inference
       menu:
-      - text: Comparison to other packages
-        href: articles/packages.html
-      - text: Tips, tricks, and debugging
+      - text: Using priors
+        href: articles/priors.html
+      - text: Default priors
+        href: articles/default_priors.html
+      - text: Hypotheses and model comparison
+        href: articles/comparison.html
+      - text: Fits and predictions
+        href: articles/predict.html
+      - text: Plotting
+        href: articles/plotting.html
+      - text: Missing responses and imputation
+        href: articles/missing.html
+    - text: Implementation
+      menu:
+      - text: From formulas to sampler code
+        href: articles/implementation.html
+      - text: Diagnosing and fixing problems
         href: articles/tips.html
+    - text: Functions
+      href: reference/index.html
     - text: News
       href: news/index.html
-    - icon: fa-twitter
-      href: https://twitter.com/jonaslindeloev
+    - icon: fa-bluesky
+      href: https://bsky.app/profile/jonaslindeloev.bsky.social
+      aria-label: Bluesky
     - icon: fa-github
       href: https://github.com/lindeloev/mcp
+      aria-label: GitHub

@@ -1,0 +1,239 @@
+#############
+# TEST AR/MA #
+#############
+# We can assume that it will fail for the same mis-specifications on the formula
+# ar(order, [formula]), since the formula runs through the exact same code as
+# sigma and mu.
+bad_arma = list(
+  list(y ~ ar(0, 1 + x)),  # cannot have formula with order 0
+  list(y ~ ar(-1)),  # must be positive
+  list(y ~ ar(1.5)),  # Cannot be decimal
+  list(y ~ ar(1) + ar(2)),  # Only one per segment
+  list(y ~ ar("1")),  # Should not take strings
+  list(y ~ ar(1 + x)),  # must have order
+  list(y ~ ar(x)),  # must have order
+  list(y ~ ar(1, series = 123)),  # invalid series
+  list(y ~ ar(1, series = id1) + ma(1, series = id2)),  # conflicting series in same segment
+  list(y ~ ar(1, series = id1),
+       ~ ar(1, series = id2)),  # conflicting series across segments
+  list(y ~ ma(0, 1 + x)),  # cannot have formula with order 0
+  list(y ~ ma(-1)),
+  list(y ~ ma(1.5)),
+  list(y ~ ma(1) + ma(2))
+)
+
+test_bad(bad_arma)
+
+
+good_arma = list(
+  list(y ~ ar(1)),  # simple
+  list(y ~ ma(1)),
+  list(y ~ ar(1) + ma(1)),
+  list(y ~ ar(3)),  # higher order
+  list(y ~ ar(1, 1 + x + I(x^2) + exp(x))),  # complicated regression
+  list(y ~ ar(1),
+       ~ ar(2, 0 + x)),  # change in ar
+  list(y ~ 1 + x + ar(1),
+       ~ 0 + x + ar(0)),  # turn off ar
+  list(y ~ 1 + x + ma(1),
+       ~ 0 + x + ma(0)),  # turn off ma
+  list(y ~ 1,
+       ~ 0 + ar(2)),  # onset of AR
+  list(y ~ 1,
+       ~ cp(1 + (1|id)) + 1 + I(x^2) + ar(2, 1 + x)),  # group-level change point
+  list(y ~ ar(1) + sigma(1 + x),
+       ~ ar(2, 1 + I(x^2)) + sigma(1)),  # With sigma
+  list(y ~ ar(1),
+       ~ ar(2, 1)),
+  list(y | weights(weights_ok) ~ 1 + ar(1),  # With weights
+       ~ 0 + ar(2, 1 + x)),
+  list(y ~ 0 + ar(1),
+       ~ 0 + ar(2)),  # mu is ~0 across all segments; only ar() gives structure
+  list(y ~ 1 + ar(1, series = id)),
+  list(y ~ 1 + ar(1, series = "id")),
+  list(y ~ 1 + ma(1, series = id)),
+  list(y ~ 1 + ar(1, 1 + x, series = id)),
+  list(y ~ 1 + ar(1, series = id) + ma(1)),
+  list(y ~ 1 + ar(1, series = id) + ma(1, series = id))
+)
+
+test_good(good_arma)
+
+
+test_that("series resets generated AR/MA lags", {
+  data = data.frame(
+    id = rep(c("a", "b"), each = 2),
+    x = c(1, 2, 1, 3),
+    y = 1:4
+  )
+  fit = suppressMessages(mcp(
+    list(y ~ 1 + ar(2, series = id) + ma(1)), data,
+    par_x = "x", sample = FALSE, quiet = TRUE
+  ))
+
+  expect_identical(fit$.internal$model_tables$data_columns$series, "id")
+  expect_match(
+    fit$jags_code,
+    "equals(series_id_[i_], series_id_[i_ - 2]) * ar2_[i_]",
+    fixed = TRUE
+  )
+  expect_match(
+    fit$jags_code,
+    "equals(series_id_[i_], series_id_[i_ - 1]) * ma1_[i_]",
+    fixed = TRUE
+  )
+  expect_message(
+    {
+      fit_no_series = mcp(
+        list(y ~ 1 + ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE
+      )
+    },
+    "'x' is unordered",
+    fixed = TRUE
+  )
+  expect_false(grepl("series_id_", fit_no_series$jags_code, fixed = TRUE))
+})
+
+
+test_that("series works with character, factor, numeric, and integer columns", {
+  for (col_val in list(c("a", "b"), factor(c("a", "b")), c(1, 2), c(1L, 2L))) {
+    data = data.frame(
+      id = rep(col_val, each = 2),
+      x = 1:4,
+      y = 1:4
+    )
+    fit = mcp(
+      list(y ~ 1 + ar(1, series = id)), data,
+      par_x = "x", sample = FALSE, quiet = TRUE
+    )
+    expect_identical(fit$.internal$model_tables$data_columns$series, "id")
+    expect_true(grepl("series_id_", fit$jags_code, fixed = TRUE))
+  }
+})
+
+
+test_that("series input is contiguous and survives interpolation", {
+  data = data.frame(id = c("a", "b", "a"), x = 1:3, y = 1:3)
+
+  expect_error(
+    mcp(list(y ~ ar(1, series = id)), data, par_x = "x", sample = FALSE),
+    "Rows belonging to each `series` must be contiguous.",
+    fixed = TRUE
+  )
+  ordered = data[order(data$id), ]
+  fit = mcp(
+    list(y ~ ar(1, series = id)), ordered,
+    par_x = "x", sample = FALSE, quiet = TRUE
+  )
+  interpolated = interpolate_newdata(fit, by = "id", x_values = 11:13)
+  expect_identical(interpolated$id, ordered$id)
+  expect_equal(interpolated$x, 11:13)
+})
+
+
+test_that("AR/MA model checks warn only about conditional information criteria", {
+  data = data.frame(x = 1:4, y = 1:4)
+  fit = mcp(list(y ~ 1 + ar(1)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+
+  expect_warning(
+    try(loo(fit), silent = TRUE),
+    "Observationwise PSIS-LOO/WAIC is problematic",
+    fixed = TRUE
+  )
+  expect_warning(
+    try(waic(fit), silent = TRUE),
+    "Observationwise PSIS-LOO/WAIC is problematic",
+    fixed = TRUE
+  )
+  expect_no_warning(warn_arma_check(fit, arma = FALSE, "information_criterion"))
+
+  fixed_draws = matrix(
+    rep(c(0, 1, 0.5), 5),
+    nrow = 5,
+    byrow = TRUE,
+    dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(fixed_draws))
+  expect_no_warning(suppressMessages(pp_check(fit, ndraws = 2)))
+})
+
+
+test_that("segments that do not include the preceding ar() or ma() warn", {
+  data = data.frame(x = 1:6, y = 1:6)
+  fit_model = function(model) mcp(model, data, par_x = "x", sample = FALSE, quiet = TRUE)
+
+  expect_warning(
+    fit_model(list(y ~ 1 + ar(1), ~ 1)),
+    "add `ar(0)` to the segment to silence it. To join the ar()-component from segment 1, include `ar(1, 0)` in segment 2. Before mcp v0.4.0",
+    fixed = TRUE
+  )
+  expect_warning(
+    fit_model(list(y ~ 1 + ma(2), ~ 1, ~ 0)),  # Segment 3 follows a segment without ma()
+    "Segment 2 does not include ma(), so it has no ma(2) component.",
+    fixed = TRUE
+  )
+  expect_no_warning(fit_model(list(y ~ 1 + ar(1) + ma(1), ~ 1 + ar(0) + ma(0), ~ 0)))
+  expect_no_warning(fit_model(list(y ~ 1 + ar(1), ~ 0 + ar(1, 0))))
+})
+
+
+test_that("ar() and ma() require a family GARMA implementation", {
+  data = data.frame(x = 1:4, y = 1:4)
+  family = gaussian(link = "log")
+
+  expect_null(as_mcpfamily(family)$garma)
+  expect_s3_class(
+    mcp(list(y ~ 1 + x), data, family = family, par_x = "x", sample = FALSE),
+    "mcpfit"
+  )
+
+  expect_error(
+    mcp(
+      list(y ~ 1 + ar(1) + ma(1)),
+      data,
+      family = family,
+      par_x = "x",
+      sample = FALSE
+    ),
+    "family = gaussian(link = \"log\") does not define the GARMA behavior required by ar() or ma().",
+    fixed = TRUE
+  )
+})
+
+
+test_that("independent-series models evaluate plots, trends, and dpars without requiring series", {
+  data = data.frame(id = rep(c("a", "b"), each = 5), x = 1:10, y = 1:10)
+  fit = mcp(list(y ~ 1 + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+  fixed_draws = matrix(
+    rep(c(0, 1, 0.5), each = 5),
+    nrow = 5,
+    dimnames = list(NULL, c("Intercept_1", "sigma_1", "ar1_1"))
+  )
+  fit$mcmc_post = coda::mcmc.list(coda::mcmc(fixed_draws))
+
+  # Plots succeed without series in interpolated newdata
+  expect_s3_class(plot(fit, arma = FALSE), "ggplot")
+  expect_s3_class(plot_dpar(fit, dpar = "sigma"), "ggplot")
+  expect_s3_class(plot_dpar(fit, dpar = "ar1"), "ggplot")
+
+  # Predict/fitted without arma recurrence do not require series
+  nd = data.frame(x = 11:15)
+  fitted_trend = expect_no_error(fitted(fit, newdata = nd, arma = FALSE))
+  expect_equal(nrow(fitted_trend), 5)
+  pred_trend = expect_no_error(predict(fit, newdata = nd, arma = FALSE))
+  expect_equal(nrow(pred_trend), 5)
+  dpar_sigma = expect_no_error(fitted(fit, newdata = nd, dpar = "sigma"))
+  expect_equal(nrow(dpar_sigma), 5)
+
+  # When series is also a predictor, omitting it still errors
+  fit_pred = mcp(list(y ~ 1 + id + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+  fit_pred$mcmc_post = coda::mcmc.list(coda::mcmc(matrix(rep(1, 20), nrow = 5, dimnames = list(NULL, c("Intercept_1", "idb_1", "sigma_1", "ar1_1")))))
+  expect_error(fitted(fit_pred, newdata = nd, arma = FALSE), "missing from the data: id")
+
+  # When series is also included as a grouping effect, omitting it errors unless group_effects = FALSE
+  fit_grp = mcp(list(y ~ 1 + (1 | id) + ar(1, series = id)), data = data, par_x = "x", sample = FALSE, quiet = TRUE)
+  fit_grp$mcmc_post = coda::mcmc.list(coda::mcmc(matrix(rep(1, 30), nrow = 5, dimnames = list(NULL, c("Intercept_1", "Intercept_1_id[a]", "Intercept_1_id[b]", "Intercept_1_id_sd", "sigma_1", "ar1_1")))))
+  expect_error(fitted(fit_grp, newdata = nd, arma = FALSE), "grouping columns are missing from `newdata`: id", fixed = TRUE)
+  fitted_pop = expect_no_error(fitted(fit_grp, newdata = nd, arma = FALSE, group_effects = FALSE))
+  expect_equal(nrow(fitted_pop), 5)
+})

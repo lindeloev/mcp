@@ -1,11 +1,28 @@
-# Use all mcp functions on a given model to check that it does not result in
-# errors.
+get_mcp_test_level = function() {
+  if (identical(Sys.getenv("MCP_TEST_LEVEL"), "release")) return("release")
+  "default"
+}
+
+# testthat deletes any vdiffr/snapshot file it didn't see referenced during the
+# current run (testthat:::SnapshotReporter$end_reporter), *unless* it thinks
+# it's running on CI (Sys.getenv("CI") == "true"). Since test-fits-example-*.R
+# files (which own tests/testthat/_snaps/fits-examples/) only run
+# at MCP_TEST_LEVEL = "release", every default-level run would otherwise wipe
+# those reference snapshots from disk. Spoof CI so cleanup is skipped whenever
+# we're not doing a release-level run; leave it alone at release level so
+# snapshot review/cleanup keeps working normally.
+if (get_mcp_test_level() != "release" && !isTRUE(as.logical(Sys.getenv("CI", "false")))) {
+  Sys.setenv(CI = "true")
+}
+
+
 test_runs = function(model,
                      data = data_gauss,
                      prior = list(),
                      family = gaussian(),
                      par_x = "x",
-                     sample = TRUE) {
+                     sample = TRUE,
+                     test_s3 = FALSE) {
 
   # Without sampling, on a data.frame.
   empty = mcp(
@@ -14,324 +31,660 @@ test_runs = function(model,
     prior = prior,
     family = family,
     par_x = par_x,
-    sample = FALSE
+    sample = FALSE,
+    quiet = TRUE
   )
 
-  # With (very brief!) sampling, on a tibble
-  # Just to leverage JAGS code checking and the mcpfit data structure
-  if (sample == TRUE) {
-    # If sample = FALSE, it should pass/fail with the above. If TRUE,
-    # check for correct types in data structure
-    testthat::expect_true(is.list(empty$model), model)
-    testthat::expect_true(is.data.frame(empty$data), model)
-    testthat::expect_true(is.list(empty$prior), model)
-    testthat::expect_true(class(empty$family) == "family", model)
-    testthat::expect_true(is.null(empty$samples), model)
-    testthat::expect_true(is.null(empty$loglik), model)
-    testthat::expect_true(is.null(empty$loo), model)
-    testthat::expect_true(is.null(empty$waic), model)
-    testthat::expect_true(is.list(empty$pars), model)
-    testthat::expect_true(is.character(empty$pars$population), model)
-    testthat::expect_true((is.character(empty$pars$varying) | is.null(empty$pars$varying)), model)
-    testthat::expect_true(is.character(empty$pars$x), model)
-    testthat::expect_true(is.character(empty$pars$y), model)
-    testthat::expect_true(is.character(empty$jags_code), model)
-    testthat::expect_true(is.function(empty$simulate), model)
-    testthat::expect_true(is.list(empty$.other), model)
+  testthat::expect_true(is.list(empty$model), model)
+  testthat::expect_true(is.data.frame(empty$data), model)
+  testthat::expect_true(is.list(empty$prior), model)
+  testthat::expect_true(all(class(empty$family) == c("mcpfamily", "family")), model)
+  testthat::expect_true(all(c("mcmc_post", "mcmc_prior") %in% names(empty)), model)
+  testthat::expect_true(is.null(.subset2(empty, "mcmc_post")) && is.null(.subset2(empty, "mcmc_prior")), model)
+  testthat::expect_false("loglik" %in% names(empty), model)
+  testthat::expect_false("loo" %in% names(empty), model)
+  testthat::expect_false("waic" %in% names(empty), model)
+  parameters = mcp_pars(empty)
+  testthat::expect_true(is.data.frame(parameters), model)
+  testthat::expect_true(is.character(parameters$parameter), model)
+  columns = mcp_columns(empty)
+  testthat::expect_true(is.character(columns$par_x), model)
+  testthat::expect_true(is.character(columns$response), model)
+  testthat::expect_true(is.character(empty$jags_code), model)
+  testthat::expect_true(is.function(empty$simulate), model)
+  testthat::expect_true(is.list(empty$.internal), model)
 
-    # Should work for tibbles as well. So do this sometimes
-    if (rbinom(1, 1, 0.5) == 1)
-      data = tibble::as_tibble(data)
+  # The plain model has the same parameters and priors, without auxiliary nodes
+  plain = withr::with_options(list(mcp_reparam = FALSE),
+    mcp(model = model, data = data, prior = prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE))
+  testthat::expect_identical(mcp_pars(plain), parameters, label = model)
+  testthat::expect_identical(plain$prior, empty$prior, label = model)
+  testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)
 
-    # Initiates and shut downs sampling much faster with no multicore
-    options(mc.cores = 1)
+  # Passing fit$prior back gives the same model, including reparameterizations of default priors.
+  # A tibble also gives the same model.
+  refit = mcp(model = model, data = tibble::as_tibble(data), prior = empty$prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE)
+  strip_comments = function(code) gsub("  #[^\n]*", "", code)
+  testthat::expect_identical(refit$data, empty$data, label = model)
+  testthat::expect_identical(strip_comments(refit$jags_code), strip_comments(empty$jags_code), label = model)
+  testthat::expect_identical(refit$.internal$prior_table$source, empty$.internal$prior_table$source, label = model)
 
-    # Capture (expected) messages and warnings
-    quiet_out = purrr::quietly(mcp)(  # Do not print to console
-      model = model,
-      data = data,
-      family = family,
-      sample = "both",  # prior and posterior to check hypotheses
-      par_x = par_x,
-      adapt = 6,
-      iter = 18,  # loo fails if this is too low. TO DO: require next version of loo when it is out.
-      chains = 2,  # 1 or 2
-      cores = 1  # run serial for faster init. Parallel can be trused to just work.
+  level = get_mcp_test_level()
+
+  if (sample) {
+    warnings = messages = character()
+    fit = withCallingHandlers(
+      with_dpar_nodes(mcp(
+        model = model,
+        data = data,
+        family = family,
+        prior = prior,
+        sample = "both",  # prior and posterior to check hypotheses
+        par_x = par_x,
+        warmup = 6,
+        iter = 18,  # Keep enough draws for the minimum supported loo version.
+        chains = 2,  # run sequentially under the default future plan
+        quiet = TRUE
+      )),
+      warning = function(condition) {
+        warnings <<- c(warnings, conditionMessage(condition))
+        invokeRestart("muffleWarning")
+      },
+      message = function(condition) {
+        messages <<- c(messages, conditionMessage(condition))
+        invokeRestart("muffleMessage")
+      }
     )
 
     # Allow for known messages and wornings that does not signify errors
-    accepted_warnings = c("Adaptation incomplete")  # due to very small test datasets
-    accepted_messages = c(
-      "Finished sampling in",
-      "The current implementation of autoregression can be fragile",
-      "Autoregression currently assumes homoskedasticity",
-      "You are using ar\\(\\) together"
+    accepted_warnings = c(
+      "Adaptation incomplete",  # due to very small test datasets
+      "Some parameters may not have converged well",  # ditto - too few iterations to mix
+      "Posterior AR/MA root smoke test"
     )
+    accepted_messages = character()
 
-    for (warn in quiet_out$warnings) {
+    for (warn in warnings) {
       if (!any(stringr::str_starts(warn, accepted_warnings))) {
         testthat::fail("Got an unknown warning: ", warn)
       }
     }
-    for (msg in quiet_out$messages) {
+    for (msg in messages) {
       if (!any(stringr::str_starts(msg, accepted_messages))) {
         testthat::fail("Got an unknown message: ", msg)
       }
     }
 
-    # Assign globally so errors can be inspected upon hard fail
-    fit = quiet_out$result
-
-
-    # Test criterions. Will warn about very few samples
-    if (!is.null(fit$mcmc_post)) {
-      fit$loo = suppressWarnings(loo(fit))
-      fit$waic = suppressWarnings(waic(fit))
-      testthat::expect_true(loo::is.psis_loo(fit$loo))
-      testthat::expect_true(loo::is.waic(fit$waic))
+    # Ensure default change-point priors do not have draws outside the observed range
+    cps = get_fit_model_tables(fit)$cps
+    if (length(intersect(names(prior), cps$name)) == 0 && nrow(cps) > 0) {
+      x_range = range(fit$data[[columns$par_x]], na.rm = TRUE)
+      for (chain in .subset2(fit, "mcmc_post")) {
+        pop = chain[, cps$name, drop = FALSE]
+        testthat::expect_true(all(pop >= x_range[1] & pop <= x_range[2]))
+      }
     }
 
-    # Test hypothesis
-    test_hypothesis(fit)
+    # Population-level change points are ordered in all draws
+    if (nrow(cps) > 1) {
+      for (chain in c(.subset2(fit, "mcmc_post"), .subset2(fit, "mcmc_prior"))) {
+        pop = as.matrix(chain)[, cps$name, drop = FALSE]
+        testthat::expect_true(all(diff(t(pop)) >= 0), label = model)
+      }
+    }
 
-    for (col in c("mcmc_post", "mcmc_prior")) {
-      # To test the prior, try setting mcmc_post = NULL to force use of prior
-      # (mcmclist_samples checks for NULL)
-      if (col == "mcmc_prior")
-        fit$mcmc_post = NULL
+    expect_jags_coherence(fit, model)
+    if (is_arma(fit))
+      test_arma_simulation(fit)
 
-      # Check that samples are the correct format
-      testthat::expect_true(is.list(fit[[col]]), model)
-      testthat::expect_true(coda::is.mcmc(fit[[col]][[1]]), model)
-      testthat::expect_true(all(fit$pars$population %in% colnames(fit[[col]][[1]])))
-
-      # Test mcpfit functions
-      varying_cols = na.omit(fit$.other$ST$cp_group_col)
-      test_summary(fit, varying_cols)
-      test_plot(fit, varying_cols)  # default plot
-      test_plot_pars(fit)  # bayesplot call
-      test_pp_eval(fit)
+    if (test_s3 || level == "release") {
+      test_s3_methods(fit)
     }
   }
+}
+
+
+# Evaluate `code`, a call to mcp(), while also monitoring the JAGS node of each dpar for each
+# observation, e.g., `mu_[i_]`, `sigma_[i_]`, and `ar1_[i_]`, and the JAGS `deviance`. Returns the fit with
+# their posterior draws in `attr(fit, "dpar_nodes")` (draws x nodes). Monitoring does not change the draws.
+with_dpar_nodes = function(code) {
+  run_jags = get("run_jags", envir = asNamespace("mcp"))
+  nodes = NULL
+  fit = testthat::with_mocked_bindings(
+    code,
+    run_jags = function(jags_code, jags_data, pars, sample, ...) {
+      if (sample != "post")
+        return(run_jags(jags_code, jags_data, pars, sample, ...))
+      if (!("dic" %in% rjags::list.modules())) {
+        rjags::load.module("dic", quiet = TRUE)
+        on.exit(rjags::unload.module("dic", quiet = TRUE), add = TRUE)
+      }
+      dpar_nodes = paste0(unique(stringr::str_match_all(jags_code, "\n\\s*([a-z]+[0-9]*)_\\[i_\\] =")[[1]][, 2]), "_")
+      draws = run_jags(jags_code, jags_data, c(pars, dpar_nodes, "deviance"), sample, ...)
+      is_node = sub("\\[.*", "", coda::varnames(draws)) %in% c(dpar_nodes, "deviance")
+      nodes <<- as.matrix(draws[, is_node, drop = FALSE])
+      draws[, !is_node, drop = FALSE]
+    },
+    .package = "mcp"
+  )
+  attr(fit, "dpar_nodes") = nodes
+  fit
+}
+
+
+# R-side evaluation equals the JAGS model, draw by draw: `fitted(fit, dpar = dpar)` equals the
+# JAGS node `<dpar>_[i_]` for all dpars, including AR/MA lags, and `-2 * log_lik(fit)` summed
+# over rows equals the JAGS `deviance`. Requires `with_dpar_nodes()`.
+expect_jags_coherence = function(fit, label = NULL) {
+  nodes = attr(fit, "dpar_nodes")
+  testthat::expect_false(is.null(nodes), label = label)
+  for (dpar in unique(sub("_\\[.*", "", setdiff(colnames(nodes), "deviance")))) {
+    r_values = fitted(fit, dpar = dpar, summary = FALSE, draws_format = "matrix")
+    jags_values = nodes[, paste0(dpar, "_[", seq_len(nrow(fit$data)), "]"), drop = FALSE]
+    testthat::expect_equal(unname(r_values), unname(jags_values), tolerance = 1e-8, label = paste(paste(label, collapse = " "), dpar))
+  }
+
+  # The JAGS deviance leaves out missing responses. Skip when it includes zeros-trick nodes: those of weighted
+  # likelihoods (see jags_weighted_likelihood()) and the dirichlet weight `cp_weight_`. log_lik() refuses
+  # missing GARMA histories.
+  columns = mcp_columns(fit)
+  has_zeros_trick = !is.null(columns$weights) || grepl("cp_weight_ ~", fit$jags_code, fixed = TRUE)
+  if (!has_zeros_trick && !(is_arma(fit) && anyNA(fit$data[[columns$response]]))) {
+    r_deviance = -2 * rowSums(log_lik(fit, summary = FALSE, draws_format = "matrix"), na.rm = TRUE)
+    testthat::expect_equal(unname(r_deviance), unname(nodes[, "deviance"]), tolerance = 1e-8, label = paste(paste(label, collapse = " "), "deviance"))
+  }
+}
+
+
+test_s3_methods = function(fit) {
+  testthat::expect_identical(fit$version$mcp, utils::packageVersion("mcp"))
+  if (utils::packageVersion("rjags") < "5")  # See fit$version$jags in mcp(). Update once rjags 5 is on CRAN.
+    testthat::expect_s3_class(fit$version$jags, "package_version")
+
+  # Test criterions. Will warn about very few draws
+  if (!is.null(.subset2(fit, "mcmc_post"))) {
+    fit_loo = suppressMessages(suppressWarnings(loo(fit)))
+    fit_waic = suppressMessages(suppressWarnings(waic(fit)))
+    testthat::expect_true(loo::is.psis_loo(fit_loo))
+    testthat::expect_true(loo::is.waic(fit_waic))
+
+    # Test log_lik and rstantools registration
+    fit_loglik = log_lik(fit)
+    testthat::expect_true(is.matrix(fit_loglik))
+
+    # Evaluation in uneven blocks of 7 draws gives identical results
+    max_cells = 7 * nrow(fit$data)
+    testthat::expect_identical(pp_eval(fit, type = "loglik", summary = FALSE, draws_format = "matrix", .max_cells = max_cells), fit_loglik)
+    testthat::expect_identical(pp_eval(fit, type = "loglik", summary = FALSE, .max_cells = max_cells), pp_eval(fit, type = "loglik", summary = FALSE))
+    testthat::expect_identical(pp_eval(fit, .max_cells = max_cells), pp_eval(fit))
+    if (requireNamespace("rstantools", quietly = TRUE)) {
+      testthat::expect_equal(rstantools::log_lik(fit), fit_loglik)
+    }
+  }
+
+  for (col in c("mcmc_post", "mcmc_prior")) {
+    use_prior = col == "mcmc_prior"
+    fit_to_test = fit
+
+    # Prior draws must be requested explicitly.
+    if (use_prior) {
+      fit_to_test$mcmc_post = NULL
+      testthat::expect_error(
+        mcmclist_draws(fit_to_test),
+        "No posterior draws are available"
+      )
+    }
+
+    # Check that draws are the correct format
+    samples_col = .subset2(fit_to_test, col)
+    testthat::expect_true(is.list(samples_col))
+    testthat::expect_true(coda::is.mcmc(samples_col[[1]]))
+    testthat::expect_true(all(mcp_pars(fit_to_test, scope = "population")$parameter %in% colnames(samples_col[[1]])))
+
+    # Test mcpfit functions
+    group_cols = na.omit(mcp_pars(fit_to_test, scope = "group")$group_col)
+    test_summary(fit_to_test, group_cols, prior = use_prior)
+    test_plot_pars(fit_to_test, prior = use_prior)
+    test_pp_eval(fit_to_test, prior = use_prior)
+    test_hypothesis(fit, prior = use_prior)
+  }
+}
+
+
+# Exercise fresh-series simulation for every accepted AR/MA model. Detailed
+# recursion and R/JAGS agreement are tested separately in test-validate-garma.R.
+test_arma_simulation = function(fit) {
+  control_args = c("fit", "newdata", ".type", ".rate", ".dpar", ".arma", ".scale")
+  component_args = setdiff(names(formals(fit$simulate)), control_args)
+  component_values = stats::setNames(as.list(rep(0, length(component_args))), component_args)
+  bounded = names(get_constant_dpar_bounds(fit$family))  # e.g., shape_1 = 0 is outside the support
+  component_values[sub("_[0-9]+$", "", component_args) %in% bounded] = 1
+  call = c(
+    list(fit = fit, newdata = fit$data),
+    component_values,
+    list(.type = "predict")
+  )
+  simulated = suppressWarnings(suppressMessages(do.call(fit$simulate, call)))
+
+  testthat::expect_length(simulated, nrow(fit$data))
+  testthat::expect_true(is.numeric(simulated))
+  testthat::expect_false(anyNA(simulated))
+  testthat::expect_true(all(is.finite(simulated)))
+
+  if (fit$family$family == "binomial") {
+    trials = fit$data[[mcp_columns(fit)$trials]]
+    testthat::expect_true(all(simulated >= 0 & simulated <= trials))
+    testthat::expect_true(all(simulated == floor(simulated)))
+  } else if (fit$family$family %in% c("poisson", "negbinomial")) {
+    testthat::expect_true(all(simulated >= 0))
+    testthat::expect_true(all(simulated == floor(simulated)))
+  }
+
+  # Summaries of fresh series use the exact predictive moments given each replicated history
+  replicated = suppressWarnings(predict(fit, arma = "replicate", ndraws = 5))
+  testthat::expect_identical(nrow(replicated), nrow(fit$data))
+  testthat::expect_false(anyNA(replicated[c(".mean", ".sd", ".lower", ".upper")]))
 }
 
 
 # Tests if summary(fit) and ranef(fit) work as expected
-test_summary = function(fit, varying_cols) {
-  summary_cols = c('name','mean','lower','upper','Rhat','n.eff')
-  result = purrr::quietly(summary)(fit)$result  # Do not print to console
-  output = purrr::quietly(summary)(fit)$output  # Do not print to console
-  testthat::expect_true(all(colnames(result) %in% summary_cols))  # All columns
-  testthat::expect_true(all(result$name %in% fit$pars$population))  # All parameters
-
-  # If there are varying effects
-  if (length(varying_cols) > 0) {
-    testthat::expect_match(output, "ranef\\(")  # noticed about varying effects
-    varying = ranef(fit)
-    testthat::expect_true(is.character(varying$name))
-    testthat::expect_true(is.numeric(varying$mean))
-
-    group_level_counts = lapply(varying_cols, function(col) length(fit$data[, col]))
-    n_unique_data = sum(unlist(group_level_counts))
-    testthat::expect_true(nrow(varying) == n_unique_data)  # TO DO: should fail if there are multiple groups
+test_summary = function(fit, group_cols, prior = FALSE) {
+  columns = mcp_columns(fit)
+  summary_cols = c('parameter','mean','sd','lower','upper','rhat','ess_bulk','ess_tail')
+  verbose_summary_cols = c('parameter','mean','sd','lower','upper','rhat','ess_bulk','ess_tail','segment','dpar')
+  if (!is.null(attr(fit$data[, columns$response], "simulated"))) {
+    summary_cols = c(summary_cols, "sim", "match")
+    verbose_summary_cols = c(verbose_summary_cols, "sim", "match")
   }
-}
+  result = summary(fit, prior = prior)
+  output = capture.output(print(result))
+  testthat::expect_named(result, summary_cols)
+  testthat::expect_true(all(result$parameter %in% mcp_pars(fit, scope = "population")$parameter))  # All parameters
+  capture.output({ verbose_result = summary(fit, prior = prior, verbose = TRUE) })
+  testthat::expect_named(verbose_result, verbose_summary_cols)
+  fixed = fixef(fit, prior = prior)
+  testthat::expect_equal(nlme::fixef(fit, prior = prior), fixed)
+  fixed_verbose = fixef(fit, prior = prior, verbose = TRUE)
+  testthat::expect_equal(nlme::fixef(fit, prior = prior, verbose = TRUE), fixed_verbose)
+  testthat::expect_named(fixed, summary_cols)
+  testthat::expect_named(fixed_verbose, verbose_summary_cols)
+  pars = mcp_pars(fit)
+  expected_fixed = pars$parameter[pars$scope == "population" & pars$role == "coefficient" & pars$dpar == "mu"]
+  testthat::expect_setequal(fixed$parameter, expected_fixed)
 
+  # If there are group-level effects
+  if (length(group_cols) > 0) {
+    testthat::expect_true(any(grepl("Use `ranef(fit)` to inspect deviations by level.", output, fixed = TRUE)))
+    testthat::expect_false(any(grepl("Group-level parameters:", output, fixed = TRUE)))
+    group_effects = ranef(fit, prior = prior)
+    testthat::expect_equal(nlme::ranef(fit, prior = prior), group_effects)
+    testthat::expect_true(is.character(group_effects$parameter))
+    testthat::expect_true(is.numeric(group_effects$mean))
+    testthat::expect_named(ranef(fit, prior = prior, verbose = TRUE), verbose_summary_cols)
+    testthat::expect_equal(nlme::ranef(fit, prior = prior, verbose = TRUE), ranef(fit, prior = prior, verbose = TRUE))
 
-# Test the regular plot, including faceting
-test_plot = function(fit, varying_cols) {
-  q_fit = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
-  q_predict = rbinom(1, 1, 0.5) == 1  # add quantiles sometimes
-  # To facet or not to facet
-  if (length(varying_cols) > 0) {
-    gg = try(plot(fit, facet_by = varying_cols[1], q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = NULL), silent = TRUE)  # just take the first
-  } else {
-    gg = try(plot(fit, q_fit = q_fit, q_predict = q_predict, lines = 3, nsamples = NULL), silent = TRUE)
-  }
-  # Is it a ggplot or a known error?
-  if (inherits(gg, "try-error")) {
-    # (the error is an artifact of very small test data --> wide posteriors.)
-    if (fit$family$family == "poisson") {
-      expected_error = "predict"  # column "predict" OK: a side-effect of the small data and short sampling.
-    } else if (any(stringr::str_detect(fit$pars$sigma, "^sigma_.*_.*$"))) {  # for slopes on sigma
-      expected_error = "^Modelled negative sigma"
-    } else {
-      expected_error = ">>>>do_not_expect_any_errors<<<<<"
+    group_level_counts = lapply(
+      mcp_pars(fit, scope = "group")$group_col,
+      function(col) length(unique(fit$data[[col]]))
+    )
+    n_group_levels = sum(unlist(group_level_counts))
+    testthat::expect_equal(nrow(group_effects), n_group_levels)
+
+    # coef() adds the population-level parameter (or 0) to each deviation, so means are additive
+    group_coefs = coef(fit, prior = prior)
+    testthat::expect_named(group_coefs, c("parameter", "group_col", "level", summary_cols[-1]))
+    testthat::expect_named(coef(fit, prior = prior, verbose = TRUE), c("parameter", "group_col", "level", "segment", "dpar", summary_cols[-1]))
+    draws = posterior::as_draws_df(posterior_draws(fit, prior = prior))
+    population = pars$population_parameter[match(sub("\\[.*\\]$", "", group_effects$parameter), pars$parameter)]
+    population_means = vapply(population, function(name) if (is.na(name)) 0 else mean(draws[[name]]), numeric(1))
+    testthat::expect_equal(group_coefs$mean, unname(population_means) + group_effects$mean)
+    if ("sim" %in% summary_cols) {
+      simulated = get_simulated_values(fit)
+      population_sim = ifelse(is.na(population), 0, simulated[population])
+      testthat::expect_equal(group_coefs$sim, unname(population_sim) + group_effects$sim)
     }
-    error_message = attr(gg, "condition")$message
-    is_expected = any(stringr::str_detect(error_message, expected_error))
-    expect_true(is_expected)
   } else {
-    testthat::expect_true(ggplot2::is.ggplot(gg))
+    testthat::expect_error(ranef(fit, prior = prior), "no group-level effects", fixed = TRUE)
+    testthat::expect_error(coef(fit, prior = prior), "no group-level effects", fixed = TRUE)
   }
 }
+
 
 # Test plot() calls to bayesplot
-test_plot_pars = function(fit) {
-  gg = plot_pars(fit, type = "dens_overlay")
-  testthat::expect_true(ggplot2::is.ggplot(gg))
+test_plot_pars = function(fit, prior = FALSE) {
+  gg = plot_pars(
+    fit,
+    type = "dens_overlay",
+    prior = prior,
+    npars = NULL
+  )
+  testthat::expect_s3_class(gg, "ggplot")
 }
 
 
 
-test_hypothesis = function(fit) {
-  # Function to test both directional and point hypotheses
-  run_test_hypothesis = function(fit, base) {
-    hypotheses = c(
-      paste0(base, " > 1"),  # Directional
-      paste0(base, " = -1")  # Savage-Dickey (point)
-    )
-    result = hypothesis(fit, hypotheses)
-    testthat::expect_true(is.data.frame(result) & nrow(result) == 2)
+test_hypothesis = function(fit, prior) {
+  population = mcp_pars(fit, scope = "population")$parameter
+  group = mcp_pars(fit, scope = "group")$parameter
+  # Function to test directional, interval, and point equality hypotheses
+  run_test_hypothesis = function(fit, base, prior) {
+    hypotheses = paste0(base, " > 1")  # Directional
+    if (prior == FALSE) {
+      hypotheses = c(
+        hypotheses,
+        paste0(base, " = -1"),  # Savage-Dickey (point); only works if both prior and posterior is present.
+        paste0(base, " > -10 & ", base, " < 10")  # Interval hypothesis requiring prior
+      )
+    }
+
+    result = suppressWarnings(hypothesis(fit, hypotheses, prior = prior))
+    testthat::expect_true(is.data.frame(result) & nrow(result) == length(hypotheses))
+    testthat::expect_named(result, c("hypothesis", "mean", "sd", "lower", "upper", "prob", "BF"))
+    testthat::expect_equal(suppressWarnings(hypothesis.mcpfit(fit, hypotheses, prior = prior)), result)
   }
 
   # Test single pop effect
-  run_test_hypothesis(fit, fit$pars$population[1])
+  run_test_hypothesis(fit, population[1], prior = prior)
 
   # Test multiple pop effect
-  if (length(fit$pars$population) > 1)
-    run_test_hypothesis(fit, paste0(fit$pars$population[1] , " + ", fit$pars$population[2]))
+  if (length(population) > 1)
+    run_test_hypothesis(fit, paste0(population[1] , " + ", population[2]), prior = prior)
 
-  # Varying
-  if (!is.null(fit$pars$varying)) {
-    mcmc_vars = colnames(mcmclist_samples(fit)[[1]])
-    varying_starts = paste0("^", fit$pars$varying[1])
-    varying_col_ids = stringr::str_detect(mcmc_vars, varying_starts)
-    varying_cols = paste0("`", mcmc_vars[varying_col_ids], "`")  # Add these for varying
+  # Group-level effects
+  if (length(group) > 0) {
+    mcmc_vars = colnames(mcmclist_draws(fit)[[1]])
+    group_starts = paste0("^", group[1], "\\[")
+    group_var_ids = stringr::str_detect(mcmc_vars, group_starts)
+    group_vars = paste0("`", mcmc_vars[group_var_ids], "`")  # Add these for group-level effects
 
-    # Test single varying effect
-    run_test_hypothesis(fit, varying_cols[1])
+    # Test one group-level deviation
+    run_test_hypothesis(fit, group_vars[1], prior = prior)
 
-    # Test multiple varying effects
-    if (length(varying_cols) > 1)
-      run_test_hypothesis(fit, paste0(varying_cols[1], " + ", varying_cols[2]))
+    # Test multiple group-level deviations
+    if (length(group_vars) > 1)
+      run_test_hypothesis(fit, paste0(group_vars[1], " + ", group_vars[2]), prior = prior)
   }
 }
 
 
-test_pp_eval_func = function(fit, func) {
+test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
   # Settings
-  expected_colnames = c(
-    fit$pars$x,
-    fit$pars$trials,
-    na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
-    as.character(substitute(func)), "error", "Q2.5", "Q97.5"  # substitute-stuff just gets the func name as string
+  columns = mcp_columns(fit)
+  group_cols = na.omit(unique(mcp_pars(fit, scope = "group")$group_col))
+  rhs_cols = intersect(
+    setdiff(unlist(get_formula_vars(fit$model)[c("predictor", "group", "offset", "series")]), group_cols),
+    colnames(fit$data)
   )
-  if (length(fit$pars$arma) > 0 || as.character(substitute(func)) == "residuals")
-    expected_colnames = c(expected_colnames, fit$pars$y)
+  expected_colnames = c(
+    columns$par_x,
+    columns$trials,
+    rhs_cols,
+    group_cols,
+    columns$response,
+    if (length(columns$weights) > 0) columns$weights else NULL,
+    ".mean", ".sd", ".lower", ".upper"
+  )
+
+  # `log_lik()` follows the conventional draws-by-observation matrix default.
+  # Its former per-observation data-frame output remains available explicitly.
+  if (colname == "loglik") {
+    default_result = try(func(fit, prior = prior), silent = TRUE)
+    if (!inherits(default_result, "try-error")) {
+      testthat::expect_true(is.matrix(default_result))
+      testthat::expect_equal(
+        ncol(default_result),
+        sum(!is.na(fit$data[[columns$response]]))
+      )
+      testthat::expect_equal(
+        default_result,
+        func(fit, prior = prior, summary = FALSE, draws_format = "matrix")
+      )
+      testthat::expect_equal(
+        default_result,
+        suppressWarnings(func(
+          fit, prior = prior, summary = FALSE, samples_format = "matrix"
+        ))
+      )
+    }
+  }
 
   # Run and test
-  result = try(func(fit), silent = TRUE)
+  result = if (colname == "loglik") {
+    try(func(fit, prior = prior, summary = TRUE), silent = TRUE)
+  } else if (colname %in% c("fitted", "predict")) {
+    try(func(fit, prior = prior, rate = FALSE), silent = TRUE)
+  } else {
+    try(func(fit, prior = prior), silent = TRUE)
+  }
   if (inherits(result, "try-error")) {
-    error_message = attr(result, "condition")$message
-    if (fit$family$family == "poisson") {
-      expect_true(stringr::str_detect(error_message, "predict"))  # column "predict" OK: a side-effect of the small data and short sampling.
-    } else {
-      testthat::expect_null(error_message)
-    }
+    testthat::fail(as.character(result))
   } else {
     testthat::expect_true(is.data.frame(result))
     testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
-    testthat::expect_true(sum(is.na(result)) == 0)  # No missing values)
+    if (fit$family$family %in% c("poisson", "negbinomial", "binomial", "bernoulli")) {
+      # Extremely diffuse draws from these deliberately tiny test fits can
+      # overflow derived summaries (e.g. infinite count means or log-likelihoods).
+      # Data keys must remain intact and the estimate itself must not be entirely missing.
+      data_cols = intersect(
+        c(columns$par_x, columns$response, columns$trials, rhs_cols, group_cols),
+        colnames(result)
+      )
+      testthat::expect_false(anyNA(result[, data_cols, drop = FALSE]))
+      testthat::expect_false(all(is.na(result$.mean)))
+    } else {
+      testthat::expect_false(anyNA(result))
+    }
     testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
-    testthat::expect_true(all(result[, fit$pars$x] == fit$data[, fit$pars$x]))  # Output should have same order as input
+    testthat::expect_true(all(result[, columns$par_x] == fit$data[, columns$par_x]))  # Output should have same order as input
+
+    if (colname == "residuals") {
+      fitted_result = fitted(fit, rate = FALSE, prior = prior)  # residuals are on response scale
+      observed = fit$data[[columns$response]]
+      testthat::expect_equal(result$.mean, observed - fitted_result$.mean)
+      testthat::expect_equal(result$.sd, fitted_result$.sd)
+      testthat::expect_equal(result$.lower, observed - fitted_result$.upper)
+      testthat::expect_equal(result$.upper, observed - fitted_result$.lower)
+
+      # Per-draw residuals as a draws-by-observation matrix
+      residual_draws = func(fit, prior = prior, summary = FALSE, draws_format = "matrix")
+      fitted_draws = fitted(fit, rate = FALSE, prior = prior, summary = FALSE, draws_format = "matrix")
+      observed_draws = matrix(observed, nrow(fitted_draws), ncol(fitted_draws), byrow = TRUE)
+      testthat::expect_equal(residual_draws, observed_draws - fitted_draws)
+    }
+
+    if (colname == "predict" && !is.null(fit$family$r$variance)) {
+      # Exact predictive moments: the mean is the expected response and summaries do not depend on the seed
+      testthat::expect_equal(result$.mean, fitted(fit, rate = FALSE, prior = prior)$.mean)
+      testthat::expect_equal(func(fit, prior = prior, rate = FALSE), result)
+    }
   }
 }
 
-test_pp_eval = function(fit) {
-  # Test pp_eval
-  test_pp_eval_func(fit, fitted)
-  test_pp_eval_func(fit, predict)
-  test_pp_eval_func(fit, residuals)
 
-  # Test the other arguments. Inside "try" without further checking because such errors should be caught by the above.
+# Weighted evaluation must use brms-aligned likelihood weights:
+# log_lik = weights * log_lik_unweighted, with predictions generated without requiring weights.
+test_pp_eval_weights = function(fit, prior = FALSE) {
+  # Getting started...
+  columns = mcp_columns(fit)
+  if (length(columns$weights) == 0)
+    return(invisible(NULL))
+
+  loglik = log_lik(fit, summary = FALSE, width = FALSE, prior = prior, draws_format = "tidy")
+  weights = fit$data[[columns$weights]][loglik$.row]
+
+  # Log-likelihood and fitted() should be evaluated at the same predictions
+  mu = fitted(fit, summary = FALSE, width = FALSE, prior = prior, dpar = "mu")
+  keys = c(".chain", ".iteration", ".draw", ".row")
+  testthat::expect_equal(loglik[, keys], mu[, keys])
+
+  # Gaussian is the easiest case to check that likelihood weights are applied correctly
+  if (fit$family$family == "gaussian") {
+    sigma = fitted(fit, summary = FALSE, width = FALSE, prior = prior, dpar = "sigma")
+    testthat::expect_equal(loglik[, keys], sigma[, keys])
+
+    observed = fit$data[[columns$response]][loglik$.row]
+    testthat::expect_equal(
+      loglik$.loglik,
+      weights * stats::dnorm(observed, mu$.mu, sigma$.sigma, log = TRUE)
+    )
+  }
+
+  # Should also be returned as column
+  fit_fitted = fitted(fit, summary = TRUE, prior = prior, rate = FALSE)
+  testthat::expect_true(columns$weights %in% colnames(fit_fitted))
+  fit_predict = predict(fit, summary = TRUE, prior = prior, rate = FALSE)
+  testthat::expect_true(columns$weights %in% colnames(fit_predict))
+
+  # When to fail
+  if (!prior) {
+    newdata_without_weights = fit$data[, colnames(fit$data) != columns$weights, drop = FALSE]
+    testthat::expect_no_error(
+      predict(fit, newdata = newdata_without_weights, summary = FALSE, rate = FALSE)
+    )
+    testthat::expect_error(
+      log_lik(fit, newdata = newdata_without_weights, summary = FALSE),
+      columns$weights,
+      fixed = TRUE
+    )
+  }
+}
+
+
+test_pp_eval = function(fit, prior = FALSE) {
+  columns = mcp_columns(fit)
+  population_pars = mcp_pars(fit, scope = "population")$parameter
+  group_pars = mcp_pars(fit, scope = "group")$parameter
+
+  # Test pp_eval
+  test_pp_eval_func(fit, fitted, "fitted", prior = prior)
+  test_pp_eval_func(fit, predict, "predict", prior = prior)
+  test_pp_eval_func(fit, residuals, "residuals", prior = prior)
+  test_pp_eval_func(fit, log_lik, "loglik", prior = prior)
+  test_pp_eval_weights(fit, prior = prior)
+
+  # rate = TRUE only applies to families with trials
+  if (!fit$family$response$has_rate) {
+    testthat::expect_error(fitted(fit, rate = TRUE, prior = prior), "`rate = TRUE` is not supported", fixed = TRUE)
+    testthat::expect_error(plot(fit, rate = TRUE, prior = prior), "`rate = TRUE` is not supported", fixed = TRUE)
+  }
+
+  # Test the other arguments
   result_more = try(fitted(
     fit,
     newdata = fit$data[sample(nrow(fit$data), 3), ],
     summary = FALSE,
-    probs = c(0.1, 0.5, 0.999),
-    prior = TRUE,
-    nsamples = 2,
+    width = 0.8,
+    rate = FALSE,
+    prior = prior,
+    group_effects = "cp",
+    ndraws = 2,
     arma = FALSE
   ), silent = TRUE)
 
-  if (is.data.frame(result_more)) {
-    #testthat::expect_true(nrow(result_more) == nrows * nsamples * 2)  # nrows * nsamples * nchains
+  if (inherits(result_more, "try-error")) {
+    testthat::fail(as.character(result_more))
+  } else {
     testthat::expect_true(sum(is.na(result_more)) == 0)
 
+    all_group_cols = unique(stats::na.omit(mcp_pars(fit, scope = "group")$group_col))
+    selected_cp = unpack_group_effects(fit, pars = "cp")
+    rhs_cols = intersect(
+      setdiff(unlist(get_formula_vars(fit$model)[c("predictor", "group", "offset", "series")]), all_group_cols),
+      colnames(fit$data)
+    )
     expected_colnames_more = c(
       # Tidybayes stuff
       ".chain", ".iteration", ".draw",
 
       # Model parameters
-      fit$pars$population,
-      fit$pars$varying,
+      population_pars,
+      group_pars,
 
       # Predictors
-      fit$pars$x,
-      fit$pars$trials,
-      na.omit(unique(fit$.other$ST$cp_group_col)),  # varying effects
-      "data_row",
-      "fitted"
+      columns$trials,
+      columns$par_x,
+      rhs_cols,
+      selected_cp$cols,
+      columns$response,
+      if (length(columns$weights) > 0) columns$weights else NULL,
+      ".row",
+      ".epred"  # dot-prefixed for summary = FALSE
     )
 
-    is_equal = dplyr::setequal(colnames(result_more), expected_colnames_more)  # Exactly these columns regardless of order
-    testthat::expect_true(is_equal)
+    testthat::expect_true(dplyr::setequal(colnames(result_more), expected_colnames_more))  # Exactly these columns regardless of order
+  }
+
+  # Population-only evaluation should not require any grouping columns.
+  if (length(group_pars) > 0) {
+    group_cols = stats::na.omit(unique(mcp_pars(fit, scope = "group")$group_col))
+    population_newdata = fit$data[, colnames(fit$data) %notin%
+      c(columns$response, group_cols), drop = FALSE]
+    population_result = fitted(
+      fit,
+      newdata = population_newdata,
+      rate = FALSE,
+      summary = FALSE,
+      width = FALSE,
+      prior = prior,
+      group_effects = FALSE,
+      arma = FALSE,
+      ndraws = 2
+    )
+
+    testthat::expect_equal(
+      sort(unique(population_result$.row)),
+      seq_len(nrow(population_newdata))
+    )
+    testthat::expect_false(any(group_cols %in% colnames(population_result)))
   }
 
   # Test pp_check
-  if (length(fit$pars$varying) > 0) {
-    varying_col = na.omit(fit$.other$ST$cp_group_col)[1]  # Just use the first column
-    pp_default = try(pp_check(fit, facet_by = varying_col, nsamples = 2), silent = TRUE)
+  if (length(group_pars) > 0) {
+    group_col = na.omit(mcp_pars(fit, scope = "group")$group_col)[1]  # Just use the first column
+    pp_default = try(suppressWarnings(pp_check(fit, facet_by = group_col, ndraws = 2, prior = prior)), silent = TRUE)
   } else {
-    pp_default = try(pp_check(fit, nsamples = 2), silent = TRUE)
+    pp_default = try(suppressWarnings(pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)
   }
 
   if (inherits(pp_default, "try-error")) {
-    error_message = attr(pp_default, "condition")$message
-
-    # Expecected error for Poisson
-    if (fit$family$family == "poisson") {
-      testthat::expect_true(stringr::str_detect(error_message, "predict"))  # column "predict" OK: a side-effect of the small data and short sampling.
-    } else {
-      # Fail otherwise
-      testthat::expect_true(error_message)
-    }
+    testthat::fail(as.character(pp_default))
   } else {
-    testthat::expect_true(ggplot2::is.ggplot(pp_default))
+    testthat::expect_s3_class(pp_default, "ggplot")
+    # bayesplot::pp_check dispatches to pp_check.mcpfit
+    if (length(group_pars) == 0) {
+      pp_bayesplot = try(suppressWarnings(bayesplot::pp_check(fit, ndraws = 2, prior = prior)), silent = TRUE)
+      if (inherits(pp_bayesplot, "try-error")) {
+        testthat::fail(as.character(pp_bayesplot))
+      } else {
+        testthat::expect_s3_class(pp_bayesplot, "ggplot")
+      }
+    }
   }
 }
 
 
-# Rutine for testing a list of erroneous models
+
+# Rutine for testing a list of erroneous models.
+# Rejects internal errors (stop_github(), base R errors from unvalidated input) and failed expectations in test_runs().
 test_bad = function(models, ...) {
+  internal_errors = "internal error in mcp|object '.*' not found|could not find function|subscript out of bounds|argument is of length zero|missing value where TRUE/FALSE needed|non-numeric argument|invalid for atomic vectors"
   for (model in models) {
-    stopifnot(all(sapply(model, is.formula)))
     test_name = paste0(as.character(substitute(models)), ":
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
-      testthat::expect_error(test_runs(model, sample = FALSE, ...))  # should err before sampling
+      error = suppressWarnings(testthat::expect_error(test_runs(model, sample = FALSE, ...)))  # should err before sampling
+      if (!is.null(error))
+        testthat::expect_false(inherits(error, "expectation") || grepl(internal_errors, conditionMessage(error)), conditionMessage(error))
     })
   }
 }
 
 
 # Routine for testing a list of good models
-test_good = function(essential, extensive = list(), ...) {
-  stopifnot(is.list(essential))
-  stopifnot(is.list(extensive))
-
-  if (is.null(getOption("test_mcp_allmodels"))) {
-    models = essential
-  } else {
-    models = c(essential, extensive)
-  }
-
+test_good = function(models, ...) {
   for (model in models) {
-    stopifnot(is.list(model))
-    stopifnot(all(sapply(model, is.formula)))
-    test_name = paste0(as.character(substitute(essential)), ":
+    test_name = paste0(as.character(substitute(models)), ":
     ", paste0(model, collapse=", "))
 
     testthat::test_that(test_name, {
@@ -339,4 +692,3 @@ test_good = function(essential, extensive = list(), ...) {
     })
   }
 }
-

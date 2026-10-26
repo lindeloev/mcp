@@ -7,89 +7,65 @@
 \usage{
 mcp(
   model,
-  data = NULL,
+  data,
   prior = list(),
   family = gaussian(),
   par_x = NULL,
   sample = "post",
-  cores = 1,
   chains = 3,
   iter = 3000,
-  adapt = 1500,
+  warmup = 1000,
   inits = NULL,
-  jags_code = NULL
+  jags_code = NULL,
+  seed = NULL,
+  diagnostics = list(),
+  quiet = getOption("mcp_quiet", FALSE),
+  cores = lifecycle::deprecated(),
+  adapt = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{model}{A list of formulas - one for each segment. The first formula
-has the format \code{response ~ predictors} while the following formulas
-have the format \code{response ~ changepoint ~ predictors}. The response
-and change points can be omitted (\code{changepoint ~ predictors} assumes same
-response. \code{~ predictors} assumes an intercept-only change point). The
-following can be modeled:
+\item{model}{A list of formulas, one for each segment, in the format
+\code{model = list(response ~ predictors, ~ cp(...) + predictors)}, where \code{cp()} is optional. See \link{mcp-formula} for how segments connect
+and the full formula syntax. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.}
+
+\item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
+with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
+\href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.}
+
+\item{prior}{Named list, e.g., \code{prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")}.
+List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},
+\code{sigma_1}, etc.) and values are a distribution string (e.g., \code{"dnorm(0, 1) T(0, )"}),
+a constant (e.g., \code{-2.1}), or the name of another parameter to share its value.
+\emph{OBS: Distributions use JAGS names but SD/scale instead of JAGS precision, so \code{dnorm(0, 0.001)} is a very narrow prior.}
+Weakly informative defaults are used where priors are not specified;
+see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-priors} for the full syntax.
+\href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.}
+
+\item{family}{A supported family and link function:
 \itemize{
-\item \emph{Regular formulas:} e.g., \code{~ 1 + x}). \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Extended formulas:}, e.g., \code{~ I(x^2) + exp(x) + sin(x)}. \href{https://lindeloev.github.io/mcp/articles/formulas.html}{Read more}.
-\item \emph{Variance:} e.g., \code{~sigma(1)} for a simple variance change or
-\code{~sigma(rel(1) + I(x^2))}) for more advanced variance structures. \href{https://lindeloev.github.io/mcp/articles/variance.html}{Read more}
-\item \emph{Autoregression:} e.g., \code{~ar(1)} for a simple onset/change in AR(1) or
-\verb{ar(2, 0 + x}) for an AR(2) increasing by \code{x}. \href{https://lindeloev.github.io/mcp/articles/arma.html}{Read more}
-}}
+\item \code{gaussian(link = "identity")} or \code{gaussian(link = "log")}
+\item \code{binomial()} or \code{bernoulli()} with \code{link = "logit"}, \code{"probit"}, or \code{"identity"}
+\item \code{poisson(link = "log")} or \code{poisson(link = "identity")}
+\item \code{negbinomial(link = "log", link_shape = "log")}
+}
 
-\item{data}{Data.frame or tibble in long format.}
+\href{https://lindeloev.github.io/mcp/articles/families.html}{Read more}.}
 
-\item{prior}{Named list. Names are parameter names (\code{cp_i}, \code{int_i}, \code{xvar_i},
-`sigma``) and the values are either
-\itemize{
-\item A JAGS distribution (e.g., \code{int_1 = "dnorm(0, 1) T(0,)"}) indicating a
-conventional prior distribution. Uninformative priors based on data
-properties are used where priors are not specified. This ensures good
-parameter estimations, but it is a questionable for hypothesis testing.
-\code{mcp} uses SD (not precision) for dnorm, dt, dlogis, etc. See
-details. Change points are forced to be ordered through the priors using
-truncation, except for uniform priors where the lower bound should be
-greater than the previous change point, \code{dunif(cp_1, MAXX)}.
-\item A numerical value (e.g., \code{int_1 = -2.1}) indicating a fixed value.
-\item A model parameter name (e.g., \code{int_2 = "int_1"}), indicating that this parameter is shared -
-typically between segments. If two varying effects are shared this way,
-they will need to have the same grouping variable.
-\item A scaled Dirichlet prior is supported for change points if they are all set to
-\verb{cp_i = "dirichlet(N)} where \code{N} is the alpha for this change point and
-\code{N = 1} is most often used. This prior is less informative about the
-location of the change points than the default uniform prior, but it
-samples less efficiently, so you will often need to set \code{iter} higher.
-It is recommended for hypothesis testing and for the estimation of more
-than 5 change points. \href{https://lindeloev.github.io/mcp/articles/priors.html}{Read more}.
-}}
-
-\item{family}{One of \code{gaussian()}, \code{binomial()}, \code{bernoulli()}, or \code{poission()}.
-Only default link functions are currently supported.}
-
-\item{par_x}{String (default: NULL). Only relevant if no segments contains
-slope (no hint at what x is). Set this, e.g., par_x = "time".}
+\item{par_x}{String. Name of the change-point variable, i.e., the data column
+on which change points are located. \code{NULL} (default) auto-detects it as the
+only continuous variable in the formulas.}
 
 \item{sample}{One of
 \itemize{
 \item \code{"post"}: Sample the posterior.
-\item \code{"prior"}: Sample only the prior. Plots, summaries, etc. will
-use the prior. This is useful for prior predictive checks.
+\item \code{"prior"}: Sample only the prior. Use \code{prior = TRUE} explicitly in
+plots, summaries, and other methods to select prior draws.
 \item \code{"both"}: Sample both prior and posterior. Plots, summaries, etc.
-will default to using the posterior. The prior only has effect when doing
-Savage-Dickey density ratios in \code{\link{hypothesis}}.
+will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
-object without sample. This is useful if you only want to check
-prior strings (fit$prior), the JAGS model (fit$jags_code), etc.
-}}
-
-\item{cores}{Positive integer or "all". Number of cores.
-\itemize{
-\item \code{1}: serial sampling. \code{options(mc.cores = 3)} will dominate \code{cores = 1}
-but not larger values of \code{cores}.
-\item \verb{>1}: parallel sampling on this number of cores. Ideally set \code{chains}
-to the same value. Note: \code{cores > 1} takes a few extra seconds the first
-time it's called but subsequent calls will start sampling immediately.
-\item \code{"all"}: use all cores but one and sets \code{chains} to the same value. This is
-a convenient way to maximally use your computer's power.
+object without draws (an "empty fit"). This is useful if you only want to check
+prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
 }}
 
 \item{chains}{Positive integer. Number of chains to run.}
@@ -97,17 +73,52 @@ a convenient way to maximally use your computer's power.
 \item{iter}{Positive integer. Number of post-warmup draws from each chain.
 The total number of draws is \code{iter * chains}.}
 
-\item{adapt}{Positive integer. Also sometimes called "burnin", this is the
-number of samples used to reach convergence. Set lower for greater speed.
-Set higher if the chains haven't converged yet or look at \href{https://lindeloev.github.io/mcp/articles/tips.html}{tips, tricks, and debugging}.}
+\item{warmup}{Positive integer. Number of initial iterations per chain which
+are discarded before sampling. Set higher if needed for sampler adaptation;
+use diagnostics to assess convergence.}
 
-\item{inits}{A list if initial values for the parameters. This can be useful
-if a model fails to converge. Read more in \code{\link[rjags]{jags.model}}.
-Defaults to \code{NULL}, i.e., no inits.}
+\item{inits}{A named list of initial values for the parameters, e.g., \code{list(Intercept_1 = 10)},
+or a list of such lists with one per chain. This can be useful if a model fails to converge
+(\href{https://lindeloev.github.io/mcp/articles/tips.html}{read more}).
+Names must be parameters in \code{\link[=mcp_pars]{mcp_pars()}}. Parameters with constant priors and parameters that are
+reparameterized for faster sampling cannot be initialized (see \code{mcp_reparam} in \link{mcp-package}).
+Initial values for change points must be ordered.
+Defaults to \code{NULL} where all chains start at equally spaced change points and the prior medians.
+User-provided \code{inits} take precedence.}
 
-\item{jags_code}{String. Pass JAGS code to \code{mcp} to use directly. This is useful if
-you want to tweak the code in \code{fit$jags_code} and run it within the \code{mcp}
-framework.}
+\item{jags_code}{String. JAGS code to sample instead of the code that \code{mcp} writes.
+This is an expert option for edits to \code{fit$jags_code} that keep the parameters in
+\code{\link[=mcp_pars]{mcp_pars()}}, the data, and the likelihood.
+Only the parameters in \code{\link[=mcp_pars]{mcp_pars()}} are monitored. R-side simulation and prediction
+methods continue to use the \code{mcp} formulas (with warning), so \code{fitted()}, \code{predict()},
+\code{plot()}, \code{loo()}, etc. are wrong if the custom code changes the formula or likelihood.
+The written JAGS code is not a stable interface and may change between \code{mcp} versions.
+\code{jags_code} is planned for deprecation once a future mcp release brings custom families
+and tooling to run \code{fit$jags_code} directly in JAGS.
+\href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more} about how \code{mcp} writes JAGS code.}
+
+\item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
+generators. If \code{NULL} (default), the seed is drawn from R's random-number generator,
+so \code{set.seed()} before \code{mcp()} also makes sampling reproducible.}
+
+\item{diagnostics}{Named list of diagnostic warning thresholds. Available
+elements are \code{rhat = 1.01}, \code{ess_bulk = 400}, \code{ess_tail = 400},
+\code{ar = 0.10}, and \code{ma = 0.10}. An empty list uses these defaults; a partial
+list overrides only the supplied values. Set an element to \code{NULL} to disable
+that diagnostic, or use \code{FALSE} to disable all configurable diagnostic
+warnings. In \code{\link[=summary.mcpfit]{summary.mcpfit()}}, \code{NULL} inherits the settings used to fit
+the model, while a list or \code{FALSE} overrides the diagnostic footer.}
+
+\item{quiet}{Logical. Suppress routine JAGS output and mcp sampling-status
+messages? Defaults to \code{FALSE}. Use \code{options(mcp_quiet = TRUE)} to change the default for the session.}
+
+\item{cores}{Deprecated and ignored. Configure parallel processing with a
+\link[future:plan]{future} plan instead, for example
+\code{future::plan(future::multisession, workers = 3)}. With the default future
+plan, chains are sampled sequentially. The argument remains available for
+backwards compatibility.}
+
+\item{adapt}{Deprecated; use \code{warmup} instead.}
 }
 \value{
 An \code{\link{mcpfit}} object.
@@ -115,43 +126,40 @@ An \code{\link{mcpfit}} object.
 \description{
 Given a model (a list of segment formulas), \code{mcp} infers the posterior
 distributions of the parameters of each segment as well as the change points
-between segments. \href{https://lindeloev.github.io/mcp/}{See more details and worked examples on the mcp website}.
-All segments must regress on the same x-variable. Change
-points are forced to be ordered using truncation of the priors. You can run
-\code{fit = mcp(model, sample=FALSE)} to avoid sampling and the need for
-data if you just want to get the priors (\code{fit$prior}), the JAGS code
-\code{fit$jags_code}, or the R function to simulate data (\code{fit$simulate}).
+between segments. See details or \href{https://lindeloev.github.io/mcp/}{the mcp website}.
 }
 \details{
-Notes on priors:
-\itemize{
-\item Order restriction is automatically applied to cp_\* parameters using
-truncation (e.g., \code{T(cp_1, )}) so that they are in the correct order on the
-x-axis UNLESS you do it yourself. The one exception is for dunif
-distributions where you have to do it as above.
-\item In addition to the model parameters, \code{MINX} (minimum x-value), \code{MAXX}
-(maximum x-value), \code{SDX} (etc...), \code{MINY}, \code{MAXY}, and \code{SDY}
-are also available when you set priors. They are used to set uninformative
-default priors.
-\item Use SD when you specify priors for dt, dlogis, etc. JAGS uses precision
-but \code{mcp} converts to precision under the hood via the sd_to_prec()
-function. So you will see SDs in \code{fit$prior} but precision ($1/SD^2)
-in \code{fit$jags_code}
-}
+Here is the demo model, which ships already fitted as \code{demo_fit} (see also \code{mcp_example("demo")}):
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{model = list(
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
+)
+}\if{html}{\out{</div>}}
+
+\if{html}{\figure{mcp_demo.png}{options: width="500" alt="Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope"}}
+\if{latex}{\figure{mcp_demo.png}{options: width=5in}}
+\if{text}{\figure{mcp_demo.png}{[Fitted 3-segment mcp model with a plateau, joined slope, and disjoined slope]}}
+
+Segment 2 continues from where the plateau left off, while segment 3 starts afresh with a new intercept.
+See \link{mcp-formula} for the rules of how segments connect, the full formula syntax, and the
+underlying model. See \link{mcp-priors} for how to specify priors.
+See \href{https://lindeloev.github.io/mcp/}{the mcp website} for worked examples of all model features.
 }
 \examples{
 \donttest{
 # Define the segments using formulas. A change point is estimated between each formula.
 model = list(
-  response ~ 1,  # Plateau in the first segment (int_1)
-  ~ 0 + time,    # Joined slope (time_2) at cp_1
-  ~ 1 + time     # Disjoined slope (int_3, time_3) at cp_2
+  response ~ 1,  # Plateau in the first segment (Intercept_1)
+  ~ 0 + time,    # Joined slope (time_2) in segment 2 which starts at cp_1
+  ~ 1 + time     # Disjoined slope (Intercept_3, time_3) at cp_2
 )
 
 # Fit it and sample the prior too.
-# options(mc.cores = 3)  # Uncomment to speed up sampling
-ex = mcp_example("demo")  # Simulated data example
-demo_fit = mcp(model, data = ex$data, sample = "both")
+# future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
+data = mcp_example_data("demo")  # Simulated data example
+demo_fit = mcp(model, data = data, sample = "both", seed = 42)
 
 # See parameter estimates
 summary(demo_fit)
@@ -162,44 +170,60 @@ plot_pars(demo_fit)  # Parameter distributions
 pp_check(demo_fit)  # Prior/Posterior predictive checks
 
 # Test a hypothesis
-hypothesis(demo_fit, "cp_1 > 10")
+hypothesis(demo_fit, "cp_1 > 30")
 
 # Make predictions
-fitted(demo_fit)
-predict(demo_fit)
-predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132)))
+head(fitted(demo_fit))
+head(predict(demo_fit))
+head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
-fit_null = mcp(model_null, data = ex$data, par_x = "time")  # fit another model here
-demo_fit$loo = loo(demo_fit)
-fit_null$loo = loo(fit_null)
-loo::loo_compare(demo_fit$loo, fit_null$loo)
+fit_null = mcp(model_null, data = data, par_x = "time")  # fit another model here
+demo_loo = loo(demo_fit)
+null_loo = loo(fit_null)
+loo_compare(demo_loo, null_loo)
 
 # Inspect the prior. Useful for prior predictive checks.
 summary(demo_fit, prior = TRUE)
 plot(demo_fit, prior = TRUE)
 
 # Show all priors. Default priors are added where you don't provide any
-print(demo_fit$prior)
+prior_summary(demo_fit)
 
 # Set priors and re-run
 prior = list(
-  int_1 = 15,
+  Intercept_1 = 15,
   time_2 = "dt(0, 2, 1) T(0, )",  # t-dist slope. Truncated to positive.
-  cp_2 = "dunif(cp_1, 80)",    # change point to segment 2 > cp_1 and < 80.
-  int_3 = "int_1"           # Shared intercept between segment 1 and 3
+  cp_2 = "dunif(min(time), 80)"   # change point to segment 3 before 80 (and after cp_1).
 )
 
-fit3 = mcp(model, data = ex$data, prior = prior)
+fit3 = mcp(model, data = data, prior = prior, seed = 42)
+
+# Reuse coefficients in later segments using same() (e.g., Intercept_1 in segment 3)
+model_same = list(
+  response ~ 1,
+  ~ 0 + time,
+  ~ same(1, as = 1) + time  # Reuse Intercept_1 instead of estimating Intercept_3
+)
+fit_same = mcp(model_same, data = data, sample = FALSE)
 
 # Show the JAGS model
 demo_fit$jags_code
 }
-
 }
-\seealso{
-\code{\link{get_segment_table}}
+\references{
+\itemize{
+\item Lindeløv, J. K. (2020). mcp: An R Package for Regression With Multiple Change Points.
+\emph{OSF Preprints}. \doi{10.31219/osf.io/fzqxv}
+Introduces the \code{mcp} package, formula syntax, default priors, and workflow for regression
+with multiple change points across generalized linear and time-series models. Newer-than-2020 versions of
+the paper may be available at that link. Please cite the newest version.
+\item Carlin, B. P., Gelfand, A. E., & Smith, A. F. (1992). Hierarchical Bayesian Analysis of
+Changepoint Problems. \emph{Applied Statistics}, 41(2), 389–405. \doi{10.2307/2347570}
+Introduced Gibbs sampling for hierarchical Bayesian change-point models, the computational
+approach that BUGS and JAGS build on.
+}
 }
 \author{
 Jonas Kristoffer Lindeløv \email{jonas@lindeloev.dk}

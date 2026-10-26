@@ -1,212 +1,437 @@
+# ABOUT: These functions call the JAGS sampler and set up inputs in a way
+# that is appropriate for that, including data (get_jags_data()).
+# ------------------------------------------------------------------------
+
+
+# Sample the posterior and/or prior using JAGS
+# Holds all JAGS-specific sampling steps for `mcp()`.
+sample_jags = function(model_tables, prior_table, family, data, sample, chains, iter, warmup, inits, jags_code, custom_jags_code, seed, quiet) {
+  data_columns = model_tables$data_columns
+  parameters = model_tables$parameters
+  jags_data = get_jags_data(data, family, model_tables, jags_code, generated = !custom_jags_code)
+
+  # Monitor model parameters and, for generated JAGS code, latent responses
+  all_pars = prior_table$parameter
+  missing_response_rows = which(is.na(data[[data_columns$response]]))
+  imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
+    paste0(data_columns$response, "[", missing_response_rows, "]")
+
+  sample_draws = function(pars, sample) {
+    draws = run_jags(
+      jags_code = jags_code,
+      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, data_columns) else jags_data,
+      pars = pars,
+      sample = sample,
+      n.chains = chains,
+      n.iter = iter,
+      n.adapt = warmup,
+      inits = inits,
+      default_inits = get_default_inits(prior_table, parameters, range(data[[data_columns$par_x]], na.rm = TRUE), inits, if (custom_jags_code) jags_code),
+      seed = seed,
+      quiet = quiet,
+      use_glm = use_jags_glm(family, definition_rows(model_tables$group_coefs))
+    ) |>
+      recover_levels(data, parameters[parameters$scope == "group", ])
+
+    class(draws) = "mcmc.list"
+
+    # JAGS sorts nodes alphabetically. Order them like mcp_pars() instead, keeping group levels in factor-level order.
+    draws[, order(match(sub("\\[.*", "", coda::varnames(draws)), parameters$parameter)), drop = FALSE]
+  }
+
+  # Sample posterior and split off the missing responses
+  mcmc_post = NULL
+  imputed_response = NULL
+  if (sample %in% c("post", "both")) {
+    mcmc_post = sample_draws(c(all_pars, imputed_response_nodes), "post")
+    if (length(imputed_response_nodes) > 0) {
+      imputed_response = mcmc_post[, imputed_response_nodes, drop = FALSE]
+      mcmc_post = mcmc_post[, setdiff(colnames(mcmc_post[[1]]), imputed_response_nodes), drop = FALSE]
+    }
+  }
+
+  # Sample prior
+  mcmc_prior = if (sample %in% c("prior", "both")) sample_draws(all_pars, "prior")
+
+  list(mcmc_post = mcmc_post, mcmc_prior = mcmc_prior, imputed_response = imputed_response)
+}
+
+
 #' Run parallel MCMC sampling using JAGS.
 #'
-#'
-#' @aliases run_jags
-#' @keywords internal
 #' @inheritParams mcp
 #' @inheritParams rjags::jags.model
 #' @inheritParams rjags::coda.samples
-#' @param jags_code A string. JAGS model, usually returned by `make_jagscode()`.
+#' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
 #' @param pars Character vector of parameters to save/monitor.
-#' @param ST A segment table (tibble), returned by `get_segment_table`.
-#'   Only really used when the model contains varying effects.
-#' @return `mcmc.list``
-#' @encoding UTF-8
-#' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
-#'
-
-run_jags = function(data,
-                    jags_code,
+#' @param default_inits Named list. Initial values for parameters not in `inits`, e.g., from `get_cp_inits()`.
+#' @param use_glm Logical. Load the JAGS glm module, which block-samples
+#'   coefficients that enter the linear predictor jointly.
+#' @return `mcmc.list`
+#' @noRd
+run_jags = function(jags_code,
+                    jags_data,
                     pars,
-                    ST,
-                    cores,
                     sample,
                     n.chains,
                     n.iter,
                     n.adapt,
-                    inits
+                    inits,
+                    default_inits = list(),
+                    seed,
+                    quiet,
+                    use_glm = FALSE
 ) {
-
-  # Prevent failure of all mcp methods when length(pars) <= 2 (one parameter +
-  # loglik_).This always happens when there is only one parameter, so we just
-  # save samples from the dummy change points.
-  if (length(pars) <= 2)
-    pars = c(pars, "cp_0", "cp_1")
-
-  # Set number of cores from "all" or mc.cores if `cores` is not specified.
-  # Max at 2 for CRAN etc.
-  opts_cores = options()$mc.cores
-  if (is.numeric(opts_cores) && cores == 1)
-    cores = opts_cores
-  if (cores == "all") {
-    cores = parallel::detectCores() - 1
-    n.chains = cores
-  }
-  if (Sys.getenv("_R_CHECK_LIMIT_CORES_", "") == "TRUE") {
-    if (cores > 1)
-      cores = 2
-  }
-
-  # Get data ready...
-  jags_data = get_jags_data(data, ST, jags_code, sample)
-
-  # Start timer
-  timer = proc.time()
 
   # Define the sampling function in this environment.
   # Can be used sequentially or in parallel.
-  do_sampling = function(seed, n.chains, quiet) {
-    # Optionally seed JAGS. Typically for parallel processing to avoid risk of identical seeds.
-    if (!is.null(seed))
-      inits = c(inits, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = seed))
+  do_sampling = function(inits, n.chains) {
+    sample_chains = function() {
+      # Samplers are assigned at compile time, so load the glm module here to reach
+      # parallel workers too, and unload it again to leave the user's session unchanged.
+      if (use_glm && !("glm" %in% rjags::list.modules())) {
+        rjags::load.module("glm", quiet = TRUE)
+        on.exit(rjags::unload.module("glm", quiet = TRUE), add = TRUE)
+      }
 
-    # Compile model
-    jm = rjags::jags.model(
-      file = textConnection(jags_code),
-      data = jags_data,
-      inits = inits,
-      n.chains = n.chains,
-      n.adapt = n.adapt,
-      quiet = quiet
-    )
+      # Compile model silently. Adapt separately to keep the progress bar.
+      jags_connection = textConnection(jags_code)
+      on.exit(close(jags_connection), add = TRUE)
+      jags_model = rjags::jags.model(
+        file = jags_connection,
+        data = jags_data,
+        inits = inits,
+        n.chains = n.chains,
+        n.adapt = 0,
+        quiet = TRUE
+      )
+      progress_bar = if (quiet) "none" else getOption("jags.pb")
+      if (!rjags::adapt(jags_model, n.iter = n.adapt, end.adaptation = TRUE, progress.bar = progress_bar))
+        warning("Adaptation incomplete")
 
-    # Sample and return
-    rjags::coda.samples(
-      model = jm,
-      variable.names = pars,
-      n.iter = n.iter,
-      quiet = quiet
-    )
+      # Ensure requested warmup iterations are discarded even if JAGS skips adaptation
+      burnin = n.adapt - jags_model$iter()
+      if (burnin > 0) {
+        stats::update(
+          object = jags_model,
+          n.iter = burnin,
+          progress.bar = progress_bar
+        )
+      }
+
+      # Sample and return
+      rjags::coda.samples(
+        model = jags_model,
+        variable.names = pars,
+        n.iter = n.iter,
+        quiet = quiet
+      )
+    }
+
+    # rjags still prints some adaptation notices with quiet = TRUE.
+    if (quiet) {
+      draws = NULL
+      capture.output({ draws = sample_chains() })
+    } else {
+      draws = sample_chains()
+    }
+    draws
   }
 
-  # Time for sampling!
-  if (cores == 1) {
-    # # SERIAL
-    samples = try(do_sampling(
-      seed = NULL,
-      n.chains = n.chains,
-      quiet = FALSE
-    ))
+  # Use JAGS directly under a sequential future plan. This compiles the model
+  # only once for all chains and preserves JAGS's progress output.
+  n_workers = future::nbrOfWorkers()
+  timer = proc.time()
+  if (is.null(seed))
+    seed = sample.int(.Machine$integer.max, 1)
+  inits = get_jags_inits(inits, seed, n.chains, sample)
+  inits = lapply(inits, function(chain_inits) c(chain_inits, default_inits[setdiff(names(default_inits), names(chain_inits))]))
 
-  } else if (cores == "all" || cores > 1) {
-    # PARALLEL using the future package and one chain per worker
-    message("Parallel sampling in progress...")
-    future::plan(future::multisession, workers = cores, .skip = TRUE)
-    samples = future.apply::future_lapply(
-      sample(1:1000, n.chains),  # Random seed to JAGS
+  if (n_workers == 1) {
+    draws = do_sampling(
+      inits = inits,
+      n.chains = n.chains
+    )
+  } else {
+    # Submit one chain per future. The user's future plan controls the backend.
+    if (!quiet)
+      message("Parallel sampling in progress...")
+    draws = future.apply::future_lapply(
+      inits,
       n.chains = 1,
-      quiet = TRUE,
       FUN = do_sampling,
       future.seed = TRUE
     )
 
     # Get result as mcmc.list
-    samples = unlist(samples, recursive = FALSE)
-    class(samples) = "mcmc.list"
+    draws = unlist(draws, recursive = FALSE)
+    class(draws) = "mcmc.list"
   }
 
-  # Sampling finished. # Recover the levels of varying effects if it succeeded
-  if (coda::is.mcmc.list(samples)) {
-    for (i in seq_len(nrow(ST))) {
-      S = ST[i, ]
-      if (!is.na(S$cp_group_col)) {
-        samples = recover_levels(samples, data, S$cp_group, S$cp_group_col)
-      }
-    }
-
-    # Return
-    passed = proc.time() - timer
+  # Sampling finished
+  passed = proc.time() - timer
+  if (!quiet)
     message("Finished sampling in ", round(passed["elapsed"], 1), " seconds\n")
-    return(samples)
 
+  draws
+}
+
+
+# The JAGS glm module helps some families always and others only with group-level effects in the predictor part.
+use_jags_glm = function(family, group_coefs) {
+  glm_module = family$backends$jags$glm_module
+  identical(glm_module, "always") || (identical(glm_module, "group_effects") && nrow(group_coefs) > 0)
+}
+
+
+# JAGS data for sampling the prior. The response is set to NA, except for weighted discrete
+# likelihoods, which use the response in a zeros trick that `response_observed_ = 0` turns off.
+get_jags_prior_data = function(jags_data, family, data_columns) {
+  if (is.null(data_columns$weights) || !isTRUE(family$response$is_discrete))
+    jags_data[[data_columns$response]][] = NA
+  if (!is.null(jags_data$response_observed_))
+    jags_data$response_observed_[] = 0L
+  jags_data
+}
+
+
+# Add deterministic JAGS RNG initial values to the `inits` passed to `mcp()`.
+# Returns one list of initial values per chain. Prior sampling (`sample = "prior"`) uses other chain seeds.
+get_jags_inits = function(inits, seed, n.chains, sample) {
+  if (is.list(inits[[1]])) {
+    if (length(inits) != n.chains)
+      stop("`inits` must have length equal to `chains` (", n.chains, ") when supplying chain-specific initialization lists.")
   } else {
-    # If it didn't succeed, quit gracefully.
-    warning("--------------\nJAGS failed with the above error. Returning an `mcpfit` without samples. Inspect fit$prior and fit$jags_code to identify the problem. Read about typical problems and fixes here: https://lindeloev.github.io/mcp/articles/tips.html.")
-    return(NULL)
+    inits = rep(list(inits), n.chains)
   }
+
+  # Space the chain seeds by the golden-ratio fraction of the seed range, so that nearby seeds,
+  # e.g., 1 and 2, never share chains (for seeds less than 10^7 apart).
+  chain = seq_len(n.chains) - 1 + if (sample == "prior") n.chains else 0
+  rng_seed = as.integer((as.double(seed) - 1 + chain * 1327217884) %% .Machine$integer.max + 1)
+
+  lapply(seq_len(n.chains), function(i) {
+    chain_inits = inits[[i]]
+    chain_inits[c(".RNG.name", ".RNG.seed", ".RNG.state")] = NULL
+    c(chain_inits, list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = rng_seed[i]))
+  })
+}
+
+
+# Check that `inits` only set parameters that are sampled directly (see add_nodes())
+assert_inits = function(inits, pars) {
+  invalid = setdiff(unlist(lapply(if (is.list(inits[[1]])) inits else list(inits), names)), pars)
+  if (length(invalid) > 0)
+    stop("`inits` can only set these parameters of this model: `", paste0(pars, collapse = "`, `"), "`. Got `", paste0(unique(invalid), collapse = "`, `"),
+         "`. Parameters with constant priors and parameters that are reparameterized for faster sampling (see `mcp_reparam` in ?mcp-package) cannot be initialized.", call. = FALSE)
+}
+
+
+# Initial values where users supplied none: ordered change points (see get_cp_inits()) and prior medians of
+# other population-level parameters, e.g., SDs away from zero. Custom JAGS code may define parameters differently.
+get_default_inits = function(prior_table, parameters, x_range, inits, custom_jags_code = NULL) {
+  is_cp = parameters$scope == "population" & parameters$role == "change_point"
+  cp_rows = prior_table[match(parameters$parameter[is_cp], prior_table$parameter), ]
+  is_median = !is.na(prior_table$node) & prior_table$parameter %in% parameters$parameter[parameters$scope == "population" & !is_cp]
+  node_priors = stats::setNames(prior_table$node_prior[is_median], prior_table$node[is_median])
+  defaults = c(get_cp_inits(cp_rows, x_range, if (!is.list(inits[[1]])) inits), get_median_inits(node_priors))  # Ignores chain-specific inits
+  if (is.null(custom_jags_code)) defaults else
+    defaults[vapply(names(defaults), function(name) grepl(paste0("\\n\\s*", name, " ~"), custom_jags_code), logical(1))]
+}
+
+
+# Initial values at the prior medians of nodes. Covers priors whose arguments and truncation bounds are numbers.
+# - prior: Named list of parsed priors, e.g., `prior_table$node_prior` named by `prior_table$node`.
+get_median_inits = function(prior) {
+  as_number = function(x) tryCatch(as.numeric(eval(str2lang(x), baseenv())), error = function(e) NA_real_)
+
+  inits = list()
+  for (name in names(prior)) {
+    parsed = prior[[name]]
+    args = vapply(parsed$args, as_number, numeric(1), USE.NAMES = FALSE)
+    bounds = c(-Inf, Inf)
+    is_bounded = nzchar(parsed$trunc)
+    bounds[is_bounded] = vapply(parsed$trunc[is_bounded], as_number, numeric(1), USE.NAMES = FALSE)
+    if (!anyNA(args) && !anyNA(bounds))
+      inits[[name]] = prior_quantile(parsed$dist, args, bounds, 0.5)
+  }
+  inits
+}
+
+
+# Initial values for the change points with a prior distribution, except those in `user_inits`:
+# equispaced in the observed range (`x_range`) with room for minimum segment lengths, then moved the
+# least possible to respect their bounds and order. JAGS fails to initialize if they violate cp_order_.
+# - cp_rows: Rows of the prior table for the population-level change points, in order.
+get_cp_inits = function(cp_rows, x_range, user_inits = list()) {
+  n_cp = nrow(cp_rows)
+  if (n_cp == 0)
+    return(list())
+
+  # Lower and upper bounds (dunif() or T()) and minimum segment length (see add_nodes()).
+  # Constant change points and user-supplied initial values are bounded by themselves.
+  env = stats::setNames(as.list(x_range), paste0("cp_", c(0, n_cp + 1)))
+  evaluate = function(x, empty) if (is.null(x) || !nzchar(x)) empty else eval(str2lang(x), env, baseenv())
+  is_free = !is.na(cp_rows$node)
+  lower = upper = min_lengths = numeric(n_cp)
+  for (i in seq_len(n_cp)) {
+    fixed = c(user_inits[[cp_rows$parameter[i]]], if (cp_rows$kind[i] == "constant") as.numeric(cp_rows$value[i]), NA)[1]
+    bounds = if (is_free[i]) get_prior_bounds(cp_rows$node_prior[[i]])
+    min_lengths[i] = evaluate(cp_rows$min_length[i], 0)
+    lower[i] = if (!is.na(fixed)) fixed else evaluate(bounds[1], -Inf)
+    upper[i] = if (!is.na(fixed)) fixed else evaluate(bounds[2], Inf)
+  }
+
+  # Keep 1% of the range of x from the bounds and neighboring change points, but within narrow priors
+  margin = pmin(0.01 * diff(x_range), (upper - lower) / 3)
+  spacing = min_lengths + c(0, pmax(margin[-1], margin[-n_cp]))
+  lower = lower + margin
+  upper = upper - margin
+
+  # Earliest and latest positions of ordered change points within these bounds
+  for (i in seq_len(n_cp)[-1])
+    lower[i] = max(lower[i], lower[i - 1] + spacing[i])
+  for (i in rev(seq_len(n_cp)[-1]))
+    upper[i - 1] = min(upper[i - 1], upper[i] - spacing[i])
+  if (any(lower > upper))
+    stop("The change point priors (and initial values) leave no room for ordered change points. Check the lower and upper bounds (in dunif() or T()), minimum segment lengths, and initial values of the change points.", call. = FALSE)
+
+  target = x_range[1] + cumsum(min_lengths) + max((diff(x_range) - sum(min_lengths)) / (n_cp + 1), 0) * seq_len(n_cp)
+  inits = stats::setNames(as.list(pmin(pmax(target, lower), upper)), cp_rows$parameter)
+  inits[is_free & cp_rows$parameter %notin% names(user_inits)]
+}
+
+
+# Check names of user-data nodes passed to JAGS against generated JAGS nodes.
+# - generated: Whether `jags_code` was generated by mcp (`FALSE` for custom `jags_code`).
+# - parameters: The parameters table from `get_pars_table()`.
+assert_jags_namespace = function(data_names, family, n_segments, parameters, jags_code, generated = TRUE) {
+  group_cols = unique(stats::na.omit(parameters$group_col))
+  dpars = family$dpar_specs$dpar
+
+  # Parameters and the ends of the observed range (cp_0 and cp_K) share one namespace.
+  parameter_names = c(paste0("cp_", c(0, n_segments)), parameters$parameter)
+
+  # Data helpers are always present; model helpers occur only in generated code.
+  offset_nodes = if (!is.null(jags_code)) unique(stringr::str_extract_all(jags_code, "offset_[A-Za-z0-9_]+_")[[1]])
+  helper_names = unique(c(
+    "rhs_matrix_", "series_id_", "response_observed_",
+    "likelihood_weight_", "likelihood_phi_", "likelihood_zero_", offset_nodes,
+    paste0("n_unique_", group_cols), paste0(group_cols, "_"), paste0(group_cols, "_index_"),
+    if (generated) c(
+      "i_", "garma_threshold_", "garma_y_", "garma_link_y_",
+      "resid_abs_", "resid_ma_", "resid_garma_", "nb_prob_",
+      "cp_order_", "cp_weight_",
+      paste0("x_local_", seq_len(n_segments), "_"),
+      paste0("link_", dpars, "_"), paste0(dpars, "_"),
+      paste0(parameters$parameter, "_inverse")
+    )
+  ))
+
+  # Catch parameter-to-parameter and parameter-to-helper collisions before priors.
+  duplicate_parameters = unique(parameter_names[duplicated(parameter_names)])
+  parameter_helpers = intersect(parameter_names, helper_names)
+  generated_collisions = unique(c(duplicate_parameters, parameter_helpers))
+  if (length(generated_collisions) > 0)
+    stop(
+      "Generated parameter name(s) collide in the JAGS namespace: ",
+      and_collapse(paste0("'", generated_collisions, "'")),
+      ". Rename the corresponding predictor column."
+    )
+
+  # Finally, ensure user data cannot overwrite any generated JAGS node.
+  collisions = intersect(data_names, c(parameter_names, helper_names))
+  reserved_prefix = grep("^\\.?mcp_", data_names, value = TRUE)
+  bad = unique(c(collisions, reserved_prefix))
+  if (length(bad) > 0)
+    stop(
+      "Data column name(s) collide with mcp's generated JAGS namespace: ",
+      and_collapse(paste0("'", bad, "'")), ". Rename them before fitting."
+    )
+  invisible(TRUE)
 }
 
 
 #' Adds helper variables for use in `run_jags`
 #'
 #' Returns the relevant data columns as a list and add elements with unique
-#' varying group levels.
+#' grouping-factor levels.
 #'
-#' @aliases get_jags_data
-#' @keywords internal
 #' @inheritParams run_jags
 #' @param data A tibble
-#' @param ST A segment table (tibble), returned by `get_segment_table`.
-
-get_jags_data = function(data, ST, jags_code, sample) {
-  cols_varying = unique(stats::na.omit(ST$cp_group_col))
+#' @param model_tables Model tables, as in `get_fit_model_tables(fit)`.
+#' @noRd
+get_jags_data = function(data, family, model_tables, jags_code, generated = TRUE) {
+  data_columns = model_tables$data_columns
+  parameters = model_tables$parameters
+  n_segments = nrow(model_tables$cps) + 1
+  group_cols = unique(stats::na.omit(parameters$group_col))
+  series = data_columns$series
 
   # Start with "raw" data
-  cols_data = unique(stats::na.omit(c(ST$y, ST$x, ST$trials, ST$weights)))
-  jags_data = as.list(data[, c(cols_varying, cols_data)])
+  aux_columns = get_family_aux_columns(family, data_columns)
+  cols_data = unique(stats::na.omit(c(data_columns$response, data_columns$par_x, unname(aux_columns))))
+  assert_jags_namespace(
+    unique(c(names(data), group_cols, cols_data, series)), family, n_segments, parameters, jags_code, generated
+  )
+  jags_data = as.list(data[, cols_data])
 
-  for (col in cols_varying) {
-    # Add meta-data (now many varying group levels)
-    tmp = paste0("n_unique_", col)
-    jags_data[[tmp]] = length(unique(data[, col]))
+  if (!is.null(series))
+    jags_data$series_id_ = as.integer(factor(data[[series]], levels = unique(data[[series]])))
 
-    # Make varying columns numeric in order of appearance
-    # They will be recovered using the recover_levels()
-    jags_data[[col]] = as.numeric(factor(jags_data[[col]], levels = unique(jags_data[[col]])))
+  for (group_col in group_cols) {
+    # Add metadata for the grouping-factor levels.
+    n_unique_name = paste0("n_unique_", group_col)
+    group_levels = levels(factor(data[[group_col]]))
+    jags_data[[n_unique_name]] = length(group_levels)
+
+    # Index grouping levels in a separate node so the grouping column can also
+    # be par_x, the response, etc. Levels are recovered using recover_levels()
+    jags_data[[paste0(group_col, "_index_")]] = as.numeric(factor(data[[group_col]], levels = group_levels))
   }
 
+  # Predictor design matrix and offsets, evaluated like predictions. Keep the JAGS data name for custom-code compatibility.
+  designs = evaluate_designs(model_tables, data)
+  jags_data$rhs_matrix_ = designs$matrix
+  jags_data[names(designs$offsets)] = designs$offsets
 
-  # Add e.g. MINX = min(data$x) for all variables where they are used.
-  # Searches whether it is in jags_code. If yes, add to jags_data
-  # TO DO: there must be a prettier way to do this.
-  funcs = c("min", "max", "sd", "mean")
-  xy_vars = c("x", "y")
-  for (func in funcs) {
-    for (xy_var in xy_vars) {
-      constant_name = toupper(paste0(func, xy_var))
-      if (stringr::str_detect(jags_code, constant_name)) {
-        func_eval = eval(parse(text = func))  # as real function
-        column = ST[, xy_var][[1]][1]
-        jags_data[[constant_name]] = func_eval(data[, column], na.rm = TRUE)
-      }
-    }
+  # Compatibility for custom JAGS code written with the released data
+  # constants. Generated code and newly resolved priors no longer need these.
+  context = prior_context(data, data_columns, n_segments, model_tables$design_specs)
+  jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
+
+  if (generated && !is.null(data_columns$weights)) {  # Zeros trick (see jags_weighted_likelihood())
+    jags_data$response_observed_ = as.integer(!is.na(data[[data_columns$response]]))
+    jags_data$likelihood_zero_ = numeric(nrow(data))
   }
 
-  # For default prior
-  if (stringr::str_detect(jags_code, "N_CP"))
-    jags_data$N_CP = nrow(ST) - 1
-
-  # Set response = NA if we only sample prior
-  if (sample == "prior")
-    jags_data[[ST$y[1]]] = rep(NA, nrow(data))
+  # Observed nodes that restrict the change point priors, also in custom code copied from fit$jags_code
+  if (grepl("cp_order_ ~", jags_code, fixed = TRUE))
+    jags_data$cp_order_ = 1
+  if (grepl("cp_weight_ ~", jags_code, fixed = TRUE))
+    jags_data$cp_weight_ = 0
 
   # Return
   jags_data
 }
 
 
+# Recover the original levels (numeric or string) of group-level effects in an mcmc.list.
+# JAGS uses 1, 2, 3, ... for indexing group-level effects.
+# - group_pars: Group-level rows of the parameters table, i.e., `mcp_pars(fit, scope = "group")`.
+recover_levels = function(draws, data, group_pars) {
+  # JAGS names levels by index, e.g., "x_1_id[2]"; use the original levels, e.g., "x_1_id[Omar]"
+  index_names = character()
+  level_names = character()
+  for (i in seq_len(nrow(group_pars))) {
+    group_levels = levels(factor(data[[group_pars$group_col[i]]]))
+    index_names = c(index_names, paste0(group_pars$parameter[i], "[", seq_along(group_levels), "]"))
+    level_names = c(level_names, paste0(group_pars$parameter[i], "[", group_levels, "]"))
+  }
 
-#' Recover the levels of varying effects in mcmc.list
-#'
-#' Jags uses 1, 2, 3, ..., etc. for indexing of varying effects.
-#' This function adds back the original levels, whether numeric or string
-#'
-#' @aliases recover_levels
-#' @keywords internal
-#' @param samples An mcmc.list with varying columns starting in `mcmc_col`.
-#' @param data A tibble or data.frame with the cols in `data_col`.
-#' @param mcmc_col A vector of strings.
-#' @param data_col A vector of strings. Has to be same length as `mcmc_col`.`
-#'
-recover_levels = function(samples, data, mcmc_col, data_col) {
-  # Get vectors of old ("from") and replacement column names in samples
-  from = colnames(samples[[1]])[stringr::str_starts(colnames(samples[[1]]), paste0(mcmc_col, '\\['))]  # Current column names
-  to = sprintf(paste0(mcmc_col, '[%s]'), unique(data[, data_col]))  # Desired column names
-
-  # Recode column names on each list (chain) using lapply
-  names(to) = from
-  lapply(samples, function(x) {
-    colnames(x) = dplyr::recode(colnames(x), !!!to)
+  lapply(draws, function(x) {
+    matched = match(colnames(x), index_names)
+    colnames(x)[!is.na(matched)] = level_names[matched[!is.na(matched)]]
     x
   })
 }
