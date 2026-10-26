@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="https://lindeloev.github.io/mcp/apple-touch-icon.png">
 <link rel="icon" sizes="any" href="https://lindeloev.github.io/mcp/favicon.ico">
 <link rel="manifest" href="https://lindeloev.github.io/mcp/site.webmanifest">
-<script src="https://lindeloev.github.io/mcp/deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="https://lindeloev.github.io/mcp/katex-auto.js"></script><script src="https://lindeloev.github.io/mcp/deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="https://lindeloev.github.io/mcp/deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="https://lindeloev.github.io/mcp/deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="https://lindeloev.github.io/mcp/deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="https://lindeloev.github.io/mcp/deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -37,7 +38,7 @@
 
     <a class="navbar-brand me-2" href="https://lindeloev.github.io/mcp/index.html">mcp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,30 +48,38 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling">
 <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/predict.html">Fits and predictions</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families">
 <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
+<li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/plotting.html">Plotting</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/missing.html">Missing responses and imputation</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
+<li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="https://lindeloev.github.io/mcp/articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="https://lindeloev.github.io/mcp/reference/index.html">Functions</a></li>

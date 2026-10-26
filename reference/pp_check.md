@@ -1,21 +1,26 @@
 # Posterior Predictive Checks For Mcpfit Objects
 
 Plot posterior (default) or prior (`prior = TRUE`) predictive checks.
-This is convenience wrapper around the `bayesplot::ppc_*()` methods.
+This is a convenience wrapper around the `bayesplot::ppc_*()` methods.
+See [prior predictive
+checks](https://lindeloev.github.io/mcp/articles/priors.html#prior-predictive-checks)
+for an example.
 
 ## Usage
 
 ``` r
+# S3 method for class 'mcpfit'
 pp_check(
   object,
   type = "dens_overlay",
   facet_by = NULL,
   newdata = NULL,
   prior = FALSE,
-  varying = TRUE,
-  arma = TRUE,
+  group_effects = TRUE,
+  arma = "replicate",
   ndraws = 100,
   nsamples = lifecycle::deprecated(),
+  varying = lifecycle::deprecated(),
   ...
 )
 ```
@@ -28,60 +33,116 @@ pp_check(
 
 - type:
 
-  One of
-  `bayesplot::available_ppc("grouped", invert = TRUE) %>% stringr::str_remove("ppc_")`
+  String specifying the type of plot. See
+  [`bayesplot::available_ppc()`](https://mc-stan.org/bayesplot/reference/PPC-overview.html)
+  for available plot types, omitting the `"ppc_"` prefix (e.g.,
+  `"dens_overlay"`, `"ribbon"`, `"intervals"`).
 
 - facet_by:
 
-  Name of a column in data modeled as varying effect(s).
+  Name of a grouping column used by group-level effects.
 
 - newdata:
 
   A `tibble` or a `data.frame` containing predictors in the model.
-  Weighted Gaussian predictions and log-likelihoods also require the
-  weights column. If `NULL` (default), the original data is used.
+
+  - If `NULL` (default), the original data is used.
+
+  - Grouping factors must only contain levels from the fitted data. Use
+    `group_effects = FALSE` to predict without group-level effects,
+    e.g., for new groups.
+
+  - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    condition on the response history by default, so `newdata` must
+    include the response. For
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    and
+    [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    missing response histories are supported only in the original fitted
+    data, using retained posterior imputations as histories. Predictions
+    are fresh response draws, including at missing rows. With
+    `arma = "replicate"`,
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    and
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    generate fresh response series recursively, so their `newdata` need
+    only contain predictors and required response auxiliaries.
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    is unavailable when a missing response enters a later observed
+    history.
+
+  - For models with `y | weights()`: Require the weights column except
+    for
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
 
 - prior:
 
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  Logical. Evaluate prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default). The selected draws must be available; prior-only
+  fits require `prior = TRUE`.
 
-- varying:
+- group_effects:
 
-  One of:
+  Group-level effects to include. One of:
 
-  - `TRUE` All varying effects (`fit$pars$varying`).
+  - `TRUE` All group-level deviations.
 
-  - `FALSE` No varying effects ([`c()`](https://rdrr.io/r/base/c.html)).
+  - `FALSE` or `NA` No group-level deviations, i.e., population-level
+    predictions. Like `re_formula = NA` in `{brms}`.
 
-  - `"cp"` or `"predictor"`: All varying effects belonging to that part
-    of the model.
+  - `"cp"` or `"predictor"`: All group-level deviations belonging to
+    that part of the model.
 
-  - Character vector: Only include specified varying parameters - see
-    `fit$pars$varying`.
+  - Character vector of group-level parameter names, e.g.,
+    `c("cp_1_id", "x_2_id")`. **\[experimental\]** `*` is a wildcard,
+    e.g., `"state*_1_id"` selects all levels of a factor and `"*_id"`
+    selects all effects by `id`. See names using `ranef(fit)`. Can be
+    combined, e.g., `c("cp", "sigma_*")`.
 
 - arma:
 
-  Whether to include AR and MA effects.
+  How to include AR and MA effects.
 
-  - `TRUE` Compute the GARMA residual recurrence. Requires the response
-    variable in `newdata`.
+  - `TRUE`: Condition on the observed response history, i.e.,
+    one-step-ahead evaluation of the GARMA residual recurrence. Requires
+    the response variable in `newdata`.
 
-  - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
+  - `FALSE`: Disregard AR and MA effects. For `family = gaussian()`,
     [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
     uses only `sigma` for residuals.
 
+  - `"replicate"`: Generate fresh response series recursively instead of
+    conditioning on the observed responses. Only for predictions:
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`posterior_predict()`](https://lindeloev.github.io/mcp/reference/posterior_epred.mcpfit.md),
+    and `pp_check()` (where it is the default). Applies equally to prior
+    and posterior draws.
+
+  For posterior evaluation of the original data, retained JAGS
+  imputations supply missing GARMA histories. In models with group-level
+  effects, this currently requires all such effects
+  (`group_effects = TRUE`).
+
 - ndraws:
 
-  Number of posterior draws. Note that you may want to use all draws for
-  summary geoms, e.g., `pp_check(fit, type = "ribbon", ndraws = NULL)`.
-  LOO checks always evaluate all posterior draws to preserve their PSIS
-  weights; where supported, `ndraws` is passed to bayesplot to control
-  the number of plotted samples.
+  Integer or `NULL`. Number of posterior draws to return/summarise.
+  `NULL` means "all". More draws trade speed for accuracy.
 
 - nsamples:
 
   Deprecated. Use `ndraws` instead.
+
+- varying:
+
+  Deprecated. Use `group_effects` instead.
 
 - ...:
 
@@ -96,14 +157,15 @@ plots.
 
 Missing responses are omitted from the observed-data check. LOO
 predictive checks use posterior draws and the original fitted data, so
-they do not support `prior = TRUE` or `newdata`.
+they do not support `prior = TRUE` or `newdata`. For GARMA models, they
+default to `arma = TRUE` to match the one-step-ahead log-likelihood used
+for the LOO weights.
 
 ## See also
 
-[`plot.mcpfit`](https://lindeloev.github.io/mcp/reference/plot.mcpfit.md)
-[`pp_eval`](https://lindeloev.github.io/mcp/reference/pp_eval.md)
-
-plot_pars plot_dpar pp_check
+[`plot.mcpfit()`](https://lindeloev.github.io/mcp/reference/plot.mcpfit.md),
+[`plot_pars()`](https://lindeloev.github.io/mcp/reference/plot_pars.md),
+[`predict.mcpfit()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
 
 ## Author
 
@@ -117,6 +179,6 @@ pp_check(demo_fit)
 
 pp_check(demo_fit, type = "ecdf_overlay")
 
-#pp_check(some_varying_fit, type = "loo_intervals", facet_by = "id")
+#pp_check(some_group_fit, type = "loo_intervals", facet_by = "id")
 # }
 ```

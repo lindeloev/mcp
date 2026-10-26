@@ -6,30 +6,53 @@ Index variables, iterations, chains, and draws.
 
 ``` r
 # S3 method for class 'mcpfit'
-niterations(object, prior = FALSE, ...)
+variables(x, ...)
 
 # S3 method for class 'mcpfit'
-nchains(object, prior = FALSE, ...)
+niterations(x, ...)
+
+# S3 method for class 'mcpfit'
+nchains(x, ...)
+
+# S3 method for class 'mcpfit'
+ndraws(x, ...)
+
+variables(x, ...)
+
+ndraws(x)
+
+nchains(x)
+
+niterations(x)
 ```
 
 ## Arguments
 
-- object:
+- x:
 
-  An `mcpfit` object.
-
-- prior:
-
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  An `mcpfit` object or a posterior draws object.
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
+
+## Value
+
+`variables()` returns the names of the draws' variables, e.g., `"cp_1"`
+and `"cp_1_id[John]"`. The other methods return an integer count of
+iterations, chains, or draws.
+
+## Details
+
+These methods require posterior draws. To index prior draws, use e.g.
+`ndraws(as_draws(fit, prior = TRUE))`.
 
 ## Functions
 
-- `niterations(mcpfit)`: Total number of iterations of an `mcpfit`
+- `variables(mcpfit)`: Variable names of an `mcpfit` object, as in
+  `as_draws(fit)`.
+
+- `niterations(mcpfit)`: Number of iterations per chain of an `mcpfit`
   object.
 
 - `nchains(mcpfit)`: Number of chains of an `mcpfit` object.
@@ -37,8 +60,10 @@ nchains(object, prior = FALSE, ...)
 ## Examples
 
 ``` r
+variables(demo_fit)
+#> [1] "cp_1"        "cp_2"        "Intercept_1" "time_2"      "Intercept_3" "time_3"      "sigma_1"    
 niterations(demo_fit)
-#> [1] 3000
-nchains(demo_fit, prior = TRUE)
-#> [1] 3
+#> [1] 500
+nchains(as_draws(demo_fit, prior = TRUE))
+#> [1] 2
 ```

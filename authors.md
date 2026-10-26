@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/lindeloev/mcp/blob/dev/inst/CITATION)
+[`inst/CITATION`](https://github.com/lindeloev/mcp/blob/main/inst/CITATION)
 
 Lindeløv J (2020). “mcp: An R Package for Regression With Multiple
 Change Points.” *OSF Preprints*.

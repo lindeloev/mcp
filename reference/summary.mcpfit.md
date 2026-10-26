@@ -6,13 +6,27 @@ Summarise parameter estimates and model diagnostics.
 
 ``` r
 # S3 method for class 'mcpfit'
-summary(object, width = 0.95, digits = 2, prior = FALSE, verbose = FALSE, ...)
+summary(
+  object,
+  width = 0.95,
+  digits = 2,
+  prior = FALSE,
+  verbose = FALSE,
+  diagnostics = NULL,
+  ...
+)
+
+# S3 method for class 'mcpsummary'
+print(x, digits = attr(x, "mcpsummary")$digits, ...)
 
 # S3 method for class 'mcpfit'
-fixef(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
+fixef(object, width = 0.95, prior = FALSE, verbose = FALSE, dpar = "mu", ...)
 
 # S3 method for class 'mcpfit'
 ranef(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
+
+# S3 method for class 'mcpfit'
+coef(object, width = 0.95, prior = FALSE, verbose = FALSE, ...)
 
 # S3 method for class 'mcpfit'
 print(x, ...)
@@ -32,76 +46,147 @@ print(x, ...)
 
 - digits:
 
-  a non-null value for digits specifies the minimum number of
-  significant digits to be printed in values. The default, NULL, uses
-  getOption("digits"). (For the interpretation for complex numbers see
-  signif.) Non-integer values will be rounded down, and only values
-  greater than or equal to 1 and no greater than 22 are accepted.
+  Positive integer. Number of significant digits of `sd` when printing
+  the summary. Defaults to 2. `mean`, `lower`, `upper`, and `sim` are
+  rounded to the same decimal places in each row. The returned tibble
+  retains the unrounded values.
 
 - prior:
 
-  TRUE/FALSE. Summarise prior instead of posterior?
+  Logical. Summarise prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)?
 
 - verbose:
 
   Logical. Include the `segment` and `dpar` columns. Defaults to `FALSE`
-  for a compact, v0.3.4-compatible summary.
+  for a compact summary.
+
+- diagnostics:
+
+  Named list of diagnostic warning thresholds. Available elements are
+  `rhat = 1.01`, `ess_bulk = 400`, `ess_tail = 400`, `ar = 0.10`, and
+  `ma = 0.10`. An empty list uses these defaults; a partial list
+  overrides only the supplied values. Set an element to `NULL` to
+  disable that diagnostic, or use `FALSE` to disable all configurable
+  diagnostic warnings. In `summary.mcpfit()`, `NULL` inherits the
+  settings used to fit the model, while a list or `FALSE` overrides the
+  diagnostic footer.
 
 - ...:
 
-  Currently ignored
+  Must be empty. Reserved for future use.
 
 - x:
 
   An
   [`mcpfit`](https://lindeloev.github.io/mcp/reference/mcpfit-class.md)
-  object.
+  object, or an `mcpsummary` returned by `summary()`.
+
+- dpar:
+
+  Distributional parameter(s) whose regression coefficients to return,
+  e.g., `"mu"`, `"sigma"`, or `"ar1"` (see
+  [mcp-formula](https://lindeloev.github.io/mcp/reference/mcp-formula.md)).
+  For modeled distributional parameters such as
+  [`sigma()`](https://rdrr.io/r/stats/sigma.html), these coefficients
+  are on the link scale.
 
 ## Value
 
-A data frame with parameter estimates and MCMC diagnostics. Rows are
-ordered by change point first, then `mu`, then the other distributional
-parameters, then `ar`/`ma` components - each ascending by segment. OBS:
-The change point distributions are often not unimodal and symmetric so
-the intervals can be deceiving. Plot them using `plot_pars(fit)`.
+An `mcpsummary` tibble with parameter estimates and MCMC diagnostics. It
+prints with model information, separate tables for change points and
+population-level parameters, and convergence warnings. Rows are ordered
+by change point first, then `mu`, then the other distributional
+parameters, then AR/MA lags - each ascending by segment. Note: The
+change point distributions are often not unimodal and symmetric so the
+intervals can be deceiving. Plot them using `plot_pars(fit)`.
 
-With `verbose = TRUE`:
+Columns:
 
-- `segment` is the segment the parameter belongs to.
+- `segment` (only with `verbose = TRUE`) is the segment the parameter
+  belongs to. For change points, it is the segment that the change point
+  starts, e.g., 2 for `cp_1`.
 
-- `dpar` is the distributional parameter (`"cp"`, `"mu"`, `"sigma"`,
-  `"ar1"`, `"ma1"`, etc.) the parameter belongs to.
+- `dpar` (only with `verbose = TRUE`) is the distributional parameter
+  (e.g., `"mu"`, `"sigma"`, or `"ar1"`; see
+  [mcp-formula](https://lindeloev.github.io/mcp/reference/mcp-formula.md))
+  as accepted by the `dpar` argument of `fixef.mcpfit()`,
+  [`fitted.mcpfit()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+  etc. It is `NA` for change points. See also
+  [`mcp_pars()`](https://lindeloev.github.io/mcp/reference/mcp_pars.md).
 
 - `mean` is the posterior mean
 
-- `lower` and `upper` are the bounds of the central posterior interval
-  given in `width`.
+- `sd` is the posterior standard deviation.
 
-- `Rhat` is the rank-normalized split-Rhat convergence diagnostic.
+- `lower` and `upper` are the lower and upper ends of the central
+  posterior interval given in `width`.
+
+- `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 
 - `ess_bulk` and `ess_tail` are the bulk and tail effective sample
   sizes. Low effective sample sizes are also obvious as poor mixing in
   trace plots (see `plot_pars(fit)`). Read how to deal with such
-  problems [here](https://lindeloev.github.io/mcp/articles/tips.html)
+  problems in [Diagnosing and fixing
+  problems](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
+
+Group-level change-point deviations (`cp_i_id`) follow a hierarchical
+normal distribution around the population-level change point before
+truncation. The group-specific change points are truncated to the
+observed range of x and ordered, so the population-level change point is
+generally close to their mean, but not exactly. Predictor group-level
+deviations (such as `Intercept_1_id`) use standard hierarchical
+zero-mean priors, without these bounds. [Read
+more](https://lindeloev.github.io/mcp/articles/group_effects.html).
 
 For simulated data, the summary contains two additional columns so that
-it is easy to inspect whether the model can recover the parameters. Run
-simulation and summary multiple times to get a sense of the robustness.
+it is easy to inspect whether the model can recover the parameters. They
+are shown when the response was simulated using `fit$simulate()` from a
+model with the same parameters, family, and link. Run simulation and
+summary multiple times to get a sense of the robustness.
 
 - `sim` is the value used to generate the data.
 
 - `match` is `"OK"` if `sim` is contained in the central posterior
-  interval (`lower` to `upper`).
+  interval (`lower` to `upper`). For change points starting a disjoined
+  segment, `sim` only needs to be between the same two adjacent observed
+  `x` as the interval, since the likelihood is identical anywhere
+  between them. Group-level deviations in `ranef()` are relative to
+  their population-level parameter, so they share its error;
+  [`coef()`](https://rdrr.io/r/stats/coef.html) checks the
+  group-specific values directly.
 
 ## Functions
 
-- `fixef(mcpfit)`: Fixed (population-level) effects of `mcpfit`.
+- `print(mcpsummary)`: Print an `mcpsummary` returned by `summary()`:
+  model information, change point and population-level parameters, and
+  diagnostics.
 
-- `ranef(mcpfit)`: Random (varying) effects of `mcpfit`.
+- `fixef(mcpfit)`: Population-level coefficients (fixed effects) of
+  `mcpfit`.
+
+- `ranef(mcpfit)`: Group-level deviations (random effects) of `mcpfit`.
+  Change-point deviations are relative to their population-level change
+  point; `cp_i_<group>_sd` (e.g., `cp_1_id_sd`) is the SD of their
+  normal distribution before truncation. Use
+  [`coef()`](https://rdrr.io/r/stats/coef.html) for group-specific
+  values.
+
+- `coef(mcpfit)`: Group-specific coefficients and change points of
+  `mcpfit`: the population-level parameter plus each group-level
+  deviation, as in `lme4` and `brms`. For example, `cp_1` for
+  `group_col = "id"` and `level = "a"` summarises the draws of
+  `cp_1 + cp_1_id[a]`, which is the change point of group `a`.
+  Deviations without a population-level parameter, e.g., from
+  `(0 + x || id)`, are added to zero. Coefficients of distributional
+  parameters such as [`sigma()`](https://rdrr.io/r/stats/sigma.html) are
+  on the link scale. For simulated data, `sim` is the sum of the
+  simulated values.
 
 - `print(mcpfit)`: Print the posterior summary of an
   [`mcpfit`](https://lindeloev.github.io/mcp/reference/mcpfit-class.md)
-  object.
+  object, or the prior summary with `prior = TRUE`. Without the
+  requested draws, only the model is shown.
 
 ## Author
 
@@ -112,84 +197,76 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 ``` r
 # Typical usage
 summary(demo_fit)
-#> Family: gaussian(link = 'identity')
-#> Iterations: 3000 from 3 chains.
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
+#> Draws: 1000 (2 chains with iter = 500)
 #> Segments:
 #>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
+#>   2: ~ 0 + time
+#>   3: ~ 1 + time
+#> 
+#> Change point parameters:
+#>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+#>  cp_1        31.6   1.7   28.2   34.9   1.00     1012      945 30.0      OK
+#>  cp_2        71.10  0.99  69.48  72.77  1.01      869      676 70.00     OK
 #> 
 #> Population-level parameters:
-#>         name match  sim  mean lower upper Rhat ess_bulk ess_tail
-#>         cp_1       30.0 10.96   8.8  13.4  2.7        4       19
-#>         cp_2       70.0 15.63  14.4  16.3  3.1        3       12
-#>  Intercept_1    OK 10.0  8.35   5.5  12.8  2.5        4       22
-#>       time_2    OK  0.5  0.15  -2.2   1.5  2.8        3       11
-#>  Intercept_3        0.0 11.71  10.3  14.1  3.4        3       11
-#>       time_3    OK -0.2 -0.31  -2.8   1.3  3.0        3       14
-#>      sigma_1        4.0  9.17   5.7  11.7  3.1        3       12
-#> 
-#> Warning: 7 parameters show poor convergence (Rhat > 1.01 or ESS < 400).
+#>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
+#>  Intercept_1  9.97  0.66   8.68  11.24  1.00     1032      747 10.00     OK
+#>  time_2       0.544 0.048  0.454  0.643 1.00     1087      970  0.500    OK
+#>  Intercept_3 14.0   1.4   11.1   16.6   1.00      993      823 15.0      OK
+#>  time_3      -0.206 0.084 -0.373 -0.048 1.00      900      740 -0.300    OK
+#>  sigma_1      3.86  0.29   3.34   4.54  1.00      931      921  3.50     OK
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
-#> Family: gaussian(link = 'identity')
-#> Iterations: 3000 from 3 chains.
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
+#> Draws: 1000 (2 chains with iter = 500)
 #> Segments:
 #>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
+#>   2: ~ 0 + time
+#>   3: ~ 1 + time
+#> 
+#> Change point parameters:
+#>    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
+#>  cp_1        31.637   1.691   29.440   33.777   1.00     1012      945 30.000      OK
+#>  cp_2        71.0983  0.9910  69.7097  72.4884  1.01      869      676 70.0000     OK
 #> 
 #> Population-level parameters:
-#>         name match  sim    mean  lower  upper  Rhat ess_bulk ess_tail
-#>         cp_1       30.0 10.9614  8.784 13.381 2.655        4       19
-#>         cp_2       70.0 15.6302 14.440 16.250 3.054        3       12
-#>  Intercept_1    OK 10.0  8.3516  5.539 12.843 2.540        4       22
-#>       time_2    OK  0.5  0.1523 -2.142  1.501 2.826        3       11
-#>  Intercept_3        0.0 11.7093 10.282 14.095 3.404        3       11
-#>       time_3    OK -0.2 -0.3131 -2.749  1.299 2.951        3       14
-#>      sigma_1        4.0  9.1750  5.749 11.717 3.106        3       12
-#> 
-#> Warning: 7 parameters show poor convergence (Rhat > 1.01 or ESS < 400).
+#>    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
+#>  Intercept_1  9.9675  0.6646   9.1113  10.8454  1.00     1032      747 10.0000     OK
+#>  time_2       0.54358 0.04754  0.48257  0.60258 1.00     1087      970  0.50000    OK
+#>  Intercept_3 13.966   1.386   12.242   15.727   1.00      993      823 15.000      OK
+#>  time_3      -0.20623 0.08367 -0.30784 -0.10085 1.00      900      740 -0.30000    OK
+#>  sigma_1      3.8615  0.2931   3.5054   4.2163  1.00      931      921  3.5000       
 
-# Get the results as a data frame
+# Get the results as a tibble
 results = summary(demo_fit)
-#> Family: gaussian(link = 'identity')
-#> Iterations: 3000 from 3 chains.
-#> Segments:
-#>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
-#> 
-#> Population-level parameters:
-#>         name match  sim  mean lower upper Rhat ess_bulk ess_tail
-#>         cp_1       30.0 10.96   8.8  13.4  2.7        4       19
-#>         cp_2       70.0 15.63  14.4  16.3  3.1        3       12
-#>  Intercept_1    OK 10.0  8.35   5.5  12.8  2.5        4       22
-#>       time_2    OK  0.5  0.15  -2.2   1.5  2.8        3       11
-#>  Intercept_3        0.0 11.71  10.3  14.1  3.4        3       11
-#>       time_3    OK -0.2 -0.31  -2.8   1.3  3.0        3       14
-#>      sigma_1        4.0  9.17   5.7  11.7  3.1        3       12
-#> 
-#> Warning: 7 parameters show poor convergence (Rhat > 1.01 or ESS < 400).
+results$mean
+#> [1] 31.6369306 71.0983320  9.9674657  0.5435759 13.9660544 -0.2062269  3.8615146
 
-# Varying (random) effects
+# Group-level deviations (random effects)
 # ranef(my_fit)
 
 # Summarise prior
 summary(demo_fit, prior = TRUE)
-#> Family: gaussian(link = 'identity')
-#> Iterations: 3000 from 3 chains.
+#> Family: gaussian
+#> Links: mu = identity; sigma = identity
+#> Draws: 1000 (2 chains with iter = 500)
 #> Segments:
 #>   1: response ~ 1
-#>   2: response ~ 1 ~ 0 + time
-#>   3: response ~ 1 ~ 1 + time
+#>   2: ~ 0 + time
+#>   3: ~ 1 + time
+#> 
+#> Change point parameters:
+#>    parameter  mean    sd  lower upper rhat ess_bulk ess_tail   sim match
+#>  cp_1        35    24      2    86    1.00     1004      882 30       OK
+#>  cp_2        66    23     16    98    1.00      975      916 70       OK
 #> 
 #> Population-level parameters:
-#>         name match  sim   mean  lower upper Rhat ess_bulk ess_tail
-#>         cp_1    OK 30.0 37.799   4.23  91.5    1     2673     2481
-#>         cp_2    OK 70.0 60.947  14.47  97.0    1     2459     2898
-#>  Intercept_1    OK 10.0 10.601 -28.21  49.9    1     2811     2902
-#>       time_2    OK  0.5 -0.014  -1.18   1.2    1     2638     2750
-#>  Intercept_3    OK  0.0 10.405 -30.56  50.6    1     2872     2863
-#>       time_3    OK -0.2  0.002  -1.30   1.3    1     2716     2883
-#>      sigma_1    OK  4.0 14.225   0.42  51.8    1     2935     2990
+#>    parameter  mean    sd  lower upper rhat ess_bulk ess_tail   sim match
+#>  Intercept_1 14    18    -23    48    1.00      786      822 10       OK
+#>  time_2       0.01  0.62  -1.23  1.28 1.00      859      956  0.50    OK
+#>  Intercept_3 13    17    -20    48    1.00      920      834 15       OK
+#>  time_3      -0.01  0.63  -1.25  1.24 1.00     1031      980 -0.30    OK
+#>  sigma_1      6.5   9.0    0.1  25.8  1.00      912     1028  3.5     OK
 ```

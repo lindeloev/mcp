@@ -1,11 +1,11 @@
-# Get example models and data
+# Run example models
 
-Get example models and data
+Run example models
 
 ## Usage
 
 ``` r
-mcp_example(name, sample = "post", warn = FALSE, plot = TRUE)
+mcp_example(name, sample = "post", plot = TRUE)
 
 mcp_example_data(name)
 ```
@@ -16,27 +16,30 @@ mcp_example_data(name)
 
   Name of the example. One of:
 
-  - `"demo"`: Two change points between intercepts and joined/disjoined
-    slopes.
-
-  - `"ar"`: One change point in autoregressive residuals.
+  - `"ar"`: One change point in autoregressive residuals (the `ar1`
+    dpar)
 
   - `"binomial"`: Binomial with two change points. Much like `"demo"` on
     a logit scale.
 
-  - `"group"`: Group-level (random) intercepts and factor effects across
-    a change point.
+  - `"demo"`: Two change points between intercepts and joined/disjoined
+    slopes.
+
+  - `"group_mu"`: Group-level deviations in the predictor part (random
+    intercepts/slopes) across a change point.
+
+  - `"group_cp"`: Group-level change-point deviations (random effects).
 
   - `"intercepts"`: An intercept-only change point.
+
+  - `"missing"`: Missing data imputation (NAs in response variable y).
 
   - `"multiple"`: Multiple regression with categorical predictors and
     interactions.
 
-  - `"quadratic"`: A change point to a quadratic segment.
+  - `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
 
-  - `"varying"`: Varying / hierarchical change points.
-
-  - `"variance"`: A change in variance, including a variance slope.
+  - `"void"`: Missing data around change points.
 
 - sample:
 
@@ -44,32 +47,25 @@ mcp_example_data(name)
 
   - `"post"`: Sample the posterior.
 
-  - `"prior"`: Sample only the prior. Plots, summaries, etc. will use
-    the prior. This is useful for prior predictive checks.
+  - `"prior"`: Sample only the prior. Use `prior = TRUE` explicitly in
+    plots, summaries, and other methods to select prior draws.
 
   - `"both"`: Sample both prior and posterior. Plots, summaries, etc.
-    will default to using the posterior. The prior only has effect when
-    doing Savage-Dickey density ratios in
-    [`hypothesis`](https://lindeloev.github.io/mcp/reference/hypothesis.md).
+    will default to using the posterior. Use `prior = TRUE` to select
+    prior draws.
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
-    sample. This is useful if you only want to check prior strings
-    (fit\$prior), the JAGS model (fit\$jags_code), etc.
-
-- warn:
-
-  Logical. Warn about non-convergence (`Rhat > 1.01` or `ESS < 400`)
-  after sampling? Defaults to `TRUE`.
+    draws (an "empty fit"). This is useful if you only want to check
+    prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
 
 - plot:
 
-  Logical. Plot the fitted example? No plot is produced when
-  `sample = FALSE`.
+  Logical. Plot the fitted example? Requires sample != "none".
 
 ## Value
 
-An `mcpfit`, enriched with a `$call` field. It contains the code to
-reproduce the data and the fit.
+An `mcpfit`, enriched with an `$example_code` field. It contains the
+code to reproduce the data and the fit.
 
 ## Functions
 
@@ -84,32 +80,25 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 ``` r
 # \donttest{
 fit = mcp_example("multiple")
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 120
-#>    Unobserved stochastic nodes: 15
-#>    Total graph size: 4259
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 4.7 seconds
 
-print(fit$call) # See how the data was simulated
+print(fit$example_code) # See how the data was simulated
+#> # mcp_example() arguments
+#> sample = "post"
+#> plot = TRUE
+#> 
 #> # Define model
 #> model = list(
-#>   y ~ 1 + x:group + z,
-#>   ~ 1 + x + group,
-#>   ~ 0 + I(x^2)
+#>   y ~ 1 + x:state + z,        # Intercept_1, by-state slopes (x.stateA_1, ...), z_1
+#>   ~ 1 + x + state,            # At cp_1: Disjoined (Intercept_2, x_2, stateB_2, ...); z not included
+#>   ~ 0 + I(x^2) + same(state)  # At cp_2: Joined quadratic (xE2_3); reuse stateB_2, ...
 #> )
 #> 
 #> # Simulate data
 #> set.seed(42)
 #> data = data.frame(
-#>   x = 1:120,
-#>   group = rep(c('A', 'B', 'C', 'D'), 30),
-#>   z = rnorm(120, mean = 1:120, sd = 25),
+#>   x = 1:132,
+#>   state = rep(c('A', 'B', 'C', 'D'), 33),
+#>   z = rnorm(132, mean = 1:132, sd = 25),
 #>   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 #> )
 #> empty = mcp(model, data, sample = FALSE, par_x = 'x')
@@ -119,54 +108,59 @@ print(fit$call) # See how the data was simulated
 #> 
 #>   Intercept_1 = 10,
 #>   z_1 = 0.2,
-#>   xgroupA_1 = -0.75,
-#>   xgroupB_1 = -0.25,
-#>   xgroupC_1 = 0.25,
-#>   xgroupD_1 = 0.75,
+#>   x.stateA_1 = -0.30,
+#>   x.stateB_1 = -0.10,
+#>   x.stateC_1 = 0.25,
+#>   x.stateD_1 = 0.50,
 #> 
-#>   Intercept_2 = 10,
-#>   x_2 = -1,
-#>   groupB_2 = 15,
-#>   groupC_2 = 30,
-#>   groupD_2 = 45,
+#>   Intercept_2 = 15,
+#>   x_2 = -0.8,
+#>   stateB_2 = 10,
+#>   stateC_2 = 20,
+#>   stateD_2 = 30,
 #> 
-#>   xE2_3 = 0.2,
+#>   xE2_3 = 0.02,
 #> 
 #>   sigma_1 = 5
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, par_x = 'x', sample = sample, warn = warn, seed = 42)
+#> fit = mcp(model, data, par_x = 'x', sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
 #>   set.seed(42)
-#>   print(plot(fit, color_by = 'group') + ggplot2::labs(title = 'plot(fit, color_by = "group")'))
+#>   print(plot(fit) + ggplot2::labs(title = 'fit = mcp_example("multiple"); plot(fit)'))
 #> }
 
 # Without sampling
-empty = mcp_example("binomial", sample = FALSE, plot = FALSE)
+empty = mcp_example("binomial", sample = "none", plot = FALSE)
 print(empty)
-#> Family: binomial(link = 'logit')
+#> Family: binomial
+#> Links: mu = logit
 #> Segments:
 #>   1: y | trials(N) ~ 1
-#>   2: y | trials(N) ~ 1 ~ 0 + x
-#>   3: y | trials(N) ~ 1 ~ 1 + x
+#>   2: ~ 0 + x
+#>   3: ~ 1 + x
 #> 
-#> No samples. Nothing to summarise.
-print(empty$call)
+#> No posterior draws. Nothing to summarise.
+print(empty$example_code)
+#> # mcp_example() arguments
+#> sample = "none"
+#> plot = FALSE
+#> 
 #> # Define model
 #> model = list(
-#>   y | trials(N) ~ 1,  # constant rate
-#>   ~ 0 + x,  # joined changing rate
-#>   ~ 1 + x  # disjoined changing rate
+#>   y | trials(N) ~ 1,  # Plateau (Intercept_1): constant success probability
+#>   ~ 0 + x,            # At cp_1: Joined slope (x_2) on the logit scale
+#>   ~ 1 + x             # At cp_2: Disjoined slope (Intercept_3, x_3)
 #> )
 #> 
 #> # Simulate data
 #> set.seed(42)
 #> data = data.frame(
 #>   x = 1:100,
-#>   N = base::sample(10, 100, replace=TRUE),
+#>   N = base::sample(15:25, 100, replace=TRUE),
 #>   y = 0.  # Numeric placeholder that is valid for every sampled trial count.
 #> )
 #> empty = mcp(model, data, family = binomial(), sample = FALSE)
@@ -180,30 +174,16 @@ print(empty$call)
 #> )
 #> 
 #> # Run sampling
-#> fit = mcp(model, data, family = binomial(), sample = sample, warn = warn, seed = 42)
+#> fit = mcp(model, data, family = binomial(), sample = sample, seed = 42)
 #> 
 #> # Illustrative plot
 #> if (plot) {
 #>   set.seed(42)
-#>   print(plot(fit, q_fit = TRUE) + ggplot2::labs(title = 'plot(fit, q_fit = TRUE)'))
+#>   print(plot(fit, interval = "fitted") + ggplot2::labs(title = 'fit = mcp_example("binomial"); plot(fit, interval = "fitted")'))
 #> }
 
 # Now sample this model
-fit2 = mcp(empty$model, empty$data, family = empty$family)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 6
-#>    Total graph size: 2229
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 2.2 seconds
-#> Warning: Some parameters may not have converged well:
-#>   * ess_bulk or ess_tail < 400: cp_2
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
+fit2 = mcp(empty$model, empty$data, family = empty$family, seed = 42)
 plot(fit2)
 
 # }

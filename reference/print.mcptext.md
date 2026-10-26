@@ -1,6 +1,6 @@
 # Nice Printing of Multiline Texts
 
-Useful for `print(fit$jags_code)`, `print(mcp_demo$call)`, etc.
+Useful for `print(fit$jags_code)`, `print(mcp_demo$example_code)`, etc.
 
 ## Usage
 
@@ -17,7 +17,11 @@ print(x, ...)
 
 - ...:
 
-  Currently ignored.
+  Must be empty. Reserved for future use.
+
+## Value
+
+`x`, invisibly.
 
 ## Author
 

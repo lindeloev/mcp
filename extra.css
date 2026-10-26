@@ -8,3 +8,23 @@ h2 {
 li {
     margin-bottom: 5px;
 }
+
+/* Horizontal scrolling for tables, matching code block overflow */
+table,
+.table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    display: table;
+}
+
+table th,
+table td,
+table td code {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+}

@@ -1,0 +1,214 @@
+# Posterior prediction draws for `mcpfit` objects
+
+Methods for the `{rstantools}` posterior-prediction generics. They
+return a draws-by-observation matrix and enable `{tidybayes}` workflows
+such as `add_epred_draws()`, `add_predicted_draws()`, and
+`add_linpred_draws()`. mcp exports these generics, so they work without
+`{rstantools}`. If `{rstantools}` or `{brms}` masks them, their generics
+dispatch to the same methods.
+
+## Usage
+
+``` r
+# S3 method for class 'mcpfit'
+posterior_epred(
+  object,
+  newdata = NULL,
+  draws = NULL,
+  ndraws = NULL,
+  re.form = NULL,
+  re_formula = NULL,
+  dpar = NULL,
+  seed = NULL,
+  rate = FALSE,
+  ...
+)
+
+# S3 method for class 'mcpfit'
+posterior_predict(
+  object,
+  newdata = NULL,
+  draws = NULL,
+  ndraws = NULL,
+  re.form = NULL,
+  re_formula = NULL,
+  seed = NULL,
+  rate = FALSE,
+  arma = TRUE,
+  ...
+)
+
+# S3 method for class 'mcpfit'
+posterior_linpred(
+  object,
+  transform = FALSE,
+  newdata = NULL,
+  draws = NULL,
+  ndraws = NULL,
+  re.form = NULL,
+  re_formula = NULL,
+  dpar = NULL,
+  seed = NULL,
+  ...
+)
+
+posterior_epred(object, ...)
+
+posterior_predict(object, ...)
+
+posterior_linpred(object, ...)
+```
+
+## Arguments
+
+- object:
+
+  An `mcpfit` object.
+
+- newdata:
+
+  A `tibble` or a `data.frame` containing predictors in the model.
+
+  - If `NULL` (default), the original data is used.
+
+  - Grouping factors must only contain levels from the fitted data. Use
+    `group_effects = FALSE` to predict without group-level effects,
+    e.g., for new groups.
+
+  - For models with [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()`:
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    condition on the response history by default, so `newdata` must
+    include the response. For
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    and
+    [`residuals()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    missing response histories are supported only in the original fitted
+    data, using retained posterior imputations as histories. Predictions
+    are fresh response draws, including at missing rows. With
+    `arma = "replicate"`,
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    and
+    [`posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+    generate fresh response series recursively, so their `newdata` need
+    only contain predictors and required response auxiliaries.
+    [`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    is unavailable when a missing response enters a later observed
+    history.
+
+  - For models with `y | weights()`: Require the weights column except
+    for
+    [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    and
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
+
+- draws, ndraws:
+
+  Number of posterior draws to return. `draws` follows the
+  `{rstantools}` convention; `ndraws` is the mcp spelling. Supply at
+  most one.
+
+- re.form, re_formula:
+
+  Group-level effects to include. `NULL` includes all effects and `NA`
+  excludes them.
+
+- dpar:
+
+  Distributional parameter for `posterior_epred()` and
+  `posterior_linpred()`; `NULL` uses the expected response.
+
+- seed:
+
+  Optional integer seed for draw selection and posterior prediction.
+
+- rate:
+
+  Logical scalar. For binomial models, return counts (`rate = FALSE`,
+  the default for
+  [`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+  and
+  [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md))
+  or the observed or expected success proportion (`rate = TRUE`).
+  Predictions and count-scale fitted values require a trials column in
+  `newdata`. Distributional parameters such as `dpar = "mu"` evaluate
+  the parameter itself (e.g., success probability) and are unaffected by
+  `rate`. Other families do not support `rate = TRUE`. For rates per
+  unit of exposure in models with `offset(log(exposure))`, set
+  `exposure = 1` in `newdata`.
+
+- ...:
+
+  Must be empty. Reserved for future use.
+
+- arma:
+
+  How to include AR and MA effects.
+
+  - `TRUE`: Condition on the observed response history, i.e.,
+    one-step-ahead evaluation of the GARMA residual recurrence. Requires
+    the response variable in `newdata`.
+
+  - `FALSE`: Disregard AR and MA effects. For `family = gaussian()`,
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+    uses only `sigma` for residuals.
+
+  - `"replicate"`: Generate fresh response series recursively instead of
+    conditioning on the observed responses. Only for predictions:
+    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+    `posterior_predict()`, and
+    [`pp_check()`](https://lindeloev.github.io/mcp/reference/pp_check.md)
+    (where it is the default). Applies equally to prior and posterior
+    draws.
+
+  For posterior evaluation of the original data, retained JAGS
+  imputations supply missing GARMA histories. In models with group-level
+  effects, this currently requires all such effects
+  (`group_effects = TRUE`).
+
+- transform:
+
+  For `posterior_linpred()`, return the inverse-linked parameter on the
+  response scale instead of the linear predictor. For binomial models,
+  this returns the success probability rather than expected counts.
+
+## Value
+
+A numeric `N_draws` by `nrow(newdata)` matrix.
+
+## Details
+
+For GARMA models, `posterior_predict()` conditions on the observed
+response history, just like
+[`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
+Use `arma = "replicate"` in either method to generate fresh response
+histories recursively. Missing responses in the original data are filled
+with retained imputations only to supply histories. With `arma = TRUE`,
+`posterior_predict()` draws from the response distributions whose means
+`posterior_epred()` returns, including at missing rows. These methods
+require posterior draws. For prior prediction, use
+[`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+with `prior = TRUE`; `arma` selects the same behavior.
+
+For binomial models, `posterior_epred()` and `posterior_predict()` (and
+corresponding `{tidybayes}` workflows such as `add_epred_draws()`)
+follow `{brms}` and `{rstantools}` conventions by returning values on
+the outcome count scale (`rate = FALSE`), i.e., expected counts \\E\[Y\]
+= n\mu\\ and simulated counts in \\\\0, \dots, n\\\\, matching
+[`fitted()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+and
+[`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md).
+Use `rate = TRUE` for proportions. To obtain the success probability
+parameter \\\mu\\ on the \\\[0, 1\]\\ scale regardless of trial counts,
+pass `dpar = "mu"`. In contrast, `posterior_linpred(transform = TRUE)`
+returns the inverse-linked parameter directly, evaluating success
+probabilities \\\mu\\ in \\\[0, 1\]\\ rather than counts.
+
+## See also
+
+[`fitted.mcpfit()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md),
+[`predict.mcpfit()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)

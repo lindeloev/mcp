@@ -1,33 +1,21 @@
 # Information Criteria for Model Comparison
 
 Compare models using
-[`loo_compare`](https://mc-stan.org/loo/reference/loo_compare.html) and
+[`loo_compare`](https://mc-stan.org/loo/reference/loo_compare.html)
+(re-exported by mcp) and
 [`loo_model_weights`](https://mc-stan.org/loo/reference/loo_model_weights.html).
-more in [`loo`](https://mc-stan.org/loo/reference/loo.html).
+Read more in [`loo`](https://mc-stan.org/loo/reference/loo.html) and see
+[worked examples on the mcp
+website](https://lindeloev.github.io/mcp/articles/comparison.html#cross-validation).
 
 ## Usage
 
 ``` r
 # S3 method for class 'mcpfit'
-loo(
-  x,
-  ...,
-  pointwise = FALSE,
-  varying = TRUE,
-  arma = TRUE,
-  ndraws = NULL,
-  nsamples = lifecycle::deprecated()
-)
+loo(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 
 # S3 method for class 'mcpfit'
-waic(
-  x,
-  ...,
-  varying = TRUE,
-  arma = TRUE,
-  ndraws = NULL,
-  nsamples = lifecycle::deprecated()
-)
+waic(x, ..., ndraws = NULL, nsamples = lifecycle::deprecated())
 ```
 
 ## Arguments
@@ -40,44 +28,15 @@ waic(
 
 - ...:
 
-  Currently ignored
-
-- pointwise:
-
-  `TRUE` calls calls
-  [`loo.function`](https://mc-stan.org/loo/reference/loo.html) which is
-  slower but more memory efficient. `FALSE` calls the default
-  [`loo`](https://mc-stan.org/loo/reference/loo.html).
-
-- varying:
-
-  One of:
-
-  - `TRUE` All varying effects (`fit$pars$varying`).
-
-  - `FALSE` No varying effects ([`c()`](https://rdrr.io/r/base/c.html)).
-
-  - `"cp"` or `"predictor"`: All varying effects belonging to that part
-    of the model.
-
-  - Character vector: Only include specified varying parameters - see
-    `fit$pars$varying`.
-
-- arma:
-
-  Whether to include AR and MA effects.
-
-  - `TRUE` Compute the GARMA residual recurrence. Requires the response
-    variable in `newdata`.
-
-  - `FALSE` Disregard AR and MA effects. For `family = gaussian()`,
-    [`predict()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
-    uses only `sigma` for residuals.
+  For `loo()`: further arguments passed to
+  [`loo`](https://mc-stan.org/loo/reference/loo.html), e.g., `cores` or
+  `save_psis`. For `waic()`: must be empty.
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws used for the
-  log-likelihood or information criterion. `NULL` uses all draws.
+  Integer or `NULL`. Target number of posterior draws used for the
+  log-likelihood or information criterion. Draws are balanced across
+  chains, so the actual number may be rounded. `NULL` uses all draws.
 
 - nsamples:
 
@@ -93,7 +52,26 @@ Observationwise PSIS-LOO and WAIC are problematic for AR/MA models
 because both treat individual conditional likelihood terms as validation
 units. In PSIS-LOO, a held-out response also remains in the conditioning
 history of later terms. Prefer leave-future-out or blocked
-cross-validation, which are not currently implemented in mcp.
+cross-validation, which are not currently implemented in mcp. When a
+missing response enters a later observed GARMA history, `loo()`,
+`waic()`, and
+[`log_lik()`](https://lindeloev.github.io/mcp/reference/execute-mcp-model.md)
+with `arma = TRUE` are unavailable: the observed-data likelihood
+requires integrating over that missing history, which mcp does not
+currently implement.
+
+`loo()` and `waic()` evaluate the likelihood of the fitted model,
+including all group-level effects and AR/MA terms. Evaluating an
+information criterion with fitted components dropped post-hoc violates
+the PSIS identity because draws come from the full model's posterior;
+comparing a reduced model requires refitting it.
+`log_lik(fit, group_effects = FALSE)` and `log_lik(fit, arma = FALSE)`
+remain available as conditional or counterfactual diagnostics.
+
+When `ndraws` is supplied, draws are balanced across chains and thinned
+at evenly spaced midpoint iterations. This preserves MCMC chain
+identities and chronological order, allowing `relative_eff()` to be
+computed directly.
 
 ## Functions
 
@@ -109,49 +87,20 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 # \donttest{
 # Define two models and sample them
 # future::plan(future::multisession, workers = 3)  # Uncomment for parallel sampling
-data = mcp_example_data("intercepts")  # Get some simulated data.
-model1 = list(y ~ 1 + x, ~ 1)
-model2 = list(y ~ 1 + x)  # Without a change point
-fit1 = mcp(model1, data)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 5
-#>    Total graph size: 1631
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 1.3 seconds
-#> Warning: Some parameters may not have converged well:
-#>   * Rhat > 1.01: Intercept_1 and cp_1 and x_1
-#>   * ess_bulk or ess_tail < 400: Intercept_1 and cp_1 and x_1
-#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`adapt` or simplifying the model before trusting these results.
-fit2 = mcp(model2, data)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 100
-#>    Unobserved stochastic nodes: 3
-#>    Total graph size: 928
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 0.6 seconds
+set.seed(42)
+data = data.frame(x = seq(-1, 1, length.out = 100))
+data$y = 1 + 2 * data$x + rnorm(100, sd = 0.3)
+model1 = list(y ~ 1 + x)
+model2 = list(y ~ 1)
+fit1 = mcp(model1, data, seed = 42)
+fit2 = mcp(model2, data, par_x = "x", seed = 42)
 
 # Compute LOO for each and compare (works for waic(fit) too)
-fit1$loo = loo(fit1)
-#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-fit2$loo = loo(fit2)
-loo::loo_compare(fit1$loo, fit2$loo)
-#>   model elpd_diff se_diff p_worse       diag_diff      diag_elpd
-#>  model1       0.0     0.0      NA                 1 k_psis > 0.7
-#>  model2      -0.8     2.8    0.61 |elpd_diff| < 4               
-#> 
-#> Diagnostic flags present.
-#> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-#> or https://mc-stan.org/loo/reference/loo-glossary.html.
+loo1 = loo(fit1)
+loo2 = loo(fit2)
+loo_compare(loo1, loo2)
+#>   model elpd_diff se_diff p_worse diag_diff diag_elpd
+#>  model1       0.0     0.0      NA                    
+#>  model2    -133.8     8.1    1.00                    
 # }
 ```

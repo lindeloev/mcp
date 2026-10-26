@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -33,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcp</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,30 +44,38 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-general-usage" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">General usage</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-general-usage">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-modeling" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Modeling</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-modeling">
 <li><a class="dropdown-item" href="../articles/formulas.html">Formulas</a></li>
-    <li><a class="dropdown-item" href="../articles/priors.html">Priors</a></li>
-    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/varying.html">Random/varying effects</a></li>
-    <li><a class="dropdown-item" href="../articles/variance.html">Modeling variance</a></li>
+    <li><a class="dropdown-item" href="../articles/group_effects.html">Group-level (random) effects</a></li>
+    <li><a class="dropdown-item" href="../articles/dpar.html">Variance and other distributional parameters</a></li>
     <li><a class="dropdown-item" href="../articles/arma.html">Time series and autocorrelation</a></li>
-    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-glm" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">GLM</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-glm">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-families" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Families</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-families">
 <li><a class="dropdown-item" href="../articles/families.html">Supported families and link functions</a></li>
     <li><a class="dropdown-item" href="../articles/poisson.html">Poisson and negative binomial</a></li>
     <li><a class="dropdown-item" href="../articles/binomial.html">Binomial and Bernoulli</a></li>
   </ul>
 </li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-inference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Inference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-inference">
+<li><a class="dropdown-item" href="../articles/priors.html">Using priors</a></li>
+    <li><a class="dropdown-item" href="../articles/default_priors.html">Default priors</a></li>
+    <li><a class="dropdown-item" href="../articles/comparison.html">Hypotheses and model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/predict.html">Fits and predictions</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting.html">Plotting</a></li>
+    <li><a class="dropdown-item" href="../articles/missing.html">Missing responses and imputation</a></li>
+  </ul>
+</li>
 <li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-other" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-other">
-<li><a class="dropdown-item" href="../articles/packages.html">Comparison to other packages</a></li>
-    <li><a class="dropdown-item" href="../articles/tips.html">Tips, tricks, and debugging</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-implementation" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Implementation</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-implementation">
+<li><a class="dropdown-item" href="../articles/implementation.html">From formulas to sampler code</a></li>
+    <li><a class="dropdown-item" href="../articles/tips.html">Diagnosing and fixing problems</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
@@ -93,8 +102,9 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Diagnosing and fixing problems</h1>
             
+            <h4 data-toc-skip class="date">2026-10-26</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/dev/vignettes/tips.Rmd" class="external-link"><code>vignettes/tips.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/lindeloev/mcp/blob/main/vignettes/tips.Rmd" class="external-link"><code>vignettes/tips.Rmd</code></a></small>
       <div class="d-none name"><code>tips.Rmd</code></div>
     </div>
 
@@ -104,22 +114,48 @@
 <h2 id="convergence">Convergence<a class="anchor" aria-label="anchor" href="#convergence"></a>
 </h2>
 <p>A common problem when using MCMC is lacking convergence between
-chains. This will show up as large <code>rhat</code> values (&gt; 1.1 is
-a common criterion) and non-converging lines in
-<code>plot_pars(fit)</code>.</p>
+chains. This will show up as large <code>rhat</code> values, low
+<code>ess_bulk</code> or <code>ess_tail</code>, and non-converging lines
+in <code>plot_pars(fit)</code>. By default, <code><a href="../reference/mcp.html">mcp()</a></code> and
+<code><a href="../reference/summary.mcpfit.html">summary()</a></code> warn when <code>rhat &gt; 1.01</code> or ESS &lt;
+400.</p>
 <ul>
 <li><p>The first thing to try is always to make the model warm up longer
-to see if it reaches convergence later:
-<code>mcp(fit, data, adapt = 10000)</code>.</p></li>
+and sample longer, e.g.:
+<code>mcp(model, data, warmup = 10000, iter = 20000)</code>. This is
+often needed with many (e.g., 5+) change points.</p></li>
+<li><p>Change points can have several modes, e.g., at two candidate
+jumps in the data. Chains may stay in one mode for thousands of
+iterations, so sampling longer may not help. Look for modes using
+<code>plot_pars(fit, regex_pars = "^cp_")</code>. If there are several,
+the posterior is genuinely uncertain between them, and more chains
+(e.g., <code>mcp(..., chains = 6)</code>) give a better sense of how
+probable each one is.</p></li>
+<li><p>Center predictors other than the change-point variable, e.g.,
+<code>data$z = data$z - mean(data$z)</code>. When <code>z</code> is far
+from zero, its coefficient and the intercept are strongly correlated,
+which slows sampling of both and, in turn, the change points. After
+centering, the intercept is the value at the mean of
+<code>z</code>.</p></li>
 <li><p>It can be a sign of a deeper non-identifiability in the model.
 This will show up as strong correlations in the joint distribution of
 any pair of implicated parameters:
 <code>plot_pars(fit, pars = c("Intercept_1", "Intercept_2"), type = "hex")</code>.
 This may give you ideas how to change the model.</p></li>
-<li><p>You can set the initial values for the JAGS sampler using, e.g.,
-<code>mcp(..., inits = list(cp_1 = 20, Intercept_2 = -20, etc.))</code>.
-This will be passed to <code>jags.fit</code> and you can see more
-documentation there.</p></li>
+<li>
+<p>You can set the initial values for the JAGS sampler using, e.g.,
+<code>mcp(..., inits = list(cp_1 = 30, sigma_1 = 2))</code>. Names must
+be parameters in <code>mcp_pars(fit)</code>. Parameters with constant
+priors and parameters reparameterized for faster sampling cannot be
+initialized. Initial values for change points must be ordered.</p>
+<ul>
+<li>By default, all chains start at the same change points. Change
+points cannot pass each other, so a chain that starts with change points
+in the wrong places may get stuck there. If you give chains different
+change point inits, disagreement between chains may reflect poor
+starting points rather than a problem with the model.</li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section level2">
@@ -133,10 +169,12 @@ fitting, e.g.,
 pool is reused across calls. Shut it down afterward with
 <code>future::plan(future::sequential)</code>. Without a parallel future
 plan, chains run sequentially.</p></li>
-<li><p>More data usually means better identifiability and faster
-convergence. Lower the adaption period period using, e.g.,
-<code>mcp(..., adapt = 300)</code>. This is also sometimes called
-“burnin”.</p></li>
+<li><p>While more data usually slows warmup and sampling, it also
+typically has better identifiability and faster convergence. You can
+therefore try reducing both, e.g.,
+<code>mcp(..., warmup = 300, iter = 1000)</code>. For JAGS, warmup
+iterations are used for sampler adaptation and discarded before
+sampling.</p></li>
 </ul>
 </div>
 <div class="section level2">
@@ -144,21 +182,20 @@ convergence. Lower the adaption period period using, e.g.,
 </h2>
 <p>Most of these problems should stem from inappropriate priors and such
 problems may be exacerbated by fragile link functions (e.g.,
-<code>binomial(link = "identity")</code>. The article on <a href="https://lindeloev.github.io/mcp/articles/priors.html">priors in
-mcp</a> may be helpful, but in particular:</p>
+<code>binomial(link = "identity")</code>). The article on <a href="../articles/priors.html">priors in mcp</a> may be helpful, but in
+particular:</p>
 <ul>
-<li><p>Errors on “directed cycle” usually stems from using parameters in
+<li><p>Errors on “directed cycle” usually stem from using parameters in
 priors. For example, if you set
 <code>prior = list(Intercept_1 = "dnorm(Intercept_2, 1)", Intercept_2 = "dnorm(Intercept_1, 1)")</code>
 this is an infinite regress.</p></li>
 <li><p>Errors on “incompatible with parent nodes” usually stem from
-impossible values. For example, the implicit <code>sigma_1</code> in a
-model without <code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> is an SD, so a custom normal prior
-should be truncated above zero. Coefficients in an explicit
-<code><a href="https://rdrr.io/r/stats/sigma.html" class="external-link">sigma()</a></code> model are instead unconstrained log-SD values and
-do not need positive truncation.</p></li>
+impossible values. For example, setting
+<code>prior = list(sigma_1 = -1)</code> when the sigma-link is identity
+or setting <code>prior = list(cp_1 = 10, cp_2 = 5)</code>, which are not
+ordered.</p></li>
 </ul>
-<p>If you encounter these or other problems, don’t hesitate to <a href="https://github.com/lindeloev/mcp/issues" class="external-link">raise a Github Issue</a>,
+<p>If you encounter problems not readily resolved, don’t hesitate to <a href="https://github.com/lindeloev/mcp/issues" class="external-link">raise a Github Issue</a>,
 asking for help or filing a bug report.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

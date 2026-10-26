@@ -13,7 +13,7 @@ plot_pars(
   type = "combo",
   ncol = 1,
   prior = FALSE,
-  nvariables = 5,
+  npars = 5,
   ask = TRUE
 )
 ```
@@ -32,25 +32,25 @@ plot_pars(
 
   - Vector of parameter names.
 
-  - `"population"` plots all population parameters.
+  - `"population"` plots all population-level parameters.
 
-  - `"varying"` plots all varying effects. To plot a particular varying
-    effect, use `regex_pars = "^name"`.
+  - `"group"` plots all group-level deviations (random effects). To plot
+    a particular group-level effect, use `regex_pars = "^name"`.
 
 - regex_pars:
 
   Vector of regular expressions. This will typically just be the
   beginning of the parameter name(s), i.e., "^cp\_" plots all change
-  points, "^my_varying" plots all levels of a particular varying effect,
-  and "^cp\_\|^my_varying" plots both.
+  points, "^my_group_effect" plots all levels of a particular
+  group-level effect, and "^cp\_\|^my_group_effect" plots both.
 
 - type:
 
   String or vector of strings. Calls `bayesplot::mcmc_>>type<<()`.
   Common calls are "combo", "trace", and "dens_overlay". Current options
-  include 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens',
-  'dens_chains', 'dens_overlay', 'hist', 'intervals', 'rank_hist',
-  'rank_overlay', 'trace', 'trace_highlight', and 'violin".
+  are 'acf', 'acf_bar', 'areas', 'areas_ridges', 'combo', 'dens',
+  'dens_chains', 'dens_overlay', 'hex', 'hist', 'intervals', 'pairs',
+  'rank_hist', 'rank_overlay', 'trace', 'trace_highlight', and 'violin'.
 
 - ncol:
 
@@ -59,13 +59,18 @@ plot_pars(
 
 - prior:
 
-  TRUE/FALSE. Plot using prior samples? Useful for
-  `mcp(..., sample = "both")`
+  Logical. Plot prior draws (`TRUE`) instead of posterior draws
+  (`FALSE`, default)? Useful for `mcp(..., sample = "both")`. Prior
+  draws show the marginal priors, e.g., of ordered change points, rather
+  than the specified priors in
+  [`prior_summary()`](https://lindeloev.github.io/mcp/reference/prior_summary.md).
 
-- nvariables:
+- npars:
 
-  Positive integer. Maximum number of parameters plotted per page. The
-  default of 5 follows `brms::plot.brmsfit()`.
+  Positive integer or `NULL` / `Inf`. Maximum number of parameters
+  plotted per page. Set to `NULL` or `Inf` to plot all parameters on a
+  single page. The default of 5 follows
+  [`brms::plot.brmsfit()`](https://paulbuerkner.com/brms/reference/plot.brmsfit.html).
 
 - ask:
 
@@ -80,23 +85,25 @@ multiple pages, an invisible list of ggplot2 objects.
 ## Details
 
 For other `type`, it calls `bayesplot::mcmc_type()`. Use these directly
-on `as.mcmc(fit)` or `as_draws(fit)` if you want finer control of
-plotting, e.g., `bayesplot::mcmc_dens(as.mcmc(fit))`. There are also a
-number of useful plots in the coda package, i.e.,
-`coda::gelman.plot(as.mcmc(fit))` and
-`coda::crosscorr.plot(as.mcmc(fit))`
+on `fit` if you want finer control of plotting, e.g.,
+`bayesplot::mcmc_dens(fit)`. There are also a number of useful plots in
+the coda package, e.g., `coda::gelman.plot(coda::as.mcmc(fit))` and
+`coda::crosscorr.plot(coda::as.mcmc(fit))`
 
 In any case, if you see a few erratic lines or parameter estimates, this
-is a sign that you may want to increase argument 'adapt' and 'iter' in
-[`mcp`](https://lindeloev.github.io/mcp/reference/mcp.md).
+is a sign that you may want to increase argument 'warmup' and 'iter' in
+[`mcp`](https://lindeloev.github.io/mcp/reference/mcp.md). [Read
+more](https://lindeloev.github.io/mcp/articles/tips.html#convergence).
 
-Up to `nvariables` parameters are shown on each page. Multi-page plots
-are printed in sequence; in interactive use, `ask = TRUE` pauses between
+Up to `npars` parameters are shown on each page. Multi-page plots are
+printed in sequence; in interactive use, `ask = TRUE` pauses between
 pages.
 
 ## See also
 
-plot_dpar pp_check
+[`plot.mcpfit()`](https://lindeloev.github.io/mcp/reference/plot.mcpfit.md),
+[`plot_dpar()`](https://lindeloev.github.io/mcp/reference/plot.mcpfit.md),
+[`pp_check()`](https://lindeloev.github.io/mcp/reference/pp_check.md)
 
 ## Author
 
@@ -110,25 +117,33 @@ plot_pars(demo_fit)
 
 
 
-if (FALSE) { # \dontrun{
+# \donttest{
 # More options
 plot_pars(demo_fit, regex_pars = "^cp_")  # Plot only change points
+
 plot_pars(demo_fit, pars = c("Intercept_3", "time_3"))  # Plot these parameters
-plot_pars(demo_fit, type = c("trace", "violin"))  # Combine plots
+
+plot_pars(demo_fit, type = c("trace", "violin"), regex_pars = "^cp_")  # Combine plots
+
+
 # Some plots only take pairs. hex is good to assess identifiability
 plot_pars(demo_fit, type = "hex", pars = c("cp_1", "time_2"))
 
-# Visualize the priors:
-plot_pars(demo_fit, prior = TRUE)
 
-# Useful for varying effects:
-# plot_pars(my_fit, pars = "varying", ncol = 3)  # plot all varying effects
-# plot_pars(my_fit, regex_pars = "my_varying", ncol = 3)  # plot all levels of a particular varying
-# pages = plot_pars(my_fit, pars = "varying", ask = FALSE)
+# Visualize the priors:
+plot_pars(demo_fit, prior = TRUE, regex_pars = "^cp_")
+
+
+# Useful for group-level effects:
+# plot_pars(my_fit, pars = "group", ncol = 3)  # plot all group-level deviations
+# plot_pars(my_fit, regex_pars = "my_group_effect", ncol = 3)  # one group-level effect
+# pages = plot_pars(my_fit, pars = "group", ask = FALSE)
 # pages[[1]]  # Inspect or customize one page
 
-# Customize multi-column ggplots using "*" instead of "+" (patchwork)
+# Customize multi-column ggplots using "&" instead of "+" (patchwork)
 library(ggplot2)
-plot_pars(demo_fit, type = c("trace", "dens_overlay")) * theme_bw(10)
-} # }
+library(patchwork)
+plot_pars(demo_fit, regex_pars = "cp") & theme_gray(15)
+
+# }
 ```
