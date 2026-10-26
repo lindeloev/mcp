@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mcp</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.0</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,10 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4.0" id="mcp-040">mcp 0.4.0<a class="anchor" aria-label="anchor" href="#mcp-040"></a></h2>
+<h2 class="pkg-version" data-toc-text="development version" id="mcp-development-version">mcp (development version)<a class="anchor" aria-label="anchor" href="#mcp-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="mcp-040">mcp 0.4.0<a class="anchor" aria-label="anchor" href="#mcp-040"></a></h2><p class="text-muted">CRAN release: 2026-10-26</p>
 <div class="section level3">
 <h3 id="major-new-features-0-4-0">Major new features<a class="anchor" aria-label="anchor" href="#major-new-features-0-4-0"></a></h3>
 <ul><li><p><strong>Multiple regression:</strong> <code>mcp</code> now supports several continuous predictors, categorical predictors, interactions, etc. for all terms on RHS. E.g., <code>~ 1 + x + x:state + sigma(1 + state) + ar(2, 0 + z)</code>. Basically, it now aims to “feel” like <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> or <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> for each distributional parameter in each segment. Explore <code>ex = mcp_example("multiple")</code> to see it in action and read more in <a href="https://lindeloev.github.io/mcp/articles/formulas.html">Understanding mcp formulas</a>. Default priors follow <code>rstanarm</code> and <code>brms</code> where possible. With this possibility for more parameters also comes the convenient <code>same()</code>, which shares coefficients across segments - including categorical predictors and group-level effects (<a href="https://lindeloev.github.io/mcp/articles/formulas.html#reusing-coefficients-between-segments">read more</a>).</p></li>

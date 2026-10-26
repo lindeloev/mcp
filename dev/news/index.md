@@ -1,6 +1,10 @@
 # Changelog
 
+## mcp (development version)
+
 ## mcp 0.4.0
+
+CRAN release: 2026-10-26
 
 ### Major new features
 
