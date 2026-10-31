@@ -1,5 +1,7 @@
 # mcp (development version)
 
+- **Better initial values for change points:** Instead of spacing inits evenly, `mcp` now does a quick R-side scan and sets inits where the model of `mu` fits the data best while respecting the change point priors. This improves sampling when change points are "clustered". You can still manually set `inits` when needed.
+
 # mcp 0.4.0
 
 ## Major new features

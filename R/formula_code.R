@@ -122,10 +122,10 @@ get_formula_jags = function(model_tables, family, nodes) {
 #' @param pars Named list of parameter values. Each is one value per draw (a vector) or one
 #'   value per row and draw (a rows x draws matrix), e.g., group-level deviations.
 #' @param ndraws Number of draws.
+#' @param terms Terms from `get_formula_terms(model_tables)`. Pass them when evaluating the same model many times.
 #' @return A named list of rows x draws matrices: one for each dpar, e.g., `mu`, `sigma`, and `ar1`.
 #' @noRd
-evaluate_formula = function(model_tables, family, data, pars, ndraws) {
-  terms = get_formula_terms(model_tables)
+evaluate_formula = function(model_tables, family, data, pars, ndraws, terms = get_formula_terms(model_tables)) {
   x = data$x
   n_rows = length(x)
   # A rows x draws matrix of the parameter `name` times `column`, which has one value per row
