@@ -27,3 +27,50 @@ See `dev/TERMINOLOGY.md` for the vocabulary used in documentation, messages, and
  * Renders and compares `mcp_example()` plots to reference (using `vdiffr`), etc. For speedup, also set e.g. `Sys.setenv(NCPUs = 11)`. If plots mismatch, use `testthat::snapshot_review()` to review.
 
 `Sys.setenv(CI = "true"); devtools::test()` (without MCP_TEST_LEVEL set) is the defaul CRAN/github test setting where short test times are required. It includes essential and fast tests.
+
+## Helpful calls
+I use these frequently during development - especially as I draw closer to relese.
+
+```r
+# TEST
+# Run full test
+Sys.setenv(MCP_TEST_LEVEL = "release", TESTTHAT_CPUS = 11)
+devtools::test()
+
+# Run all examples
+rcmdcheck::rcmdcheck(args = c("--no-tests", "--no-vignettes", "--as-cran"), env = c("_R_CHECK_DONT_RUN_EXAMPLES_" = "true"), error_on = "error")
+
+# Run all examples from bash
+#Rscript -e 'devtools::run_examples(run_donttest = TRUE, document = FALSE)'
+
+# CHECK
+# Check without tests
+devtools::document()
+rcmdcheck::rcmdcheck(args = c("--no-tests", "--no-examples"))
+
+# PKGDOWN/DOCS
+urlchecker::url_check()
+
+# Render README.Rmd
+devtools::document()
+rmarkdown::render("README.Rmd", output_format = "github_document")
+
+# pkgdown: Invalidate all vignette sources. Then build_articles() continue from failure instead of re-running
+vignette_files = Sys.glob("vignettes/*.Rmd")
+Sys.setFileTime(vignette_files, Sys.time())
+pkgdown::build_articles(lazy = TRUE)
+
+# Build manual
+devtools::build_manual(path = "dev")
+```
+
+## Releasing to CRAN
+Checklist before releasing to CRAN:
+ * Run everything above
+ * Rerun all release-stuff; data_raw/release.R.
+ * Push to github and pass tests.
+ * win-builder
+ * Check release_questions(), which covers much of above.
+ * Merge into main and check github actions, docs, etc.
+ * Check primary site and `urlchecker::url_check()` (now main site has been updated)
+ * Submit to CRAN
