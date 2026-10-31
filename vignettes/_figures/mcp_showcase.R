@@ -46,7 +46,7 @@ format_model_user = function(model) {
 # Make the base plots
 fit_intercepts = mcp_example("intercepts")
 gg_intercepts_org = force(last_plot())  # force to avoid lazy evaluation issues with patchwork
-intercepts_model = format_model_user(fit_intercepts$model)
+intercepts_model = paste(format_model_user(fit_intercepts$model), collapse = ", ")  # One line to fit above the data
 
 fit_binomial = mcp_example("binomial")
 gg_binomial_org = force(last_plot())
@@ -74,7 +74,7 @@ multiple_model = format_model_user(fit_multiple$model)
 
 
 # Style them
-gg_intercepts = style_gg(gg_intercepts_org, intercepts_model, "Intercept change", 0.2, 0.75, 0.3, 0.85)
+gg_intercepts = style_gg(gg_intercepts_org, intercepts_model, "Intercept changes", 0.5, 0.75, 0.6, 0.88)
 gg_binomial = style_gg(gg_binomial_org, binomial_model, "Binomial changes and other GLM", 0.4, 0.75, 0.5, 0.85)
 gg_sigma = style_gg(gg_sigma_org, sigma_model, "Sigma changes w/prediction", 0.5, 0.75, 0.6, 0.85)
 gg_ar = style_gg(gg_ar_org, ar_model, "AR(N) change", 0.2, 0.75, 0.3, 0.85)

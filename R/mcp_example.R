@@ -7,7 +7,7 @@
 #'  * `"demo"`: Two change points between intercepts and joined/disjoined slopes.
 #'  * `"group_mu"`: Group-level deviations in the predictor part (random intercepts/slopes) across a change point.
 #'  * `"group_cp"`: Group-level change-point deviations (random effects).
-#'  * `"intercepts"`: An intercept-only change point.
+#'  * `"intercepts"`: Four change points between plateaus, clustered early in the data.
 #'  * `"missing"`: Missing data imputation (NAs in response variable y).
 #'  * `"multiple"`: Multiple regression with categorical predictors and interactions.
 #'  * `"sigma"`: A change in "sigma" dpar, including a slope on sigma.
@@ -185,21 +185,30 @@ if (plot) {
     intercepts = "# Define model
 model = list(
   y ~ 1,  # Plateau (Intercept_1)
-  ~ 1     # At cp_1: Disjoined plateau (Intercept_2)
+  ~ 1,    # At cp_1: Disjoined plateau (Intercept_2)
+  ~ 1,    # At cp_2: Disjoined plateau (Intercept_3)
+  ~ 1,    # At cp_3: Disjoined plateau (Intercept_4)
+  ~ 1     # At cp_4: Disjoined plateau (Intercept_5)
 )
 
 # Simulate data
 set.seed(42)
 data = data.frame(
-  x = runif(60, 0, 100),
+  x = c(1:60, seq(61, 150, by = 3)),
   y = 2.  # or whatever signals 'numeric'. Will be replaced by simulation below.
 )
 empty = mcp(model, data, sample = FALSE, par_x = 'x')
 data$y = empty$simulate(empty, data,
-  cp_1 = 50,
-  Intercept_1 = 10,
-  Intercept_2 = 20,
-  sigma_1 = 7
+  cp_1 = 15,
+  cp_2 = 30,
+  cp_3 = 45,
+  cp_4 = 60,
+  Intercept_1 = 5,
+  Intercept_2 = 15,
+  Intercept_3 = 7,
+  Intercept_4 = 0,
+  Intercept_5 = 4,  # Small step to show weakly identified change point
+  sigma_1 = 2.5
 )
 
 # Run sampling
