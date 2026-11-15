@@ -1,5 +1,5 @@
 
-#' Posterior Predictive Checks For Mcpfit Objects
+#' Posterior Predictive Checks For `mcpfit` Objects
 #'
 #' Plot posterior (default) or prior (`prior = TRUE`) predictive checks. This is a convenience wrapper
 #' around the `bayesplot::ppc_*()` methods. See

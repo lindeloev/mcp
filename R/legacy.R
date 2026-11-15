@@ -234,7 +234,7 @@ legacy_binomial_rate = function(fit, newdata, what) {
 }
 
 
-# Signal deprecated and removed mcpfit fields from v0.3.4. LEGACY: remove `$.mcpfit` and `[[.mcpfit` in mcp 1.0.
+# Signal deprecated and removed mcpfit fields. LEGACY: remove `$.mcpfit` and `[[.mcpfit` in mcp 1.0.
 #' @export
 `$.mcpfit` = function(x, name) {
   if (name == "fit" && is.null(.subset2(x, "fit"))) {
