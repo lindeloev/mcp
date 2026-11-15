@@ -101,11 +101,11 @@ fill_offset = function(prior, offset) {
 }
 
 
-# Keep default-prior rows whose `condition` applies: "always", or "modeled"/"constant"
-# depending on whether the model includes a formula for that dpar, e.g., sigma(1 + x).
+# Keep default-prior rows whose `condition` applies: "always", or "included"/"not_included"
+# depending on whether the dpar is included in any formula, e.g., sigma(1 + x).
 filter_default_conditions = function(defaults, family) {
-  for (dpar in unique(defaults$dpar[defaults$condition == "modeled"])) {
-    condition = if (get_dpar_spec(family, dpar)$modeled) "modeled" else "constant"
+  for (dpar in unique(defaults$dpar[defaults$condition != "always"])) {
+    condition = if (get_dpar_spec(family, dpar)$included) "included" else "not_included"
     defaults = defaults[defaults$dpar != dpar | defaults$condition %in% c("always", condition), ]
   }
   defaults

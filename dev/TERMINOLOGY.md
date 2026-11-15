@@ -8,7 +8,7 @@ Use one word per concept, so users are not confused:
 ## Formulas and segments
 `vignettes/formulas.Rmd#how-segments-connect` defines these:
 
-- **included** / **not included** (terms): what terms are written in a formula. This matches base R wording. Prefer "not included" over "omitted", "dropped", or "excluded". Avoid: declared, active, written.
+- **included** / **not included** (terms): what terms are written in a formula. This matches base R wording. Prefer "not included" over "omitted", "dropped", or "excluded". Avoid: declared, active, written. Also used for dpars, e.g., `condition = "not_included"` in `mcpfamily(default_prior)` for `sigma_1` when `sigma()` is not included in any formula.
 - **x-terms**: formula terms involving `par_x`, i.e., the change point dimension, e.g., `x`, `I(x^2)`, `x:z`. They are *measured from the change point*. Avoid: segment-local, "count from".
 - **joined**: a segment without an intercept (`0 + ...`). Avoid: carry, persist, retain.
 - **disjoined**: a segment with an intercept. It starts afresh. Applies separately to each dpar, each grouping column of its group-level terms, and each AR/MA lag, e.g., "joined mu, disjoined sigma". As a verb, the intercept *disjoins* the earlier joined terms. Avoid: reset.

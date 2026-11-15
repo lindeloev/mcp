@@ -744,9 +744,9 @@ get_coef_tables = function(model, data, family, par_x) {
   parsed_coefs = dplyr::arrange(parsed_coefs, .data$dpar, .data$segment)
 
   # An implicit dpar without a formula anywhere is the parameter itself, e.g., sigma_1
-  # rather than the link-scale intercept sigma_Intercept_1 of a modeled sigma().
-  unmodeled = parsed_coefs$dpar %in% setdiff(family$dpar_specs$dpar, c("mu", unlist(lapply(components, names))))
-  parsed_coefs$name[unmodeled] = paste0(parsed_coefs$dpar[unmodeled], "_1")
+  # rather than the link-scale intercept sigma_Intercept_1 of an included sigma().
+  not_included = parsed_coefs$dpar %in% setdiff(family$dpar_specs$dpar, c("mu", unlist(lapply(components, names))))
+  parsed_coefs$name[not_included] = paste0(parsed_coefs$dpar[not_included], "_1")
   coefs = parsed_coefs |>
     dplyr::filter(.data$par_type != "offset") |>
     dplyr::mutate(matrix_col = dplyr::row_number())

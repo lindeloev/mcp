@@ -15,10 +15,7 @@
 #' mcp_pars(fit)$parameter  # Show the parameters of the fitted Bernoulli model
 bernoulli = function(link = "logit") {
   link = rlang::arg_match0(link, c("identity", "logit", "probit"))
-
-  family = stats::binomial(link = link)
-  family$family = "bernoulli"
-  as_mcpfamily(family)
+  mcpfamily_bernoulli(link)
 }
 
 
@@ -48,27 +45,23 @@ bernoulli = function(link = "logit") {
 negbinomial = function(link = "log", link_shape = "log") {
   link = rlang::arg_match0(link, "log")
   link_shape = rlang::arg_match0(link_shape, "log")
-
-  family = list(family = "negbinomial", link = link, link_shape = link_shape)
-  class(family) = "family"
-  as_mcpfamily(family)
+  mcpfamily_negbinomial(link, link_shape)
 }
 
 
-# Convert a standard R family object (e.g., `binomial(link = "identity")`) into the
-# `mcpfamily` used internally by mcp. Built-in families are (re)built from their family and
-# link(s), so this is idempotent. Not exported until user-supplied families are supported.
+# Convert a stats family object (e.g., `binomial(link = "identity")`) into an `mcpfamily`.
+# An `mcpfamily`, e.g., from bernoulli() or mcpfamily(), is returned as is.
 as_mcpfamily = function(x) {
   checkmate::assert_true(is_family(x), .var.name = "x")
+  if (is_mcpfamily(x))
+    return(assert_mcpfamily(x))
 
   switch(
     x$family,
-    gaussian = mcpfamily_gaussian(x),
-    binomial = mcpfamily_binomial(x),
-    bernoulli = mcpfamily_bernoulli(x),
-    poisson = mcpfamily_poisson(x),
-    negbinomial = mcpfamily_negbinomial(x),
-    if (is_mcpfamily(x)) assert_mcpfamily(x) else stop(
+    gaussian = mcpfamily_gaussian(x$link),
+    binomial = mcpfamily_binomial(x$link),
+    poisson = mcpfamily_poisson(x$link),
+    stop(
       "family = ", x$family, "() is not supported by mcp. Supported families are gaussian(), binomial(), ",
       "bernoulli(), poisson(), and negbinomial().", call. = FALSE
     )
@@ -76,15 +69,40 @@ as_mcpfamily = function(x) {
 }
 
 
-# Complete and validate an mcpfamily from the parts that each mcpfamily_*() supplies:
-# - dpar_specs: one row per dpar (see new_dpar_spec()).
-# - default_prior: one row per dpar and par_type. `condition` selects priors for a dpar
-#   with ("modeled") or without ("constant") its own formula, e.g., sigma(1 + x).
-# - response: auxiliary data columns (e.g., trials()) and how to validate and present the response.
+# Build an mcpfamily from its parts (not exported yet):
+# - links: named link per dpar. Other dpars than mu are implicit and constant (identity link) unless included in a formula.
+# - jags: `likelihood(context)` returning JAGS code, and `glm_module` ("never", "group_effects", or "always").
 # - r: R functions for predictions, log_lik(), etc. (see assert_mcpfamily()).
-# - backends$jags: the likelihood in JAGS code and when to use the JAGS glm module.
+# - default_prior: one row per dpar and par_type. `condition` selects priors for a dpar
+#   that is "included" or "not_included" in any formula, e.g., sigma(1 + x).
+# - response: auxiliary data columns (e.g., trials()) and how to validate and present the response.
+# - lower, floor: exclusive lower bound and numerical floor of dpars, e.g., c(sigma = 0).
 # - garma: the observed response for AR/MA on the link scale, bounded by `threshold`. NULL if unsupported.
-new_mcpfamily = function(family, dpar_specs, default_prior, response, r, backends, garma) {
+# - glm_family: a stats family approximating the model of mu, for change point inits. NULL to space them equally.
+mcpfamily = function(family, links, jags, r, default_prior = NULL, response = list(), lower = NULL, floor = NULL, garma = NULL, glm_family = NULL) {
+  checkmate::assert_string(family)
+  checkmate::assert_character(links, names = "unique", any.missing = FALSE)
+  checkmate::assert_list(jags, names = "unique")
+  checkmate::assert_list(r, names = "unique")
+  checkmate::assert_numeric(lower, names = "unique", null.ok = TRUE)
+  checkmate::assert_numeric(floor, names = "unique", null.ok = TRUE)
+  if ("mu" %notin% names(links))
+    stop("`links` must include the link function for 'mu', e.g., `links = c(mu = \"identity\")`.", call. = FALSE)
+
+  # mu first. Other dpars are implicit: always part of the model, and constant (identity link) unless included in a formula.
+  dpars = c("mu", setdiff(names(links), "mu"))
+  dpar_specs = dplyr::bind_rows(lapply(dpars, function(dpar) {
+    is_mu = dpar == "mu"
+    new_dpar_spec(
+      dpar,
+      link_included = links[[dpar]],
+      implicit = !is_mu,
+      require_initial_term = !is_mu,
+      lower = if (dpar %in% names(lower)) lower[[dpar]] else NA_real_,
+      floor = if (dpar %in% names(floor)) floor[[dpar]] else NA_real_
+    )
+  }))
+
   # Default values and funcs for the dependent variable (the response)
   response_defaults = list(
     auxiliary = list(weights = list(
@@ -106,19 +124,25 @@ new_mcpfamily = function(family, dpar_specs, default_prior, response, r, backend
   missing_aux = setdiff(names(response_defaults$auxiliary), names(response$auxiliary))
   response$auxiliary[missing_aux] = response_defaults$auxiliary[missing_aux]
 
-  family$dpar_specs = dpar_specs
-  family$default_prior = standardize_family_default_priors(default_prior)
-  family$response = response
-  family$r = r
-  family$backends = backends
-  family$garma = garma
+  if (is.null(jags$glm_module))
+    jags$glm_module = "never"
 
-  family$linkfun = get_link_function(family$link)
-  family$linkinv = get_link_function(family$link, inverse = TRUE)
-
-  class(family) = c("mcpfamily", "family")
-  assert_mcpfamily(family)
-  family
+  out = list(
+    family = family,
+    link = links[["mu"]],
+    dpar_specs = dpar_specs,
+    default_prior = standardize_family_default_priors(default_prior),
+    response = response,
+    r = r,
+    backends = list(jags = jags),
+    garma = garma,
+    glm_family = glm_family,
+    linkfun = get_link_function(links[["mu"]]),
+    linkinv = get_link_function(links[["mu"]], inverse = TRUE)
+  )
+  class(out) = c("mcpfamily", "family")
+  assert_mcpfamily(out)
+  out
 }
 
 
@@ -142,6 +166,8 @@ validate_count_mean = function(mu) {
 
 
 standardize_family_default_priors = function(defaults) {
+  if (is.null(defaults))
+    defaults = data.frame(dpar = character(), par_type = character(), prior = character())
   checkmate::assert_data_frame(defaults)
   assert_data_cols(defaults, c("dpar", "par_type", "prior"))
   defaults = tibble::as_tibble(defaults)
@@ -151,6 +177,7 @@ standardize_family_default_priors = function(defaults) {
     defaults$description = NA_character_
   if (!"condition" %in% names(defaults))
     defaults$condition = "always"
+  checkmate::assert_subset(defaults$condition, c("always", "included", "not_included"), .var.name = "default_prior$condition")
   defaults[, c("dpar", "par_type", "prior", "group_sd_prior", "description", "condition")]
 }
 
@@ -182,13 +209,13 @@ probability_mu_priors = function(link) {
 }
 
 
-mcpfamily_gaussian = function(family) {
-  if (family$link %notin% c("identity", "log"))
-    stop("mcp has no default priors for gaussian(link = \"", family$link, "\") so it's likely not supported.")
+mcpfamily_gaussian = function(link) {
+  if (link %notin% c("identity", "log"))
+    stop("mcp has no default priors for gaussian(link = \"", link, "\") so it's likely not supported.")
 
   response_scale = "max(2.5, round(mad(.y), 1))"
 
-  if (family$link == "identity") {
+  if (link == "identity") {
     mu_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
       "mu", "Intercept", "dnorm(mean(.y - .offset), 2.5 * sd(.y - .offset))", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Mean intercept (rstanarm default)", "always",
@@ -201,8 +228,8 @@ mcpfamily_gaussian = function(family) {
 
   sigma_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "constant",
-    "sigma", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing modeled log-SD intercept", "modeled",
+    "sigma", "Intercept", paste0("dt(0, ", response_scale, ", 3) T(0, )"), paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Positive residual SD calibrated on the response scale", "not_included",
+    "sigma", "Intercept", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Weakly regularizing log-SD intercept", "included",
     "sigma", "dummy", "dt(0, 2.5, 3)", "dt(0, 2.5, 3) T(0, )", "Regularizing log-SD contrast", "always",
     "sigma", "slope", "dt(0, 2.5 / predictor_scale(), 3)", "dt(0, 2.5 / predictor_scale(), 3) T(0, )", "Regularizing log-SD coefficient scaled by the predictor SD", "always"
   )
@@ -243,41 +270,40 @@ mcpfamily_gaussian = function(family) {
     }
   )
 
-  garma = if (family$link == "identity") {
+  garma = if (link == "identity") {
     list(
       observed_r = function(y, data, threshold) y,
       observed_jags = function(context) context$y
     )
   }
 
-  # Return
-  new_mcpfamily(
-    family,
-    dpar_specs = dplyr::bind_rows(
-      new_dpar_spec("mu", family$link),
-      new_dpar_spec("sigma", "identity", implicit = TRUE, require_initial_term = TRUE, link_modeled = "log", lower = 0, floor = 1e-5)
-    ),
+  mcpfamily(
+    family = "gaussian",
+    links = c(mu = link, sigma = "log"),
+    jags = jags,
+    r = r,
     default_prior = default_prior,
     response = list(),
-    r = r,
-    backends = list(jags = jags),
-    garma = garma
+    lower = c(sigma = 0),
+    floor = c(sigma = 1e-5),
+    garma = garma,
+    glm_family = stats::gaussian(link)
   )
 }
 
 
-mcpfamily_binomial = function(family) {
-  if (family$link == "identity") {
+mcpfamily_binomial = function(link) {
+  if (link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
       "mu", "Intercept", "dunif(0, 1)", "dt(0, 1, 3) T(0, )", "Uniform success-probability intercept", "always",
       "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "Success-probability difference between levels", "always",
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled success-probability coefficient", "always"
     )
-  } else if (family$link %in% c("logit", "probit")) {
-    default_prior = probability_mu_priors(family$link)
+  } else if (link %in% c("logit", "probit")) {
+    default_prior = probability_mu_priors(link)
   } else {
-    stop("mcp has no default priors for binomial(link = \"", family$link, "\") so it's likely not supported.")
+    stop("mcp has no default priors for binomial(link = \"", link, "\") so it's likely not supported.")
   }
 
   response = list(
@@ -329,7 +355,7 @@ mcpfamily_binomial = function(family) {
       }
     }
   )
-  garma = if (family$link == "logit") {
+  garma = if (link == "logit") {
     list(
       observed_r = function(y, data, threshold) pmin(pmax(y, threshold), data$trials - threshold) / data$trials,
       observed_jags = function(context) paste0(
@@ -345,30 +371,31 @@ mcpfamily_binomial = function(family) {
     )
   }
 
-  new_mcpfamily(
-    family,
-    dpar_specs = new_dpar_spec("mu", family$link),
+  mcpfamily(
+    family = "binomial",
+    links = c(mu = link),
+    jags = jags,
+    r = r,
     default_prior = default_prior,
     response = response,
-    r = r,
-    backends = list(jags = jags),
-    garma = garma
+    garma = garma,
+    glm_family = stats::binomial(link)
   )
 }
 
 
-mcpfamily_bernoulli = function(family) {
-  if (family$link == "identity") {
+mcpfamily_bernoulli = function(link) {
+  if (link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
       "mu", "Intercept", "dunif(0, 1)", "dt(0, 1, 3) T(0, )", "Uniform P(y = TRUE) intercept", "always",
       "mu", "dummy", "dunif(-1, 1)", "dt(0, 1, 3) T(0, )", "P(y = TRUE) difference between levels", "always",
       "mu", "slope", "dnorm(0, 1 / predictor_scale())", "dt(0, 1 / predictor_scale(), 3) T(0, )", "Autoscaled P(y = TRUE) coefficient", "always"
     )
-  } else if (family$link %in% c("logit", "probit")) {
-    default_prior = probability_mu_priors(family$link)
+  } else if (link %in% c("logit", "probit")) {
+    default_prior = probability_mu_priors(link)
   } else {
-    stop("mcp has no default priors for bernoulli(link = \"", family$link, "\") so it's likely not supported.")
+    stop("mcp has no default priors for bernoulli(link = \"", link, "\") so it's likely not supported.")
   }
 
   response = list(
@@ -405,7 +432,7 @@ mcpfamily_bernoulli = function(family) {
     }
   )
 
-  garma = if (family$link == "logit") {
+  garma = if (link == "logit") {
     list(
       observed_r = function(y, data, threshold) pmin(pmax(y, threshold), 1 - threshold),
       observed_jags = function(context) paste0(
@@ -418,31 +445,32 @@ mcpfamily_bernoulli = function(family) {
     )
   }
 
-  new_mcpfamily(
-    family,
-    dpar_specs = new_dpar_spec("mu", family$link),
+  mcpfamily(
+    family = "bernoulli",
+    links = c(mu = link),
+    jags = jags,
+    r = r,
     default_prior = default_prior,
     response = response,
-    r = r,
-    backends = list(jags = jags),
-    garma = garma
+    garma = garma,
+    glm_family = stats::binomial(link)
   )
 }
 
 
-mcpfamily_poisson = function(family) {
+mcpfamily_poisson = function(link) {
   response_scale = "max(2.5, round(mad(.y), 1))"
-  if (family$link == "identity") {
+  if (link == "identity") {
     default_prior = tibble::tribble(
       ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
       "mu", "Intercept", "dnorm(mean(.y - .offset), 2.5 * sd(.y - .offset)) T(-min(.offset), )", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Count intercept on the response scale with a positive mean", "always",
       "mu", "dummy", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, ", 3) T(0, )"), "Autoscaled count contrast on the response scale", "always",
       "mu", "slope", "dnorm(0, 2.5 * sd(.y) / predictor_scale())", paste0("dt(0, ", response_scale, " / predictor_scale(), 3) T(0, )"), "Autoscaled count coefficient on the response scale", "always"
     )
-  } else if (family$link == "log") {
+  } else if (link == "log") {
     default_prior = log_mu_priors("count")
   } else {
-    stop("mcp has no default priors for poisson(link = \"", family$link, "\") so it's likely not supported.")
+    stop("mcp has no default priors for poisson(link = \"", link, "\") so it's likely not supported.")
   }
 
   response = list(
@@ -487,33 +515,34 @@ mcpfamily_poisson = function(family) {
       }
     }
   )
-  garma = if (family$link == "log") {
+  garma = if (link == "log") {
     list(
       observed_r = function(y, data, threshold) pmax(y, threshold),
       observed_jags = function(context) paste0("max(", context$y, ", ", context$threshold, ")")
     )
   }
 
-  new_mcpfamily(
-    family,
-    dpar_specs = new_dpar_spec("mu", family$link),
+  mcpfamily(
+    family = "poisson",
+    links = c(mu = link),
+    jags = jags,
+    r = r,
     default_prior = default_prior,
     response = response,
-    r = r,
-    backends = list(jags = jags),
-    garma = garma
+    garma = garma,
+    glm_family = stats::poisson(link)
   )
 }
 
 
-mcpfamily_negbinomial = function(family) {
-  if (family$link != "log" || family$link_shape != "log")
+mcpfamily_negbinomial = function(link, link_shape) {
+  if (link != "log" || link_shape != "log")
     stop("Negative-binomial models currently require log links for both mu and shape.")
 
   shape_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~description, ~condition,
-    "shape", "Intercept", "dinvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape (brms default)", "constant",
-    "shape", "Intercept", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Weakly regularizing modeled log-shape intercept", "modeled",
+    "shape", "Intercept", "dinvgamma(0.4, 0.3)", NA_character_, "Weakly regularizing positive overdispersion shape (brms default)", "not_included",
+    "shape", "Intercept", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Weakly regularizing log-shape intercept", "included",
     "shape", "dummy", "dnorm(0, 2.5)", "dnorm(0, 2.5) T(0, )", "Regularizing shape contrast on the log scale", "always",
     "shape", "slope", "dnorm(0, 2.5 / predictor_scale())", "dnorm(0, 2.5 / predictor_scale()) T(0, )", "Regularizing log-shape coefficient scaled by the predictor SD", "always"
   )
@@ -567,32 +596,30 @@ mcpfamily_negbinomial = function(family) {
     observed_jags = function(context) paste0("max(", context$y, ", ", context$threshold, ")")
   )
 
-  new_mcpfamily(
-    family,
-    dpar_specs = dplyr::bind_rows(
-      new_dpar_spec("mu", family$link),
-      new_dpar_spec("shape", "identity", implicit = TRUE, require_initial_term = TRUE, link_modeled = family$link_shape, lower = 0)
-    ),
+  mcpfamily(
+    family = "negbinomial",
+    links = c(mu = link, shape = link_shape),
+    jags = jags,
+    r = r,
     default_prior = default_prior,
     response = response,
-    r = r,
-    backends = list(jags = jags),
-    garma = garma
+    lower = c(shape = 0),
+    garma = garma,
+    glm_family = stats::poisson(link)  # Quasi-likelihood for the mean
   )
 }
 
 
-# Describe a distributional parameter. `lower` is the exclusive lower bound of its
-# support (e.g., 0 for sigma) and bounds constant priors. `floor` is an optional numerical
-# floor on per-observation values (see dev/DECISIONS.md for sigma).
-new_dpar_spec = function(dpar, link, implicit = FALSE, require_initial_term = FALSE, lower = NA_real_,
-                          link_modeled = link, floor = NA_real_) {
+# Describe a distributional parameter. `link_included` applies when the dpar is included in a formula.
+# Implicit dpars not included in any formula are constant with an identity link (see resolve_dpar_specs()).
+# `lower` is the exclusive lower bound of its support (e.g., 0 for sigma) and bounds constant priors.
+# `floor` is an optional numerical floor on per-observation values (see dev/DECISIONS.md for sigma).
+new_dpar_spec = function(dpar, link_included, implicit = FALSE, require_initial_term = FALSE, lower = NA_real_, floor = NA_real_) {
   tibble::tibble(
     dpar = dpar,
-    link = link,
-    link_constant = link,
-    link_modeled = link_modeled,
-    modeled = FALSE,
+    link = if (implicit) "identity" else link_included,
+    link_included = link_included,
+    included = FALSE,
     implicit = implicit,
     require_initial_term = require_initial_term,
     lower = lower,
@@ -609,10 +636,10 @@ known_dpar_wrappers = function() {
 }
 
 
-# Lower bounds of constant (unmodeled) dpars on their parameter scale, e.g., c(sigma = 0).
+# Lower bounds of constant dpars (not included in any formula) on their parameter scale, e.g., c(sigma = 0).
 # Bounds that the link already enforces (e.g., log(0) = -Inf) are omitted.
 get_constant_dpar_bounds = function(family) {
-  dpar_specs = family$dpar_specs[!family$dpar_specs$modeled & !is.na(family$dpar_specs$lower), ]
+  dpar_specs = family$dpar_specs[!family$dpar_specs$included & !is.na(family$dpar_specs$lower), ]
   bounds = vapply(seq_len(nrow(dpar_specs)), function(i) get_link_function(dpar_specs$link[i])(dpar_specs$lower[i]), numeric(1))
   stats::setNames(bounds, dpar_specs$dpar)[is.finite(bounds)]
 }
@@ -622,12 +649,8 @@ get_constant_dpar_bounds = function(family) {
 # - components: A list with `get_segment_components()` for each segment.
 resolve_dpar_specs = function(family, components) {
   checkmate::assert_class(family, "mcpfamily")
-  family$dpar_specs$modeled = family$dpar_specs$dpar %in% unlist(lapply(components, names))
-  family$dpar_specs$link = ifelse(
-    family$dpar_specs$modeled,
-    family$dpar_specs$link_modeled,
-    family$dpar_specs$link_constant
-  )
+  family$dpar_specs$included = family$dpar_specs$dpar %in% unlist(lapply(components, names))
+  family$dpar_specs$link = ifelse(family$dpar_specs$included | !family$dpar_specs$implicit, family$dpar_specs$link_included, "identity")
   family
 }
 
@@ -636,14 +659,14 @@ resolve_dpar_specs = function(family, components) {
 assert_dpar_specs = function(x) {
   checkmate::assert_data_frame(x)
   required = c(
-    "dpar", "link", "link_constant", "link_modeled", "modeled",
+    "dpar", "link", "link_included", "included",
     "implicit", "require_initial_term", "lower", "floor"
   )
   assert_data_cols(x, required)
 
   if (!is.character(x$dpar) || anyNA(x$dpar) || any(x$dpar == ""))
     stop("`family$dpar_specs$dpar` must contain non-empty parameter names.")
-  link_cols = c("link", "link_constant", "link_modeled")
+  link_cols = c("link", "link_included")
   if (any(!vapply(x[link_cols], is.character, logical(1))) || anyNA(x[link_cols]))
     stop("Links in `family$dpar_specs` must be names without missing values.")
   if (anyDuplicated(x$dpar))
@@ -657,8 +680,8 @@ assert_dpar_specs = function(x) {
   links = unique(unlist(x[link_cols], use.names = FALSE))
   if (any(links %notin% supported_links))
     stop("Unsupported dpar link(s): ", and_collapse(links[links %notin% supported_links]))
-  if (!is.logical(x$modeled) || anyNA(x$modeled))
-    stop("`family$dpar_specs$modeled` must be logical without missing values.")
+  if (!is.logical(x$included) || anyNA(x$included))
+    stop("`family$dpar_specs$included` must be logical without missing values.")
   if (!is.logical(x$implicit) || anyNA(x$implicit))
     stop("`family$dpar_specs$implicit` must be logical without missing values.")
   if (!is.logical(x$require_initial_term) || anyNA(x$require_initial_term))
@@ -804,7 +827,9 @@ assert_mcpfamily = function(x) {
   checkmate::assert_function(x$r$rng)
   checkmate::assert_function(x$r$cdf, null.ok = TRUE)
   checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf))
-  checkmate::assert_function(x$backends$jags$likelihood)
+  checkmate::assert_function(x$backends$jags$likelihood, .var.name = "jags$likelihood")
+  checkmate::assert_choice(x$backends$jags$glm_module, c("never", "group_effects", "always"), .var.name = "jags$glm_module")
+  checkmate::assert_class(x$glm_family, "family", null.ok = TRUE, .var.name = "glm_family")
   if (!is.null(x$garma)) {
     checkmate::assert_function(x$garma$observed_r)
     checkmate::assert_function(x$garma$observed_jags)

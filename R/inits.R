@@ -144,15 +144,16 @@ scan_cps = function(cp, is_init, lower, upper, spacing, cp_deviance, n_grid = 40
 
 
 # The deviance of the mu model at given change points, with all population-level mu coefficients fitted by
-# glm.fit() and other parameters at zero, e.g., group-level deviations and other dpars. NULL where the mu model
-# cannot place all change points (AR/MA terms or segments without mu terms) and for likelihood weights.
+# glm.fit() with `family$glm_family` and other parameters at zero, e.g., group-level deviations and other dpars. NULL
+# where the mu model cannot place all change points (AR/MA terms or segments without mu terms), for likelihood weights,
+# and for families without a `glm_family`.
 # - max_rows: Evaluate at most this many rows, evenly spread over the sorted x.
 get_cp_deviance = function(model_tables, family, data, max_rows = 2000) {
   terms = get_formula_terms(model_tables)
   cps = model_tables$cps
   data_columns = model_tables$data_columns
   is_mu = terms$dpar == "mu" & is.na(terms$group_col) & is.na(terms$offset)
-  if (nrow(cps) == 0 || !is.null(data_columns$weights) || any(model_tables$coefs$dpar %in% c("ar", "ma")) || !all(seq_len(nrow(cps) + 1) %in% terms$segment[is_mu]))
+  if (nrow(cps) == 0 || is.null(family$glm_family) || !is.null(data_columns$weights) || any(model_tables$coefs$dpar %in% c("ar", "ma")) || !all(seq_len(nrow(cps) + 1) %in% terms$segment[is_mu]))
     return(NULL)
 
   # Response on a subset of rows. Binomial responses are proportions weighted by trials.
@@ -174,7 +175,7 @@ get_cp_deviance = function(model_tables, family, data, max_rows = 2000) {
     pars[cps$name] = lapply(cp, rep, p + 1)
     link_mu = evaluate_formula(model_tables, family, model_data, pars, p + 1, terms)$mu
     fit = tryCatch(suppressWarnings(stats::glm.fit(
-      link_mu[, seq_len(p), drop = FALSE] - link_mu[, p + 1], y[rows] / trials[rows], trials[rows], offset = link_mu[, p + 1], family = family
+      link_mu[, seq_len(p), drop = FALSE] - link_mu[, p + 1], y[rows] / trials[rows], trials[rows], offset = link_mu[, p + 1], family = family$glm_family
     )), error = function(e) NULL)
     if (is.null(fit) || !fit$converged) Inf else fit$deviance
   }

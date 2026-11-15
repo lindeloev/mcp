@@ -8,9 +8,9 @@ test_that("families define dpars independently of prior rows", {
 
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
   expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
-  expect_equal(gaussian_family$dpar_specs$link_constant, c("identity", "identity"))
-  expect_equal(gaussian_family$dpar_specs$link_modeled, c("identity", "log"))
-  expect_false(any(gaussian_family$dpar_specs$modeled))
+  expect_equal(gaussian_family$dpar_specs$link, c("identity", "identity"))
+  expect_equal(gaussian_family$dpar_specs$link_included, c("identity", "log"))
+  expect_false(any(gaussian_family$dpar_specs$included))
   expect_equal(gaussian_family$dpar_specs$implicit, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpar_specs$require_initial_term, c(FALSE, TRUE))
   expect_equal(gaussian_family$dpar_specs$dpar, c("mu", "sigma"))
@@ -133,13 +133,11 @@ test_that("family prior builders determine their supported links", {
   unsupported_binomial$link = "log"
   unsupported_poisson = poisson()
   unsupported_poisson$link = "probit"
-  unsupported_negbinomial = negbinomial()
-  unsupported_negbinomial$link = "identity"
 
   expect_error(as_mcpfamily(unsupported_gaussian), "no default priors for gaussian")
   expect_error(as_mcpfamily(unsupported_binomial), "no default priors for binomial")
   expect_error(as_mcpfamily(unsupported_poisson), "no default priors for poisson")
-  expect_error(as_mcpfamily(unsupported_negbinomial), "require log links")
+  expect_error(mcpfamily_negbinomial("identity", "log"), "require log links")
 })
 
 
@@ -167,7 +165,7 @@ test_that("generated code separates link and distribution scales", {
   expect_match(constant_fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, link_sigma_\\[i_\\]\\)")
   expect_false(grepl("max\\(1e-09, link_sigma_", constant_fit$jags_code))
   expect_equal(get_dpar_spec(constant_fit$family, "sigma")$link, "identity")
-  expect_false(constant_fit$family$dpar_specs$modeled[
+  expect_false(constant_fit$family$dpar_specs$included[
     constant_fit$family$dpar_specs$dpar == "sigma"
   ])
   expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
@@ -177,7 +175,7 @@ test_that("generated code separates link and distribution scales", {
   expect_match(fit$jags_code, "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
   expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
   expect_equal(fit$family$dpar_specs$link, c("log", "log"))
-  expect_true(fit$family$dpar_specs$modeled[fit$family$dpar_specs$dpar == "sigma"])
+  expect_true(fit$family$dpar_specs$included[fit$family$dpar_specs$dpar == "sigma"])
   expect_equal(fit$prior$sigma_Intercept_1, "dt(-sigma_x_1 * 1, 2.5, 3)")
   expect_prior(fit$prior$sigma_x_1, paste0("dt(0, ", format_prior_number(2.5 / stats::sd(data$x)), ", 3)"))
   expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
@@ -187,7 +185,7 @@ test_that("generated code separates link and distribution scales", {
     unname(unlist(change_fit$prior[c("sigma_Intercept_1", "sigma_Intercept_2")])),
     rep("dt(0, 2.5, 3)", 2)
   )
-  expect_true(change_fit$family$dpar_specs$modeled[change_fit$family$dpar_specs$dpar == "sigma"])
+  expect_true(change_fit$family$dpar_specs$included[change_fit$family$dpar_specs$dpar == "sigma"])
 
   expect_false(any(grepl("^link_", mcp_pars(fit, scope = "population")$parameter)))
   expect_false(any(grepl("^(mu_|sigma_)\\[", mcp_pars(fit, scope = "population")$parameter)))
