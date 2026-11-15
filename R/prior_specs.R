@@ -141,7 +141,7 @@ get_prior_type = function(coefs) {
 }
 
 
-# Default priors for population-level coefficients, looked up by dpar and par_type
+# Default priors for population-level coefficients, looked up by dpar and par_type. NA where the family has none.
 default_coef_specs = function(coefs, family, context) {
   defaults = filter_default_conditions(dplyr::bind_rows(family$default_prior, default_arma_specs()), family)
 
@@ -153,13 +153,6 @@ default_coef_specs = function(coefs, family, context) {
     dplyr::left_join(defaults, by = c("dpar", prior_type = "par_type"))
   is_factor_intercept = joined$prior_type == "Intercept" & joined$par_type != "Intercept"
   joined$description[is_factor_intercept] = paste0(joined$description[is_factor_intercept], "; one per factor level")
-  if (any(is.na(joined$prior))) {
-    stop_github(
-      "mcp could not find a default prior for ",
-      and_collapse(joined$name[is.na(joined$prior)])
-    )
-  }
-
   # Calibrate mu priors on the offset-adjusted response. Only mu offsets are used.
   offset = ifelse(joined$dpar == "mu", context$offsets[as.character(joined$segment)], NA_character_)
   is_adjusted = !is.na(offset) & grepl(".offset", joined$prior, fixed = TRUE)
@@ -177,7 +170,7 @@ default_coef_specs = function(coefs, family, context) {
 }
 
 
-# Default priors for group-level SDs and deviations
+# Default priors for group-level SDs and deviations. SD priors are NA where the family has none.
 default_group_specs = function(group_coefs, family) {
   if (nrow(group_coefs) == 0)
     return(empty_prior_specs())
@@ -188,13 +181,6 @@ default_group_specs = function(group_coefs, family) {
       dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
       by = c("dpar", prior_type = "par_type")
     )
-  if (any(is.na(joined$group_sd_prior))) {
-    stop_github(
-      "mcp could not find a default group-level SD prior for ",
-      and_collapse(joined$name[is.na(joined$group_sd_prior)])
-    )
-  }
-
   joined$group_sd_prior = fill_predictor_scale(joined$group_sd_prior, joined$matrix_data, joined$x_degree)
   coefficient_description = ifelse(
     joined$par_type == "Intercept",

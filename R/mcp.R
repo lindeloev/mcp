@@ -24,6 +24,7 @@
 #'   * `binomial()` or `bernoulli()` with `link = "logit"`, `"probit"`, or `"identity"`
 #'   * `poisson(link = "log")` or `poisson(link = "identity")`
 #'   * `negbinomial(link = "log", link_shape = "log")`
+#'   * A custom family made with [mcpfamily()].
 #'
 #'   [Read more](https://lindeloev.github.io/mcp/articles/families.html).
 #' @param par_x String. Name of the change-point variable, i.e., the data column

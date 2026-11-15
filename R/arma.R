@@ -508,7 +508,7 @@ simulate_garma = function(link_mu, ar, ma, threshold, family, dpars, data = list
       row_dpars = lapply(dpars, function(value) value[rows, , drop = FALSE])
       row_dpars$mu = family$linkinv(link_mu[rows, , drop = FALSE] + resid_garma[rows, , drop = FALSE])
       row_data = lapply(data, function(value) value[rows])
-      y[rows, ] = family$r$rng(length(rows) * ncol(y), row_dpars, row_data)
+      y[rows, ] = family_r(family, "rng")(length(rows) * ncol(y), row_dpars, row_data)
       link_y[rows, ] = family$linkfun(family$garma$observed_r(y[rows, ], row_data, threshold))
     }
     resid_abs[rows, ] = link_y[rows, ] - link_mu[rows, ]

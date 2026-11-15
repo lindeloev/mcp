@@ -44,7 +44,7 @@ test_that("Poisson JAGS weights implement a likelihood power and sample on ordin
   expect_equal(nrow(summary_fit), 1)
   expect_true(abs(summary_fit$mean[1] - log(200)) < 0.1)
 
-  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, mu_[i_] - y[i_] * log(mu_[i_]) + loggam(y[i_] + 1))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * (max(0, mu_[i_] - y[i_] * log(mu_[i_]) + loggam(y[i_] + 1)))", fixed = TRUE)
   expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # Check that R-side log_lik() applies the weights directly
@@ -76,7 +76,7 @@ test_that("Weighted Poisson targets exact conjugate posterior without clamping",
   data_na = data.frame(x = 1:3, y = c(10, NA, 10), w = 10)
   expect_error(
     mcp(list(y | weights(w) ~ 1), data = data_na, family = poisson(), par_x = "x"),
-    "Weights with missing responses"
+    "cannot impute missing responses"
   )
 })
 

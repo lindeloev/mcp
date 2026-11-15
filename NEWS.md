@@ -1,8 +1,21 @@
 # mcp (development version)
 
+## Major new features
+
+- **Custom families:** Define your own response distribution using `mcpfamily()`, e.g., a Student-t family for robust change point regression. See [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html). The built-in families are now defined using `mcpfamily()` too. `fit$family` is now an `mcpfamily()`.
+
+
+## Major breaking changes
+None
+
+## Minor new features
+
 - **Better initial values for change points:** Instead of spacing inits evenly, `mcp` now does a quick R-side scan and sets inits where the model of `mu` fits the data best while respecting the change point priors. This improves sampling when change points are "clustered". You can still manually set `inits` when needed.
 
 - `mcp_pars()` gains a `par_type` column (`"Intercept"`, `"dummy"`, or `"slope"`), which selects the default prior of each parameter.
+
+
+## Minor breaking changes
 
 
 # mcp 0.4.0

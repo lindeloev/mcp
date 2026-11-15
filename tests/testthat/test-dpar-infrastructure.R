@@ -330,7 +330,7 @@ test_that("AR and MA component names are reserved", {
 
   expect_error(
     assert_dpar_specs(family$dpar_specs),
-    "'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.",
+    "'epred', 'ar', 'ma', 'cp', and 'same' are reserved and cannot be family distributional parameters.",
     fixed = TRUE
   )
 })

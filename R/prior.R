@@ -55,6 +55,16 @@ get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior 
     default_group_specs(group_coefs, family)
   )
 
+  # Families need not define all default priors. Then users must specify them.
+  no_default = prior_specs$parameter[is.na(prior_specs$code)]
+  unspecified = setdiff(no_default, names(prior))
+  if (length(unspecified) > 0)
+    stop(
+      "family = ", family$family, "() has no default prior for ", and_collapse(paste0("`", unspecified, "`")),
+      ". Specify it in `prior`, e.g., `prior = list(", unspecified[1], " = \"dnorm(0, 10)\")`.", call. = FALSE
+    )
+  prior_specs$code[is.na(prior_specs$code)] = "dnorm(0, 1)"  # Placeholder for the specified prior
+
   # Parse default and specified priors once. A constant response (e.g., a placeholder before
   # simulating data) has no scale. Use 1 instead, as rstanarm does for non-Gaussian families.
   # Check each scale on its own quantity, e.g., `sd(.y - offset)` rather than `sd(.y)`.
@@ -78,7 +88,7 @@ get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior 
   if (length(prior) > 0) {
     default_prior_table = compile(list())
     value = function(prior_table) format_prior_display(prior_table$value[match(names(prior), prior_table$parameter)], digits = 15)
-    is_default = value(prior_table) == value(default_prior_table)
+    is_default = value(prior_table) == value(default_prior_table) & names(prior) %notin% no_default
     if (any(is_default))
       prior_table = compile(prior[!is_default])
   }

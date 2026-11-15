@@ -99,8 +99,6 @@ parse_segments = function(model, data, family, par_x, series = NULL) {
   # Check y
   y_col = data_columns$response
   if (any(is.na(data[[y_col]]))) {
-    if (!is.null(data_columns$weights) && isTRUE(family$response$is_discrete))
-      stop("Weights with missing responses (NA in '", y_col, "') is not supported for family = ", family$family, "().")
     message("NA values detected in '", y_col, "'. JAGS will treat them as latent responses and impute them during sampling.")
   }
 
@@ -195,11 +193,11 @@ get_pars_table = function(coefs, cps, group_coefs, family) {
 #'   group-level deviations, e.g., `scope = "group", role = "change_point"` for group-level change points.
 #' @return A tibble with one row per parameter definition. `parameter` is the
 #'   model parameter name; `dpar` is its distributional parameter (e.g., `"mu"`,
+#'   `"sigma"`, or `"ar1"`; see [mcp-formula]), as accepted by the `dpar` argument of
+#'   [fitted.mcpfit()], [fixef.mcpfit()], etc., and `NA` for change points;
 #'   `par_type` (`"Intercept"`, `"dummy"`, or `"slope"`) selects its default prior together with `dpar`,
 #'   e.g., factor levels in `y ~ 0 + group` are intercepts (see the `default_prior` argument of [mcpfamily()]).
 #'   Group-level parameters have the `par_type` of their population-level parameter;
-#'   `"sigma"`, or `"ar1"`; see [mcp-formula]), as accepted by the `dpar` argument of
-#'   [fitted.mcpfit()], [fixef.mcpfit()], etc., and `NA` for change points;
 #'   `group_col` and `population_parameter` describe group-level effects.
 #' @export
 #' @examples

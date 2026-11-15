@@ -160,10 +160,10 @@ evaluate_model = function(fit, data, pars, ndraws, y = NULL, type = "predict",
   }
 
   value = switch(type,
-    fitted = if (scale == "linear") links$mu else if (dpar == "mu") dpars$mu else family$r$epred(dpars, data$response, rate = rate),
+    fitted = if (scale == "linear") links$mu else if (dpar == "mu") dpars$mu else family_r(family, "epred")(dpars, data$response, rate = rate),
     loglik = (if (is.null(data$response$weights)) 1 else data$response$weights) * family$r$log_lik(y, dpars, data$response),
     predict = if (is.null(generated)) {
-      family$r$rng(length(dpars$mu), dpars, data$response, rate = rate)
+      family_r(family, "rng")(length(dpars$mu), dpars, data$response, rate = rate)
     } else {
       family$response$observed(generated, data$response, rate)
     }

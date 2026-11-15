@@ -6,18 +6,30 @@
 # e.g., the response `response[i_]`, distributional parameters `sigma_[i_]`,
 # and auxiliary response columns such as `trials(N)` as `N[i_]`.
 get_jags_family_context = function(data_columns) {
+  aux = function(name, default = NULL) {
+    if (is.null(data_columns[[name]])) {
+      if (!is.null(default))
+        return(default)
+      stop_github("Missing response auxiliary ", name, "() in JAGS family context.")
+    }
+    paste0(data_columns[[name]], "[i_]")
+  }
+
   list(
     y = paste0(data_columns$response, "[i_]"),
     threshold = "garma_threshold_[i_]",
     dpar = function(name) paste0(name, "_[i_]"),
     local = function(name) paste0(name, "_[i_]"),
-    aux = function(name, default = NULL) {
-      if (is.null(data_columns[[name]])) {
-        if (!is.null(default))
-          return(default)
-        stop_github("Missing response auxiliary ", name, "() in JAGS family context.")
-      }
-      paste0(data_columns[[name]], "[i_]")
+    aux = aux,
+
+    # Zeros trick: P(Z = 0) from dpois(phi) contributes -phi to the log-likelihood. `neg_log_density` must be
+    # non-negative, e.g., by adding a constant. Raised to the observation weight. Unobserved responses contribute nothing.
+    zeros_trick = function(neg_log_density) {
+      weights = aux("weights", "1")
+      c(
+        paste0("likelihood_phi_[i_] = response_observed_[i_] * ", if (weights != "1") paste0(weights, " * "), "(", neg_log_density, ")"),
+        "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])"
+      )
     }
   )
 }
@@ -137,6 +149,8 @@ get_jags_code = function(model_tables, prior_table, family) {
   }
 
   likelihood = family$backends$jags$likelihood(context)
+  if (!is.null(model_tables$data_columns$weights) && !any(grepl(context$aux("weights"), likelihood, fixed = TRUE)))
+    stop("family = ", family$family, "() does not support `weights()`.", call. = FALSE)
   jags_code = paste0(jags_code, paste(likelihood, collapse = "\n    "))
 
   # Compute link-scale residuals for GARMA

@@ -87,6 +87,7 @@ reference:
     contents:
       - bernoulli
       - negbinomial
+      - mcpfamily
 
   - title: Help and demos
     desc: Some showcases of typical mcp analyses. Most of these are discussed on the [front page](https://lindeloev.github.io/mcp).

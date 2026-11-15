@@ -305,12 +305,12 @@ test_summary = function(fit, group_cols, prior = FALSE) {
   fixed = fixef(fit, prior = prior)
   testthat::expect_equal(nlme::fixef(fit, prior = prior), fixed)
   fixed_verbose = fixef(fit, prior = prior, verbose = TRUE)
-  testthat::expect_true(all(pars$par_type[pars$part == "predictor"] %in% c("Intercept", "dummy", "slope")))
-  testthat::expect_true(all(is.na(pars$par_type[pars$part == "cp"])))
   testthat::expect_equal(nlme::fixef(fit, prior = prior, verbose = TRUE), fixed_verbose)
   testthat::expect_named(fixed, summary_cols)
   testthat::expect_named(fixed_verbose, verbose_summary_cols)
   pars = mcp_pars(fit)
+  testthat::expect_true(all(pars$par_type[pars$part == "predictor"] %in% c("Intercept", "dummy", "slope")))
+  testthat::expect_true(all(is.na(pars$par_type[pars$part == "cp"])))
   expected_fixed = pars$parameter[pars$scope == "population" & pars$role == "coefficient" & pars$dpar == "mu"]
   testthat::expect_setequal(fixed$parameter, expected_fixed)
 

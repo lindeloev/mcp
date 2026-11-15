@@ -192,7 +192,7 @@ pp_eval = function(
   if (summary) {
     if (type == "predict" && !is.null(fit$family$r$variance)) {
       # Exact predictive moments over the draws via the laws of total expectation and variance
-      epred = matrix(fit$family$r$epred(dpars, data$response, rate = rate), nrow(values))
+      epred = matrix(family_r(fit$family, "epred")(dpars, data$response, rate = rate), nrow(values))
       variance = matrix(fit$family$r$variance(dpars, data$response, rate = rate), nrow(values))
       newdata_return$.mean = rowMeans(epred)
       newdata_return$.sd = sqrt(rowMeans(variance) + rowMeans((epred - rowMeans(epred))^2))

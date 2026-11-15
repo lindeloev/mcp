@@ -19,7 +19,7 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
   sample_draws = function(pars, sample) {
     draws = run_jags(
       jags_code = jags_code,
-      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, family, data_columns) else jags_data,
+      jags_data = if (sample == "prior") get_jags_prior_data(jags_data, jags_code, data_columns) else jags_data,
       pars = pars,
       sample = sample,
       n.chains = chains,
@@ -185,10 +185,10 @@ use_jags_glm = function(family, group_coefs) {
 }
 
 
-# JAGS data for sampling the prior. The response is set to NA, except for weighted discrete
-# likelihoods, which use the response in a zeros trick that `response_observed_ = 0` turns off.
-get_jags_prior_data = function(jags_data, family, data_columns) {
-  if (is.null(data_columns$weights) || !isTRUE(family$response$is_discrete))
+# JAGS data for sampling the prior. The response is set to NA, except for likelihoods without a
+# response node, e.g., the zeros trick, which `response_observed_ = 0` turns off.
+get_jags_prior_data = function(jags_data, jags_code, data_columns) {
+  if (has_response_node(jags_code, data_columns))
     jags_data[[data_columns$response]][] = NA
   if (!is.null(jags_data$response_observed_))
     jags_data$response_observed_[] = 0L
@@ -317,7 +317,14 @@ get_jags_data = function(data, family, model_tables, jags_code, generated = TRUE
   context = prior_context(data, data_columns, n_segments, model_tables$design_specs)
   jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
 
-  if (generated && !is.null(data_columns$weights)) {  # Zeros trick (see jags_weighted_likelihood())
+  # Zeros trick (see context$zeros_trick() in get_jags_family_context())
+  if (grepl("likelihood_zero_[i_] ~", jags_code, fixed = TRUE)) {
+    if (anyNA(data[[data_columns$response]]) && !has_response_node(jags_code, data_columns))
+      stop(
+        "The likelihood of family = ", family$family, "() uses the response as data, e.g., to apply weights, ",
+        "so it cannot impute missing responses (NA in '", data_columns$response, "'). Remove these rows before fitting.",
+        call. = FALSE
+      )
     jags_data$response_observed_ = as.integer(!is.na(data[[data_columns$response]]))
     jags_data$likelihood_zero_ = numeric(nrow(data))
   }
@@ -330,6 +337,13 @@ get_jags_data = function(data, family, model_tables, jags_code, generated = TRUE
 
   # Return
   jags_data
+}
+
+
+# Whether the likelihood has a node for the response, e.g., `y[i_] ~ dnorm(...)`. Otherwise, e.g., with the zeros trick,
+# the response is data, so JAGS can neither impute missing responses nor sample it from the prior.
+has_response_node = function(jags_code, data_columns) {
+  grepl(paste0(" ", data_columns$response, "[i_] ~"), jags_code, fixed = TRUE)
 }
 
 

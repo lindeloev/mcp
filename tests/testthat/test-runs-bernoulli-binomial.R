@@ -163,7 +163,7 @@ test_that("Binomial JAGS weights implement a likelihood power and sample on ordi
   expect_equal(nrow(summary_fit), 1)
   expect_true(abs(summary_fit$mean[1] - 0) < 0.1)
 
-  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * max(0, loggam(y[i_] + 1) + loggam(N[i_] - y[i_] + 1) - loggam(N[i_] + 1) - y[i_] * log(mu_[i_]) - (N[i_] - y[i_]) * log(1 - mu_[i_]))", fixed = TRUE)
+  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * (max(0, loggam(y[i_] + 1) + loggam(N[i_] - y[i_] + 1) - loggam(N[i_] + 1) - y[i_] * log(mu_[i_]) - (N[i_] - y[i_]) * log(1 - mu_[i_])))", fixed = TRUE)
   expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # Check that R-side log_lik() applies the weights directly

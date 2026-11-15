@@ -63,22 +63,103 @@ as_mcpfamily = function(x) {
     poisson = mcpfamily_poisson(x$link),
     stop(
       "family = ", x$family, "() is not supported by mcp. Supported families are gaussian(), binomial(), ",
-      "bernoulli(), poisson(), and negbinomial().", call. = FALSE
+      "bernoulli(), poisson(), and negbinomial(). Use mcpfamily() to define other families.", call. = FALSE
     )
   )
 }
 
 
-# Build an mcpfamily from its parts (not exported yet):
-# - links: named link per dpar. Other dpars than mu are implicit and constant (identity link) unless included in a formula.
-# - jags: `likelihood(context)` returning JAGS code, and `glm_module` ("never", "group_effects", or "always").
-# - r: R functions for predictions, log_lik(), etc. (see assert_mcpfamily()).
-# - default_prior: one row per dpar and par_type. `condition` selects priors for a dpar
-#   that is "included" or "not_included" in any formula, e.g., sigma(1 + x).
-# - response: auxiliary data columns (e.g., trials()) and how to validate and present the response.
-# - lower, floor: exclusive lower bound and numerical floor of dpars, e.g., c(sigma = 0).
-# - garma: the observed response for AR/MA on the link scale, bounded by `threshold`. NULL if unsupported.
-# - glm_family: a stats family approximating the model of mu, for change point inits. NULL to space them equally.
+#' Define a Family for mcp
+#'
+#' `r lifecycle::badge("experimental")`
+#'
+#' Define a response distribution for [mcp()], e.g., one that `mcp` does not ship.
+#' The built-in families, such as `gaussian()` and [negbinomial()], are defined using `mcpfamily()` too.
+#' See [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html) for a worked example.
+#'
+#' Only the elements needed to fit and check the model are required: `family`, `links`, `jags$likelihood`, and `r$log_lik`.
+#' Methods that are needed later (e.g., `r$rng` for `predict()`) raise an error on use.
+#'
+#' @param family String. Name the family for printing, e.g., `"student"`.
+#' @param links Named character vector with the link function of each distributional parameter (dpar),
+#'   e.g., `c(mu = "identity", sigma = "log")`. Supported links: `"identity"`, `"log"`, `"logit"`, and `"probit"`.
+#'   The dpar `mu` is required.
+#' @param jags Named list with the JAGS likelihood:
+#'   * `likelihood`: A function taking a `context` list and returning JAGS code for observation `i_`
+#'     (a string or a character vector of lines). See examples. `context` contains:
+#'     * `y`: The response node, e.g., `"y[i_]"`.
+#'     * `dpar(name)`: A dpar on the response scale, e.g., `context$dpar("sigma")` returns `"sigma_[i_]"`.
+#'     * `aux(name, default)`: A response auxiliary column, e.g., `context$aux("weights", "1")`.
+#'       Returns `default` if the model does not include it.
+#'     * `local(name)`: A node for intermediate values, e.g., `context$local("prob")` returns `"prob_[i_]"`.
+#'     * `zeros_trick(neg_log_density)`: For likelihoods that JAGS does not have. Takes the negative log-density of `y`
+#'       as a string. Add a constant to keep it non-negative. Applies weights but does not support missing responses. See the [Gumbel example](https://lindeloev.github.io/mcp/articles/custom_families.html#likelihoods-that-jags-does-not-have).
+#'   * `glm_module`: When to load the JAGS glm module: `"never"` (default), `"group_effects"`, or `"always"`.
+#' @param r Named list of R functions. They take `dpars`, a list with a rows-by-draws matrix for each dpar
+#'   on its response scale, and `data`, a list with the response auxiliary columns, e.g., `data$trials`.
+#'   Like [stats::dnorm()], they must recycle `data` over the draws (columns). See examples and [Custom families article](https://lindeloev.github.io/mcp/articles/custom_families.html) for applied examples.
+#'   * `log_lik(y, dpars, data)`: Required. The log-density of each response, including normalizing constants.
+#'     Used by [loo()], [log_lik()], etc.
+#'     For weighted models, the observation weights are applied by `mcp`.
+#'   * `epred(dpars, data, rate = FALSE)`: The expected response. Used by `fitted()`, `plot()`, etc.
+#'   * `rng(n, dpars, data, rate = FALSE)`: Random responses. Used by `predict()`, [pp_check()], `fit$simulate()`, etc.
+#'   * `variance(dpars, data, rate = FALSE)`: The variance of the response. Used for exact `predict()` SDs.
+#'     If missing, the SD of the `rng` draws is used.
+#'   * `cdf(q, dpars, data)` and `quantile(p, dpars, data)`: Used for exact predictive intervals.
+#'     If missing, the quantiles of the `rng` draws are used, which is less precise.
+#' @param default_prior `NULL` or a data frame with columns `dpar`, `par_type` (`"Intercept"`, `"dummy"`, or
+#'   `"slope"`), and `prior`, e.g., `"dnorm(0, 2.5 / predictor_scale())"`. Each parameter gets the row matching
+#'   its `dpar` and `par_type` in [mcp_pars()]. Optional columns:
+#'   * `group_sd_prior`: Prior for the SD of group-level effects.
+#'   * `description`: Shown in `prior_summary(fit, verbose = TRUE)`.
+#'   * `condition`: one of
+#'     - `"always"`: (default)
+#'     - `"included"`: for dpar terms explicitly included in formula, e.g., `sigma_Intercept_1` in `sigma(1)`.
+#'     - `"not_included"` for dpar terms not included in any formula, e.g., `sigma_1` implicit when `sigma()` term is absent.
+#'
+#'   Priors use the syntax of `mcp(..., prior)` (see [mcp-priors]). `.y` and `.x` are the response and the change-point variable,
+#'   e.g., `"dnorm(mean(.y), 2.5 * sd(.y))"`. `predictor_scale()` is the SD of each coefficient's predictor, for autoscaling.
+#'   [prior_summary()] shows the result: try `prior_summary(demo_fit, verbose = TRUE)`, where `rule` is the default `prior`
+#'   with these filled in, and `prior` is the resolved prior.
+#' @param response Named list describing the response:
+#'   * `auxiliary`: Named list of response auxiliaries, used like `y | trials(N)`, e.g.,
+#'     `list(trials = list(required = TRUE, operations = c("epred", "log_lik", "rng")))`.
+#'     `operations` lists where the column is needed (`"epred"`, `"log_lik"`, `"rng"`, and `"garma"`).
+#'     `weights()` is always available. Use it in `jags$likelihood` to support weights.
+#'   * `validate(y, data, data_columns)`: Function that raises an error for invalid responses.
+#'   * `is_discrete`: Logical. Integer-valued responses? Defaults to `FALSE`.
+#'   * `has_rate`, `observed(y, data, rate)`, `probability(rate)`: For responses per trial, as in `binomial()`.
+#' @param lower Named numeric vector. The exclusive lower bound of dpars, e.g., `c(sigma = 0)`.
+#'   Priors on constant dpars (e.g., `sigma_1`) are truncated to it.
+#' @param floor Named numeric vector. Numerical floor on the dpar for each observation, e.g., `c(sigma = 1e-5)`.
+#' @param garma `NULL` (AR/MA unsupported) or a named list with `observed_r(y, data, threshold)` and
+#'   `observed_jags(context)`: The response, bounded by `threshold`, before the link function is applied, in R and JAGS.
+#'   Optionally `validate_threshold(threshold, data)` which stop()s if invalid.
+#' @param glm_family `NULL` or a stats family, e.g., `poisson()`, that approximates the model of `mu`.
+#'   [stats::glm.fit()] uses it to find initial values for change points. If `NULL`, they are equally spaced.
+#' @return An `mcpfamily` object.
+#' @aliases mcpfamily
+#' @export
+#' @examples
+#' # A Student-t family with mu, sigma, and nu
+#' student = mcpfamily(
+#'   family = "student",
+#'   links = c(mu = "identity", sigma = "log", nu = "log"),
+#'   jags = list(likelihood = function(context) {
+#'     paste0(context$y, " ~ dt(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2, ", context$dpar("nu"), ")")
+#'   }),
+#'   r = list(
+#'     log_lik = function(y, dpars, data) stats::dt((y - dpars$mu) / dpars$sigma, dpars$nu, log = TRUE) - log(dpars$sigma),
+#'     rng = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * stats::rt(n, dpars$nu)
+#'   ),
+#'   lower = c(sigma = 0, nu = 1)
+#' )
+#'
+#' # Priors are required for parameters without a default prior
+#' data = data.frame(x = 1:20, y = c(rnorm(10), rnorm(10, 3)))
+#' prior = list(Intercept_1 = "dnorm(0, 10)", Intercept_2 = "dnorm(0, 10)", sigma_1 = "dnorm(0, 5) T(0, )", nu_1 = "dgamma(2, 0.1) T(1, )")
+#' fit = mcp(list(y ~ 1, ~ 1), data, family = student, prior = prior, par_x = "x", sample = FALSE)
+#' fit$family
 mcpfamily = function(family, links, jags, r, default_prior = NULL, response = list(), lower = NULL, floor = NULL, garma = NULL, glm_family = NULL) {
   checkmate::assert_string(family)
   checkmate::assert_character(links, names = "unique", any.missing = FALSE)
@@ -143,18 +224,6 @@ mcpfamily = function(family, links, jags, r, default_prior = NULL, response = li
   class(out) = c("mcpfamily", "family")
   assert_mcpfamily(out)
   out
-}
-
-
-# JAGS code raising a discrete likelihood to the observation weight using the Poisson zeros trick:
-# P(Z = 0) from dpois(phi) contributes -phi to the log-likelihood, so phi = weight * -log(density).
-# Missing responses (response_observed_ = 0) contribute nothing.
-jags_weighted_likelihood = function(label, weights, neg_log_density) {
-  c(
-    paste0("# ", label, " likelihood raised to the observation weight"),
-    paste0("likelihood_phi_[i_] = response_observed_[i_] * ", weights, " * max(0, ", neg_log_density, ")"),
-    "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])"
-  )
 }
 
 
@@ -257,7 +326,7 @@ mcpfamily_gaussian = function(link) {
       } else {
         # Precision w / sigma^2 raises the kernel to weight w. The normalizing term needs
         # an extra -(w - 1) * log(sigma), added with the Poisson zeros trick (see
-        # jags_weighted_likelihood()). The constant |w - 1| * 50 keeps phi >= 0 for
+        # get_jags_family_context()). The constant |w - 1| * 50 keeps phi >= 0 for
         # sigma within e^-50 to e^50 and cancels out in MCMC.
         c(
           "# Gaussian likelihood raised to the observation weight",
@@ -351,7 +420,7 @@ mcpfamily_binomial = function(link) {
         trials = context$aux("trials")
         mu = context$dpar("mu")
         y = context$y
-        jags_weighted_likelihood("Binomial", weights, paste0("loggam(", y, " + 1) + loggam(", trials, " - ", y, " + 1) - loggam(", trials, " + 1) - ", y, " * log(", mu, ") - (", trials, " - ", y, ") * log(1 - ", mu, ")"))
+        c("# Binomial likelihood raised to the observation weight", context$zeros_trick(paste0("max(0, loggam(", y, " + 1) + loggam(", trials, " - ", y, " + 1) - loggam(", trials, " + 1) - ", y, " * log(", mu, ") - (", trials, " - ", y, ") * log(1 - ", mu, "))")))
       }
     }
   )
@@ -427,7 +496,7 @@ mcpfamily_bernoulli = function(link) {
       } else {
         mu = context$dpar("mu")
         y = context$y
-        jags_weighted_likelihood("Bernoulli", weights, paste0("- ", y, " * log(", mu, ") - (1 - ", y, ") * log(1 - ", mu, ")"))
+        c("# Bernoulli likelihood raised to the observation weight", context$zeros_trick(paste0("max(0, - ", y, " * log(", mu, ") - (1 - ", y, ") * log(1 - ", mu, "))")))
       }
     }
   )
@@ -511,7 +580,7 @@ mcpfamily_poisson = function(link) {
       } else {
         mu = context$dpar("mu")
         y = context$y
-        jags_weighted_likelihood("Poisson", weights, paste0(mu, " - ", y, " * log(", mu, ") + loggam(", y, " + 1)"))
+        c("# Poisson likelihood raised to the observation weight", context$zeros_trick(paste0("max(0, ", mu, " - ", y, " * log(", mu, ") + loggam(", y, " + 1))")))
       }
     }
   )
@@ -588,7 +657,7 @@ mcpfamily_negbinomial = function(link, link_shape) {
       if (identical(weights, "1"))
         return(c(prob_code, paste0(y, " ~ dnegbin(", prob, ", ", shape, ")")))
 
-      c(prob_code, jags_weighted_likelihood("Negative binomial", weights, paste0("loggam(", shape, ") + loggam(", y, " + 1) - loggam(", y, " + ", shape, ") - ", shape, " * log(", prob, ") - ", y, " * log(1 - ", prob, ")")))
+      c(prob_code, "# Negative binomial likelihood raised to the observation weight", context$zeros_trick(paste0("max(0, loggam(", shape, ") + loggam(", y, " + 1) - loggam(", y, " + ", shape, ") - ", shape, " * log(", prob, ") - ", y, " * log(1 - ", prob, "))")))
     }
   )
   garma = list(
@@ -673,8 +742,10 @@ assert_dpar_specs = function(x) {
     stop("Each distributional parameter must occur exactly once in `family$dpar_specs`.")
   if ("mu" %notin% x$dpar)
     stop("`family$dpar_specs` must contain the response-mean parameter 'mu'.")
-  if (any(x$dpar %in% c("epred", "ar", "ma")))
-    stop("'epred', 'ar', and 'ma' are reserved and cannot be family distributional parameters.")
+  if (any(x$dpar %in% c("epred", "ar", "ma", "cp", "same")))
+    stop("'epred', 'ar', 'ma', 'cp', and 'same' are reserved and cannot be family distributional parameters.")
+  if (any(make.names(x$dpar) != x$dpar))
+    stop("Distributional parameter names must be syntactic, e.g., 'nu' or 'zi'.")
 
   supported_links = names(.mcplinks)
   links = unique(unlist(x[link_cols], use.names = FALSE))
@@ -786,6 +857,17 @@ print.mcpfamily = function(x, ...) {
 }
 
 
+# Get an R-side function of the family, e.g., `family_r(family, "rng")`. Families need not define those
+# that are not needed to fit the model, so this errors if it is missing.
+family_r = function(family, name) {
+  fun = family$r[[name]]
+  if (is.null(fun))
+    stop("family = ", family$family, "() has no `r$", name, "` function, which is needed here. ",
+         "Add it in `mcpfamily(..., r = list(", name, " = ...))` and refit.", call. = FALSE)
+  fun
+}
+
+
 is_mcpfamily = function(x) {
   inherits(x, "mcpfamily")
 }
@@ -821,12 +903,11 @@ assert_mcpfamily = function(x) {
   
   # R-side functions take `dpars` as rows x draws matrices on the response scale and `data` (response
   # auxiliaries, e.g., `trials`) with one value per row. Like stats::dbinom() etc., they must recycle `data` down the columns.
-  checkmate::assert_function(x$r$epred)
-  checkmate::assert_function(x$r$variance, null.ok = TRUE)
-  checkmate::assert_function(x$r$log_lik)
-  checkmate::assert_function(x$r$rng)
-  checkmate::assert_function(x$r$cdf, null.ok = TRUE)
-  checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf))
+  # Only log_lik() is required. Methods get the others using family_r().
+  checkmate::assert_function(x$r$log_lik, .var.name = "r$log_lik")
+  for (name in c("epred", "variance", "rng", "cdf"))
+    checkmate::assert_function(x$r[[name]], null.ok = TRUE, .var.name = paste0("r$", name))
+  checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf), .var.name = "r$quantile")
   checkmate::assert_function(x$backends$jags$likelihood, .var.name = "jags$likelihood")
   checkmate::assert_choice(x$backends$jags$glm_module, c("never", "group_effects", "always"), .var.name = "jags$glm_module")
   checkmate::assert_class(x$glm_family, "family", null.ok = TRUE, .var.name = "glm_family")
