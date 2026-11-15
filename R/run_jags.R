@@ -10,11 +10,12 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
   parameters = model_tables$parameters
   jags_data = get_jags_data(data, family, model_tables, jags_code, generated = !custom_jags_code)
 
-  # Monitor model parameters and, for generated JAGS code, latent responses
+  # Monitor model parameters and, for generated JAGS code, latent responses and the deviance (see check_jags_likelihood())
   all_pars = prior_table$parameter
   missing_response_rows = which(is.na(data[[data_columns$response]]))
   imputed_response_nodes = if (custom_jags_code || length(missing_response_rows) == 0) character() else
     paste0(data_columns$response, "[", missing_response_rows, "]")
+  deviance_node = if (!custom_jags_code) "deviance"
 
   sample_draws = function(pars, sample) {
     draws = run_jags(
@@ -40,21 +41,23 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
     draws[, order(match(sub("\\[.*", "", coda::varnames(draws)), parameters$parameter)), drop = FALSE]
   }
 
-  # Sample posterior and split off the missing responses
+  # Sample posterior and split off the missing responses and the deviance
   mcmc_post = NULL
   imputed_response = NULL
+  deviance = NULL
   if (sample %in% c("post", "both")) {
-    mcmc_post = sample_draws(c(all_pars, imputed_response_nodes), "post")
-    if (length(imputed_response_nodes) > 0) {
+    mcmc_post = sample_draws(c(all_pars, imputed_response_nodes, deviance_node), "post")
+    if (length(imputed_response_nodes) > 0)
       imputed_response = mcmc_post[, imputed_response_nodes, drop = FALSE]
-      mcmc_post = mcmc_post[, setdiff(colnames(mcmc_post[[1]]), imputed_response_nodes), drop = FALSE]
-    }
+    if (!is.null(deviance_node))
+      deviance = mcmc_post[, deviance_node, drop = FALSE]
+    mcmc_post = mcmc_post[, setdiff(colnames(mcmc_post[[1]]), c(imputed_response_nodes, deviance_node)), drop = FALSE]
   }
 
   # Sample prior
   mcmc_prior = if (sample %in% c("prior", "both")) sample_draws(all_pars, "prior")
 
-  list(mcmc_post = mcmc_post, mcmc_prior = mcmc_prior, imputed_response = imputed_response)
+  list(mcmc_post = mcmc_post, mcmc_prior = mcmc_prior, imputed_response = imputed_response, deviance = deviance)
 }
 
 
@@ -64,7 +67,7 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
 #' @inheritParams rjags::jags.model
 #' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
-#' @param pars Character vector of parameters to save/monitor.
+#' @param pars Character vector of parameters to save/monitor. `"deviance"` loads the JAGS dic module.
 #' @param default_inits Named list. Initial values for parameters not in `inits`, e.g., from `get_cp_inits()`.
 #' @param use_glm Logical. Load the JAGS glm module, which block-samples
 #'   coefficients that enter the linear predictor jointly.
@@ -88,12 +91,12 @@ run_jags = function(jags_code,
   # Can be used sequentially or in parallel.
   do_sampling = function(inits, n.chains) {
     sample_chains = function() {
-      # Samplers are assigned at compile time, so load the glm module here to reach
-      # parallel workers too, and unload it again to leave the user's session unchanged.
-      if (use_glm && !("glm" %in% rjags::list.modules())) {
-        rjags::load.module("glm", quiet = TRUE)
-        on.exit(rjags::unload.module("glm", quiet = TRUE), add = TRUE)
-      }
+      # Samplers are assigned at compile time, so load the modules here to reach
+      # parallel workers too, and unload them again to leave the user's session unchanged.
+      modules = setdiff(c(if (use_glm) "glm", if ("deviance" %in% pars) "dic"), rjags::list.modules())
+      for (module in modules)
+        rjags::load.module(module, quiet = TRUE)
+      on.exit(for (module in modules) rjags::unload.module(module, quiet = TRUE), add = TRUE)
 
       # Compile model silently. Adapt separately to keep the progress bar.
       jags_connection = textConnection(jags_code)
@@ -365,4 +368,49 @@ recover_levels = function(draws, data, group_pars) {
     colnames(x)[!is.na(matched)] = level_names[matched[!is.na(matched)]]
     x
   })
+}
+
+
+# How much the JAGS likelihood and the R-side log_lik() disagree in `ndraws` posterior draws of `fit`. 
+# Should ideally be zero, i.e., mcp's JAGS code, log_lik(), and loo() describe the same model.
+# The JAGS deviance may differ from -2 * sum(log_lik()) by a constant (e.g., from the zeros trick in
+# context$zeros_trick()), so the check is on their difference across draws. NA where log_lik() does not apply.
+# - deviance: mcmc.list with the JAGS deviance of each draw in `fit`.
+get_likelihood_mismatch = function(fit, deviance, ndraws = 20) {
+  columns = mcp_columns(fit)
+  if (is_arma(fit) && anyNA(fit$data[[columns$response]]))
+    return(NA_real_)  # log_lik() refuses missing AR/MA histories
+
+  ndraws = min(ndraws, count_draws(fit))
+  fit = thin_post_draws(fit, ndraws)
+  jags_deviance = as.numeric(as.matrix(thin_chains(deviance, ndraws))) - get_cp_weight_deviance(fit)
+  r_deviance = -2 * rowSums(log_lik(fit, summary = FALSE, draws_format = "matrix"), na.rm = TRUE)
+  difference = jags_deviance - r_deviance
+  max(abs(difference - stats::median(difference))) / (1 + mean(abs(r_deviance)))
+}
+
+
+# Warn if mcp's JAGS code and R-side methods describe different likelihoods (see get_likelihood_mismatch()),
+# e.g., when `jags$likelihood` and `r$log_lik` of a custom family disagree.
+check_jags_likelihood = function(fit, deviance) {
+  if (isTRUE(get_likelihood_mismatch(fit, deviance) > 1e-6))
+    warning(
+      "The JAGS likelihood and the R-side `log_lik()` of family = ", fit$family$family, "() disagree, so R-side methods ",
+      "such as `loo()`, `predict()`, and `plot()` may be wrong. For families made with `mcpfamily()`, check that ",
+      "`jags$likelihood` and `r$log_lik` describe the same distribution.", call. = FALSE
+    )
+}
+
+
+# The JAGS deviance of the dirichlet weight on the segment lengths (`cp_weight_` in get_jags_code()) in each draw of `fit`
+get_cp_weight_deviance = function(fit) {
+  model_tables = get_fit_model_tables(fit)
+  alpha = get_dirichlet_alpha(fit$.internal$prior_table, model_tables$cps)
+  if (alpha == 1)
+    return(0)
+
+  # cp_weight_ ~ dpois(-(alpha - 1) * sum(log(segment length / range of x))) adds 2 * lambda to the deviance
+  x_range = range(fit$data[[model_tables$data_columns$par_x]])
+  cps = cbind(x_range[1], as.matrix(mcmclist_draws(fit))[, model_tables$cps$name, drop = FALSE], x_range[2])
+  -2 * (alpha - 1) * rowSums(log((cps[, -1, drop = FALSE] - cps[, -ncol(cps), drop = FALSE]) / diff(x_range)))
 }

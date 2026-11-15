@@ -392,6 +392,10 @@ mcp = function(
   )
   class(mcpfit) = "mcpfit"
 
+  # The JAGS deviance is only used for this check, so it is not stored in the fit
+  if (!is.null(samples$deviance))
+    check_jags_likelihood(mcpfit, samples$deviance)
+
   if (!is.null(samples$mcmc_post) && is_arma(mcpfit))
     warn_arma_fit(mcpfit, diagnostics = diagnostics)
 

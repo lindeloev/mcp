@@ -35,6 +35,15 @@ get_jags_family_context = function(data_columns) {
 }
 
 
+# The `alpha` of a dirichlet() prior on the change points, or 1 for no weight on the segment lengths
+get_dirichlet_alpha = function(prior_table, cps) {
+  if (nrow(cps) == 0)
+    return(1)
+  parsed = prior_table$parsed[[match(cps$name[1], prior_table$parameter)]]
+  if (parsed$dist %in% "dirichlet") as.numeric(parsed$args) else 1  # %in% is FALSE for dist = NA
+}
+
+
 #' Make JAGS code for Multiple Change Point model
 #'
 #' @param model_tables Model tables, as in `get_fit_model_tables(fit)`.
@@ -77,7 +86,7 @@ get_jags_code = function(model_tables, prior_table, family) {
     steps = paste0("step(cp_", 2:nrow(cps), " - cp_", 2:nrow(cps) - 1, ifelse(min_lengths[-1] == "0", "", paste0(" - ", min_lengths[-1])), ")")
     jags_code = paste0(jags_code, "  cp_order_ ~ dbern(", paste(steps, collapse = " * "), ")  # Ordered change points", if (any(min_lengths != "0")) " with minimum segment lengths", "\n")
   }
-  alpha = if (nrow(cps) > 0 && cp_rows$parsed[[1]]$dist %in% "dirichlet") as.numeric(cp_rows$parsed[[1]]$args) else 1  # %in% is FALSE for dist = NA
+  alpha = get_dirichlet_alpha(prior_table, cps)
   if (alpha != 1) {
     # Zeros trick: dpois(0 | lambda) adds -lambda = (alpha - 1) * sum(log(segment length / range of x)) to the log density
     log_lengths = paste0("log((cp_", seq_len(K), " - cp_", seq_len(K) - 1, ") / (cp_", K, " - cp_0))", collapse = " + ")

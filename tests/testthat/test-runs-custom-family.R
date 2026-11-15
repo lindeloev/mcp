@@ -81,6 +81,21 @@ student_zeros = mcpfamily(
   lower = c(sigma = 0, nu = 1)
 )
 
+good_student_zeros = list(
+  list(y ~ 1 + x),
+  list(
+    y ~ 1 + x,
+    ~ 1 + sigma(1)
+  ),
+  list(y | weights(weights_ok) ~ 1 + x)
+)
+
+test_good(
+  good_student_zeros,
+  family = student_zeros
+)
+
+
 test_that("zeros-trick likelihoods keep the response as data", {
   fit = mcp(list(y ~ 1 + x), data_gauss, family = student_zeros, par_x = "x", sample = FALSE)
   expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * (loggam(", fixed = TRUE)
@@ -138,6 +153,17 @@ test_that("families without default priors require specified priors", {
   expect_error(
     fit$simulate(fit, data_gauss, Intercept_1 = 0, x_1 = 1, sigma_1 = 1, nu_1 = 3, .type = "predict"),
     "family = minimal() has no `r$rng` function",
+    fixed = TRUE
+  )
+})
+
+
+test_that("mcp() warns when the JAGS likelihood and R-side log_lik() disagree", {
+  wrong = student
+  wrong$r$log_lik = function(y, dpars, data) stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE)
+  expect_warning(
+    mcp(list(y ~ 1 + x), data_gauss, family = wrong, par_x = "x", chains = 1, warmup = 300, iter = 50, diagnostics = FALSE, quiet = TRUE),
+    "The JAGS likelihood and the R-side `log_lik()` of family = student() disagree",
     fixed = TRUE
   )
 })

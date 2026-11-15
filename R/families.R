@@ -99,7 +99,7 @@ as_mcpfamily = function(x) {
 #'   on its response scale, and `data`, a list with the response auxiliary columns, e.g., `data$trials`.
 #'   Like [stats::dnorm()], they must recycle `data` over the draws (columns). See examples and [Custom families article](https://lindeloev.github.io/mcp/articles/custom_families.html) for applied examples.
 #'   * `log_lik(y, dpars, data)`: Required. The log-density of each response, including normalizing constants.
-#'     Used by [loo()], [log_lik()], etc.
+#'     After sampling, `mcp` checks `jags$likelihood` against it. Also used by [loo()], [log_lik()], etc.
 #'     For weighted models, the observation weights are applied by `mcp`.
 #'   * `epred(dpars, data, rate = FALSE)`: The expected response. Used by `fitted()`, `plot()`, etc.
 #'   * `rng(n, dpars, data, rate = FALSE)`: Random responses. Used by `predict()`, [pp_check()], `fit$simulate()`, etc.
@@ -903,7 +903,7 @@ assert_mcpfamily = function(x) {
   
   # R-side functions take `dpars` as rows x draws matrices on the response scale and `data` (response
   # auxiliaries, e.g., `trials`) with one value per row. Like stats::dbinom() etc., they must recycle `data` down the columns.
-  # Only log_lik() is required. Methods get the others using family_r().
+  # Only log_lik() is needed to fit the model (see check_jags_likelihood()). Methods get the others using family_r().
   checkmate::assert_function(x$r$log_lik, .var.name = "r$log_lik")
   for (name in c("epred", "variance", "rng", "cdf"))
     checkmate::assert_function(x$r[[name]], null.ok = TRUE, .var.name = paste0("r$", name))

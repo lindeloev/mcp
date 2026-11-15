@@ -103,18 +103,23 @@ thin_post_draws = function(fit, ndraws) {
   if (is.null(ndraws))
     return(fit)
 
-  n_iter_min = min(vapply(mcmc_post, nrow, integer(1)))
-  iter_per_chain = max(1L, as.integer(round(ndraws / length(mcmc_post))))
+  fit$mcmc_post = thin_chains(mcmc_post, ndraws)
+  if (!is.null(fit$.internal$imputed_response))
+    fit$.internal$imputed_response = thin_chains(fit$.internal$imputed_response, ndraws)
+  fit
+}
+
+
+# Subset an mcmc.list to `ndraws` evenly spaced midpoint iterations, balanced across chains
+thin_chains = function(draws, ndraws) {
+  n_iter_min = min(vapply(draws, nrow, integer(1)))
+  iter_per_chain = max(1L, as.integer(round(ndraws / length(draws))))
   indices = pmax(1L, as.integer(round(
     (seq_len(iter_per_chain) - 0.5) * n_iter_min / iter_per_chain
   )))
-  subset_chains = function(draws) coda::mcmc.list(lapply(draws, function(chain_draws) {
+  coda::mcmc.list(lapply(draws, function(chain_draws) {
     coda::mcmc(chain_draws[indices, , drop = FALSE])
   }))
-  fit$mcmc_post = subset_chains(mcmc_post)
-  if (!is.null(fit$.internal$imputed_response))
-    fit$.internal$imputed_response = subset_chains(fit$.internal$imputed_response)
-  fit
 }
 
 
