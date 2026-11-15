@@ -80,7 +80,7 @@ pp_eval = function(
   exclude_group_cols = setdiff(group_cols, c(group_info$cols, if (evaluating_arma) data_columns$series, get_predictor_cols(fit)))
 
   # Determine which auxiliary columns are needed for this operation
-  operation = switch(type, predict = "rng", loglik = "log_lik", fitted = "epred", residuals = "epred")
+  operation = switch(type, predict = "simulate", loglik = "log_lik", fitted = "epred", residuals = "epred")
   aux_operations = c(operation, if (arma && is_arma(fit)) "garma")
   if (type == "fitted" && (rate || dpar != "epred"))
     aux_operations = setdiff(aux_operations, "epred")

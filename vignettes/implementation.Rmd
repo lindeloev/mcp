@@ -275,4 +275,4 @@ y_mcp = fit$simulate(fit, data.frame(x = 1:20), cp_1 = 12, x_1 = 2, x_2 = -1, si
 all.equal(as.numeric(y_mcp), y_local)
 ```
 
-The priors and reparameterizations are not part of the R evaluation. The likelihood is in `fit$family$r`, e.g., `fit$family$r$log_lik` and `fit$family$r$rng`.
+The priors and reparameterizations are not part of the R evaluation. The likelihood is in `fit$family$r`, e.g., `fit$family$r$log_lik` and `fit$family$r$simulate`.

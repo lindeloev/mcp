@@ -8,7 +8,7 @@ student = mcpfamily(
   r = list(
     log_lik = function(y, dpars, data) stats::dt((y - dpars$mu) / dpars$sigma, dpars$nu, log = TRUE) - log(dpars$sigma),
     epred = function(dpars, data, rate = FALSE) dpars$mu,
-    rng = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * stats::rt(n, dpars$nu)
+    simulate = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * stats::rt(n, dpars$nu)
   ),
   default_prior = tibble::tribble(
     ~dpar, ~par_type, ~prior, ~group_sd_prior, ~condition,
@@ -156,7 +156,7 @@ test_that("families without default priors require specified priors", {
   # Methods error when they need a missing R-side function
   expect_error(
     fit$simulate(fit, data_gauss, Intercept_1 = 0, x_1 = 1, sigma_1 = 1, nu_1 = 3, .type = "predict"),
-    "family = minimal() has no `r$rng` function",
+    "family = minimal() has no `r$simulate` function",
     fixed = TRUE
   )
 })

@@ -1,0 +1,205 @@
+---
+title: "Custom families"
+date: "`r format(file.mtime(knitr::current_input()), '%Y-%m-%d')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Custom families}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+editor_options:
+  markdown:
+    wrap: none
+---
+
+```{r, include = FALSE}
+if (requireNamespace("pkgload", quietly = TRUE)) {
+  pkgload::load_all(export_all = FALSE, quiet = TRUE)
+}
+options(mcp_quiet = TRUE)
+set.seed(42)
+```
+
+`mcp` ships with the [families listed here](../articles/families.html). Use `mcpfamily()` to define other response distributions. A family defines the likelihood, i.e., how the response is distributed given its distributional parameters (dpars). Everything else is up to `mcp`: change points, formulas for each dpar, group-level effects, AR/MA, priors, plots, `loo()`, etc. The built-in families are defined using `mcpfamily()` too.
+
+`mcpfamily()` is experimental, so its arguments may change in future releases.
+
+# A Student-t family
+
+We will make a Student-t family for robust regression. It has three dpars: the location `mu`, the scale `sigma`, and the degrees of freedom `nu`, where small `nu` gives heavy tails. Here is some data with a joined slope after the change point and heavy-tailed residuals:
+
+```{r}
+df = data.frame(x = 1:100)
+df$y = ifelse(df$x < 50, 10, 10 + 0.5 * (df$x - 50)) + 2 * rt(100, df = 3)
+```
+
+## The minimal family
+
+A family needs only what is required to fit the model:
+
+```{r}
+student = mcpfamily(
+  family = "student",
+  links = c(mu = "identity", sigma = "log", nu = "log"),
+  jags = list(likelihood = function(context) {
+    paste0(context$y, " ~ dt(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2, ", context$dpar("nu"), ")")
+  }),
+  r = list(
+    log_lik = function(y, dpars, data) dt((y - dpars$mu) / dpars$sigma, dpars$nu, log = TRUE) - log(dpars$sigma)
+  ),
+  lower = c(sigma = 0, nu = 1)
+)
+```
+
+- `links`: The link function of each dpar. `mu` is required. The other dpars are always part of the model. Without a formula, they are constant, e.g., `sigma_1` is the scale itself. With a formula, e.g., `sigma(1 + x)`, their link applies, so `sigma_Intercept_1` is the log-scale.
+- `jags$likelihood`: Returns the JAGS code for one observation. `context$y` is the response and `context$dpar("sigma")` is `sigma` on its response scale. JAGS's `dt()` takes the precision $1/\sigma^2$, not the scale.
+- `r$log_lik`: The same log-density in R, used by `log_lik()`, `loo()`, etc. `dpars` contains a matrix (rows x draws) for each dpar. Include normalizing constants, e.g., `- log(dpars$sigma)` here.
+- `lower`: The lower bounds of `sigma` and `nu`. Priors on the constant `sigma_1` and `nu_1` are truncated to these bounds.
+
+## Priors
+
+The minimal family has no default priors, so `mcp` asks for them:
+
+```{r, error = TRUE}
+model = list(
+  y ~ 1,     # Plateau
+  ~ 0 + x    # Joined slope
+)
+fit = mcp(model, data = df, family = student)
+```
+
+We specify them:
+
+```{r}
+prior = list(
+  Intercept_1 = "dnorm(0, 20)",
+  x_2 = "dnorm(0, 2)",
+  sigma_1 = "dt(0, 5, 3)",
+  nu_1 = "dgamma(2, 0.1)"
+)
+fit = mcp(model, data = df, family = student, prior = prior)
+summary(fit)
+```
+
+The priors of `sigma_1` and `nu_1` were truncated to the bounds in `lower`:
+
+```{r}
+prior_summary(fit)
+```
+
+## Checking the JAGS and R likelihoods
+
+`jags$likelihood` is used for sampling, whereas `r$log_lik` is used for `loo()` etc. If they differ, these methods are wrong. After sampling, `mcp` therefore compares the JAGS deviance to $-2 \sum$ `log_lik()` in some posterior draws, and warns if they disagree. Constant differences are allowed, e.g., normalizing constants that JAGS leaves out, or the ["zeros trick"](#likelihoods-that-jags-does-not-have), which is useful for likelihoods that JAGS does not have.
+
+## The complete family
+
+Methods that need more than the likelihood raise an error. For example, `fitted()` needs the expected response (`r$epred`) and `predict()` needs random draws (`r$rng`). Let us add these, the variance for `predict()` SDs, and default priors:
+
+```{r}
+student = mcpfamily(
+  family = "student",
+  links = c(mu = "identity", sigma = "log", nu = "log"),
+  jags = list(likelihood = function(context) {
+    paste0(context$y, " ~ dt(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2, ", context$dpar("nu"), ")")
+  }),
+  r = list(
+    log_lik = function(y, dpars, data) dt((y - dpars$mu) / dpars$sigma, dpars$nu, log = TRUE) - log(dpars$sigma),
+    epred = function(dpars, data, rate = FALSE) dpars$mu,
+    rng = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * rt(n, dpars$nu),
+    variance = function(dpars, data, rate = FALSE) ifelse(dpars$nu > 2, dpars$sigma^2 * dpars$nu / (dpars$nu - 2), Inf)
+  ),
+  default_prior = tibble::tribble(
+    ~dpar,   ~par_type,   ~prior,                                       ~condition,
+    "mu",    "Intercept", "dnorm(mean(.y), 2.5 * sd(.y))",              "always",
+    "mu",    "dummy",     "dnorm(0, 2.5 * sd(.y) / predictor_scale())", "always",
+    "mu",    "slope",     "dnorm(0, 2.5 * sd(.y) / predictor_scale())", "always",
+    "sigma", "Intercept", "dt(0, sd(.y), 3) T(0, )",                    "not_included",
+    "sigma", "Intercept", "dt(0, 2.5, 3)",                              "included",
+    "sigma", "slope",     "dt(0, 2.5 / predictor_scale(), 3)",          "always",
+    "nu",    "Intercept", "dgamma(2, 0.1) T(1, )",                      "not_included"
+  ),
+  lower = c(sigma = 0, nu = 1)
+)
+```
+
+Each default prior applies to one `dpar` and `par_type`: intercepts (`"Intercept"`), coefficients of categorical predictors (`"dummy"`), and other coefficients (`"slope"`), as listed by `mcp_pars(fit)`. `condition` selects priors for dpars not included (`"not_included"`) or included (`"included"`) in any formula, e.g., `sigma_1` vs. `sigma_Intercept_1` in `sigma(1)`. Priors use the syntax of `mcp(..., prior)`, where `.y` is the response and `predictor_scale()` is the SD of the predictor of each coefficient. The [default priors](../articles/default_priors.html) of the built-in families are good starting points, e.g., `prior_summary(demo_fit, verbose = TRUE)` shows the defaults of `gaussian()` in the `rule` and `description` columns. An optional `group_sd_prior` column sets the default priors for group-level effects.
+
+Now all methods work, and we can also model `sigma`:
+
+```{r}
+model = list(
+  y ~ 1,
+  ~ 0 + x + sigma(1)  # Joined slope and a new scale
+)
+fit = mcp(model, data = df, family = student)
+plot(fit)
+pp_check(fit)
+```
+
+Including `nu()` in a formula without a default prior for `"included"` requires a specified prior, e.g., `prior = list(nu_Intercept_1 = "dnorm(1, 1)")`.
+
+## Likelihoods that JAGS does not have
+
+For distributions that JAGS does not have, pass the negative log-density of the response as a string to `context$zeros_trick()`. This uses the "zeros trick": an observed 0 from a Poisson distribution with mean $\phi$ has log-likelihood $-\phi$, so setting $\phi$ to the negative log-density adds the log-density to the model. For example, the right-skewed Gumbel distribution has the negative log-density $\log\sigma + z + e^{-z}$ where $z = (y - \mu) / \sigma$:
+
+```{r}
+gumbel = mcpfamily(
+  family = "gumbel",
+  links = c(mu = "identity", sigma = "log"),
+  jags = list(likelihood = function(context) {
+    z = context$local("z")
+    c(
+      paste0(z, " = (", context$y, " - ", context$dpar("mu"), ") / ", context$dpar("sigma")),
+      context$zeros_trick(paste0("log(", context$dpar("sigma"), ") + ", z, " + exp(-", z, ") + 100"))
+    )
+  }),
+  r = list(
+    log_lik = function(y, dpars, data) {
+      z = (y - dpars$mu) / dpars$sigma
+      -log(dpars$sigma) - z - exp(-z)
+    }
+  ),
+  lower = c(sigma = 0)
+)
+```
+
+`context$local("z")` names a node for the intermediate value, and the likelihood returns one string per line. The resulting JAGS code is (`response_observed_` is 0 when sampling the prior):
+
+```
+z_[i_] = (y[i_] - mu_[i_]) / sigma_[i_]
+likelihood_phi_[i_] = response_observed_[i_] * (log(sigma_[i_]) + z_[i_] + exp(-z_[i_]) + 100)
+likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])
+```
+
+$\phi$ must be non-negative, so we add a constant (100). This multiplies the likelihood by a constant, so the posterior is unchanged. `context$zeros_trick()` also applies weights. Because the response is now data rather than a node in JAGS, missing responses are not supported. The model is fitted as usual:
+
+```{r}
+fit = mcp(list(y ~ 1, ~ 0 + x), data = df, family = gumbel, prior = prior[c("Intercept_1", "x_2", "sigma_1")])
+summary(fit)
+```
+
+## More options
+
+See `?mcpfamily` for all arguments. In short:
+
+- **Weights**: `y | weights(w)` raises an error unless `jags$likelihood` uses `context$aux("weights", "1")`. `mcp` applies the weights to `r$log_lik`.
+- **Auxiliary response columns**: Use `response$auxiliary` for columns like `trials()` in `binomial()`, available as `context$aux("trials")` in JAGS and `data$trials` in R.
+- **Discrete responses**: Set `response = list(is_discrete = TRUE)` for integer-valued responses, e.g., for exact predictive intervals with `r$cdf` and `r$quantile`.
+- **AR/MA**: `garma` defines the response on the link scale for `ar()` and `ma()`.
+- **Initial values**: `glm_family`, e.g., `glm_family = gaussian()`, lets `mcp` find initial change points by fitting the `mu` model with `glm.fit()`. Otherwise, initial change points are equally spaced.
+
+
+# Sampling the model directly in JAGS
+
+`as_jags()` returns the JAGS code, data, and initial values of a model, e.g., to change the JAGS code or to monitor other nodes:
+
+```{r}
+jags = as_jags(fit)
+names(jags)
+```
+
+```{r, eval = FALSE}
+model = rjags::jags.model(textConnection(jags$code), jags$data, jags$inits, n.chains = length(jags$inits))
+draws = rjags::coda.samples(model, jags$variable.names, n.iter = 3000)
+```
+
+`mcp` methods cannot use draws sampled this way. Use `mcpfamily()` to fit a different likelihood in `mcp`. This replaces the deprecated `mcp(..., jags_code)`.

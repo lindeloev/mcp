@@ -78,7 +78,7 @@ as_mcpfamily = function(x) {
 #' See [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html) for a worked example.
 #'
 #' Only the elements needed to fit the model are required: `family`, `links`, and `jags$likelihood`, with priors supplied as defaults or in [mcp()].
-#' Methods that are needed later (e.g., `r$rng` for `predict()`) raise an error on use.
+#' Methods that are needed later (e.g., `r$simulate` for `predict()`) raise an error on use.
 #'
 #' @param family String. Name the family for printing, e.g., `"student"`.
 #' @param links Named character vector with the link function of each distributional parameter (dpar),
@@ -102,11 +102,11 @@ as_mcpfamily = function(x) {
 #'     When supplied, `mcp` checks `jags$likelihood` against it after sampling. Required by [loo()], [waic()], and [log_lik()].
 #'     For weighted models, the observation weights are applied by `mcp`.
 #'   * `epred(dpars, data, rate = FALSE)`: The expected response. Used by `fitted()`, `plot()`, etc.
-#'   * `rng(n, dpars, data, rate = FALSE)`: Random responses. Used by `predict()`, [pp_check()], `fit$simulate()`, etc.
+#'   * `simulate(n, dpars, data, rate = FALSE)`: Random responses. Used by `predict()`, [pp_check()], `fit$simulate()`, etc.
 #'   * `variance(dpars, data, rate = FALSE)`: The variance of the response. Used for exact `predict()` SDs.
-#'     If missing, the SD of the `rng` draws is used.
+#'     If missing, the SD of the simulated responses is used.
 #'   * `cdf(q, dpars, data)` and `quantile(p, dpars, data)`: Used for exact predictive intervals.
-#'     If missing, the quantiles of the `rng` draws are used, which is less precise.
+#'     If missing, the quantiles of the simulated responses are used, which is less precise.
 #' @param default_prior `NULL` or a data frame with columns `dpar`, `par_type` (`"Intercept"`, `"dummy"`, or
 #'   `"slope"`), and `prior`, e.g., `"dnorm(0, 2.5 / predictor_scale())"`. Each parameter gets the row matching
 #'   its `dpar` and `par_type` in [mcp_pars()]. Optional columns:
@@ -123,8 +123,8 @@ as_mcpfamily = function(x) {
 #'   with these filled in, and `prior` is the resolved prior.
 #' @param response Named list describing the response:
 #'   * `auxiliary`: Named list of response auxiliaries, used like `y | trials(N)`, e.g.,
-#'     `list(trials = list(required = TRUE, operations = c("epred", "log_lik", "rng")))`.
-#'     `operations` lists where the column is needed (`"epred"`, `"log_lik"`, `"rng"`, and `"garma"`).
+#'     `list(trials = list(required = TRUE, operations = c("epred", "log_lik", "simulate")))`.
+#'     `operations` lists where the column is needed (`"epred"`, `"log_lik"`, `"simulate"`, and `"garma"`).
 #'     `weights()` is always available. Use it in `jags$likelihood` to support weights.
 #'   * `validate(y, data, data_columns)`: Function that raises an error for invalid responses.
 #'   * `is_discrete`: Logical. Integer-valued responses? Defaults to `FALSE`.
@@ -150,7 +150,7 @@ as_mcpfamily = function(x) {
 #'   }),
 #'   r = list(
 #'     log_lik = function(y, dpars, data) stats::dt((y - dpars$mu) / dpars$sigma, dpars$nu, log = TRUE) - log(dpars$sigma),
-#'     rng = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * stats::rt(n, dpars$nu)
+#'     simulate = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * stats::rt(n, dpars$nu)
 #'   ),
 #'   lower = c(sigma = 0, nu = 1)
 #' )
@@ -309,7 +309,7 @@ mcpfamily_gaussian = function(link) {
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     variance = function(dpars, data, rate = FALSE) dpars$sigma^2,
     log_lik = function(y, dpars, data) stats::dnorm(y, dpars$mu, dpars$sigma, log = TRUE),
-    rng = function(n, dpars, data, rate = FALSE) {
+    simulate = function(n, dpars, data, rate = FALSE) {
       stats::rnorm(n, dpars$mu, dpars$sigma)
     },
     cdf = function(q, dpars, data) stats::pnorm(q, dpars$mu, dpars$sigma),
@@ -378,7 +378,7 @@ mcpfamily_binomial = function(link) {
   response = list(
     auxiliary = list(trials = list(
       required = TRUE,
-      operations = c("epred", "log_lik", "rng", "garma")
+      operations = c("epred", "log_lik", "simulate", "garma")
     )),
     validate = function(y, data, data_columns) {
       checkmate::assert_integerish(y, lower = 0, .var.name = data_columns$response)
@@ -401,7 +401,7 @@ mcpfamily_binomial = function(link) {
     epred = function(dpars, data, rate = FALSE) if (rate) dpars$mu else data$trials * dpars$mu,
     variance = function(dpars, data, rate = FALSE) if (rate) dpars$mu * (1 - dpars$mu) / data$trials else data$trials * dpars$mu * (1 - dpars$mu),
     log_lik = function(y, dpars, data) stats::dbinom(y, data$trials, dpars$mu, log = TRUE),
-    rng = function(n, dpars, data, rate = FALSE) {
+    simulate = function(n, dpars, data, rate = FALSE) {
       y = stats::rbinom(n, data$trials, dpars$mu)
       if (rate) y / data$trials else y
     },
@@ -482,7 +482,7 @@ mcpfamily_bernoulli = function(link) {
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     variance = function(dpars, data, rate = FALSE) dpars$mu * (1 - dpars$mu),
     log_lik = function(y, dpars, data) stats::dbinom(y, 1, dpars$mu, log = TRUE),
-    rng = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu),
+    simulate = function(n, dpars, data, rate = FALSE) stats::rbinom(n, 1, dpars$mu),
     cdf = function(q, dpars, data) stats::pbinom(q, 1, dpars$mu),
     quantile = function(p, dpars, data) stats::qbinom(p, 1, dpars$mu)
   )
@@ -556,7 +556,7 @@ mcpfamily_poisson = function(link) {
       validate_count_mean(dpars$mu)
       stats::dpois(y, dpars$mu, log = TRUE)
     },
-    rng = function(n, dpars, data, rate = FALSE) {
+    simulate = function(n, dpars, data, rate = FALSE) {
       validate_count_mean(dpars$mu)
       stats::rpois(n, dpars$mu)
     },
@@ -630,7 +630,7 @@ mcpfamily_negbinomial = function(link, link_shape) {
       validate_count_mean(dpars$mu)
       stats::dnbinom(y, mu = dpars$mu, size = dpars$shape, log = TRUE)
     },
-    rng = function(n, dpars, data, rate = FALSE) {
+    simulate = function(n, dpars, data, rate = FALSE) {
       validate_count_mean(dpars$mu)
       stats::rnbinom(n, mu = dpars$mu, size = dpars$shape)
     },
@@ -857,7 +857,7 @@ print.mcpfamily = function(x, ...) {
 }
 
 
-# Get an R-side function of the family, e.g., `family_r(family, "rng")`. Families need not define those
+# Get an R-side function of the family, e.g., `family_r(family, "simulate")`. Families need not define those
 # that are not needed to fit the model, so this errors if it is missing.
 family_r = function(family, name) {
   fun = family$r[[name]]
@@ -904,7 +904,7 @@ assert_mcpfamily = function(x) {
   # R-side functions take `dpars` as rows x draws matrices on the response scale and `data` (response
   # auxiliaries, e.g., `trials`) with one value per row. Like stats::dbinom() etc., they must recycle `data` down the columns.
   # R-side functions are optional. Methods get them using family_r().
-  for (name in c("log_lik", "epred", "variance", "rng", "cdf"))
+  for (name in c("log_lik", "epred", "variance", "simulate", "cdf"))
     checkmate::assert_function(x$r[[name]], null.ok = TRUE, .var.name = paste0("r$", name))
   
   checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf), .var.name = "r$quantile")
