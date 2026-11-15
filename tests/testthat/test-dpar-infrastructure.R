@@ -162,23 +162,23 @@ test_that("generated code separates link and distribution scales", {
     sample = FALSE
   )
 
-  expect_match(constant_fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, link_sigma_\\[i_\\]\\)")
-  expect_false(grepl("max\\(1e-09, link_sigma_", constant_fit$jags_code))
+  expect_match(get_fit_jags_code(constant_fit), "sigma_\\[i_\\] = max\\(1e-05, link_sigma_\\[i_\\]\\)")
+  expect_false(grepl("max\\(1e-09, link_sigma_", get_fit_jags_code(constant_fit)))
   expect_equal(get_dpar_spec(constant_fit$family, "sigma")$link, "identity")
   expect_false(constant_fit$family$dpar_specs$included[
     constant_fit$family$dpar_specs$dpar == "sigma"
   ])
   expect_equal(constant_fit$prior$sigma_1, "dt(0, 2.5, 3) T(0, )")
 
-  expect_match(fit$jags_code, "link_mu_\\[i_\\] =")
-  expect_match(fit$jags_code, "link_sigma_\\[i_\\] =")
-  expect_match(fit$jags_code, "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
-  expect_match(fit$jags_code, "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
+  expect_match(get_fit_jags_code(fit), "link_mu_\\[i_\\] =")
+  expect_match(get_fit_jags_code(fit), "link_sigma_\\[i_\\] =")
+  expect_match(get_fit_jags_code(fit), "mu_\\[i_\\] = exp\\(link_mu_\\[i_\\]\\)")
+  expect_match(get_fit_jags_code(fit), "sigma_\\[i_\\] = max\\(1e-05, exp\\(link_sigma_\\[i_\\]\\)\\)")
   expect_equal(fit$family$dpar_specs$link, c("log", "log"))
   expect_true(fit$family$dpar_specs$included[fit$family$dpar_specs$dpar == "sigma"])
   expect_equal(fit$prior$sigma_Intercept_1, "dt(-sigma_x_1 * 1, 2.5, 3)")
   expect_prior(fit$prior$sigma_x_1, paste0("dt(0, ", format_prior_number(2.5 / stats::sd(data$x)), ", 3)"))
-  expect_false(grepl("max\\(1e-09, link_sigma_", fit$jags_code))
+  expect_false(grepl("max\\(1e-09, link_sigma_", get_fit_jags_code(fit)))
 
   expect_equal(get_dpar_spec(change_fit$family, "sigma")$link, "log")
   expect_equal(
@@ -195,8 +195,8 @@ test_that("generated code separates link and distribution scales", {
 test_that("only dpars with a numerical floor are floored", {
   data = data.frame(x = 1:6, y = c(1, 2, 1, 3, 2, 4))
   fit = mcp(list(y ~ 1), data, family = negbinomial(), par_x = "x", sample = FALSE)
-  expect_match(fit$jags_code, "shape_\\[i_\\] = link_shape_\\[i_\\]\n")
-  expect_false(grepl("max\\(1e", fit$jags_code))
+  expect_match(get_fit_jags_code(fit), "shape_\\[i_\\] = link_shape_\\[i_\\]\n")
+  expect_false(grepl("max\\(1e", get_fit_jags_code(fit)))
 
   dpars = evaluate_model(fit, get_model_data(fit, data), list(Intercept_1 = 0, shape_1 = 1e-8), ndraws = 1, type = "fitted")$dpars
   expect_equal(as.vector(dpars$shape), rep(1e-8, nrow(data)))
@@ -243,7 +243,7 @@ test_that("distributional population-level terms apply only where included", {
   )
   expect_lifetimes(fit, c(sigma_z_1 = 2L))
   expect_match(
-    fit$jags_code,
+    get_fit_jags_code(fit),
     "(?s)x\\[i_\\] < cp_1.*c\\(sigma_z_1\\)",
     perl = TRUE
   )

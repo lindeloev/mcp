@@ -22,14 +22,10 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
       jags_code = jags_code,
       jags_data = if (sample == "prior") get_jags_prior_data(jags_data, jags_code, data_columns) else jags_data,
       pars = pars,
-      sample = sample,
       n.chains = chains,
       n.iter = iter,
       n.adapt = warmup,
-      inits = inits,
-      default_inits = get_default_inits(prior_table, parameters, range(data[[data_columns$par_x]], na.rm = TRUE), inits, if (custom_jags_code) jags_code,
-                                        cp_deviance = if (!custom_jags_code && sample == "post") get_cp_deviance(model_tables, family, data)),
-      seed = seed,
+      inits = get_chain_inits(model_tables, prior_table, family, data, sample, chains, inits, seed, if (custom_jags_code) jags_code),
       quiet = quiet,
       use_glm = use_jags_glm(family, definition_rows(model_tables$group_coefs))
     ) |>
@@ -61,6 +57,19 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
 }
 
 
+# Initial values for each chain: the user's `inits` with JAGS RNG seeds (see get_jags_inits()) and defaults for the
+# other parameters (see get_default_inits()). Used for sampling and by as_jags().
+# - jags_code: Custom JAGS code or NULL for the code that mcp writes.
+get_chain_inits = function(model_tables, prior_table, family, data, sample, chains, inits, seed, jags_code = NULL) {
+  x_range = range(data[[model_tables$data_columns$par_x]], na.rm = TRUE)
+  cp_deviance = if (is.null(jags_code) && sample == "post") get_cp_deviance(model_tables, family, data)
+  defaults = get_default_inits(prior_table, model_tables$parameters, x_range, inits, jags_code, cp_deviance)
+  lapply(get_jags_inits(inits, seed, chains, sample), function(chain_inits) {
+    c(chain_inits, defaults[setdiff(names(defaults), names(chain_inits))])
+  })
+}
+
+
 #' Run parallel MCMC sampling using JAGS.
 #'
 #' @inheritParams mcp
@@ -68,7 +77,7 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
 #' @inheritParams rjags::coda.samples
 #' @param jags_code A string. JAGS model, usually returned by `get_jags_code()`.
 #' @param pars Character vector of parameters to save/monitor. `"deviance"` loads the JAGS dic module.
-#' @param default_inits Named list. Initial values for parameters not in `inits`, e.g., from `get_cp_inits()`.
+#' @param inits List with initial values for each chain, e.g., from `get_chain_inits()`.
 #' @param use_glm Logical. Load the JAGS glm module, which block-samples
 #'   coefficients that enter the linear predictor jointly.
 #' @return `mcmc.list`
@@ -76,13 +85,10 @@ sample_jags = function(model_tables, prior_table, family, data, sample, chains, 
 run_jags = function(jags_code,
                     jags_data,
                     pars,
-                    sample,
                     n.chains,
                     n.iter,
                     n.adapt,
                     inits,
-                    default_inits = list(),
-                    seed,
                     quiet,
                     use_glm = FALSE
 ) {
@@ -146,11 +152,6 @@ run_jags = function(jags_code,
   # only once for all chains and preserves JAGS's progress output.
   n_workers = future::nbrOfWorkers()
   timer = proc.time()
-  if (is.null(seed))
-    seed = sample.int(.Machine$integer.max, 1)
-  inits = get_jags_inits(inits, seed, n.chains, sample)
-  inits = lapply(inits, function(chain_inits) c(chain_inits, default_inits[setdiff(names(default_inits), names(chain_inits))]))
-
   if (n_workers == 1) {
     draws = do_sampling(
       inits = inits,
@@ -320,7 +321,7 @@ get_jags_data = function(data, family, model_tables, jags_code, generated = TRUE
   context = prior_context(data, data_columns, n_segments, model_tables$design_specs)
   jags_data = legacy_prior_jags_data(jags_data, jags_code, context)
 
-  # Zeros trick (see context$zeros_trick() in get_jags_family_context())
+  # Zeros trick (see context$zeros_trick() in get_jags_family_context()), also in custom code copied from as_jags(fit)$code
   if (grepl("likelihood_zero_[i_] ~", jags_code, fixed = TRUE)) {
     if (anyNA(data[[data_columns$response]]) && !has_response_node(jags_code, data_columns))
       stop(
@@ -332,7 +333,7 @@ get_jags_data = function(data, family, model_tables, jags_code, generated = TRUE
     jags_data$likelihood_zero_ = numeric(nrow(data))
   }
 
-  # Observed nodes that restrict the change point priors, also in custom code copied from fit$jags_code
+  # Observed nodes that restrict the change point priors, also in custom code copied from as_jags(fit)$code
   if (grepl("cp_order_ ~", jags_code, fixed = TRUE))
     jags_data$cp_order_ = 1
   if (grepl("cp_weight_ ~", jags_code, fixed = TRUE))

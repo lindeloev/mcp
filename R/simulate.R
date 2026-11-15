@@ -1,5 +1,5 @@
 # ABOUT: These functions evaluate the model on data and parameter values in R, the
-# counterpart of the likelihood in fit$jags_code, for predictions and fit$simulate()
+# counterpart of the likelihood in the JAGS code, for predictions and fit$simulate()
 # ------------------------------------------------------------
 
 # Make categorical columns in `newdata` factors with levels identical to the original data

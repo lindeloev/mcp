@@ -50,7 +50,7 @@ test_that("distribution priors for fixed residual SDs are truncated at zero", {
   )
 
   expect_equal(fit$prior$sigma_1, "dnorm(0, 1) T(0, )")
-  expect_match(fit$jags_code, "sigma_1 ~ dnorm(0, 1/(1)^2) T(0, )", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "sigma_1 ~ dnorm(0, 1/(1)^2) T(0, )", fixed = TRUE)
 
   # Already bounded uniform prior is preserved without T()
   fit_unif_ok = mcp(
@@ -58,8 +58,8 @@ test_that("distribution priors for fixed residual SDs are truncated at zero", {
     par_x = "x", prior = list(sigma_1 = "dunif(1, 2)"), sample = FALSE
   )
   expect_equal(fit_unif_ok$prior$sigma_1, "dunif(1, 2)")
-  expect_match(fit_unif_ok$jags_code, "sigma_1 ~ dunif(1, 2)", fixed = TRUE)
-  expect_false(grepl("sigma_1 ~ dunif.*T\\(", fit_unif_ok$jags_code))
+  expect_match(get_fit_jags_code(fit_unif_ok), "sigma_1 ~ dunif(1, 2)", fixed = TRUE)
+  expect_false(grepl("sigma_1 ~ dunif.*T\\(", get_fit_jags_code(fit_unif_ok)))
 
   # Uniform prior reaching below zero has lower bound adjusted
   fit_unif_zero = mcp(
@@ -67,7 +67,7 @@ test_that("distribution priors for fixed residual SDs are truncated at zero", {
     par_x = "x", prior = list(sigma_1 = "dunif(-1, 2)"), sample = FALSE
   )
   expect_equal(fit_unif_zero$prior$sigma_1, "dunif(0, 2)")
-  expect_match(fit_unif_zero$jags_code, "sigma_1 ~ dunif(0, 2)", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit_unif_zero), "sigma_1 ~ dunif(0, 2)", fixed = TRUE)
 
   # Uniform prior without positive values errors
   expect_error(
@@ -81,7 +81,7 @@ test_that("distribution priors for fixed residual SDs are truncated at zero", {
     par_x = "x", prior = list(sigma_1 = "sqrt(4)"), sample = FALSE
   )
   expect_equal(fit_expr$prior$sigma_1, "2")
-  expect_match(fit_expr$jags_code, "sigma_1 = 2  # Deterministic expression", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit_expr), "sigma_1 = 2  # Deterministic expression", fixed = TRUE)
 })
 
 

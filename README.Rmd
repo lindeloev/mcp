@@ -50,7 +50,7 @@ knitr::knit_hooks$set(plot = function(x, options) knitr::hook_plot_md(sub("^man/
 
 - *Express expert knowledge:* Specify the number of change points, the form of each segment, and restrict coefficients via priors. Compare hypotheses using `loo()` and `hypothesis()`.
 
-- *Native feel:* `summary()`, `plot_pars()`, `pp_check()`, and `as_draws_df()` follow the conventions of [`brms`](https://paulbuerkner.com/brms/), [`rstanarm`](https://mc-stan.org/rstanarm/), and [`posterior`](https://mc-stan.org/posterior/articles/posterior.html), adapted to change point regression. Inspect the sampled JAGS model in `fit$jags_code`.
+- *Native feel:* `summary()`, `plot_pars()`, `pp_check()`, and `as_draws_df()` follow the conventions of [`brms`](https://paulbuerkner.com/brms/), [`rstanarm`](https://mc-stan.org/rstanarm/), and [`posterior`](https://mc-stan.org/posterior/articles/posterior.html), adapted to change point regression. Inspect the sampled JAGS model using `as_jags(fit)`.
 
 `mcp` has [200+ academic citations](https://scholar.google.com/scholar?cites=5590697509718421309) across ecology, astronomy, neuroscience, epidemiology, and other disciplines. You will find many aliases for change point regression in the literature, including piecewise linear, discontinuity, segmented, and broken stick regression.
 
@@ -207,7 +207,7 @@ The articles on the [mcp website](https://lindeloev.github.io/mcp/) go in-depth 
 
 **Implementation**
 
-- [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html): how `mcp` writes the JAGS model in `fit$jags_code`.
+- [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html): how `mcp` writes the JAGS model, which you get using `as_jags(fit)`.
 - [Diagnosing and fixing problems](https://lindeloev.github.io/mcp/articles/tips.html): convergence, speed, and common errors.
 
 # Citation

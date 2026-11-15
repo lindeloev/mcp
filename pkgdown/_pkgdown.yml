@@ -38,6 +38,7 @@ reference:
       - prior_summary
       - print.mcplist
       - print.mcptext
+      - as_jags
       - is_mcpfit
       - model-accessors-mcpfit
 

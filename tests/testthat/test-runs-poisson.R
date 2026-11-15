@@ -44,8 +44,8 @@ test_that("Poisson JAGS weights implement a likelihood power and sample on ordin
   expect_equal(nrow(summary_fit), 1)
   expect_true(abs(summary_fit$mean[1] - log(200)) < 0.1)
 
-  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * (max(0, mu_[i_] - y[i_] * log(mu_[i_]) + loggam(y[i_] + 1)))", fixed = TRUE)
-  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "likelihood_phi_[i_] = response_observed_[i_] * w[i_] * (max(0, mu_[i_] - y[i_] * log(mu_[i_]) + loggam(y[i_] + 1)))", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # Check that R-side log_lik() applies the weights directly
   draws = as.data.frame(fit)

@@ -154,14 +154,14 @@ test_that("Gaussian JAGS weights implement a likelihood power", {
       par_x = "x", sample = FALSE
     )
   }, "NA values detected in 'y'")
-  jags_data = get_jags_data(fit$data, fit$family, get_fit_model_tables(fit), fit$jags_code)
+  jags_data = get_jags_data(fit$data, fit$family, get_fit_model_tables(fit), get_fit_jags_code(fit))
 
   expect_equal(jags_data$response_observed_, c(1, 0, 1, 1))
   expect_equal(jags_data$likelihood_zero_, numeric(4))
   expect_equal(jags_data$w, weighted_data$w)
-  expect_match(fit$jags_code, "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
-  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * max(0, (likelihood_weight_[i_] - 1) * log(sigma_[i_]) + abs(likelihood_weight_[i_] - 1) * 50)", fixed = TRUE)
-  expect_match(fit$jags_code, "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "likelihood_weight_[i_] = 1 + response_observed_[i_] * (w[i_] - 1)", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "likelihood_phi_[i_] = response_observed_[i_] * max(0, (likelihood_weight_[i_] - 1) * log(sigma_[i_]) + abs(likelihood_weight_[i_] - 1) * 50)", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "likelihood_zero_[i_] ~ dpois(likelihood_phi_[i_])", fixed = TRUE)
 
   # The JAGS normal density plus its Poisson zeros correction is the desired
   # powered normal density up to a constant that depends only on the weight.

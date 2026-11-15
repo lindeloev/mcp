@@ -73,12 +73,12 @@ test_that("series resets generated AR/MA lags", {
 
   expect_identical(fit$.internal$model_tables$data_columns$series, "id")
   expect_match(
-    fit$jags_code,
+    get_fit_jags_code(fit),
     "equals(series_id_[i_], series_id_[i_ - 2]) * ar2_[i_]",
     fixed = TRUE
   )
   expect_match(
-    fit$jags_code,
+    get_fit_jags_code(fit),
     "equals(series_id_[i_], series_id_[i_ - 1]) * ma1_[i_]",
     fixed = TRUE
   )
@@ -91,7 +91,7 @@ test_that("series resets generated AR/MA lags", {
     "'x' is unordered",
     fixed = TRUE
   )
-  expect_false(grepl("series_id_", fit_no_series$jags_code, fixed = TRUE))
+  expect_false(grepl("series_id_", get_fit_jags_code(fit_no_series), fixed = TRUE))
 })
 
 
@@ -107,7 +107,7 @@ test_that("series works with character, factor, numeric, and integer columns", {
       par_x = "x", sample = FALSE, quiet = TRUE
     )
     expect_identical(fit$.internal$model_tables$data_columns$series, "id")
-    expect_true(grepl("series_id_", fit$jags_code, fixed = TRUE))
+    expect_true(grepl("series_id_", get_fit_jags_code(fit), fixed = TRUE))
   }
 })
 

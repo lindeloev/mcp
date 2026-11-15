@@ -249,7 +249,15 @@ legacy_binomial_rate = function(fit, newdata, what) {
     )
   }
   legacy_mcpfit_field(name)
+  legacy_jags_code_field(name)
   .subset2(x, name)
+}
+
+
+# Deprecate fit$jags_code in favor of as_jags(fit). LEGACY: remove the field in mcp 1.0.
+legacy_jags_code_field = function(name) {
+  if (identical(name, "jags_code"))
+    lifecycle::deprecate_warn("0.5.0", I("fit$jags_code"), I("as_jags(fit)$code"), user_env = rlang::caller_env(2))
 }
 
 #' @export
@@ -261,8 +269,10 @@ legacy_binomial_rate = function(fit, newdata, what) {
       with = I("as_draws(fit) or coda::as.mcmc(fit)")
     )
   }
-  if (is.character(i))
+  if (is.character(i)) {
     legacy_mcpfit_field(i)
+    legacy_jags_code_field(i)
+  }
   .subset2(x, i)
 }
 

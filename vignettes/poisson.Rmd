@@ -173,7 +173,7 @@ Again, the change point model is preferred and the weights show the same ranking
 Here is the JAGS code for the full Poisson change-point model above.
 
 ```{r}
-fit$jags_code
+as_jags(fit)
 ```
 
 ```{r cleanup, include=FALSE}

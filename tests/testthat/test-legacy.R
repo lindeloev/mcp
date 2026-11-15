@@ -38,7 +38,7 @@ test_that("deprecated change points on the left-hand side warn and equal cp()", 
     "replace `y ~ 1 ~ 1` with `~ 1` in segment 3",
     fixed = TRUE
   )
-  expect_identical(fit_old$jags_code, fit_new$jags_code)
+  expect_identical(get_fit_jags_code(fit_old), get_fit_jags_code(fit_new))
   expect_identical(mcp_pars(fit_old), mcp_pars(fit_new))
   expect_identical(formula(fit_old), formula(fit_new))
 })

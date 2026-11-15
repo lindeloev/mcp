@@ -60,7 +60,7 @@ test_that("population-level terms apply only where included while x-terms join",
   )
   expect_lifetimes(fit, c(z_1 = 2L, w_1 = 2L, x_1 = NA_integer_))
   expect_match(
-    fit$jags_code,
+    get_fit_jags_code(fit),
     "(?s)x\\[i_\\] < cp_1.*c\\(z_1, w_1\\)",
     perl = TRUE
   )
@@ -135,8 +135,8 @@ test_that("formula offsets work in mcp formulas", {
     list(y ~ 1 + x + offset(z), ~ 1 + x + offset(z)),
     d, sample = FALSE
   )
-  expect_true(grepl("offset_mu_1_\\[i_\\]", fit_gauss$jags_code))
-  expect_true(grepl("offset_mu_2_\\[i_\\]", fit_gauss$jags_code))
+  expect_true(grepl("offset_mu_1_\\[i_\\]", get_fit_jags_code(fit_gauss)))
+  expect_true(grepl("offset_mu_2_\\[i_\\]", get_fit_jags_code(fit_gauss)))
   expect_false("z" %in% mcp_pars(fit_gauss)$parameter)
   expect_false("offset_mu_1_" %in% mcp_pars(fit_gauss)$parameter)
 
@@ -150,8 +150,8 @@ test_that("formula offsets work in mcp formulas", {
     list(y ~ 1 + x + offset(log(pop)), ~ 1 + x + offset(log(pop))),
     d_pois, family = poisson(), sample = FALSE
   )
-  expect_true(grepl("offset_mu_1_\\[i_\\]", fit_pois$jags_code))
-  expect_true(grepl("offset_mu_2_\\[i_\\]", fit_pois$jags_code))
+  expect_true(grepl("offset_mu_1_\\[i_\\]", get_fit_jags_code(fit_pois)))
+  expect_true(grepl("offset_mu_2_\\[i_\\]", get_fit_jags_code(fit_pois)))
 
   # Offsets apply only in segments that include them.
   offset_lifetime = mcp(
@@ -181,7 +181,7 @@ test_that("formula offsets work in mcp formulas", {
     ifelse(d_pois$x < 7.5 | (d_pois$x >= 11.5 & d_pois$x < 15.5), d_pois$pop, 1)
   )
   expect_match(
-    offset_lifetime$jags_code,
+    get_fit_jags_code(offset_lifetime),
     "(?s)x\\[i_\\] < cp_1.*offset_mu_1_",
     perl = TRUE
   )
@@ -205,7 +205,7 @@ test_that("formula offsets work in mcp formulas", {
     d,
     sample = FALSE
   )
-  expect_true(grepl("offset_sigma_1_\\[i_\\]", fit_sigma$jags_code))
+  expect_true(grepl("offset_sigma_1_\\[i_\\]", get_fit_jags_code(fit_sigma)))
   sigma_linear = fit_sigma$simulate(
     fit_sigma,
     d,

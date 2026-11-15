@@ -137,13 +137,13 @@ test_that("fit$simulate() reproduces the deterministic linear predictor at .type
 test_that("custom JAGS code warns R-side evaluation and suppresses simulated-truth comparisons", {
   data = data.frame(x = 1:5, y = 0)
   generated = mcp(list(y ~ 1 + x), data, par_x = "x", sample = FALSE)
-  fit = mcp(
+  lifecycle::expect_deprecated(fit <- mcp(
     list(y ~ 1 + x),
     data,
     par_x = "x",
-    jags_code = generated$jags_code,
+    jags_code = get_fit_jags_code(generated),
     sample = FALSE
-  )
+  ))
   draws = matrix(
     c(2, 3, 1),
     nrow = 1,

@@ -24,7 +24,7 @@ test_that("same() on AR resolves every lag and preserves current segment transit
   links = evaluate_formula(get_fit_model_tables(fit), fit$family, get_model_data(fit, data), pars, ndraws = 1)
   expect_equal(as.vector(links$ar1), rep(0.3, 12))
   expect_equal(as.vector(links$ar2), rep(-0.1, 12))
-  expect_match(fit$jags_code, "garma_threshold_\\[i_\\] = 0.2\n")
+  expect_match(get_fit_jags_code(fit), "garma_threshold_\\[i_\\] = 0.2\n")
   expect_error(mcp(list(y ~ 1 + ar(1), ~ 1 + ar(2, same(1))),
     data, par_x = "x", sample = FALSE), "lag 2")
 

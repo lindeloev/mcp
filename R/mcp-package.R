@@ -12,7 +12,7 @@
 #' * *Native feel:* `summary()`, `plot_pars()`, `pp_check()`, and `as_draws_df()` follow the conventions of
 #'   [`brms`](https://paulbuerkner.com/brms/), [`rstanarm`](https://mc-stan.org/rstanarm/), and
 #'   [`posterior`](https://mc-stan.org/posterior/articles/posterior.html), adapted to change point regression.
-#'   Inspect the sampled JAGS model in `fit$jags_code`.
+#'   Inspect the sampled JAGS model using [as_jags()].
 #'
 #' You will find many aliases for change point regression in the literature, including piecewise linear,
 #' discontinuity, segmented, and broken stick regression.
@@ -40,7 +40,7 @@
 #' * `mcp_quiet`: Logical. The default of `mcp(..., quiet)`. `options(mcp_quiet = TRUE)` suppresses routine JAGS output
 #'   and mcp sampling-status messages for the session.
 #' * `mcp_reparam`: Logical. `TRUE` (default) lets [mcp()] sample some default priors on scales that mix
-#'   faster. This changes only `fit$jags_code` and sampling efficiency, not the model, the priors, or the posterior.
+#'   faster. This changes only the JAGS code ([as_jags()]) and sampling efficiency, not the model, the priors, or the posterior.
 #'   `options(mcp_reparam = FALSE)` writes the plain model, which is mostly useful for seeing how `mcp` works.
 #'   Ignored when `jags_code` is supplied. Read more in
 #'   [From formulas to sampler code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).

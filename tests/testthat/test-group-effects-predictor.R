@@ -94,9 +94,9 @@ test_that("group-level intercepts in the predictor part work for family dpars an
     ),
     ignore.order = TRUE
   )
-  expect_match(fit$jags_code, "Intercept_1_id\\[id_\\] ~")
-  expect_match(fit$jags_code, "sigma_Intercept_1_id\\[id_\\] ~")
-  expect_false(grepl("Intercept_1_id_uncentered", fit$jags_code, fixed = TRUE))
+  expect_match(get_fit_jags_code(fit), "Intercept_1_id\\[id_\\] ~")
+  expect_match(get_fit_jags_code(fit), "sigma_Intercept_1_id\\[id_\\] ~")
+  expect_false(grepl("Intercept_1_id_uncentered", get_fit_jags_code(fit), fixed = TRUE))
 
   set.seed(42)
   simulated = fit$simulate(
@@ -141,8 +141,8 @@ test_that("double-bar terms expand into independent group coefficients", {
   expect_equal(effects$par_type, c("Intercept", "dummy", "dummy"))
   expect_equal(effects$next_segment, rep(2L, 3))
   expect_true(all(effects$sd_name %in% names(fit$prior)))
-  expect_match(fit$jags_code, "stateB_1_id\\[id_\\] ~")
-  expect_match(fit$jags_code, "stateC_1_id\\[id_\\] ~")
+  expect_match(get_fit_jags_code(fit), "stateB_1_id\\[id_\\] ~")
+  expect_match(get_fit_jags_code(fit), "stateC_1_id\\[id_\\] ~")
 
   set.seed(42)
   simulated = fit$simulate(
@@ -216,7 +216,7 @@ test_that("double-bar terms support no-intercept factors and numeric slopes", {
   expect_equal(slope_effect$name, "z_1_id")
   expect_equal(slope_effect$par_type, "slope")
   expect_true(is.na(slope_effect$population_parameter))
-  expect_match(slope_fit$jags_code, "z_1_id\\[id_\\]")
+  expect_match(get_fit_jags_code(slope_fit), "z_1_id\\[id_\\]")
 })
 
 
@@ -481,7 +481,7 @@ test_that("shared group-level parameters in priors are correctly indexed", {
     par_x = "x",
     sample = FALSE
   )
-  expect_match(fit$jags_code, "Intercept_2_id\\[id_\\] = Intercept_1_id\\[id_\\]")
+  expect_match(get_fit_jags_code(fit), "Intercept_2_id\\[id_\\] = Intercept_1_id\\[id_\\]")
 })
 
 

@@ -148,8 +148,8 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
     sample = FALSE,
     quiet = TRUE
   )
-  testthat::expect_match(fit$jags_code, "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
-  testthat::expect_false(grepl("cp_weight_", fit$jags_code, fixed = TRUE))
+  testthat::expect_match(get_fit_jags_code(fit), "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
+  testthat::expect_false(grepl("cp_weight_", get_fit_jags_code(fit), fixed = TRUE))
   fit_10 = mcp(
     prior_model,
     data = data_gauss,
@@ -158,7 +158,7 @@ testthat::test_that("Dirichlet change point priors use a common alpha", {
     sample = FALSE,
     quiet = TRUE
   )
-  testthat::expect_match(fit_10$jags_code, "cp_weight_ ~ dpois(-9 * (log((cp_1 - cp_0) / (cp_3 - cp_0)) + ", fixed = TRUE)
+  testthat::expect_match(get_fit_jags_code(fit_10), "cp_weight_ ~ dpois(-9 * (log((cp_1 - cp_0) / (cp_3 - cp_0)) + ", fixed = TRUE)
   testthat::expect_error(
     mcp(prior_model, data = data_gauss, prior = list(cp_1 = "dirichlet(2)", cp_2 = "dirichlet(3)"), par_x = "x", sample = FALSE, quiet = TRUE),
     "same alpha"
@@ -203,16 +203,16 @@ testthat::test_that("Dirichlet change point prior matches direct R simulation", 
 testthat::test_that("Minimum segment lengths go in cp_order_", {
   fit = mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dnorm(2, 1) T(cp_1 + 0.5, )"), sample = FALSE)
   testthat::expect_equal(fit$prior$cp_2, "dnorm(2, 1) T(cp_1 + 0.5, max(x))")
-  testthat::expect_match(fit$jags_code, "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0, cp_3)", fixed = TRUE)
-  testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
+  testthat::expect_match(get_fit_jags_code(fit), "cp_2 ~ dnorm(2, 1/(1)^2) T(cp_0, cp_3)", fixed = TRUE)
+  testthat::expect_match(get_fit_jags_code(fit), "cp_order_ ~ dbern(step(cp_2 - cp_1 - 0.5))", fixed = TRUE)
 
   # A lower bound at the previous change point is a minimum segment length of 0, i.e., just the ordering
   testthat::expect_warning(
     fit <- mcp(list(y ~ 1, ~ 1, ~ 1), data_gauss, par_x = "x", prior = list(cp_2 = "dunif(cp_1, max(x))"), sample = FALSE),
     "as the lower bound is already embodied in the mcp model"
   )
-  testthat::expect_match(fit$jags_code, "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
-  testthat::expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)
+  testthat::expect_match(get_fit_jags_code(fit), "cp_2 ~ dunif(cp_0, cp_3)", fixed = TRUE)
+  testthat::expect_match(get_fit_jags_code(fit), "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)
 })
 
 
@@ -577,8 +577,8 @@ test_that("priors are resolved without changing their parameterization", {
 
   expect_prior(fit$prior$Intercept_1, paste0("dt(5.5, ", format_prior_number(stats::mad(data$y)), ", 3) T(, 9)"))
   expect_equal(fit$prior$x_2, "x_1/5")
-  expect_false(grepl("MINX|MAXX|N_CP|LINKY", fit$jags_code))
-  expect_match(fit$jags_code, "# User-specified prior", fixed = TRUE)
+  expect_false(grepl("MINX|MAXX|N_CP|LINKY", get_fit_jags_code(fit)))
+  expect_match(get_fit_jags_code(fit), "# User-specified prior", fixed = TRUE)
 
   compact = prior_summary(fit)
   verbose = prior_summary(fit, verbose = TRUE)
@@ -605,7 +605,7 @@ test_that("priors are resolved without changing their parameterization", {
   )
   readable_fit = mcp(list(y ~ 1, ~ 1), data, par_x = "x", prior = list(cp_1 = "dunif(min(x), max(x))"), sample = FALSE)
   expect_identical(legacy_fit$prior, readable_fit$prior)
-  expect_identical(legacy_fit$jags_code, readable_fit$jags_code)
+  expect_identical(get_fit_jags_code(legacy_fit), get_fit_jags_code(readable_fit))
 })
 
 
@@ -616,7 +616,7 @@ test_that("resolved priors keep full precision regardless of options(digits)", {
   slope_sd = 2.5 * stats::sd(data$y) / stats::sd(data$x)
   expect_equal(fit$prior$Intercept_1, "dnorm(0, 0.33333333333333331)")
   expect_identical(as.numeric(sub("dnorm\\(0, (.*)\\)", "\\1", fit$prior$x_1)), slope_sd)
-  expect_match(fit$jags_code, paste0("x_1 ~ dnorm(0, 1/(", format_prior_number(slope_sd), ")^2)"), fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), paste0("x_1 ~ dnorm(0, 1/(", format_prior_number(slope_sd), ")^2)"), fixed = TRUE)
 
   # Only prior_summary() is rounded for display
   ps = prior_summary(fit)
@@ -634,7 +634,7 @@ test_that("change point priors refer to the exact ends of the observed range, cp
   expect_equal(fit$prior$cp_1, "dunif(min(x), 5)")
   expect_equal(fit$prior$cp_2, "dnorm(7, 1) T(min(x), max(x))")
   expect_equal(fit$prior$Intercept_1, "dnorm(0.618632254190743, 1)")
-  expect_match(fit$jags_code, "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0, cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "cp_0 = min(x)\n  cp_1 ~ dunif(cp_0, 5)  # User-specified prior, restricted to ordered change points\n  cp_2 ~ dnorm(7, 1/(1)^2) T(cp_0, cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points\n  cp_3 = max(x)\n  cp_order_ ~ dbern(step(cp_2 - cp_1))  # Ordered change points\n", fixed = TRUE)
 
   # cp_0 and cp_K are JAGS nodes, not parameters
   expect_error(mcp(list(y ~ 1, ~ 1, ~ 1), data, par_x = "x", sample = FALSE, prior = list(cp_1 = "dunif(cp_0, 5)")), "Use `min(x)` and `max(x)`", fixed = TRUE)
@@ -680,7 +680,7 @@ test_that("Gaussian defaults use coherent response and link scales", {
   expect_equal(log_fit$prior$Intercept_1, "dnorm(4.6 - x_1 * 1, 2.5)")
   expect_prior(log_fit$prior$x_1, paste0("dnorm(0, ", format_prior_number(2.5 / stats::sd(log_data$x)), ")"))
   expect_equal(log_fit$prior$sigma_1, "dt(0, 22.2, 3) T(0, )")
-  expect_false(grepl("log\\(y\\)", log_fit$jags_code))
+  expect_false(grepl("log\\(y\\)", get_fit_jags_code(log_fit)))
 
   rules = prior_summary(log_fit, verbose = TRUE)
   sigma_rule = rules$rule[rules$parameter == "sigma_1"]
@@ -744,7 +744,7 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   fit = withr::with_options(list(mcp_reparam = FALSE), mcp(list(y ~ 1 + x + I(x^2), ~ 0 + x), data, par_x = "x", sample = FALSE))
   location = paste0(format_prior_number(mean(data$y)), " - x_1 * 101 - xE2_1 * 10201")
   expect_prior(fit$prior$Intercept_1, paste0("dnorm(", location, ", ", format_prior_number(2.5 * stats::sd(data$y)), ")"))
-  expect_match(fit$jags_code, paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), paste0("Intercept_1 ~ dnorm(", location, ", "), fixed = TRUE)
   ps = prior_summary(fit, verbose = TRUE)
   expect_equal(ps$rule[ps$parameter == "Intercept_1"], "dnorm(mean(y) - x_1 * min(x) - xE2_1 * min(x)^2, 2.5 * sd(y))")
   expect_match(ps$description[ps$parameter == "Intercept_1"], "on the value at min(x)", fixed = TRUE)
@@ -754,20 +754,20 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   poisson_fit = mcp(list(y ~ 1 + x), data, family = poisson(link = "identity"), sample = FALSE)
   expect_match(poisson_fit$prior$Intercept_1, " - x_1 * 101, ", fixed = TRUE)
   expect_match(poisson_fit$prior$Intercept_1, ") T(-x_1 * 101, )", fixed = TRUE)
-  expect_match(poisson_fit$jags_code, "Intercept_1_mid_ ~ dnorm(", fixed = TRUE)
+  expect_match(get_fit_jags_code(poisson_fit), "Intercept_1_mid_ ~ dnorm(", fixed = TRUE)
   data$y = rbinom(30, 1, 0.5)
   bernoulli_fit = mcp(list(y ~ 1 + x), data, family = bernoulli(link = "identity"), sample = FALSE)
   expect_equal(bernoulli_fit$prior$Intercept_1, "dunif(-x_1 * 101, 1 - x_1 * 101)")
-  expect_match(bernoulli_fit$jags_code, "Intercept_1_mid_ ~ dunif(", fixed = TRUE)
+  expect_match(get_fit_jags_code(bernoulli_fit), "Intercept_1_mid_ ~ dunif(", fixed = TRUE)
 
   # Factor levels and contrasts with their own x-terms are placed at min(x) too
   data$state = rep(c("a", "b"), 15)
   level_fit = mcp(list(y ~ 0 + state + state:x), data, sample = FALSE)
   expect_match(level_fit$prior$stateb_1, " - stateb.x_1 * 101, ", fixed = TRUE)
-  expect_match(level_fit$jags_code, "stateb_1_mid_ ~ dnorm(", fixed = TRUE)
+  expect_match(get_fit_jags_code(level_fit), "stateb_1_mid_ ~ dnorm(", fixed = TRUE)
   contrast_fit = mcp(list(y ~ 1 + state * x), data, sample = FALSE)
   expect_match(contrast_fit$prior$stateb_1, "dnorm(-stateb.x_1 * 101, ", fixed = TRUE)
-  expect_match(contrast_fit$jags_code, "stateb_1_mid_ ~ dnorm(", fixed = TRUE)
+  expect_match(get_fit_jags_code(contrast_fit), "stateb_1_mid_ ~ dnorm(", fixed = TRUE)
   ps = prior_summary(contrast_fit, verbose = TRUE)
   expect_match(ps$description[ps$parameter == "stateb_1"], "on the difference at min(x)", fixed = TRUE)
 
@@ -777,14 +777,14 @@ test_that("default segment-1 intercept priors are placed at min(x)", {
   location = "x\\.statea_1 \\* 0\\.666666666666.* \\* 101 - (sigma_)?x\\.stateb_1 \\* 0\\.333333333333.* \\* 101, "
   expect_match(split_fit$prior$Intercept_1, paste0("- ", location))
   expect_match(split_fit$prior$sigma_Intercept_1, paste0("-sigma_", location))
-  expect_match(split_fit$jags_code, "Intercept_1_mid_ ~ dnorm(", fixed = TRUE)
+  expect_match(get_fit_jags_code(split_fit), "Intercept_1_mid_ ~ dnorm(", fixed = TRUE)
   ps = prior_summary(split_fit, verbose = TRUE)
   expect_match(ps$description[ps$parameter == "Intercept_1"], "on the average value at min(x)", fixed = TRUE)
 
   # User-specified intercept priors stay on the intercept at x = 0
   user_fit = mcp(list(y ~ 1 + x), data, prior = list(Intercept_1 = "dnorm(0, 10)"), sample = FALSE)
-  expect_match(user_fit$jags_code, "Intercept_1 ~ dnorm(", fixed = TRUE)
-  expect_false(grepl("Intercept_1_", user_fit$jags_code))
+  expect_match(get_fit_jags_code(user_fit), "Intercept_1 ~ dnorm(", fixed = TRUE)
+  expect_false(grepl("Intercept_1_", get_fit_jags_code(user_fit)))
 
   # Nothing to move when x starts at zero or segment 1 has no x-terms
   expect_false(grepl("x_", mcp(list(y ~ 1 + x), transform(data, x = x - 101), sample = FALSE)$prior$Intercept_1))
@@ -879,28 +879,28 @@ test_that("reparameterizations keep segment lines in place when change points mo
   model = list(y ~ 1 + x, ~ 1 + x, ~ 0 + x + I(x^2))
   fit = mcp(model, data, par_x = "x", sample = FALSE)
   # Segment 1: intercept sampled as the value at the expected midpoint of segment 1, 1 + 99 / 6
-  expect_match(fit$jags_code, "Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "Intercept_1 = Intercept_1_mid_ - (x_1 * (17.5))", fixed = TRUE)
   # Disjoined segment: intercept sampled as the value at the segment end
-  expect_match(fit$jags_code, "Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "Intercept_2 = Intercept_2_end_ - (x_2 * (cp_2 - cp_1))", fixed = TRUE)
   # Joined segment: first x-term sampled as the value at the segment end, others as the rise
-  expect_match(fit$jags_code, "x_3 = (x_3_end_ - (Intercept_2 + x_2 * (cp_2 - cp_1))) / (cp_3 - cp_2)", fixed = TRUE)
-  expect_match(fit$jags_code, "xE2_3 = xE2_3_rise_ / (cp_3 - cp_2)^2", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "x_3 = (x_3_end_ - (Intercept_2 + x_2 * (cp_2 - cp_1))) / (cp_3 - cp_2)", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "xE2_3 = xE2_3_rise_ / (cp_3 - cp_2)^2", fixed = TRUE)
   # Distributional parameters follow the same rules
   sigma_fit = mcp(list(y ~ 1, ~ 0 + sigma(1 + x)), data, par_x = "x", sample = FALSE)
-  expect_match(sigma_fit$jags_code, "sigma_Intercept_2 = sigma_Intercept_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
+  expect_match(get_fit_jags_code(sigma_fit), "sigma_Intercept_2 = sigma_Intercept_2_end_ - (sigma_x_2 * (cp_2 - cp_1))", fixed = TRUE)
 
   # The plain model
   plain_fit = withr::with_options(list(mcp_reparam = FALSE), mcp(model, data, par_x = "x", sample = FALSE))
-  expect_false(grepl("_mid_|_end_|_rise_", plain_fit$jags_code))
-  expect_match(plain_fit$jags_code, "\n  x_3 ~ dnorm")
+  expect_false(grepl("_mid_|_end_|_rise_", get_fit_jags_code(plain_fit)))
+  expect_match(get_fit_jags_code(plain_fit), "\n  x_3 ~ dnorm")
   expect_equal(plain_fit$prior, fit$prior)
 
   # Not for user-specified priors or segments bounded by group-level change points
   user_fit = mcp(list(y ~ 1, ~ 0 + x), data, par_x = "x", prior = list(x_2 = "dnorm(0, 1)"), sample = FALSE)
-  expect_false(grepl("_end_|_rise_", user_fit$jags_code))
+  expect_false(grepl("_end_|_rise_", get_fit_jags_code(user_fit)))
   data$id = rep(1:5, 20)
   group_fit = mcp(list(y ~ 1, ~ cp(1 + (1 | id)) + 0 + x), data, par_x = "x", sample = FALSE)
-  expect_false(grepl("_end_|_rise_", group_fit$jags_code))
+  expect_false(grepl("_end_|_rise_", get_fit_jags_code(group_fit)))
 })
 
 

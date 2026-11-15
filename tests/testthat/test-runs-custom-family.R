@@ -98,7 +98,10 @@ test_good(
 
 test_that("zeros-trick likelihoods keep the response as data", {
   fit = mcp(list(y ~ 1 + x), data_gauss, family = student_zeros, par_x = "x", sample = FALSE)
-  expect_match(fit$jags_code, "likelihood_phi_[i_] = response_observed_[i_] * (loggam(", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "likelihood_phi_[i_] = response_observed_[i_] * (loggam(", fixed = TRUE)
+  prior_jags = as_jags(fit, prior = TRUE)
+  expect_identical(prior_jags$data$y, data_gauss$y)
+  expect_identical(prior_jags$data$response_observed_, rep(0L, nrow(data_gauss)))
 
   data_na = transform(data_gauss, y = replace(y, 2, NA))
   expect_error(
@@ -166,4 +169,39 @@ test_that("mcp() warns when the JAGS likelihood and R-side log_lik() disagree", 
     "The JAGS likelihood and the R-side `log_lik()` of family = student() disagree",
     fixed = TRUE
   )
+})
+
+
+test_that("as_jags() returns the JAGS inputs that mcp() sampled", {
+  data = mcp_example_data("demo")
+  model = list(response ~ 1, ~ 0 + time)
+  fit = mcp(model, data, chains = 2, warmup = 300, iter = 50, inits = list(Intercept_1 = 10), diagnostics = FALSE, quiet = TRUE)
+  jags = as_jags(fit)
+  expect_s3_class(jags, "mcpjags")
+  expect_named(jags, c("code", "data", "inits", "variable.names", "modules", "levels"))
+  expect_identical(jags$code, get_fit_jags_code(fit))
+  expect_identical(jags$variable.names, mcp_pars(fit)$parameter)
+  expect_identical(jags$modules, "glm")
+  expect_length(jags$inits, 2)
+  expect_equal(jags$inits[[1]]$Intercept_1, 10)
+  expect_output(print(jags), "model {", fixed = TRUE)
+
+  # Sampling these inputs reproduces the draws
+  draws = run_jags(jags$code, jags$data, jags$variable.names, n.chains = 2, n.iter = 50, n.adapt = 300, inits = jags$inits, quiet = TRUE, use_glm = TRUE)
+  expect_equal(as.matrix(draws)[, jags$variable.names], as.matrix(as_draws_matrix(fit))[, jags$variable.names], ignore_attr = TRUE)
+
+  # Prior sampling and grouping levels
+  prior_jags = as_jags(fit, prior = TRUE)
+  expect_true(all(is.na(prior_jags$data$response)))
+  expect_false(identical(prior_jags$inits[[1]]$.RNG.seed, jags$inits[[1]]$.RNG.seed))
+  group_fit = mcp(list(y ~ 1 + (1 | id)), data_gauss, par_x = "x", sample = FALSE)
+  expect_identical(as_jags(group_fit)$levels, list(id = c("a", "b", "c", "d", "e")))
+})
+
+
+test_that("jags_code is deprecated", {
+  fit = mcp(list(y ~ 1 + x), data_gauss, par_x = "x", sample = FALSE)
+  lifecycle::expect_deprecated(fit$jags_code)
+  lifecycle::expect_deprecated(fit[["jags_code"]])
+  lifecycle::expect_deprecated(mcp(list(y ~ 1 + x), data_gauss, par_x = "x", jags_code = get_fit_jags_code(fit), sample = FALSE))
 })

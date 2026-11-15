@@ -24,7 +24,7 @@
 #' * `mcmc_post` and `mcmc_prior`: \code{\link[coda]{mcmc.list}} objects with
 #'   posterior and prior draws, respectively. Do not access these directly; 
 #'   use as_draws(fit) or similar.
-#' * `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show it.
+#' * `jags_code`: Deprecated. Use [as_jags()] to get the JAGS code, data, and initial values.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html).
 #' * `simulate`: A function to simulate data from supplied parameter values.
 #' * `version`: A named list of [package_version]s for `mcp`, `R`, `rjags`,

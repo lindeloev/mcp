@@ -28,11 +28,11 @@ test_that("group-level change points use absolute locations and sequential bound
   )
 
   expect_match(fit$prior$cp_2_id, "cp_1_id\\[id_\\]")
-  expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1")
-  expect_match(fit$jags_code, "cp_1_id\\[id_\\] = cp_1_id_location\\[id_\\] - cp_1")
-  expect_match(fit$jags_code, "cp_2_id_location\\[id_\\].*cp_1_id_location\\[id_\\]")
-  expect_false(grepl("_uncentered", fit$jags_code, fixed = TRUE))
-  expect_match(fit$jags_code, "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)  # Population-level change points only
+  expect_match(get_fit_jags_code(fit), "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1")
+  expect_match(get_fit_jags_code(fit), "cp_1_id\\[id_\\] = cp_1_id_location\\[id_\\] - cp_1")
+  expect_match(get_fit_jags_code(fit), "cp_2_id_location\\[id_\\].*cp_1_id_location\\[id_\\]")
+  expect_false(grepl("_uncentered", get_fit_jags_code(fit), fixed = TRUE))
+  expect_match(get_fit_jags_code(fit), "cp_order_ ~ dbern(step(cp_2 - cp_1))", fixed = TRUE)  # Population-level change points only
 })
 
 
@@ -45,7 +45,7 @@ test_that("custom normal change-point hierarchies retain model bounds", {
     sample = FALSE
   )
   expect_match(fit$prior$cp_1_id, "T(min(x) - cp_1, max(x) - cp_1)", fixed = TRUE)
-  expect_match(fit$jags_code, "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1, .*\\) T\\(cp_0, cp_2\\)")
+  expect_match(get_fit_jags_code(fit), "cp_1_id_location\\[id_\\] ~ dnorm\\(cp_1, .*\\) T\\(cp_0, cp_2\\)")
 
   # Constant priors are not truncated
   fit = mcp(
@@ -56,7 +56,7 @@ test_that("custom normal change-point hierarchies retain model bounds", {
     sample = FALSE
   )
   expect_equal(fit$prior$cp_2_id, "cp_1_id")
-  expect_match(fit$jags_code, "cp_2_id[id_] = cp_1_id[id_]", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "cp_2_id[id_] = cp_1_id[id_]", fixed = TRUE)
 })
 
 
@@ -132,7 +132,7 @@ test_that("a grouping column can also be par_x", {
     chains = 1, warmup = 100, iter = 200,
     seed = 42, quiet = TRUE
   )
-  expect_match(fit$jags_code, "cp_1_year_location[year_index_[i_]]", fixed = TRUE)
+  expect_match(get_fit_jags_code(fit), "cp_1_year_location[year_index_[i_]]", fixed = TRUE)
   draws = as.matrix(.subset2(fit, "mcmc_prior"))
   expect_true(all(draws[, "cp_1"] >= 2001 & draws[, "cp_1"] <= 2010))
   expect_true("cp_1_year[2001]" %in% colnames(draws))

@@ -278,14 +278,14 @@ test_that("generated JAGS uses the same bounded GARMA residuals", {
     sample = FALSE
   )
 
-  expect_match(poisson_fit$jags_code, "garma_y_\\[i_\\] = max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\)")
-  expect_match(poisson_fit$jags_code, "garma_link_y_\\[i_\\] = log\\(garma_y_\\[i_\\]\\)")
-  expect_match(poisson_fit$jags_code, "resid_abs_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\]")
-  expect_match(poisson_fit$jags_code, "resid_ma_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\] - resid_garma_\\[i_\\]")
-  expect_match(poisson_fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
-  expect_match(binomial_fit$jags_code, "garma_y_\\[i_\\] = min\\(max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\), N\\[i_\\] - garma_threshold_\\[i_\\]\\) / N\\[i_\\]")
-  expect_match(binomial_fit$jags_code, "garma_link_y_\\[i_\\] = logit\\(garma_y_\\[i_\\]\\)")
-  expect_match(segmented_fit$jags_code, "garma_threshold_\\[i_\\] = 0\\.2\n")
+  expect_match(get_fit_jags_code(poisson_fit), "garma_y_\\[i_\\] = max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\)")
+  expect_match(get_fit_jags_code(poisson_fit), "garma_link_y_\\[i_\\] = log\\(garma_y_\\[i_\\]\\)")
+  expect_match(get_fit_jags_code(poisson_fit), "resid_abs_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\]")
+  expect_match(get_fit_jags_code(poisson_fit), "resid_ma_\\[i_\\] = garma_link_y_\\[i_\\] - link_mu_\\[i_\\] - resid_garma_\\[i_\\]")
+  expect_match(get_fit_jags_code(poisson_fit), "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
+  expect_match(get_fit_jags_code(binomial_fit), "garma_y_\\[i_\\] = min\\(max\\(y\\[i_\\], garma_threshold_\\[i_\\]\\), N\\[i_\\] - garma_threshold_\\[i_\\]\\) / N\\[i_\\]")
+  expect_match(get_fit_jags_code(binomial_fit), "garma_link_y_\\[i_\\] = logit\\(garma_y_\\[i_\\]\\)")
+  expect_match(get_fit_jags_code(segmented_fit), "garma_threshold_\\[i_\\] = 0\\.2\n")
 })
 
 

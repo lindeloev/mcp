@@ -57,7 +57,7 @@ See `vignettes/priors.Rmd#cp_prior`.
 
 ## Draws and predictions
 - **draws**: prior or posterior draws, following the `posterior` package. Avoid: samples (except for "sample" as a verb, e.g., `mcp(..., sample = "both")`).
-- **empty fit**: an `mcpfit` without draws, from `mcp(..., sample = FALSE)`, e.g., to get `fit$simulate()`, `fit$prior`, or `fit$jags_code`. Conventionally named `empty` in examples. Avoid: empty model.
+- **empty fit**: an `mcpfit` without draws, from `mcp(..., sample = FALSE)`, e.g., to get `fit$simulate()`, `fit$prior`, or `as_jags(fit)`. Conventionally named `empty` in examples. Avoid: empty model.
 - **response scale**: after applying the inverse link function, i.e., the scale of `y` (counts for binomial unless `rate = TRUE`). Avoid: "natural scale", "original scale", etc.
 - **link scale**: the scale of the linear predictor, before the inverse link. `scale = "linear"` selects it in `fitted()` etc. Avoid: "linear-predictor scale" but OK to mention the argument `scale = "linear"`.
 

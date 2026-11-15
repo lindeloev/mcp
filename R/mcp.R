@@ -38,7 +38,7 @@
 #'       will default to using the posterior. Use `prior = TRUE` to select prior draws.
 #'   * `"none"` or `FALSE`: Do not sample. Returns an mcpfit
 #'       object without draws (an "empty fit"). This is useful if you only want to check
-#'       prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
+#'       prior strings (`fit$prior`), the JAGS model ([as_jags()]), etc.
 #' @param cores Deprecated and ignored. Configure parallel processing with a
 #'   [future][future::plan] plan instead, for example
 #'   `future::plan(future::multisession, workers = 3)`. With the default future
@@ -59,16 +59,9 @@
 #'   Initial values for change points must be ordered.
 #'   Defaults to `NULL` where all chains start at equally spaced change points and the prior medians.
 #'   User-provided `inits` take precedence.
-#' @param jags_code String. JAGS code to sample instead of the code that `mcp` writes.
-#'   This is an expert option for edits to `fit$jags_code` that keep the parameters in
-#'   [mcp_pars()], the data, and the likelihood.
-#'   Only the parameters in [mcp_pars()] are monitored. R-side simulation and prediction
-#'   methods continue to use the `mcp` formulas (with warning), so `fitted()`, `predict()`,
-#'   `plot()`, `loo()`, etc. are wrong if the custom code changes the formula or likelihood.
-#'   The written JAGS code is not a stable interface and may change between `mcp` versions.
-#'   `jags_code` is planned for deprecation once a future mcp release brings custom families 
-#'   and tooling to run `fit$jags_code` directly in JAGS.
-#'   [Read more](https://lindeloev.github.io/mcp/articles/implementation.html) about how `mcp` writes JAGS code.
+#' @param jags_code `r lifecycle::badge("deprecated")` String. JAGS code to sample instead of the code that `mcp` writes.
+#'   Use [mcpfamily()] instead to continue using R-side methods (`fitted()`, `predict()`, `plot()`, `loo()`, etc.).
+#'   Or use [as_jags()] to sample a modified model directly in JAGS, foregoing mcp's R-side methods.
 #' @param seed `NULL` or a positive integer. Seed for the JAGS random-number
 #'   generators. If `NULL` (default), the seed is drawn from R's random-number generator,
 #'   so `set.seed()` before `mcp()` also makes sampling reproducible. 
@@ -178,7 +171,7 @@
 #' fit_same = mcp(model_same, data = data, sample = FALSE)
 #'
 #' # Show the JAGS model
-#' demo_fit$jags_code
+#' as_jags(demo_fit)
 #' }
 mcp = function(
   model,
@@ -191,14 +184,14 @@ mcp = function(
   iter = 3000,
   warmup = 1000,
   inits = NULL,
-  jags_code = NULL,
+  jags_code = lifecycle::deprecated(),
   seed = NULL,
   diagnostics = list(),
   quiet = getOption("mcp_quiet", FALSE),
   cores = lifecycle::deprecated(),
   adapt = lifecycle::deprecated()
 ) {
-  custom_jags_code = !is.null(jags_code)
+  custom_jags_code = lifecycle::is_present(jags_code)
 
   matched_call = match.call()
 
@@ -273,6 +266,8 @@ mcp = function(
   if (length(inits) == 0)
     inits = NULL
   checkmate::assert_int(seed, lower = 1, null.ok = TRUE)
+  if (is.null(seed) && sample %in% c("post", "prior", "both"))
+    seed = sample.int(.Machine$integer.max, 1)  # Stored in the fit for as_jags()
   diagnostics = resolve_diagnostics(diagnostics)
   if (missing(quiet) && identical(Sys.getenv("IN_PKGDOWN"), "true"))
     quiet = TRUE
@@ -281,8 +276,11 @@ mcp = function(
   checkmate::assert_flag(reparam, .var.name = "getOption(\"mcp_reparam\")")
 
   # jags_code
-  if (custom_jags_code && (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{")))
-    stop("`jags_code` must be NULL or a string with a JAGS model, containing 'model {...}'.")
+  if (custom_jags_code) {
+    lifecycle::deprecate_warn("0.5.0", "mcp(jags_code)", details = "Use `mcpfamily()` for other likelihoods, or `as_jags(fit)` to sample a modified model directly in JAGS.")
+    if (!is.character(jags_code) || !stringr::str_detect(gsub(" ", "", jags_code), "model\\{"))
+      stop("`jags_code` must be a string with a JAGS model, containing 'model {...}'.")
+  }
 
 
   ##################
@@ -385,6 +383,7 @@ mcp = function(
       prior_table = prior_table,
       diagnostics = diagnostics,
       convergence = convergence,
+      sampling = list(chains = chains, seed = seed, inits = inits),  # For as_jags()
       custom_jags_code = custom_jags_code,
       imputed_response = samples$imputed_response,
       imputed_response_rows = if (is.null(samples$imputed_response)) integer() else which(is.na(data[[model_tables$data_columns$response]]))

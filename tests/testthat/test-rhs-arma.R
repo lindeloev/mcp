@@ -55,7 +55,7 @@ test_that("including a lower-order AR/MA turns off higher lags", {
 
   fit = mcp(list(y ~ ar(2), ~ ar(1)), data, par_x = "x", sample = FALSE, quiet = TRUE)
   expect_match(
-    fit$jags_code,
+    get_fit_jags_code(fit),
     "(?s)# Formula for ar2.*x\\[i_\\] < cp_1.*ar2_1",
     perl = TRUE
   )
@@ -92,12 +92,12 @@ test_that("ar(0) and ma(0) turn off AR/MA components", {
   expect_equal(sum(zeroed_ma$dpar == "ma" & zeroed_ma$segment == 2), 0)
 
   fit_ar = mcp(list(y ~ 1 + x + ar(1), ~ 0 + x + ar(0)), data, par_x = "x", sample = FALSE, quiet = TRUE)
-  expect_match(fit_ar$jags_code, "x\\[i_\\] < cp_1")
-  expect_false(grepl("ar1_2", fit_ar$jags_code))
+  expect_match(get_fit_jags_code(fit_ar), "x\\[i_\\] < cp_1")
+  expect_false(grepl("ar1_2", get_fit_jags_code(fit_ar)))
 
   fit_ma = mcp(list(y ~ 1 + x + ma(1), ~ 0 + x + ma(0)), data, par_x = "x", sample = FALSE, quiet = TRUE)
-  expect_match(fit_ma$jags_code, "x\\[i_\\] < cp_1")
-  expect_false(grepl("ma1_2", fit_ma$jags_code))
+  expect_match(get_fit_jags_code(fit_ma), "x\\[i_\\] < cp_1")
+  expect_false(grepl("ma1_2", get_fit_jags_code(fit_ma)))
 })
 
 
@@ -137,8 +137,8 @@ test_that("AR/MA components are off until included again", {
     "Segment 2 does not include ar()", fixed = TRUE
   )
   expect_false("ar1_2" %in% mcp_pars(fit)$parameter)
-  expect_match(fit$jags_code, "x\\[i_\\] < cp_1.*ar1_1", perl = TRUE)
-  expect_match(fit$jags_code, "x\\[i_\\] >= cp_2.*ar1_3", perl = TRUE)
+  expect_match(get_fit_jags_code(fit), "x\\[i_\\] < cp_1.*ar1_1", perl = TRUE)
+  expect_match(get_fit_jags_code(fit), "x\\[i_\\] >= cp_2.*ar1_3", perl = TRUE)
 })
 
 
@@ -192,7 +192,7 @@ test_that("mcp builds MA parameters and JAGS code", {
   fit = mcp(list(y ~ 1 + ma(1)), data, par_x = "x", sample = FALSE)
 
   expect_true(is_arma(fit))
-  expect_match(fit$jags_code, "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
+  expect_match(get_fit_jags_code(fit), "ma1_\\[i_\\] \\* resid_ma_\\[i_ - 1\\]")
 })
 
 

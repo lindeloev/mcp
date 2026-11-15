@@ -4,6 +4,8 @@
 
 - **Custom families:** Define your own response distribution using `mcpfamily()`, e.g., a Student-t family for robust change point regression. See [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html). The built-in families are now defined using `mcpfamily()` too. `fit$family` is now an `mcpfamily()`.
 
+- **Run the model directly in JAGS:** `as_jags(fit)` (along with above `mcpfamily()`) is now the route to run custom models, so `mcp(..., jags_code)` and `fit$jags_code` are deprecated. You can then run your modified/custom model mcp model using `rjags` with `as_jags(fit)` contents as arguments. See `?as_jags` for examples and more details.
+
 
 ## Major breaking changes
 None

@@ -50,7 +50,7 @@ test_runs = function(model,
   columns = mcp_columns(empty)
   testthat::expect_true(is.character(columns$par_x), model)
   testthat::expect_true(is.character(columns$response), model)
-  testthat::expect_true(is.character(empty$jags_code), model)
+  testthat::expect_true(is.character(get_fit_jags_code(empty)), model)
   testthat::expect_true(is.function(empty$simulate), model)
   testthat::expect_true(is.list(empty$.internal), model)
 
@@ -59,14 +59,14 @@ test_runs = function(model,
     mcp(model = model, data = data, prior = prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE))
   testthat::expect_identical(mcp_pars(plain), parameters, label = model)
   testthat::expect_identical(plain$prior, empty$prior, label = model)
-  testthat::expect_false(grepl("_mid_|_end_|_rise_", plain$jags_code), label = model)
+  testthat::expect_false(grepl("_mid_|_end_|_rise_", get_fit_jags_code(plain)), label = model)
 
   # Passing fit$prior back gives the same model, including reparameterizations of default priors.
   # A tibble also gives the same model.
   refit = mcp(model = model, data = tibble::as_tibble(data), prior = empty$prior, family = family, par_x = par_x, sample = FALSE, quiet = TRUE)
   strip_comments = function(code) gsub("  #[^\n]*", "", code)
   testthat::expect_identical(refit$data, empty$data, label = model)
-  testthat::expect_identical(strip_comments(refit$jags_code), strip_comments(empty$jags_code), label = model)
+  testthat::expect_identical(strip_comments(get_fit_jags_code(refit)), strip_comments(get_fit_jags_code(empty)), label = model)
   testthat::expect_identical(refit$.internal$prior_table$source, empty$.internal$prior_table$source, label = model)
 
   level = get_mcp_test_level()
@@ -144,6 +144,12 @@ test_runs = function(model,
 }
 
 
+# The JAGS code of a fit, without computing the data and initial values in as_jags(fit).
+get_fit_jags_code = function(fit) {
+  .subset2(fit, "jags_code")
+}
+
+
 # Evaluate `code`, a call to mcp(), while also monitoring the JAGS node of each dpar for each
 # observation, e.g., `mu_[i_]`, `sigma_[i_]`, and `ar1_[i_]`, and keeping the JAGS `deviance`. Returns the fit with
 # their posterior draws in `attr(fit, "dpar_nodes")` (an mcmc.list). Monitoring does not change the draws.
@@ -152,11 +158,11 @@ with_dpar_nodes = function(code) {
   nodes = NULL
   fit = testthat::with_mocked_bindings(
     code,
-    run_jags = function(jags_code, jags_data, pars, sample, ...) {
+    run_jags = function(jags_code, jags_data, pars, ...) {
       if (!("deviance" %in% pars))  # mcp() monitors the deviance for the posterior only
-        return(run_jags(jags_code, jags_data, pars, sample, ...))
+        return(run_jags(jags_code, jags_data, pars, ...))
       dpar_nodes = paste0(unique(stringr::str_match_all(jags_code, "\n\\s*([a-z]+[0-9]*)_\\[i_\\] =")[[1]][, 2]), "_")
-      draws = run_jags(jags_code, jags_data, c(pars, dpar_nodes), sample, ...)
+      draws = run_jags(jags_code, jags_data, c(pars, dpar_nodes), ...)
       node_names = sub("\\[.*", "", coda::varnames(draws))
       nodes <<- draws[, node_names %in% c(dpar_nodes, "deviance"), drop = FALSE]
       draws[, node_names %notin% dpar_nodes, drop = FALSE]
