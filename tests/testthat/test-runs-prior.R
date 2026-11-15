@@ -822,6 +822,19 @@ test_that("factors without an intercept get intercept priors where a segment sta
   # Segments that start at a fixed zero: each factor value_at_min gets the intercept prior
   expect_equal(get_prior(list(y ~ 0 + state, ~ 1))[c("stateA_1", "stateB_1")], list(stateA_1 = intercept, stateB_1 = intercept))
   expect_equal(get_prior(list(y ~ 0, ~ 0 + state))$stateA_2, intercept)
+
+  # mcp_pars() shows this par_type. Group-level SDs get the par_type of their population-level coefficient.
+  data$id = rep(1:5, 20)
+  family = mcp(list(y ~ 1), data, par_x = "x", sample = FALSE)$family
+  family$default_prior$group_sd_prior[family$default_prior$par_type == "dummy"] = "dunif(0, 1)"
+  fit = mcp(list(y ~ 0 + state + (0 + state || id), ~ 1 + state), data, family = family, par_x = "x", sample = FALSE)
+  pars = mcp_pars(fit)
+  expect_equal(
+    pars$par_type[match(c("cp_1", "stateA_1", "stateA_1_id_sd", "stateA_1_id", "stateB_2"), pars$parameter)],
+    c(NA, "Intercept", "Intercept", "Intercept", "dummy")
+  )
+  expect_false(fit$prior$stateA_1_id_sd == "dunif(0, 1)")
+
   data$y = rbinom(100, 1, 0.5)
   expect_equal(get_prior(list(y ~ 0 + state, ~ 1), bernoulli(link = "identity"))$stateA_1, "dunif(0, 1)")
 

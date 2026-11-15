@@ -37,7 +37,6 @@ get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior 
   context$cp_names = cps$name
   context$cp_pars = stats::na.omit(c(cps$name, cps$group_name))
   prior = legacy_prior_constants(prior, context)
-  coefs$prior_type = get_prior_type(coefs)
 
   # Disallow cp_0 and cp_K (at least for now)
   prior_text = unlist(prior[vapply(prior, is.character, logical(1))])

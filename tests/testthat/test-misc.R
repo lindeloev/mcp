@@ -134,13 +134,13 @@ test_that("model metadata uses aligned table names and group-effect selectors", 
     c(
       "population_parameter", "name", "group_col", "segment", "dpar",
       "sd_name", "par_type", "matrix_name", "order", "x_degree", "design_id",
-      "design_col", "matrix_col", "definition_segment", "next_segment"
+      "design_col", "matrix_col", "definition_segment", "next_segment", "prior_type"
     )
   )
   expect_equal(nrow(tables$group_coefs), 0)  # Group-level change points are only in `cps`
   expect_named(
     tables$parameters,
-    c("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
+    c("parameter", "part", "scope", "role", "segment", "dpar", "par_type", "group_col", "population_parameter")
   )
   expect_true(all(tables$parameters$part %in% c("cp", "predictor")))
   expect_true(all(tables$parameters$scope %in% c("population", "group")))

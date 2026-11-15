@@ -186,7 +186,7 @@ default_group_specs = function(group_coefs, family) {
   joined = group_coefs |>
     dplyr::left_join(
       dplyr::select(defaults, "dpar", "par_type", "group_sd_prior"),
-      by = c("dpar", "par_type")
+      by = c("dpar", prior_type = "par_type")
     )
   if (any(is.na(joined$group_sd_prior))) {
     stop_github(

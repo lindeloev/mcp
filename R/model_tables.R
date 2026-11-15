@@ -8,7 +8,11 @@ get_model_tables = function(model, data, family, par_x, series = NULL) {
   # Pass the same canonical segment formulas to all model-building consumers
   parsed = parse_segments(model, data, family, par_x, series)
   coef_tables = get_coef_tables(parsed$model, data, family, par_x)
+  coef_tables$coefs$prior_type = get_prior_type(coef_tables$coefs)
   coef_definitions = definition_rows(coef_tables$coefs)
+  # Group-level coefficients get the prior type of their population-level coefficient, e.g., for the SD prior
+  population_type = coef_definitions$prior_type[match(coef_tables$group_coefs$population_parameter, coef_definitions$name)]
+  coef_tables$group_coefs$prior_type = dplyr::coalesce(population_type, coef_tables$group_coefs$par_type)
   group_definitions = definition_rows(coef_tables$group_coefs)
   family = resolve_dpar_specs(family, coef_tables$components)
   parameters = get_pars_table(coef_definitions, parsed$cps, group_definitions, family)
@@ -136,7 +140,7 @@ parse_segments = function(model, data, family, par_x, series = NULL) {
 #' @param family An `mcpfamily` object.
 #' @return A tibble with one row per model parameter (population and group),
 #'   with columns `parameter`, `part`, `scope`, `role`, `segment`, `dpar`,
-#'   `group_col`, and `population_parameter`.
+#'   `par_type`, `group_col`, and `population_parameter`.
 #' @noRd
 get_pars_table = function(coefs, cps, group_coefs, family) {
   group_cps = cps[!is.na(cps$group_col), , drop = FALSE]
@@ -145,18 +149,18 @@ get_pars_table = function(coefs, cps, group_coefs, family) {
   # change point and coefficient (by model-matrix column) before its group-level SD and deviations.
   pars = dplyr::bind_rows(
     tibble::tibble(parameter = cps$name, part = "cp", scope = "population", role = "change_point", segment = cps$segment,
-      dpar = "cp", group_col = NA_character_, population_parameter = NA_character_, .tie = 0),
+      dpar = "cp", par_type = NA_character_, group_col = NA_character_, population_parameter = NA_character_, .tie = 0),
     tibble::tibble(parameter = group_cps$sd_name, part = "cp", scope = "population", role = "group_sd", segment = group_cps$segment,
-      dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1),
+      dpar = "cp", par_type = NA_character_, group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 1),
     tibble::tibble(parameter = group_cps$group_name, part = "cp", scope = "group", role = "change_point", segment = group_cps$segment,
-      dpar = "cp", group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2),
+      dpar = "cp", par_type = NA_character_, group_col = group_cps$group_col, population_parameter = group_cps$name, .tie = 2),
     tibble::tibble(parameter = coefs$name, part = "predictor", scope = "population", role = "coefficient", segment = coefs$segment,
-      dpar = coefs$dpar, order = coefs$order, .tie = coefs$matrix_col),
+      dpar = coefs$dpar, par_type = coefs$prior_type, order = coefs$order, .tie = coefs$matrix_col),
     tibble::tibble(parameter = group_coefs$sd_name, part = "predictor", scope = "population", role = "group_sd", segment = group_coefs$segment,
-      dpar = group_coefs$dpar, order = group_coefs$order, group_col = group_coefs$group_col,
+      dpar = group_coefs$dpar, par_type = group_coefs$prior_type, order = group_coefs$order, group_col = group_coefs$group_col,
       population_parameter = group_coefs$population_parameter, .tie = group_coefs$matrix_col + 0.1),
     tibble::tibble(parameter = group_coefs$name, part = "predictor", scope = "group", role = "coefficient", segment = group_coefs$segment,
-      dpar = group_coefs$dpar, order = group_coefs$order, group_col = group_coefs$group_col,
+      dpar = group_coefs$dpar, par_type = group_coefs$prior_type, order = group_coefs$order, group_col = group_coefs$group_col,
       population_parameter = group_coefs$population_parameter, .tie = group_coefs$matrix_col + 0.2)
   )
 
@@ -172,7 +176,7 @@ get_pars_table = function(coefs, cps, group_coefs, family) {
       .data$dpar %in% c("ar", "ma") ~ paste0(.data$dpar, .data$order),
       .default = .data$dpar
     )) |>
-    dplyr::select("parameter", "part", "scope", "role", "segment", "dpar", "group_col", "population_parameter")
+    dplyr::select("parameter", "part", "scope", "role", "segment", "dpar", "par_type", "group_col", "population_parameter")
 }
 
 
@@ -191,6 +195,9 @@ get_pars_table = function(coefs, cps, group_coefs, family) {
 #'   group-level deviations, e.g., `scope = "group", role = "change_point"` for group-level change points.
 #' @return A tibble with one row per parameter definition. `parameter` is the
 #'   model parameter name; `dpar` is its distributional parameter (e.g., `"mu"`,
+#'   `par_type` (`"Intercept"`, `"dummy"`, or `"slope"`) selects its default prior together with `dpar`,
+#'   e.g., factor levels in `y ~ 0 + group` are intercepts (see the `default_prior` argument of [mcpfamily()]).
+#'   Group-level parameters have the `par_type` of their population-level parameter;
 #'   `"sigma"`, or `"ar1"`; see [mcp-formula]), as accepted by the `dpar` argument of
 #'   [fitted.mcpfit()], [fixef.mcpfit()], etc., and `NA` for change points;
 #'   `group_col` and `population_parameter` describe group-level effects.
