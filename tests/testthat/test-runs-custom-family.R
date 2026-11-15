@@ -121,7 +121,8 @@ test_that("mcpfamily() validates its arguments", {
   expect_error(mcpfamily("unit", c(mu = "cloglog"), list(likelihood = likelihood), r), "must be one of")
   expect_error(mcpfamily("unit", c(mu = "identity", cp = "log"), list(likelihood = likelihood), r), "reserved")
   expect_error(mcpfamily("unit", c(mu = "identity", `1nu` = "log"), list(likelihood = likelihood), r), "must be syntactic")
-  expect_error(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood), list()), "r\\$log_lik")
+  expect_s3_class(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood)), "mcpfamily")
+  expect_error(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood), list(log_lik = 1)), "r\\$log_lik")
   expect_error(mcpfamily("unit", c(mu = "identity"), list(), r), "jags\\$likelihood")
   expect_error(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood, glm_module = "sometimes"), r), "jags\\$glm_module")
 
@@ -158,6 +159,24 @@ test_that("families without default priors require specified priors", {
     "family = minimal() has no `r$rng` function",
     fixed = TRUE
   )
+})
+
+
+test_that("custom families can fit without R-side functions", {
+  minimal = mcpfamily(
+    family = "minimal",
+    links = c(mu = "identity", sigma = "log", nu = "log"),
+    jags = student$backends$jags,
+    default_prior = student$default_prior,
+    lower = c(sigma = 0, nu = 1)
+  )
+  expect_no_warning({
+    fit = mcp(list(y ~ 1 + x), data_gauss, family = minimal, par_x = "x", chains = 1, warmup = 300, iter = 50, diagnostics = FALSE, quiet = TRUE)
+  })
+  expect_s3_class(coda::as.mcmc(fit), "mcmc.list")
+  expect_silent(check_jags_likelihood(fit, NULL))
+  for (method in list(log_lik, loo, waic))
+    expect_error(method(fit), "family = minimal() has no `r$log_lik` function", fixed = TRUE)
 })
 
 

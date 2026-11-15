@@ -77,7 +77,7 @@ as_mcpfamily = function(x) {
 #' The built-in families, such as `gaussian()` and [negbinomial()], are defined using `mcpfamily()` too.
 #' See [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html) for a worked example.
 #'
-#' Only the elements needed to fit and check the model are required: `family`, `links`, `jags$likelihood`, and `r$log_lik`.
+#' Only the elements needed to fit the model are required: `family`, `links`, and `jags$likelihood`, with priors supplied as defaults or in [mcp()].
 #' Methods that are needed later (e.g., `r$rng` for `predict()`) raise an error on use.
 #'
 #' @param family String. Name the family for printing, e.g., `"student"`.
@@ -98,8 +98,8 @@ as_mcpfamily = function(x) {
 #' @param r Named list of R functions. They take `dpars`, a list with a rows-by-draws matrix for each dpar
 #'   on its response scale, and `data`, a list with the response auxiliary columns, e.g., `data$trials`.
 #'   Like [stats::dnorm()], they must recycle `data` over the draws (columns). See examples and [Custom families article](https://lindeloev.github.io/mcp/articles/custom_families.html) for applied examples.
-#'   * `log_lik(y, dpars, data)`: Required. The log-density of each response, including normalizing constants.
-#'     After sampling, `mcp` checks `jags$likelihood` against it. Also used by [loo()], [log_lik()], etc.
+#'   * `log_lik(y, dpars, data)`: The log-density of each response, including normalizing constants.
+#'     When supplied, `mcp` checks `jags$likelihood` against it after sampling. Required by [loo()], [waic()], and [log_lik()].
 #'     For weighted models, the observation weights are applied by `mcp`.
 #'   * `epred(dpars, data, rate = FALSE)`: The expected response. Used by `fitted()`, `plot()`, etc.
 #'   * `rng(n, dpars, data, rate = FALSE)`: Random responses. Used by `predict()`, [pp_check()], `fit$simulate()`, etc.
@@ -160,7 +160,7 @@ as_mcpfamily = function(x) {
 #' prior = list(Intercept_1 = "dnorm(0, 10)", Intercept_2 = "dnorm(0, 10)", sigma_1 = "dnorm(0, 5) T(0, )", nu_1 = "dgamma(2, 0.1) T(1, )")
 #' fit = mcp(list(y ~ 1, ~ 1), data, family = student, prior = prior, par_x = "x", sample = FALSE)
 #' fit$family
-mcpfamily = function(family, links, jags, r, default_prior = NULL, response = list(), lower = NULL, floor = NULL, garma = NULL, glm_family = NULL) {
+mcpfamily = function(family, links, jags, r = list(), default_prior = NULL, response = list(), lower = NULL, floor = NULL, garma = NULL, glm_family = NULL) {
   checkmate::assert_string(family)
   checkmate::assert_character(links, names = "unique", any.missing = FALSE)
   checkmate::assert_list(jags, names = "unique")
@@ -903,14 +903,15 @@ assert_mcpfamily = function(x) {
   
   # R-side functions take `dpars` as rows x draws matrices on the response scale and `data` (response
   # auxiliaries, e.g., `trials`) with one value per row. Like stats::dbinom() etc., they must recycle `data` down the columns.
-  # Only log_lik() is needed to fit the model (see check_jags_likelihood()). Methods get the others using family_r().
-  checkmate::assert_function(x$r$log_lik, .var.name = "r$log_lik")
-  for (name in c("epred", "variance", "rng", "cdf"))
+  # R-side functions are optional. Methods get them using family_r().
+  for (name in c("log_lik", "epred", "variance", "rng", "cdf"))
     checkmate::assert_function(x$r[[name]], null.ok = TRUE, .var.name = paste0("r$", name))
+  
   checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf), .var.name = "r$quantile")
   checkmate::assert_function(x$backends$jags$likelihood, .var.name = "jags$likelihood")
   checkmate::assert_choice(x$backends$jags$glm_module, c("never", "group_effects", "always"), .var.name = "jags$glm_module")
   checkmate::assert_class(x$glm_family, "family", null.ok = TRUE, .var.name = "glm_family")
+  
   if (!is.null(x$garma)) {
     checkmate::assert_function(x$garma$observed_r)
     checkmate::assert_function(x$garma$observed_jags)

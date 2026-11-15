@@ -394,7 +394,7 @@ get_likelihood_mismatch = function(fit, deviance, ndraws = 20) {
 # Warn if mcp's JAGS code and R-side methods describe different likelihoods (see get_likelihood_mismatch()),
 # e.g., when `jags$likelihood` and `r$log_lik` of a custom family disagree.
 check_jags_likelihood = function(fit, deviance) {
-  if (isTRUE(get_likelihood_mismatch(fit, deviance) > 1e-6))
+  if (!is.null(fit$family$r$log_lik) && isTRUE(get_likelihood_mismatch(fit, deviance) > 1e-6))
     warning(
       "The JAGS likelihood and the R-side `log_lik()` of family = ", fit$family$family, "() disagree, so R-side methods ",
       "such as `loo()`, `predict()`, and `plot()` may be wrong. For families made with `mcpfamily()`, check that ",

@@ -12,7 +12,7 @@ None
 
 ## Minor new features
 
-- `mcp()` now checks that its JAGS likelihood and the R-side `log_lik()` agree in a few posterior draws, and warns if they do not. This guards `loo()`, `predict()`, etc. for custom families.
+- `mcp()` now checks that its JAGS likelihood and the R-side `log_lik()` agree in a few posterior draws, and warns if they do not. This also serves as a safety check for custom families.
 
 - **Better initial values for change points:** Instead of spacing inits evenly, `mcp` now does a quick R-side scan and sets inits where the model of `mu` fits the data best while respecting the change point priors. This improves sampling when change points are "clustered". You can still manually set `inits` when needed.
 

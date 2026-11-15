@@ -161,7 +161,7 @@ evaluate_model = function(fit, data, pars, ndraws, y = NULL, type = "predict",
 
   value = switch(type,
     fitted = if (scale == "linear") links$mu else if (dpar == "mu") dpars$mu else family_r(family, "epred")(dpars, data$response, rate = rate),
-    loglik = (if (is.null(data$response$weights)) 1 else data$response$weights) * family$r$log_lik(y, dpars, data$response),
+    loglik = (if (is.null(data$response$weights)) 1 else data$response$weights) * family_r(family, "log_lik")(y, dpars, data$response),
     predict = if (is.null(generated)) {
       family_r(family, "rng")(length(dpars$mu), dpars, data$response, rate = rate)
     } else {
