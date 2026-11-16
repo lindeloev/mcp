@@ -282,7 +282,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'
 #' Missing responses in the original data remain missing in the response column.
 #' `fitted()` returns their expected responses, while `predict()` generates fresh
-#' posterior predictive response draws (including at missing rows). In GARMA models,
+#' posterior predictive response draws (including at missing rows). In AR/MA models,
 #' retained JAGS imputations supply the history used for later fitted and predicted rows.
 #' [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
 #'
@@ -547,7 +547,7 @@ fitted.mcpfit = function(
 #' @param seed Optional integer seed for draw selection and posterior prediction.
 #' @param ... Must be empty. Reserved for future use.
 #' @return A numeric `N_draws` by `nrow(newdata)` matrix.
-#' @details For GARMA models, `posterior_predict()` conditions on the observed
+#' @details For AR/MA models, `posterior_predict()` conditions on the observed
 #'   response history, just like `predict()`. Use `arma = "replicate"` in either
 #'   method to generate fresh response histories recursively. Missing responses
 #'   in the original data are filled with retained imputations only to supply

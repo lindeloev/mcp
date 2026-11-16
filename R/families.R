@@ -132,8 +132,9 @@ as_mcpfamily = function(x) {
 #' @param lower Named numeric vector. The exclusive lower bound of dpars, e.g., `c(sigma = 0)`.
 #'   Priors on constant dpars (e.g., `sigma_1`) are truncated to it.
 #' @param floor Named numeric vector. Numerical floor on the dpar for each observation, e.g., `c(sigma = 1e-5)`.
-#' @param garma `NULL` (AR/MA unsupported) or a named list with `observed_r(y, data, threshold)` and
-#'   `observed_jags(context)`: The response, bounded by `threshold`, before the link function is applied, in R and JAGS.
+#' @param garma AR/MA support for this family. `NULL` (unsupported) or a named list with
+#'   `observed_r(y, data, threshold)` and `observed_jags(context)`: Matching response transformations
+#'   in R and JAGS for the GARMA recurrence, before applying the link function, using `threshold` where needed.
 #'   Optionally `validate_threshold(threshold, data)` which stop()s if invalid.
 #' @param glm_family `NULL` or a stats family, e.g., `poisson()`, that approximates the model of `mu`.
 #'   [stats::glm.fit()] uses it to find initial values for change points. If `NULL`, they are equally spaced.

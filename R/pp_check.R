@@ -17,7 +17,7 @@
 #' @param ... Further arguments passed to `bayesplot::ppc_type(y, yrep, ...)`
 #' @details Missing responses are omitted from the observed-data check. LOO predictive
 #'   checks use posterior draws and the original fitted data, so they do not
-#'   support `prior = TRUE` or `newdata`. For GARMA models, they default to `arma = TRUE`
+#'   support `prior = TRUE` or `newdata`. For AR/MA models, they default to `arma = TRUE`
 #'   to match the one-step-ahead log-likelihood used for the LOO weights.
 #' @return A `ggplot2` object for single plots. Enriched by `patchwork` for faceted plots.
 #' @seealso [plot.mcpfit()], [plot_pars()], [predict.mcpfit()]
