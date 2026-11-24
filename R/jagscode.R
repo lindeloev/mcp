@@ -157,7 +157,7 @@ get_jags_code = function(model_tables, prior_table, family) {
     jags_code = paste0(jags_code, dpar, "_[i_] = ", response_code, "\n    ")
   }
 
-  likelihood = family$backends$jags$likelihood(context)
+  likelihood = family$jags$likelihood(context)
   if (!is.null(model_tables$data_columns$weights) && !any(grepl(context$aux("weights"), likelihood, fixed = TRUE)))
     stop("family = ", family$family, "() does not support `weights()`.", call. = FALSE)
   jags_code = paste0(jags_code, paste(likelihood, collapse = "\n    "))

@@ -184,7 +184,7 @@ run_jags = function(jags_code,
 
 # The JAGS glm module helps some families always and others only with group-level effects in the predictor part.
 use_jags_glm = function(family, group_coefs) {
-  glm_module = family$backends$jags$glm_module
+  glm_module = family$jags$glm_module
   identical(glm_module, "always") || (identical(glm_module, "group_effects") && nrow(group_coefs) > 0)
 }
 

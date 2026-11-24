@@ -116,19 +116,27 @@ test_that("mcpfamily() validates its arguments", {
   likelihood = function(context) paste0(context$y, " ~ dnorm(", context$dpar("mu"), ", 1)")
   r = list(log_lik = function(y, dpars, data) stats::dnorm(y, dpars$mu, 1, log = TRUE))
 
-  expect_s3_class(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood), r), c("mcpfamily", "family"))
-  expect_error(mcpfamily("unit", c(sigma = "log"), list(likelihood = likelihood), r), "must include the link function for 'mu'")
-  expect_error(mcpfamily("unit", c(mu = "cloglog"), list(likelihood = likelihood), r), "must be one of")
-  expect_error(mcpfamily("unit", c(mu = "identity", cp = "log"), list(likelihood = likelihood), r), "reserved")
-  expect_error(mcpfamily("unit", c(mu = "identity", `1nu` = "log"), list(likelihood = likelihood), r), "must be syntactic")
-  expect_s3_class(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood)), "mcpfamily")
-  expect_error(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood), list(log_lik = 1)), "r\\$log_lik")
-  expect_error(mcpfamily("unit", c(mu = "identity"), list(), r), "jags\\$likelihood")
-  expect_error(mcpfamily("unit", c(mu = "identity"), list(likelihood = likelihood, glm_module = "sometimes"), r), "jags\\$glm_module")
+  expect_s3_class(mcpfamily("unit", c(mu = "identity"), jags = list(likelihood = likelihood), r = r), c("mcpfamily", "family"))
+  expect_error(mcpfamily("unit", c(sigma = "log"), jags = list(likelihood = likelihood), r = r), "must include the link function for 'mu'")
+  expect_error(mcpfamily("unit", c(mu = "cloglog"), jags = list(likelihood = likelihood), r = r), "must be one of")
+  expect_error(mcpfamily("unit", c(mu = "identity", cp = "log"), jags = list(likelihood = likelihood), r = r), "reserved")
+  expect_error(mcpfamily("unit", c(mu = "identity", `1nu` = "log"), jags = list(likelihood = likelihood), r = r), "must be syntactic")
+  expect_s3_class(mcpfamily("unit", c(mu = "identity"), jags = list(likelihood = likelihood)), "mcpfamily")
+  expect_error(mcpfamily("unit", c(mu = "identity"), jags = list(likelihood = likelihood), r = list(log_lik = 1)), "r\\$log_lik")
+  expect_error(mcpfamily("unit", c(mu = "identity"), jags = list(), r = r), "jags\\$likelihood")
+  expect_error(mcpfamily("unit", c(mu = "identity"), jags = list(likelihood = likelihood, glm_module = "sometimes"), r = r), "jags\\$glm_module")
 
   # Built-in families are mcpfamily() objects and returned as is
   expect_identical(as_mcpfamily(student), student)
   expect_identical(as_mcpfamily(negbinomial())$dpar_specs, negbinomial()$dpar_specs)
+
+  # The family stores its mcpfamily() arguments, so it can be rebuilt from them, e.g., with modified elements
+  for (family in list(as_mcpfamily(gaussian()), negbinomial(), student)) {
+    args = family[names(formals(mcpfamily))]
+    rebuilt = do.call(mcpfamily, args)
+    expect_identical(rebuilt[names(args)], args)
+    expect_identical(rebuilt$dpar_specs, family$dpar_specs)
+  }
 })
 
 
@@ -136,7 +144,7 @@ test_that("families without default priors require specified priors", {
   minimal = mcpfamily(
     family = "minimal",
     links = c(mu = "identity", sigma = "log", nu = "log"),
-    jags = student$backends$jags,
+    jags = student$jags,
     r = list(log_lik = student$r$log_lik),
     lower = c(sigma = 0, nu = 1)
   )
@@ -166,7 +174,7 @@ test_that("custom families can fit without R-side functions", {
   minimal = mcpfamily(
     family = "minimal",
     links = c(mu = "identity", sigma = "log", nu = "log"),
-    jags = student$backends$jags,
+    jags = student$jags,
     default_prior = student$default_prior,
     lower = c(sigma = 0, nu = 1)
   )

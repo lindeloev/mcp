@@ -120,12 +120,6 @@ student = mcpfamily(
     quantile = function(p, dpars, data) dpars$mu + dpars$sigma * qt(p, dpars$nu)
   ),
 
-  # AR/MA: ar() and ma() act on y before the link function (here, identity)
-  garma = list(
-    observed_r = function(y, data, threshold) y,
-    observed_jags = function(context) context$y
-  ),
-
   # Default priors
   default_prior = tibble::tribble(
     ~dpar,   ~par_type,   ~prior,                                       ~condition,
@@ -136,6 +130,12 @@ student = mcpfamily(
     "sigma", "Intercept", "dt(0, 2.5, 3)",                              "included",
     "sigma", "slope",     "dt(0, 2.5 / predictor_scale(), 3)",          "always",
     "nu",    "Intercept", "dgamma(2, 0.1) T(1, )",                      "not_included"
+  ),
+
+  # AR/MA: ar() and ma() act on y before the link function (here, identity)
+  garma = list(
+    observed_r = function(y, data, threshold) y,
+    observed_jags = function(context) context$y
   )
 )
 ```
@@ -286,14 +286,14 @@ meta = mcpfamily(
     epred = function(dpars, data, rate = FALSE) dpars$mu,
     simulate = function(n, dpars, data, rate = FALSE) rnorm(n, dpars$mu, sqrt(dpars$tau^2 + data$se^2))
   ),
-  response = list(
-    auxiliary = list(se = list(required = TRUE, operations = c("log_lik", "simulate")))
-  ),
 
   # Note: you can reuse objects from other mcpfamilies
   default_prior = dplyr::bind_rows(
     subset(student$default_prior, dpar == "mu"),
     data.frame(dpar = "tau", par_type = "Intercept", prior = "dnorm(0, sd(.y)) T(0, )", condition = "not_included")
+  ),
+  response = list(
+    auxiliary = list(se = list(required = TRUE, operations = c("log_lik", "simulate")))
   ),
   glm_family = gaussian()
 )

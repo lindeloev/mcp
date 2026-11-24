@@ -84,6 +84,8 @@ as_mcpfamily = function(x) {
 #' @param links Named character vector with the link function of each distributional parameter (dpar),
 #'   e.g., `c(mu = "identity", sigma = "log")`. Supported links: `"identity"`, `"log"`, `"logit"`, and `"probit"`.
 #'   The dpar `mu` is required.
+#' @param lower Named numeric vector. The exclusive lower bound of dpars, e.g., `c(sigma = 0)`.
+#'   Priors on constant dpars (e.g., `sigma_1`) are truncated to it.
 #' @param jags Named list with the JAGS likelihood:
 #'   * `likelihood`: A function taking a `context` list and returning JAGS code for observation `i_`
 #'     (a string or a character vector of lines). See examples. `context` contains:
@@ -130,15 +132,13 @@ as_mcpfamily = function(x) {
 #'   * `validate(y, data, data_columns)`: Function that raises an error for invalid responses.
 #'   * `is_discrete`: Logical. Integer-valued responses? Defaults to `FALSE`.
 #'   * `has_rate`, `observed(y, data, rate)`, `probability(rate)`: For responses per trial, as in `binomial()`.
-#' @param lower Named numeric vector. The exclusive lower bound of dpars, e.g., `c(sigma = 0)`.
-#'   Priors on constant dpars (e.g., `sigma_1`) are truncated to it.
-#' @param floor Named numeric vector. Numerical floor on the dpar for each observation, e.g., `c(sigma = 1e-5)`.
 #' @param garma AR/MA support for this family. `NULL` (unsupported) or a named list with
 #'   `observed_r(y, data, threshold)` and `observed_jags(context)`: Matching response transformations
 #'   in R and JAGS for the GARMA recurrence, before applying the link function, using `threshold` where needed.
 #'   Optionally `validate_threshold(threshold, data)` which stop()s if invalid.
 #' @param glm_family `NULL` or a stats family, e.g., `poisson()`, that approximates the model of `mu`.
 #'   [stats::glm.fit()] uses it to find initial values for change points. If `NULL`, they are equally spaced.
+#' @param floor Named numeric vector. Numerical floor on the dpar for each observation, e.g., `c(sigma = 1e-5)`.
 #' @return An `mcpfamily` object.
 #' @aliases mcpfamily
 #' @export
@@ -147,14 +147,14 @@ as_mcpfamily = function(x) {
 #' student = mcpfamily(
 #'   family = "student",
 #'   links = c(mu = "identity", sigma = "log", nu = "log"),
+#'   lower = c(sigma = 0, nu = 1),
 #'   jags = list(likelihood = function(context) {
 #'     paste0(context$y, " ~ dt(", context$dpar("mu"), ", 1 / ", context$dpar("sigma"), "^2, ", context$dpar("nu"), ")")
 #'   }),
 #'   r = list(
 #'     log_lik = function(y, dpars, data) stats::dt((y - dpars$mu) / dpars$sigma, dpars$nu, log = TRUE) - log(dpars$sigma),
 #'     simulate = function(n, dpars, data, rate = FALSE) dpars$mu + dpars$sigma * stats::rt(n, dpars$nu)
-#'   ),
-#'   lower = c(sigma = 0, nu = 1)
+#'   )
 #' )
 #'
 #' # Priors are required for parameters without a default prior
@@ -162,7 +162,7 @@ as_mcpfamily = function(x) {
 #' prior = list(Intercept_1 = "dnorm(0, 10)", Intercept_2 = "dnorm(0, 10)", sigma_1 = "dnorm(0, 5) T(0, )", nu_1 = "dgamma(2, 0.1) T(1, )")
 #' fit = mcp(list(y ~ 1, ~ 1), data, family = student, prior = prior, par_x = "x", sample = FALSE)
 #' fit$family
-mcpfamily = function(family, links, jags, r = list(), default_prior = NULL, response = list(), lower = NULL, floor = NULL, garma = NULL, glm_family = NULL) {
+mcpfamily = function(family, links, lower = NULL, jags, r = list(), default_prior = NULL, response = list(), garma = NULL, glm_family = NULL, floor = NULL) {
   checkmate::assert_string(family)
   checkmate::assert_character(links, names = "unique", any.missing = FALSE)
   checkmate::assert_list(jags, names = "unique")
@@ -210,18 +210,22 @@ mcpfamily = function(family, links, jags, r = list(), default_prior = NULL, resp
   if (is.null(jags$glm_module))
     jags$glm_module = "never"
 
+  # The arguments, followed by derived elements. `link`, `linkfun`, and `linkinv` (of mu) follow stats::family().
   out = list(
     family = family,
-    link = links[["mu"]],
-    dpar_specs = dpar_specs,
+    links = links,
+    lower = lower,
+    jags = jags,
+    r = r,
     default_prior = standardize_family_default_priors(default_prior),
     response = response,
-    r = r,
-    backends = list(jags = jags),
     garma = garma,
     glm_family = glm_family,
+    floor = floor,
+    link = links[["mu"]],
     linkfun = get_link_function(links[["mu"]]),
-    linkinv = get_link_function(links[["mu"]], inverse = TRUE)
+    linkinv = get_link_function(links[["mu"]], inverse = TRUE),
+    dpar_specs = dpar_specs
   )
   class(out) = c("mcpfamily", "family")
   assert_mcpfamily(out)
@@ -351,14 +355,14 @@ mcpfamily_gaussian = function(link) {
   mcpfamily(
     family = "gaussian",
     links = c(mu = link, sigma = "log"),
+    lower = c(sigma = 0),
     jags = jags,
     r = r,
     default_prior = default_prior,
     response = list(),
-    lower = c(sigma = 0),
-    floor = c(sigma = 1e-5),
     garma = garma,
-    glm_family = stats::gaussian(link)
+    glm_family = stats::gaussian(link),
+    floor = c(sigma = 1e-5)
   )
 }
 
@@ -670,11 +674,11 @@ mcpfamily_negbinomial = function(link, link_shape) {
   mcpfamily(
     family = "negbinomial",
     links = c(mu = link, shape = link_shape),
+    lower = c(shape = 0),
     jags = jags,
     r = r,
     default_prior = default_prior,
     response = response,
-    lower = c(shape = 0),
     garma = garma,
     glm_family = stats::poisson(link)  # Quasi-likelihood for the mean
   )
@@ -910,8 +914,8 @@ assert_mcpfamily = function(x) {
     checkmate::assert_function(x$r[[name]], null.ok = TRUE, .var.name = paste0("r$", name))
   
   checkmate::assert_function(x$r$quantile, null.ok = is.null(x$r$cdf), .var.name = "r$quantile")
-  checkmate::assert_function(x$backends$jags$likelihood, .var.name = "jags$likelihood")
-  checkmate::assert_choice(x$backends$jags$glm_module, c("never", "group_effects", "always"), .var.name = "jags$glm_module")
+  checkmate::assert_function(x$jags$likelihood, .var.name = "jags$likelihood")
+  checkmate::assert_choice(x$jags$glm_module, c("never", "group_effects", "always"), .var.name = "jags$glm_module")
   checkmate::assert_class(x$glm_family, "family", null.ok = TRUE, .var.name = "glm_family")
   
   if (!is.null(x$garma)) {
