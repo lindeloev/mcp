@@ -3,7 +3,7 @@
 \docType{data}
 \name{demo_fit}
 \alias{demo_fit}
-\title{Pre-fitted example mcp model}
+\title{Pre-Fitted Example mcp Model}
 \format{
 An \code{\link{mcpfit}} object.
 }

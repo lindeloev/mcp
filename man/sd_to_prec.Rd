@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{sd_to_prec}
 \alias{sd_to_prec}
-\title{Transform an mcp prior to the parameterization used by JAGS}
+\title{Transform an mcp Prior to the Parameterization Used by JAGS}
 \usage{
 sd_to_prec(prior_str)
 }

@@ -1,4 +1,4 @@
-#' Run example models
+#' Run Example Models
 #'
 #' @aliases mcp_example
 #' @param name Name of the example. One of:

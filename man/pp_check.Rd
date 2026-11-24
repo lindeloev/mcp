@@ -4,7 +4,7 @@
 \name{pp_check.mcpfit}
 \alias{pp_check.mcpfit}
 \alias{pp_check}
-\title{Posterior Predictive Checks For Mcpfit Objects}
+\title{Posterior Predictive Checks for \code{mcpfit} Objects}
 \usage{
 \method{pp_check}{mcpfit}(
   object,
@@ -97,7 +97,7 @@ around the \verb{bayesplot::ppc_*()} methods. See
 \details{
 Missing responses are omitted from the observed-data check. LOO predictive
 checks use posterior draws and the original fitted data, so they do not
-support \code{prior = TRUE} or \code{newdata}. For GARMA models, they default to \code{arma = TRUE}
+support \code{prior = TRUE} or \code{newdata}. For AR/MA models, they default to \code{arma = TRUE}
 to match the one-step-ahead log-likelihood used for the LOO weights.
 }
 \examples{

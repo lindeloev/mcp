@@ -141,7 +141,7 @@ tidy_draws.mcpfit = function(model, ...) {
 }
 
 
-#' Index \code{mcpfit} objects
+#' Index `mcpfit` Objects
 #'
 #' Index variables, iterations, chains, and draws.
 #'

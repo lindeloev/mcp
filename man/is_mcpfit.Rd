@@ -3,7 +3,7 @@
 \name{is.mcpfit}
 \alias{is.mcpfit}
 \alias{is_mcpfit}
-\title{Checks if the Argument is an \code{mcpfit} Object}
+\title{Check if the Argument Is an \code{mcpfit} Object}
 \usage{
 is.mcpfit(x)
 
@@ -16,5 +16,5 @@ is_mcpfit(x)
 Logical scalar (\code{TRUE} if \code{x} is an \code{mcpfit} object, \code{FALSE} otherwise).
 }
 \description{
-Checks if the Argument is an \code{mcpfit} Object
+Check if the Argument Is an \code{mcpfit} Object
 }

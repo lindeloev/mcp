@@ -198,7 +198,7 @@ get_summary = function(fit, width, scope = c("population", "group"), role = NULL
 }
 
 
-#' Summarise mcpfit objects
+#' Summarise `mcpfit` Objects
 #'
 #' Summarise parameter estimates and model diagnostics.
 #'
@@ -672,7 +672,7 @@ print.mcpfit = function(x, ...) {
 }
 
 
-#' Checks if the Argument is an `mcpfit` Object
+#' Check if the Argument Is an `mcpfit` Object
 #'
 #' @aliases is_mcpfit
 #' @param x An `R` object.

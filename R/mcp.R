@@ -1,4 +1,4 @@
-#' Fit Multiple Linear Segments And Their Change Points
+#' Fit Multiple Linear Segments and Their Change Points
 #'
 #' Given a model (a list of segment formulas), `mcp` infers the posterior
 #' distributions of the parameters of each segment as well as the change points

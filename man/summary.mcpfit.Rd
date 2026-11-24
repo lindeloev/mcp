@@ -12,7 +12,7 @@
 \alias{coef.mcpfit}
 \alias{print.mcpfit}
 \alias{print}
-\title{Summarise mcpfit objects}
+\title{Summarise \code{mcpfit} Objects}
 \usage{
 \method{summary}{mcpfit}(
   object,

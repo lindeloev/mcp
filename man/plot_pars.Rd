@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{plot_pars}
 \alias{plot_pars}
-\title{Plot individual parameters}
+\title{Plot Individual Parameters}
 \usage{
 plot_pars(
   fit,

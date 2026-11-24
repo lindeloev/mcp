@@ -2,9 +2,9 @@
 # mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;"/>
 
 [![mcp Github Actions
-status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev)
+status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=main)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Amain)
 [![mcp Codecov
-status](https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/dev)
+status](https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/main)
 [![mcp CRAN
 status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
 [![mcp CRAN
@@ -30,8 +30,8 @@ its most flexible, it aims to be
   [`brms`](https://paulbuerkner.com/brms/),
   [`rstanarm`](https://mc-stan.org/rstanarm/), and
   [`posterior`](https://mc-stan.org/posterior/articles/posterior.html),
-  adapted to change point regression. Inspect the sampled JAGS model in
-  `fit$jags_code`.
+  adapted to change point regression. Inspect the sampled JAGS model
+  using `as_jags(fit)`.
 
 `mcp` has [200+ academic
 citations](https://scholar.google.com/scholar?cites=5590697509718421309)
@@ -87,7 +87,7 @@ segment 2+ would be `~ predictors` (more details
 You can do change point regression for a large number of models in a
 syntax that aligns with `lm()`/`glm()`/`brms`. E.g.:
 
-![](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
+![](https://lindeloev.github.io/mcp/mcp_showcase_small.png)
 
 # Brief worked example
 
@@ -127,7 +127,7 @@ also add the 95% central interval of the fitted values
 plot(fit, interval = "fitted") + ggtitle("Regression with two change points")
 ```
 
-<img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot-1.png" alt="" width="100%" />
+<img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-plot-1.png" alt="" width="100%" />
 
 Use `summary()` to summarise the posterior distribution as well as
 sampling diagnostics:
@@ -146,16 +146,16 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
-    ##  cp_1        31.7   1.8   28.4   35.3   1.00     3301     4250 30.0      OK
-    ##  cp_2        71.15  0.99  69.47  72.78  1.00     3649     6590 70.00     OK
+    ##  cp_1        31.7   1.7   28.3   35.1   1.00     3126     4329 30.0      OK
+    ##  cp_2        71.16  1.00  69.49  72.77  1.00     3564     6708 70.00     OK
     ## 
     ## Population-level parameters:
     ##    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
-    ##  Intercept_1  9.94  0.66   8.62  11.22  1.00     4835     6307 10.00     OK
-    ##  time_2       0.546 0.047  0.456  0.642 1.00     5165     6622  0.500    OK
-    ##  Intercept_3 14.0   1.3   11.4   16.6   1.00     2306     4675 15.0      OK
-    ##  time_3      -0.206 0.082 -0.366 -0.045 1.00     1287     2440 -0.300    OK
-    ##  sigma_1      3.87  0.28   3.36   4.46  1.00     4455     4623  3.50     OK
+    ##  Intercept_1  9.93  0.66   8.62  11.20  1.00     4874     6938 10.00     OK
+    ##  time_2       0.546 0.047  0.458  0.642 1.00     4546     6978  0.500    OK
+    ##  Intercept_3 14.0   1.3   11.3   16.6   1.00     2187     5310 15.0      OK
+    ##  time_3      -0.206 0.081 -0.365 -0.046 1.00     1173     2817 -0.300    OK
+    ##  sigma_1      3.87  0.29   3.36   4.49  1.00     4787     4579  3.50     OK
 
 - `rhat` is the rank-normalized split-Rhat convergence diagnostic.
 - `ess_bulk` and `ess_tail` are the effective sample sizes for the bulk
@@ -176,7 +176,7 @@ the need for a computational approach:
 plot_pars(fit, regex_pars = "cp_") + ggtitle("Change point posteriors")
 ```
 
-<img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot_pars-1.png" alt="" width="100%" />
+<img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-plot_pars-1.png" alt="" width="100%" />
 
 Do a posterior predictive check to see if the model recovers the
 empirical distribution in the data:
@@ -185,7 +185,7 @@ empirical distribution in the data:
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
-<img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-pp_check-1.png" alt="" width="100%" />
+<img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-pp_check-1.png" alt="" width="100%" />
 
 You can expect most generics from R, `posterior`, `tidybayes` to work on
 mcpfits. E.g., use `fitted(fit)` and `predict(fit)` to get fits and
@@ -207,7 +207,7 @@ hypothesis(fit, "cp_1 > 30")
     ## # A tibble: 1 × 7
     ##   hypothesis     mean    sd lower upper  prob    BF
     ##   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 - 30 > 0  1.67  1.79 -1.63  5.28 0.826  4.92
+    ## 1 cp_1 - 30 > 0  1.68  1.74 -1.65  5.11 0.836  5.20
 
 For model comparisons, we can fit a null model and compare the
 predictive performance of the two models using (approximate)
@@ -272,8 +272,6 @@ in-depth with the functionality of `mcp`:
   [Binomial and
   Bernoulli](https://lindeloev.github.io/mcp/articles/binomial.html):
   worked examples, including rates via `offset()`.
-- [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html):
-  worked examples for student-t, gumbel, and meta-analysis.
 
 **Inference**
 
@@ -301,7 +299,7 @@ in-depth with the functionality of `mcp`:
 
 - [From formulas to sampler
   code](https://lindeloev.github.io/mcp/articles/implementation.html):
-  how `mcp` writes the JAGS model in `fit$jags_code`.
+  how `mcp` writes the JAGS model, which you get using `as_jags(fit)`.
 - [Diagnosing and fixing
   problems](https://lindeloev.github.io/mcp/articles/tips.html):
   convergence, speed, and common errors.

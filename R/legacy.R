@@ -291,7 +291,7 @@ tidy_samples = function(...) {
 }
 
 
-#' Defunct functions in mcp
+#' Defunct Functions in mcp
 #'
 #' These functions were exported in mcp v0.3.4 and removed in v0.4.0. They now
 #' throw an error pointing to their replacements.
@@ -328,7 +328,7 @@ is.mcpfit = function(x) {
 }
 
 
-#' Deprecated functions in mcp
+#' Deprecated Functions in mcp
 #'
 #' These functions were exported in mcp v0.3.4 and are deprecated in v0.4.0.
 #' They still work but warn and point to their replacements.

@@ -1,4 +1,4 @@
-#' Model formulas in mcp
+#' Model Formulas in mcp
 #'
 #' @description
 #' The `model` argument of [mcp()] is a list of formulas, one for each segment. A change point is

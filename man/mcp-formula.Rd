@@ -3,7 +3,7 @@
 \name{mcp-formula}
 \alias{mcp-formula}
 \alias{mcp_formula}
-\title{Model formulas in mcp}
+\title{Model Formulas in mcp}
 \description{
 The \code{model} argument of \code{\link[=mcp]{mcp()}} is a list of formulas, one for each segment. A change point is
 estimated between each pair of consecutive segments. This page describes how segments connect,
@@ -60,6 +60,8 @@ log-likelihood contribution by \code{w > 0}; affects posterior inference and \co
 not predictions).
 \item \code{y | trials(total) + weights(w) ~ ...}: Combine response auxiliaries using \code{+}.
 }
+
+Built-in response auxiliaries are \code{trials()} and \code{weights()}; custom families can define additional names via \code{\link[=mcpfamily]{mcpfamily()}}.
 
 \strong{2. Change-point part (\code{cp()}, segments 2+):}
 \itemize{

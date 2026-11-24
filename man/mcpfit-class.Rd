@@ -24,7 +24,7 @@ Components:
 \item \code{mcmc_post} and \code{mcmc_prior}: \code{\link[coda]{mcmc.list}} objects with
 posterior and prior draws, respectively. Do not access these directly;
 use as_draws(fit) or similar.
-\item \code{jags_code}: A string with JAGS code; use \code{cat(fit$jags_code)} to show it.
+\item \code{jags_code}: Deprecated. Use \code{\link[=as_jags]{as_jags()}} to get the JAGS code, data, and initial values.
 \href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more}.
 \item \code{simulate}: A function to simulate data from supplied parameter values.
 \item \code{version}: A named list of \link{package_version}s for \code{mcp}, \code{R}, \code{rjags},

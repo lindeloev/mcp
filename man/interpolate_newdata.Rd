@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{interpolate_newdata}
 \alias{interpolate_newdata}
-\title{Returns a tibble with all combos of predictors}
+\title{Tibble with All Combinations of Predictors}
 \usage{
 interpolate_newdata(
   fit,

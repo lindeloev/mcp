@@ -79,7 +79,7 @@ get_continuous_at = function(data, data_columns, at = NULL, group_cols = NULL) {
 }
 
 
-#' Returns a tibble with all combos of predictors
+#' Tibble with All Combinations of Predictors
 #'
 #' `r lifecycle::badge("experimental")`
 #'

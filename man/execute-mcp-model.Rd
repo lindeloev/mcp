@@ -11,7 +11,7 @@
 \alias{log_lik.mcpfit}
 \alias{residuals.mcpfit}
 \alias{residuals}
-\title{Fitted and predicted values of \code{mcp} models fits}
+\title{Fitted and Predicted Values of \code{mcpfit} Objects}
 \usage{
 \method{predict}{mcpfit}(
   object,
@@ -249,7 +249,7 @@ models requires refitting.
 
 Missing responses in the original data remain missing in the response column.
 \code{fitted()} returns their expected responses, while \code{predict()} generates fresh
-posterior predictive response draws (including at missing rows). In GARMA models,
+posterior predictive response draws (including at missing rows). In AR/MA models,
 retained JAGS imputations supply the history used for later fitted and predicted rows.
 \href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.
 }

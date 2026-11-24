@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_tables.R
 \name{mcp_pars}
 \alias{mcp_pars}
-\title{Model parameters}
+\title{Model Parameters}
 \usage{
 mcp_pars(fit, scope = NULL, role = NULL)
 }
@@ -21,6 +21,9 @@ A tibble with one row per parameter definition. \code{parameter} is the
 model parameter name; \code{dpar} is its distributional parameter (e.g., \code{"mu"},
 \code{"sigma"}, or \code{"ar1"}; see \link{mcp-formula}), as accepted by the \code{dpar} argument of
 \code{\link[=fitted.mcpfit]{fitted.mcpfit()}}, \code{\link[=fixef.mcpfit]{fixef.mcpfit()}}, etc., and \code{NA} for change points;
+\code{par_type} (\code{"Intercept"}, \code{"dummy"}, or \code{"slope"}) selects its default prior together with \code{dpar},
+e.g., factor levels in \code{y ~ 0 + group} are intercepts (see the \code{default_prior} argument of \code{\link[=mcpfamily]{mcpfamily()}}).
+Group-level parameters have the \code{par_type} of their population-level parameter;
 \code{group_col} and \code{population_parameter} describe group-level effects.
 }
 \description{

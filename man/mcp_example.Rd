@@ -4,7 +4,7 @@
 \name{mcp_example}
 \alias{mcp_example}
 \alias{mcp_example_data}
-\title{Run example models}
+\title{Run Example Models}
 \usage{
 mcp_example(name, sample = "post", plot = TRUE)
 
@@ -18,7 +18,7 @@ mcp_example_data(name)
 \item \code{"demo"}: Two change points between intercepts and joined/disjoined slopes.
 \item \code{"group_mu"}: Group-level deviations in the predictor part (random intercepts/slopes) across a change point.
 \item \code{"group_cp"}: Group-level change-point deviations (random effects).
-\item \code{"intercepts"}: An intercept-only change point.
+\item \code{"intercepts"}: Four change points between plateaus, clustered early in the data.
 \item \code{"missing"}: Missing data imputation (NAs in response variable y).
 \item \code{"multiple"}: Multiple regression with categorical predictors and interactions.
 \item \code{"sigma"}: A change in "sigma" dpar, including a slope on sigma.
@@ -34,7 +34,7 @@ plots, summaries, and other methods to select prior draws.
 will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
 object without draws (an "empty fit"). This is useful if you only want to check
-prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
+prior strings (\code{fit$prior}), the JAGS model (\code{\link[=as_jags]{as_jags()}}), etc.
 }}
 
 \item{plot}{Logical. Plot the fitted example? Requires sample != "none".}
@@ -44,7 +44,7 @@ An \code{mcpfit}, enriched with an \verb{$example_code} field. It contains the c
 reproduce the data and the fit.
 }
 \description{
-Run example models
+Run Example Models
 }
 \section{Functions}{
 \itemize{

@@ -7,7 +7,7 @@
 \alias{posterior_epred}
 \alias{posterior_predict}
 \alias{posterior_linpred}
-\title{Posterior prediction draws for \code{mcpfit} objects}
+\title{Posterior Prediction Draws for \code{mcpfit} Objects}
 \usage{
 \method{posterior_epred}{mcpfit}(
   object,
@@ -125,7 +125,7 @@ mcp exports these generics, so they work without \code{{rstantools}}. If \code{{
 \code{{brms}} masks them, their generics dispatch to the same methods.
 }
 \details{
-For GARMA models, \code{posterior_predict()} conditions on the observed
+For AR/MA models, \code{posterior_predict()} conditions on the observed
 response history, just like \code{predict()}. Use \code{arma = "replicate"} in either
 method to generate fresh response histories recursively. Missing responses
 in the original data are filled with retained imputations only to supply

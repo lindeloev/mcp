@@ -5,7 +5,7 @@
 \alias{plot.mcpfit}
 \alias{plot}
 \alias{plot_dpar}
-\title{Plot full fits}
+\title{Plot Full Fits}
 \usage{
 \method{plot}{mcpfit}(
   x,

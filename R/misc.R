@@ -219,7 +219,7 @@ get_mixture_quantiles = function(dpars, data, probs, family, rate = FALSE) {
 }
 
 
-#' Print mcplist
+#' Print an mcplist
 #'
 #' Shows a list in a more condensed format using `str(list)`.
 #' @aliases print.mcplist

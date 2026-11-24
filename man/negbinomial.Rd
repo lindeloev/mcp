@@ -2,7 +2,7 @@
 % Please edit documentation in R/families.R
 \name{negbinomial}
 \alias{negbinomial}
-\title{Negative Binomial for mcp}
+\title{Negative Binomial Family for mcp}
 \usage{
 negbinomial(link = "log", link_shape = "log")
 }

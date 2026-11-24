@@ -322,7 +322,7 @@ get_plot = function(x,
 }
 
 
-#' Plot full fits
+#' Plot Full Fits
 #'
 #' Plot prior or posterior model draws on top of data.
 #'

@@ -3,7 +3,7 @@
 \name{mcp-deprecated}
 \alias{mcp-deprecated}
 \alias{phi}
-\title{Deprecated functions in mcp}
+\title{Deprecated Functions in mcp}
 \usage{
 phi(q)
 }

@@ -99,7 +99,7 @@ get_prior_table = function(data_columns, cps, coefs, group_coefs, family, prior 
 }
 
 
-#' Summarise priors used by an mcp model
+#' Summarise Priors Used by an mcp Model
 #'
 #' `r lifecycle::badge("experimental")`
 #'

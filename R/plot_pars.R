@@ -1,4 +1,4 @@
-#' Plot individual parameters
+#' Plot Individual Parameters
 #'
 #' Plot many types of plots of parameter estimates. See examples for typical use
 #' cases.

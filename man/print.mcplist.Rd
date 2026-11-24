@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{print.mcplist}
 \alias{print.mcplist}
-\title{Print mcplist}
+\title{Print an mcplist}
 \usage{
 \method{print}{mcplist}(x, ...)
 }

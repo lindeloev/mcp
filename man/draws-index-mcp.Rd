@@ -10,7 +10,7 @@
 \alias{ndraws}
 \alias{nchains}
 \alias{niterations}
-\title{Index \code{mcpfit} objects}
+\title{Index \code{mcpfit} Objects}
 \usage{
 \method{variables}{mcpfit}(x, ...)
 

@@ -178,7 +178,7 @@ get_pars_table = function(coefs, cps, group_coefs, family) {
 }
 
 
-#' Model parameters
+#' Model Parameters
 #'
 #' `r lifecycle::badge("experimental")`
 #'
@@ -223,7 +223,7 @@ mcp_pars = function(fit, scope = NULL, role = NULL) {
 }
 
 
-#' Model data columns
+#' Model Data Columns
 #'
 #' `r lifecycle::badge("experimental")`
 #'

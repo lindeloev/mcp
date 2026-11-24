@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_tables.R
 \name{mcp_columns}
 \alias{mcp_columns}
-\title{Model data columns}
+\title{Model Data Columns}
 \usage{
 mcp_columns(fit)
 }

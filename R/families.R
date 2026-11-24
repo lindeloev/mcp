@@ -19,7 +19,7 @@ bernoulli = function(link = "logit") {
 }
 
 
-#' Negative Binomial for mcp
+#' Negative Binomial Family for mcp
 #'
 #' Parameterized as `mu` (the conditional mean) and `shape` (the same quantity
 #' as `size` in `rnbinom()`). Thus `Var(y) = mu + mu^2 / shape`, which approaches

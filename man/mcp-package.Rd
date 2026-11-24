@@ -17,7 +17,7 @@ coefficients via priors. Compare hypotheses using \code{loo()} and \code{hypothe
 \item \emph{Native feel:} \code{summary()}, \code{plot_pars()}, \code{pp_check()}, and \code{as_draws_df()} follow the conventions of
 \href{https://paulbuerkner.com/brms/}{\code{brms}}, \href{https://mc-stan.org/rstanarm/}{\code{rstanarm}}, and
 \href{https://mc-stan.org/posterior/articles/posterior.html}{\code{posterior}}, adapted to change point regression.
-Inspect the sampled JAGS model in \code{fit$jags_code}.
+Inspect the sampled JAGS model using \code{\link[=as_jags]{as_jags()}}.
 }
 
 You will find many aliases for change point regression in the literature, including piecewise linear,
@@ -52,7 +52,7 @@ or \code{~ cp((1|id)) + 0 + x}. \href{https://lindeloev.github.io/mcp/articles/g
 \item \code{mcp_quiet}: Logical. The default of \code{mcp(..., quiet)}. \code{options(mcp_quiet = TRUE)} suppresses routine JAGS output
 and mcp sampling-status messages for the session.
 \item \code{mcp_reparam}: Logical. \code{TRUE} (default) lets \code{\link[=mcp]{mcp()}} sample some default priors on scales that mix
-faster. This changes only \code{fit$jags_code} and sampling efficiency, not the model, the priors, or the posterior.
+faster. This changes only the JAGS code (\code{\link[=as_jags]{as_jags()}}) and sampling efficiency, not the model, the priors, or the posterior.
 \code{options(mcp_reparam = FALSE)} writes the plain model, which is mostly useful for seeing how \code{mcp} works.
 Ignored when \code{jags_code} is supplied. Read more in
 \href{https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations}{From formulas to sampler code}.

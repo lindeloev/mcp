@@ -252,7 +252,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 }
 
 
-#' Fitted and predicted values of `mcp` models fits
+#' Fitted and Predicted Values of `mcpfit` Objects
 #'
 #' Evaluate the model on data, either summarised (per data-row) or per draw. You
 #' can use draws from the prior (`prior = TRUE`), select a distributional
@@ -524,7 +524,7 @@ fitted.mcpfit = function(
 }
 
 
-#' Posterior prediction draws for `mcpfit` objects
+#' Posterior Prediction Draws for `mcpfit` Objects
 #'
 #' Methods for the `{rstantools}` posterior-prediction generics. They return a
 #' draws-by-observation matrix and enable `{tidybayes}` workflows such as

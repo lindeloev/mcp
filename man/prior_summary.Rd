@@ -3,7 +3,7 @@
 \name{prior_summary}
 \alias{prior_summary}
 \alias{prior_summary.mcpfit}
-\title{Summarise priors used by an mcp model}
+\title{Summarise Priors Used by an mcp Model}
 \usage{
 prior_summary(object, ...)
 

@@ -4,7 +4,7 @@
 \alias{mcp-defunct}
 \alias{criterion}
 \alias{get_segment_table}
-\title{Defunct functions in mcp}
+\title{Defunct Functions in mcp}
 \usage{
 criterion(...)
 

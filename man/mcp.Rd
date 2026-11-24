@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{mcp}
 \alias{mcp}
-\title{Fit Multiple Linear Segments And Their Change Points}
+\title{Fit Multiple Linear Segments and Their Change Points}
 \usage{
 mcp(
   model,
@@ -16,7 +16,7 @@ mcp(
   iter = 3000,
   warmup = 1000,
   inits = NULL,
-  jags_code = NULL,
+  jags_code = lifecycle::deprecated(),
   seed = NULL,
   diagnostics = list(),
   quiet = getOption("mcp_quiet", FALSE),
@@ -48,6 +48,7 @@ see them with \code{\link[=prior_summary]{prior_summary()}}. See \link{mcp-prior
 \item \code{binomial()} or \code{bernoulli()} with \code{link = "logit"}, \code{"probit"}, or \code{"identity"}
 \item \code{poisson(link = "log")} or \code{poisson(link = "identity")}
 \item \code{negbinomial(link = "log", link_shape = "log")}
+\item A custom family made with \code{\link[=mcpfamily]{mcpfamily()}}.
 }
 
 \href{https://lindeloev.github.io/mcp/articles/families.html}{Read more}.}
@@ -65,7 +66,7 @@ plots, summaries, and other methods to select prior draws.
 will default to using the posterior. Use \code{prior = TRUE} to select prior draws.
 \item \code{"none"} or \code{FALSE}: Do not sample. Returns an mcpfit
 object without draws (an "empty fit"). This is useful if you only want to check
-prior strings (\code{fit$prior}), the JAGS model (\code{fit$jags_code}), etc.
+prior strings (\code{fit$prior}), the JAGS model (\code{\link[=as_jags]{as_jags()}}), etc.
 }}
 
 \item{chains}{Positive integer. Number of chains to run.}
@@ -86,16 +87,9 @@ Initial values for change points must be ordered.
 Defaults to \code{NULL} where all chains start at equally spaced change points and the prior medians.
 User-provided \code{inits} take precedence.}
 
-\item{jags_code}{String. JAGS code to sample instead of the code that \code{mcp} writes.
-This is an expert option for edits to \code{fit$jags_code} that keep the parameters in
-\code{\link[=mcp_pars]{mcp_pars()}}, the data, and the likelihood.
-Only the parameters in \code{\link[=mcp_pars]{mcp_pars()}} are monitored. R-side simulation and prediction
-methods continue to use the \code{mcp} formulas (with warning), so \code{fitted()}, \code{predict()},
-\code{plot()}, \code{loo()}, etc. are wrong if the custom code changes the formula or likelihood.
-The written JAGS code is not a stable interface and may change between \code{mcp} versions.
-\code{jags_code} is planned for deprecation once a future mcp release brings custom families
-and tooling to run \code{fit$jags_code} directly in JAGS.
-\href{https://lindeloev.github.io/mcp/articles/implementation.html}{Read more} about how \code{mcp} writes JAGS code.}
+\item{jags_code}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} String. JAGS code to sample instead of the code that \code{mcp} writes.
+Use \code{\link[=mcpfamily]{mcpfamily()}} instead to continue using R-side methods (\code{fitted()}, \code{predict()}, \code{plot()}, \code{loo()}, etc.).
+Or use \code{\link[=as_jags]{as_jags()}} to sample a modified model directly in JAGS, foregoing mcp's R-side methods.}
 
 \item{seed}{\code{NULL} or a positive integer. Seed for the JAGS random-number
 generators. If \code{NULL} (default), the seed is drawn from R's random-number generator,
@@ -209,7 +203,7 @@ model_same = list(
 fit_same = mcp(model_same, data = data, sample = FALSE)
 
 # Show the JAGS model
-demo_fit$jags_code
+as_jags(demo_fit)
 }
 }
 \references{
