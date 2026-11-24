@@ -107,12 +107,11 @@ is unavailable when a missing response enters a later observed history.
 \item For models with \code{y | weights()}: Require the weights column except for \code{fitted()} and \code{predict()}.
 }}
 
-\item{summary}{Logical. Summarise the draws for each row in \code{newdata} (\code{TRUE}) or return the draws (\code{FALSE})?}
+\item{summary}{Logical. Summarise the draws for each returned row (\code{TRUE}) or return individual draws (\code{FALSE})?}
 
 \item{width}{Width of the central interval (strictly between 0 and 1),
 returned in the \code{.lower} and \code{.upper} columns. \code{FALSE} omits the interval.
-Only in effect when \code{summary == TRUE}. To get custom quantiles, summarise the draws from
-\code{summary = FALSE}, e.g., using \code{dplyr::reframe()} (see examples).}
+Used when \code{summary = TRUE}.}
 
 \item{rate}{Logical scalar. For binomial models, return counts (\code{rate = FALSE}, the default for \code{fitted()} and \code{predict()}) or
 the observed or expected success proportion (\code{rate = TRUE}). Predictions and
@@ -151,8 +150,8 @@ For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
 currently requires all such effects (\code{group_effects = TRUE}).}
 
-\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
-\code{NULL} means "all". More draws trade speed for accuracy.}
+\item{ndraws}{Integer or \code{NULL}. Number of draws to select at random.
+\code{NULL} uses all draws.}
 
 \item{draws_format}{One of "tidy" or "matrix". Controls the output format when \code{summary == FALSE}.}
 
@@ -186,7 +185,7 @@ trends are modeled.
 \value{
 \itemize{
 \item If \code{summary = TRUE}: A tibble with the columns of \code{newdata} (or
-\code{fit$data} if \code{newdata} is \code{NULL}), followed by summaries for each row:
+\code{fit$data} if \code{newdata} is \code{NULL}), \code{.row}, and summaries for each row:
 \itemize{
 \item \code{.mean}: The mean of the draws.
 \item \code{.sd}: The SD of the draws. With posterior draws (the default), this is the
@@ -210,15 +209,18 @@ group-level effects, the returned data is expanded with the relevant levels for 
 The return columns are:
 \itemize{
 \item Predictors from \code{newdata}, plus its response column when supplied.
-\item Draw descriptors: ".chain", ".iteration", ".draw" (see the \code{posterior} and \code{tidybayes} packages), and \code{.row}, the row number in the evaluated \code{newdata}.
+\item Row and draw identifiers (\code{.row}, \code{.chain}, \code{.iteration}, \code{.draw}).
 \item Draw values: one column for each parameter in the model.
 \item The estimate (matching tidybayes conventions): \code{.epred} for expected responses, \code{.linpred} with \code{scale = "linear"},
 the \code{.dpar} for other dpars (e.g., \code{.mu} or \code{.sigma}), \code{.prediction}, \code{.residual}, or \code{.loglik}.
 }
-\item If \code{summary = FALSE} and \code{draws_format = "matrix"}: An \code{N_draws} X \code{nrows(newdata)} matrix with fitted/predicted
-values (depending on the function). This format is used by \code{brms} and it's useful as \code{yrep} in
-\verb{bayesplot::ppc_*} functions.
+\item If \code{summary = FALSE} and \code{draws_format = "matrix"}: A draws-by-observation matrix
+with columns named by \code{.row}. This format is used by \code{brms} and is useful as
+\code{yrep} in \verb{bayesplot::ppc_*} functions.
 }
+
+\code{.row} is the row number in \code{newdata} (or in \code{fit$data}).
+\code{log_lik()} includes only observed responses and keeps their original row numbers.
 }
 \description{
 Evaluate the model on data, either summarised (per data-row) or per draw. You
@@ -247,11 +249,10 @@ without group-level effects or serial correlation); they cannot be used in
 \code{loo()} or \code{waic()} because estimating information criteria for reduced
 models requires refitting.
 
-Missing responses in the original data remain missing in the response column.
-\code{fitted()} returns their expected responses, while \code{predict()} generates fresh
-posterior predictive response draws (including at missing rows). In AR/MA models,
-retained JAGS imputations supply the history used for later fitted and predicted rows.
-\href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.
+Use \code{\link[=imputed]{imputed()}} to extract draws of missing responses in the fitted data.
+\code{fitted()} gives expected responses and \code{predict()} gives fresh predictions,
+including at rows where the response column contains \code{NA}. In AR/MA models,
+imputations supply missing responses in the history for later rows.
 }
 \section{Functions}{
 \itemize{
@@ -290,9 +291,8 @@ head(predict(demo_fit, newdata = novel_data))
 
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)
-fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
-fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
-predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
+imputed(missing_fit)  # Impute missing y
+fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses at those rows
 }
 }
 \seealso{

@@ -57,6 +57,8 @@ See `vignettes/priors.Rmd#cp_prior`.
 
 
 ## Draws and predictions
+- **imputation**: a posterior draw of a missing response given the observed data.
+- **completed data**: the observed responses and imputations together, one dataset per posterior draw.
 - **draws**: prior or posterior draws, following the `posterior` package. Avoid: samples (except for "sample" as a verb, e.g., `mcp(..., sample = "both")`).
 - **empty fit**: an `mcpfit` without draws, from `mcp(..., sample = FALSE)`, e.g., to get `fit$simulate()`, `fit$prior`, or `as_jags(fit)`. Conventionally named `empty` in examples. Avoid: empty model.
 - **response scale**: after applying the inverse link function, i.e., the scale of `y` (counts for binomial unless `rate = TRUE`). Avoid: "natural scale", "original scale", etc.

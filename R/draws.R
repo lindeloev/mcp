@@ -272,26 +272,3 @@ draws_to_pars = function(draws, data, groups) {
   }
   pars
 }
-
-
-# Tidy draws of the missing responses imputed by JAGS (`.imputed` for each `.row`). Unlike fresh
-# draws from predict(), they are conditional on all observed data, including later rows in AR/MA models.
-imputed_draws = function(object, ndraws = NULL) {
-  mcmclist_draws(object)  # Validate the fit and availability of posterior draws.
-  checkmate::assert_int(ndraws, lower = 1, null.ok = TRUE)
-  imputed_response = object$.internal$imputed_response
-  if (is.null(imputed_response))
-    stop("No retained posterior imputations are available in this fit.", call. = FALSE)
-
-  draws = tibble::as_tibble(posterior::as_draws_df(posterior::as_draws_array(imputed_response)))
-  if (!is.null(ndraws))
-    draws = dplyr::sample_n(draws, ndraws)
-  imputed_response_rows = object$.internal$imputed_response_rows
-  pivot_spec = tibble::tibble(
-    .name = paste0(mcp_columns(object)$response, "[", imputed_response_rows, "]"),
-    .value = ".imputed",
-    .row = imputed_response_rows
-  )
-  tidyr::pivot_longer_spec(draws, pivot_spec) |>
-    dplyr::relocate(".chain", ".iteration", ".draw")
-}

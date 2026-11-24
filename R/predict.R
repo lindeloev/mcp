@@ -212,7 +212,7 @@ pp_eval = function(
       newdata_return$.lower = quantiles[, 1]
       newdata_return$.upper = quantiles[, 2]
     }
-    return(tibble::as_tibble(newdata_return[names(newdata_return) != ".row"]))
+    return(tibble::as_tibble(newdata_return))
   }
 
   # Draws-by-rows matrix, as in brms and rstantools
@@ -280,11 +280,10 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' `loo()` or `waic()` because estimating information criteria for reduced
 #' models requires refitting.
 #'
-#' Missing responses in the original data remain missing in the response column.
-#' `fitted()` returns their expected responses, while `predict()` generates fresh
-#' posterior predictive response draws (including at missing rows). In AR/MA models,
-#' retained JAGS imputations supply the history used for later fitted and predicted rows.
-#' [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
+#' Use [imputed()] to extract draws of missing responses in the fitted data.
+#' `fitted()` gives expected responses and `predict()` gives fresh predictions,
+#' including at rows where the response column contains `NA`. In AR/MA models,
+#' imputations supply missing responses in the history for later rows.
 #'
 #' @param group_effects Group-level effects to include. One of:
 #'   * `TRUE` All group-level deviations.
@@ -312,11 +311,10 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'   predictors and required response auxiliaries. `log_lik()`
 #'   is unavailable when a missing response enters a later observed history.
 #' - For models with `y | weights()`: Require the weights column except for `fitted()` and `predict()`.
-#' @param summary Logical. Summarise the draws for each row in `newdata` (`TRUE`) or return the draws (`FALSE`)?
+#' @param summary Logical. Summarise the draws for each returned row (`TRUE`) or return individual draws (`FALSE`)?
 #' @param width Width of the central interval (strictly between 0 and 1),
 #'   returned in the `.lower` and `.upper` columns. `FALSE` omits the interval.
-#'   Only in effect when `summary == TRUE`. To get custom quantiles, summarise the draws from
-#'   `summary = FALSE`, e.g., using `dplyr::reframe()` (see examples).
+#'   Used when `summary = TRUE`.
 #' @param rate Logical scalar. For binomial models, return counts (`rate = FALSE`, the default for `fitted()` and `predict()`) or
 #'   the observed or expected success proportion (`rate = TRUE`). Predictions and
 #'   count-scale fitted values require a trials column in `newdata`.
@@ -344,8 +342,8 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'   For posterior evaluation of the original data, retained JAGS imputations
 #'   supply missing GARMA histories. In models with group-level effects, this
 #'   currently requires all such effects (`group_effects = TRUE`).
-#' @param ndraws Integer or `NULL`. Number of posterior draws to return/summarise.
-#'   `NULL` means "all". More draws trade speed for accuracy.
+#' @param ndraws Integer or `NULL`. Number of draws to select at random.
+#'   `NULL` uses all draws.
 #' @param draws_format One of "tidy" or "matrix". Controls the output format when `summary == FALSE`.
 #' @param scale One of
 #'   * `"response"`: return on the response scale, i.e., after applying the inverse link function.
@@ -358,7 +356,7 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #' @param ... Must be empty. Reserved for future use.
 #' @return
 #'   * If `summary = TRUE`: A tibble with the columns of `newdata` (or
-#'     `fit$data` if `newdata` is `NULL`), followed by summaries for each row:
+#'     `fit$data` if `newdata` is `NULL`), `.row`, and summaries for each row:
 #'
 #'      - `.mean`: The mean of the draws.
 #'      - `.sd`: The SD of the draws. With posterior draws (the default), this is the
@@ -382,14 +380,17 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'     The return columns are:
 #'
 #'      - Predictors from `newdata`, plus its response column when supplied.
-#'      - Draw descriptors: ".chain", ".iteration", ".draw" (see the `posterior` and `tidybayes` packages), and `.row`, the row number in the evaluated `newdata`.
+#'      - Row and draw identifiers (`.row`, `.chain`, `.iteration`, `.draw`).
 #'      - Draw values: one column for each parameter in the model.
 #'      - The estimate (matching tidybayes conventions): `.epred` for expected responses, `.linpred` with `scale = "linear"`,
 #'        the `.dpar` for other dpars (e.g., `.mu` or `.sigma`), `.prediction`, `.residual`, or `.loglik`.
 #'
-#'   * If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X `nrows(newdata)` matrix with fitted/predicted
-#'       values (depending on the function). This format is used by `brms` and it's useful as `yrep` in
-#'      `bayesplot::ppc_*` functions.
+#'   * If `summary = FALSE` and `draws_format = "matrix"`: A draws-by-observation matrix
+#'     with columns named by `.row`. This format is used by `brms` and is useful as
+#'     `yrep` in `bayesplot::ppc_*` functions.
+#'
+#' `.row` is the row number in `newdata` (or in `fit$data`).
+#' `log_lik()` includes only observed responses and keeps their original row numbers.
 #' @seealso \code{\link{fitted.mcpfit}} \code{\link{predict.mcpfit}} \code{\link{residuals.mcpfit}} \code{\link{log_lik.mcpfit}}
 #' @encoding UTF-8
 #' @author Jonas Kristoffer Lindeløv \email{jonas@@lindeloev.dk}
@@ -419,12 +420,113 @@ get_value_col = function(type, dpar = "epred", scale = "response") {
 #'
 #' # Work with missing responses
 #' missing_fit = mcp_example("missing", plot = FALSE)
-#' fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
-#' fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
-#' predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
+#' imputed(missing_fit)  # Impute missing y
+#' fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses at those rows
 #'}
 #' @name execute-mcp-model
 NULL
+
+
+#' Imputed Responses
+#'
+#' Get posterior draws of the missing responses in `fit$data`. Use `complete = TRUE`
+#' to include the observed responses in each draw.
+#' For predictions of fresh responses, including at the missing rows, use [predict()]. See the
+#' [missing data article](https://lindeloev.github.io/mcp/articles/missing.html)
+#' for plotting imputations and completing your original data.
+#'
+#' @param fit An `mcpfit` object with posterior draws.
+#' @param complete Logical. Include observed responses (`TRUE`) or only missing responses (`FALSE`)?
+#' @param rate Logical. For binomial models, return counts (`FALSE`, the default) or proportions (`TRUE`).
+#' @inheritParams fitted.mcpfit
+#' @return With `summary = TRUE`, a tibble with `.mean`, `.sd`, and, by default,
+#'   `.lower` and `.upper`. With `summary = FALSE`, a tidy tibble with `.imputed`,
+#'   `.chain`, `.iteration`, and `.draw`, or a draws-by-observation matrix when
+#'   `draws_format = "matrix"`.
+#'
+#'   Tibbles include the original columns of `fit$data` and `.row`, the row number in `fit$data`.
+#'   Matrix columns are named by `.row`. `.draw` matches the draw in [as_draws_df()].
+#' @examples
+#' \donttest{
+#' fit = mcp_example("missing", plot = FALSE)
+#' imputed(fit, width = 0.8)
+#' head(imputed(fit, summary = FALSE, ndraws = 3))
+#' }
+#' @export
+imputed = function(fit, complete = FALSE, summary = TRUE, width = 0.95, rate = FALSE,
+                   ndraws = NULL, draws_format = "tidy", ...) {
+  rlang::check_dots_empty()
+  checkmate::assert_flag(complete)
+  checkmate::assert_flag(summary)
+  assert_width(width, false_ok = TRUE)
+  assert_rate(rate, fit)
+  draws_format = rlang::arg_match0(draws_format, c("tidy", "matrix"))
+  if (!summary && draws_format == "tidy" && ".imputed" %in% names(fit$data))
+    stop("The fitted data contain a column named `.imputed`. Use `draws_format = \"matrix\"` for the draws.", call. = FALSE)
+
+  # Helpful recoding
+  parameter_draws = mcmclist_draws(fit)
+  data_columns = mcp_columns(fit)
+  y = fit$data[[data_columns$response]]
+  missing_response = is.na(y)
+  missing_rows = which(missing_response)
+  imputations = fit$.internal$imputed_response
+  if (length(missing_rows) > 0 && is.null(imputations))
+    stop("No posterior imputations are available for the missing responses in this fit. Refit with a model that supports response imputation.", call. = FALSE)
+
+  # With no imputations, get draw identifiers from a single parameter
+  draws = if (is.null(imputations)) parameter_draws[, 1, drop = FALSE] else imputations
+  draws = tibble::as_tibble(posterior::as_draws_df(draws))
+  checkmate::assert_int(ndraws, lower = 1, upper = nrow(draws), null.ok = TRUE)
+  if (!is.null(ndraws))
+    draws = dplyr::arrange(dplyr::sample_n(draws, ndraws), .data$.draw)
+
+  # Get imputed draws or all draws
+  nodes = if (length(missing_rows) > 0) paste0(data_columns$response, "[", missing_rows, "]")
+  values = t(as.matrix(draws[nodes]))
+  rows = missing_rows
+  if (complete) {
+    completed = matrix(y, nrow = length(y), ncol = nrow(draws))
+    completed[missing_rows, ] = values
+    values = completed
+    rows = seq_along(y)
+  }
+
+  # Begin constructing return
+  data = fit$data[rows, , drop = FALSE]
+  data$.row = rows
+  if (rate) {
+    response_data = get_family_response_data(fit$family, data_columns, data)
+    values[] = fit$family$response$observed(values, response_data, rate)
+  }
+
+  if (summary) {
+    data$.mean = rowMeans(values)
+    data$.sd = as.numeric(apply(values, 1, stats::sd))
+    data$.sd[!missing_response[rows]] = 0
+    if (!isFALSE(width)) {
+      probs = c((1 - width) / 2, (1 + width) / 2)
+      quantiles = apply(values, 1, stats::quantile, probs = probs, names = FALSE)
+      quantiles = matrix(quantiles, ncol = 2, byrow = TRUE)  # Also handles zero rows
+      data$.lower = quantiles[, 1]
+      data$.upper = quantiles[, 2]
+    }
+    return(tibble::as_tibble(data))
+  }
+
+  if (draws_format == "matrix") {
+    values = t(values)
+    colnames(values) = rows
+    return(values)
+  }
+
+  # summary == FALSE, draws_format == "tidy"
+  tibble::as_tibble(c(
+    lapply(data, rep, each = nrow(draws)),
+    lapply(draws[c(".chain", ".iteration", ".draw")], rep, times = length(rows)),
+    list(.imputed = as.vector(t(values)))
+  ))
+}
 
 
 #' @aliases predict predict.mcpfit

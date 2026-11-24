@@ -112,6 +112,21 @@ test_that("binomial prediction defaults agree with posterior methods and warn on
 })
 
 
+test_that("binomial imputations use the number of trials at each returned row", {
+  data = data.frame(x = 1:4, N = c(9, 4, 10, 6), y = c(5, NA, 3, NA))
+  fit = suppressMessages(mcp(
+    list(y | trials(N) ~ 1), data, family = binomial(), par_x = "x",
+    prior = list(Intercept_1 = 0), chains = 1, iter = 20, warmup = 20,
+    seed = 42, quiet = TRUE, diagnostics = FALSE
+  ))
+  for (complete in c(FALSE, TRUE)) {
+    counts = imputed(fit, complete = complete, summary = FALSE)
+    rates = imputed(fit, complete = complete, summary = FALSE, rate = TRUE)
+    expect_equal(rates$.imputed, counts$.imputed / counts$N)
+  }
+})
+
+
 ##################
 # TEST BERNOULLI #
 ##################

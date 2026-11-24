@@ -142,7 +142,7 @@ test_that("probs is a deprecated alias for central intervals", {
     result = fitted(demo_fit, probs = c(0.1, 0.9))
   })
   expect_equal(result, fitted(demo_fit, width = 0.8))
-  expect_named(suppressWarnings(residuals(demo_fit, probs = FALSE)), c(colnames(demo_fit$data), ".mean", ".sd"))
+  expect_named(suppressWarnings(residuals(demo_fit, probs = FALSE)), c(colnames(demo_fit$data), ".row", ".mean", ".sd"))
   expect_error(suppressWarnings(fitted(demo_fit, probs = c(0.1, 0.5, 0.9))), "central interval")
   expect_error(
     suppressWarnings(predict(demo_fit, width = 0.8, probs = c(0.1, 0.9))),

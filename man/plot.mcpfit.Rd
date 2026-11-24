@@ -104,8 +104,8 @@ For posterior evaluation of the original data, retained JAGS imputations
 supply missing GARMA histories. In models with group-level effects, this
 currently requires all such effects (\code{group_effects = TRUE}).}
 
-\item{ndraws}{Integer or \code{NULL}. Number of posterior draws to return/summarise.
-\code{NULL} means "all". More draws trade speed for accuracy.}
+\item{ndraws}{Integer or \code{NULL}. Number of draws to select at random.
+\code{NULL} uses all draws.}
 
 \item{scale}{One of
 \itemize{

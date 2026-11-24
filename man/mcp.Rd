@@ -31,7 +31,7 @@ and the full formula syntax. \href{https://lindeloev.github.io/mcp/articles/form
 
 \item{data}{Table-like data in long format (data.frame, tibble, data.table, etc.)
 with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
-\href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.}
+Use \code{\link[=imputed]{imputed()}} to extract them. \href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.}
 
 \item{prior}{Named list, e.g., \code{prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")}.
 List names are parameter names (\code{cp_1}, \code{Intercept_1}, \code{x_2},

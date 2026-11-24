@@ -33,7 +33,7 @@
 #'   [Read more](https://lindeloev.github.io/mcp/articles/comparison.html).
 #' * *Fits, predictions, and forecasts:* `fitted()`, `predict()`, and `residuals()`, including forecasts beyond the data.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/predict.html).
-#' * *Missing responses:* Missing values in the response are imputed jointly with the parameters.
+#' * *Missing responses:* Use [imputed()] to inspect missing responses or complete your data.
 #'   [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
 #'
 #' @section Options:

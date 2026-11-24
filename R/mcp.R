@@ -10,7 +10,7 @@
 #'   and the full formula syntax. [Read more](https://lindeloev.github.io/mcp/articles/formulas.html).
 #' @param data Table-like data in long format (data.frame, tibble, data.table, etc.)
 #'   with syntactic column names. The response variable can contain missing values, which will be imputed jointly with the parameters.
-#'   [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
+#'   Use [imputed()] to extract them. [Read more](https://lindeloev.github.io/mcp/articles/missing.html).
 #' @param prior Named list, e.g., `prior = list(cp_1 = "dunif(0, 100)", Intercept_1 = "dnorm(0, 1)")`. 
 #'   List names are parameter names (`cp_1`, `Intercept_1`, `x_2`,
 #'   `sigma_1`, etc.) and values are a distribution string (e.g., `"dnorm(0, 1) T(0, )"`),

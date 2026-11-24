@@ -344,7 +344,7 @@ Here are a few ways in which you may want to inform the AR or MA parameters:
 
 JAGS, `fitted()`, `predict()`, and `log_lik()` evaluate a finite, conditional recurrence: the response history supplies earlier residuals, and unavailable residuals before the start of the series are set to zero.
 
-- `fitted()` and `predict()` use posterior imputations only to complete missing response histories. `predict()` generates fresh outcomes at all rows, even where the original response was missing.
+- Use `imputed()` to fill gaps. It gives draws of the missing responses given all the observed data. `fitted()` and `predict()` use those imputations in the history of later rows. `predict()` generates a fresh response at each row which differs from `imputed()` for AR/MA. See [imputations in time series](../articles/missing.html#imputations-in-time-series).
 - `log_lik()` is unavailable if the data has missingness before some observed data.
 - `predict(..., arma = "replicate")`, `posterior_predict(..., arma = "replicate")`, and `pp_check()` (where it is the default) generate each series recursively from the model posteriors without conditioning on the original response history. This makes serial summaries of posterior replications, such as their autocorrelation and run lengths, meaningful. Use `pp_check(fit, arma = TRUE)` to check the one-step-ahead predictions instead.
 

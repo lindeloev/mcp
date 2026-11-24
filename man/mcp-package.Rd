@@ -41,7 +41,7 @@ or \code{~ cp((1|id)) + 0 + x}. \href{https://lindeloev.github.io/mcp/articles/g
 \href{https://lindeloev.github.io/mcp/articles/comparison.html}{Read more}.
 \item \emph{Fits, predictions, and forecasts:} \code{fitted()}, \code{predict()}, and \code{residuals()}, including forecasts beyond the data.
 \href{https://lindeloev.github.io/mcp/articles/predict.html}{Read more}.
-\item \emph{Missing responses:} Missing values in the response are imputed jointly with the parameters.
+\item \emph{Missing responses:} Use \code{\link[=imputed]{imputed()}} to inspect missing responses or complete your data.
 \href{https://lindeloev.github.io/mcp/articles/missing.html}{Read more}.
 }
 }

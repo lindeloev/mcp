@@ -22,7 +22,7 @@ set.seed(42)
 `mcp` allows missing values (`NA`) in the response. This article covers two consequences of that:
 
 1. **Change points in voids:** Change points can be inferred in regions with no observed responses.
-2. **Imputing missing responses:** JAGS treats the missing responses as latent variables and samples them together with the model parameters. You can inspect expected responses with `fitted()` and the imputation distribution with `predict()`.
+2. **Imputing missing responses:** `imputed()` gives you the missing responses sampled jointly with the model parameters. Use it to inspect a gap or complete your data.
 
 ```{r, message=FALSE}
 library(mcp)
@@ -57,44 +57,23 @@ hypothesis(fit_void, c(
 
 # Imputing missing responses
 
-## An example with missing responses
+The built-in example has a change in slope, a difference between two states, and several missing responses. Use `imputed()` to see the mean and an 80% interval for each missing response. `.row` gives its row number in `fit$data`.
 
-The built-in example has a change in slope, a strong difference between two states, scattered missing responses, and a short run of missing responses:
-
-```{r}
+```{r, results = 'hold', fig.show = 'hold'}
+# Fits model and plots it. See code in fit$example_code.
 fit = mcp_example("missing")
+
+# Get imputations
+imputations = imputed(fit, width = 0.8)
+imputations
 ```
 
-The ordinary plot shows the observed responses and model estimates but omits missing responses. [Below](#visualizing-imputations), we add them to the plot. These are the rows with missing responses in `y`:
-
-```{r}
-fit$data |> filter(is.na(y))
-```
-
-
-## Expected responses and predictions
-
-`predict()` evaluates the posterior predictive distribution at the missing rows, generating fresh simulated responses that include residual variation. The predictions come from trends in non-missing data and what they imply, given the observed covariates (`state` and `x`), for the missing rows. Without `ar()` or `ma()` terms, as here, these predictions have the same distribution as the JAGS imputations, so we use them as imputations below.
-
-```{r}
-# Mean and 80% posterior predictive interval for missing data
-imputed = predict(fit, width = 0.8) |>
-  filter(is.na(y))
-imputed
-```
-
-`fitted()` has the same syntax as `predict()` but returns the posterior *expected* response. Its intervals are narrower because they do not include response variation:
-
-```{r}
-# Mean and 80% posterior interval of the expected response at missing data
-fitted(fit, width = 0.8) |>
-  filter(is.na(y))
-```
+Use `fitted()` for the expected response at each row and `predict()` for a fresh response. Both return all rows, so you can use `filter(is.na(y))` to inspect the missing responses. For this model, predictions and imputations at the gaps have the same distribution. In a [time series](#imputations-in-time-series), they can differ, and `imputed()` use more available information.
 
 
 ## Visualizing imputations
 
-Imputations are not added to `plot()` automatically. Since `plot()` returns a ggplot, it is easy to extend. Here an `×` marks the posterior mean and a vertical line shows the central 80% imputation interval:
+Add the imputation summaries to `plot()` with `geom_linerange()` for the interval and an `×` for the mean.
 
 ```{r}
 # Start with mcp plot with prediction interval
@@ -102,7 +81,7 @@ plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add imputation interval
   geom_linerange(
-    data = imputed,
+    data = imputations,
     aes(x = x, ymin = .lower, ymax = .upper),
     inherit.aes = FALSE,
     color = "black"
@@ -110,7 +89,7 @@ plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add "x" at posterior mean
   geom_point(
-    data = imputed,
+    data = imputations,
     aes(x = x, y = .mean),
     inherit.aes = FALSE,
     shape = 4,  # an "x"
@@ -118,40 +97,51 @@ plot(fit, color_by = "state", interval = "predict", width = 0.8) +
   )
 ```
 
-This deliberately distinguishes imputed values from the solid observed points. You can change the interval width, marker, color, or add a subset of the missing rows using ordinary `dplyr` and `ggplot2` code.
-
-The plot above reduces each imputation distribution to an interval. Use `summary = FALSE` when you need the individual draws instead. Here we plot the imputation distribution for each missing row:
+Use `summary = FALSE` to plot the distribution of each missing response from its draws, which is richer than just the interval plotted above.
 
 ```{r}
-missing_draws = predict(fit, summary = FALSE) |>
-  filter(is.na(y))
+missing_draws = imputed(fit, summary = FALSE)
 
-ggplot(missing_draws, aes(x = .prediction)) +
-  geom_density() + 
+ggplot(missing_draws, aes(x = .imputed)) +
+  geom_density() +
   facet_wrap(~x)
 ```
 
 
-## Probabilistic statements about missing responses
+## Probabilities for a missing response
 
-Sometimes, the missing response is of direct interest. For example, you may want to know the probability that a missing response is above a threshold. You can use `predict()` with `summary = FALSE` to get all posterior predictive draws and then calculate probabilities of various statements. For example:
+To estimate the probability that the missing response at row 19 exceeded 20, calculate the fraction of its draws above 20. Similarly for other probabilities:
 
 ```{r}
 missing_draws |>
-  filter(.row == 19) |>  # Row number 19 in original data
+  filter(.row == 19) |>
   summarise(
-    p_greater = mean(.prediction > 20),
-    p_lower = mean(.prediction < 10),
-    p_between = mean(.prediction > 10 & .prediction < 20)
+    p_greater = mean(.imputed > 20),
+    p_lower = mean(.imputed < 10),
+    p_between = mean(.imputed > 10 & .imputed < 20)
   )
 ```
 
 
-## Imputations and other continuous predictors
+## Completing a dataset (multiple imputation)
 
-Plotting differs from `fitted()` and `predict()` in one respect: The smooth curves in `plot()` are evaluated on data made by `interpolate_newdata()`, which keeps additional continuous predictors (i.e., predictors not assigned an aesthetic) at their observed means by default, or at values supplied through the `at`-argument. The plot caption reports these fixed values. See the [plotting article](../articles/plotting.html) for using `interpolate_newdata()` to make your own plots.
+With `complete = TRUE`, `.imputed` contains the observed responses as well as the imputed ones. Each `.draw` gives one joint completion of the data. For multiple imputation, select a few draws and make one dataset per draw.
 
-The imputation markers above are different: `predict(fit)` evaluates the original data, so every missing row uses its own predictor values. If another continuous predictor is especially important, an imputation may therefore lie away from a curve drawn at that predictor's mean. This is expected, just as an observed response with unusual predictor values may lie away from that curve. Use `plot(fit, at = ...)` or `interpolate_newdata(fit, at = ...)` or make separate plots when those differences deserve emphasis.
+```{r}
+completed = imputed(fit, complete = TRUE, summary = FALSE, ndraws = 20) |>
+  mutate(y = .imputed)
+datasets = split(select(completed, all_of(names(fit$data))), completed$.draw)
+
+# Show one completed dataset
+datasets[1]
+```
+
+
+## Imputations in time series
+
+Use `imputed()` to fill a gap in an AR/MA series. The observed responses on both sides can inform the imputation. For example, in a Gaussian AR(1) model with mean 0 and coefficient 0.8, the middle response in `c(0, NA, 10)` has an imputed mean of about 4.9. The fresh prediction at that row has mean 0, based on the preceding response.
+
+Default `predict()` uses the history up to each row to generate a fresh response. Earlier imputations in that history can already contain information from later observations. Use `predict(fit, arma = "replicate")` to generate a fresh series recursively. See the [time-series article](../articles/arma.html) for examples.
 
 
 # Supported models and limitations
@@ -163,23 +153,21 @@ Missing responses work with the usual `mcp` model features. For example, you can
  * Include [continuous and categorical predictors](../articles/formulas.html) so imputations follow observed covariate information.
  * Use [group-level effects](../articles/group_effects.html) so sparsely observed groups borrow information from the population and their available observations.
  * [Model changing residual standard deviation with `sigma()`](../articles/dpar.html) so imputation uncertainty can vary over the predictor range.
- * Use [binomial, Bernoulli, Poisson, or negative-binomial responses](../articles/families.html). Their imputations remain on the appropriate discrete response scale; binomial predictions can also be returned as rates.
+ * Use [binomial, Bernoulli, Poisson, or negative-binomial responses](../articles/families.html). The imputation draws are discrete. Use `imputed(fit, rate = TRUE)` for binomial proportions.
 
 However, predictors required by the model must themselves be observed. `mcp` currently imputes missing responses, not missing predictor values, and it does not model the process that caused responses to be missing. As with ordinary regression using incomplete outcomes, interpretation relies on the missing responses being reasonably explained by the observed predictors and model structure.
 
 
 ## Model evaluation and time series
 
-Missing rows are not treated as observed contributions to `log_lik()`, `loo()`, or `waic()`. For ordinary non-AR/MA models, the remaining observed rows can still be used for these calculations.
+`log_lik()`, `loo()`, and `waic()` score observed responses. In AR/MA models, these functions are unavailable when a missing response enters the history of a later observed response. Scoring that observation would require integrating over the missing history.
 
-AR/MA models need extra care because a missing response can become part of the history for later observations. `mcp` retains the JAGS draws so `fitted()` and `predict()` can reconstruct that history, but it does not currently integrate over missing histories for pointwise likelihood calculations. Consequently, `log_lik()`, `loo()`, and `waic()` are unavailable when a missing response precedes some observed data. 
-
-The [time-series article](../articles/arma.html) discusses this. Use `predict(fit, arma = "replicate")` or `posterior_predict(fit, arma = "replicate")` to generate fresh replicated series recursively. Their histories are generated rather than taken from the observed responses. The default predictions condition on observed responses and retained imputations as histories, but still generate fresh outcomes at every row.
+The [time-series article](../articles/arma.html) discusses this. Use `predict(fit, arma = "replicate")` or `posterior_predict(fit, arma = "replicate")` to generate fresh replicated series recursively.
 
 
 ## Predictions for new data
 
-In AR/MA models, the retained JAGS draws belong to the missing rows in the original fitted data and supply their histories. For the non-AR/MA example in this article, predictions for genuinely new data are ordinary posterior predictions, evaluated just like predictions at the missing rows:
+Use `predict()` with `newdata` to generate responses at new predictor values. For the example without AR/MA terms, supply the predictor values directly.
 
 ```{r}
 newdata = data.frame(

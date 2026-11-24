@@ -420,7 +420,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     group_cols,
     columns$response,
     if (length(columns$weights) > 0) columns$weights else NULL,
-    ".mean", ".sd", ".lower", ".upper"
+    ".row", ".mean", ".sd", ".lower", ".upper"
   )
 
   # `log_lik()` follows the conventional draws-by-observation matrix default.
@@ -458,7 +458,8 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
     testthat::fail(as.character(result))
   } else {
     testthat::expect_true(is.data.frame(result))
-    testthat::expect_equal(nrow(result), nrow(fit$data))  # Returns same number of rows as data
+    rows = if (colname == "loglik") which(!is.na(fit$data[[columns$response]])) else seq_len(nrow(fit$data))
+    testthat::expect_identical(result$.row, rows)
     if (fit$family$family %in% c("poisson", "negbinomial", "binomial", "bernoulli")) {
       # Extremely diffuse draws from these deliberately tiny test fits can
       # overflow derived summaries (e.g. infinite count means or log-likelihoods).
@@ -473,7 +474,7 @@ test_pp_eval_func = function(fit, func, colname, prior = FALSE) {
       testthat::expect_false(anyNA(result))
     }
     testthat::expect_true(dplyr::setequal(colnames(result), expected_colnames))  # Exactly these columns regardless of order
-    testthat::expect_true(all(result[, columns$par_x] == fit$data[, columns$par_x]))  # Output should have same order as input
+    testthat::expect_identical(result[[columns$par_x]], fit$data[[columns$par_x]][rows])
 
     if (colname == "residuals") {
       fitted_result = fitted(fit, rate = FALSE, prior = prior)  # residuals are on response scale
@@ -559,6 +560,17 @@ test_pp_eval = function(fit, prior = FALSE) {
   test_pp_eval_func(fit, residuals, "residuals", prior = prior)
   test_pp_eval_func(fit, log_lik, "loglik", prior = prior)
   test_pp_eval_weights(fit, prior = prior)
+
+  if (!prior) {
+    missing_rows = which(is.na(fit$data[[columns$response]]))
+    n_draws = ndraws(fit)
+    imputations = imputed(fit)
+    imputation_draws = imputed(fit, summary = FALSE)
+    imputation_matrix = imputed(fit, summary = FALSE, draws_format = "matrix")
+    testthat::expect_identical(imputations$.row, missing_rows)
+    testthat::expect_identical(imputation_draws$.row, rep(missing_rows, each = n_draws))
+    testthat::expect_equal(dim(imputation_matrix), c(n_draws, length(missing_rows)))
+  }
 
   # rate = TRUE only applies to families with trials
   if (!fit$family$response$has_rate) {

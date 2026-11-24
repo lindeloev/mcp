@@ -74,6 +74,7 @@ reference:
     contents:
       - fitted
       - predict
+      - imputed
       - residuals
       - log_lik
       - posterior_epred.mcpfit

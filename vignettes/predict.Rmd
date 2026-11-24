@@ -74,6 +74,8 @@ head(fitted(fit))
 In general, this output contains:
 
  * A column for each predictor column in the data. Here, `time` is the only predictor and you see the values in the same order as in `data` (which is copied to `fit$data`). Models with [group-level effects](../articles/group_effects.html) additionally have the relevant grouping columns, `binomial()` models have the number of trials, etc.
+
+ * **.row** gives the row number in `fit$data`, or in `newdata` if supplied. Use it to join summaries or draws by row, even when predictors repeat.
  
  * **.mean:** The fitted value (posterior mean). When `summary = FALSE`, you instead get one row per draw with the value in `.epred`, matching `tidybayes::add_epred_draws()` conventions.
  
