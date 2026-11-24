@@ -107,7 +107,7 @@
 <img src="logo.png" class="logo" alt=""><h1 id="mcp-regression-with-multiple-change-points">mcp: Regression with Multiple Change Points<a class="anchor" aria-label="anchor" href="#mcp-regression-with-multiple-change-points"></a>
 </h1>
 </div>
-<p><a href="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Amain" class="external-link"><img src="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=main" alt="mcp Github Actions status"></a> <a href="https://app.codecov.io/gh/lindeloev/mcp/branch/main" class="external-link"><img src="https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg" alt="mcp Codecov status"></a> <a href="https://CRAN.R-project.org/package=mcp" class="external-link"><img src="https://www.r-pkg.org/badges/version/mcp" alt="mcp CRAN status"></a> <a href="https://cranlogs.r-pkg.org/badges/mcp" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/mcp" alt="mcp CRAN downloads"></a></p>
+<p><a href="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev" class="external-link"><img src="https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev" alt="mcp Github Actions status"></a> <a href="https://app.codecov.io/gh/lindeloev/mcp/branch/dev" class="external-link"><img src="https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg" alt="mcp Codecov status"></a> <a href="https://CRAN.R-project.org/package=mcp" class="external-link"><img src="https://www.r-pkg.org/badges/version/mcp" alt="mcp CRAN status"></a> <a href="https://cranlogs.r-pkg.org/badges/mcp" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/mcp" alt="mcp CRAN downloads"></a></p>
 <p><code>mcp</code> is regression with multiple change points, inferring full Bayesian uncertainty for all parameters, including the change points themselves. At its simplest, it feels like <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> with one formula per segment. At its most flexible, it aims to be <a href="https://paulbuerkner.com/brms/" class="external-link"><strong><code>brms</code></strong></a> <strong>for change points</strong>:</p>
 <ul>
 <li><p><em>GLMM and distributional regression:</em> Gaussian, binomial, Bernoulli, Poisson, and Negative Binomial families. Group-level (random) effects, AR/MA, and regression on distributional parameters (e.g., <code>sigma</code>, <code>shape</code>).</p></li>
@@ -126,7 +126,7 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"lindeloev/mcp@dev"</span><span class="op">)</span></span></code></pre></div>
-<p><code>mcp</code> uses JAGS through <code>rjags</code>. If installation of <code>rjags</code> reports that JAGS headers or libraries are missing, install <a href="https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/" class="external-link">JAGS 4.x</a> and rerun the <code>mcp</code> installation. JAGS 5 is supported when <code>rjags</code> 5 is released.</p>
+<p><code>mcp</code> uses JAGS through <code>rjags</code>, and their major versions must match. Check your <code>rjags</code> version with <code>packageVersion("rjags")</code> and install the matching <a href="https://sourceforge.net/projects/mcmc-jags/files/JAGS/5.x/" class="external-link">JAGS 5.x</a> or <a href="https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/" class="external-link">JAGS 4.x</a>, then restart R. On Linux, <code>rjags</code> is built from source and fails to install until JAGS is present. Install JAGS first, e.g., JAGS 4 using <code>sudo apt install jags</code> followed by <code>remotes::install_version("rjags", "4-17")</code>, then rerun the <code>mcp</code> installation.</p>
 </div>
 <div class="section level1">
 <h1 id="at-a-glance">At a glance<a class="anchor" aria-label="anchor" href="#at-a-glance"></a>
@@ -145,7 +145,7 @@
 <span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="reference/mcp.html">mcp</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span><span class="op">)</span></span></code></pre></div>
 <p>The change points are the values of the change-point variable (here <code>time</code>) where the model switches from one formula to the next. The first formula is just <code>response ~ predictors</code> and the most common formula for segment 2+ would be <code>~ predictors</code> (more details <a href="https://lindeloev.github.io/mcp/articles/formulas.html">here</a>).</p>
 <p>You can do change point regression for a large number of models in a syntax that aligns with <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code>/<code>brms</code>. E.g.:</p>
-<p><img src="https://lindeloev.github.io/mcp/mcp_showcase_small.png"></p>
+<p><img src="https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png"></p>
 </div>
 <div class="section level1">
 <h1 id="brief-worked-example">Brief worked example<a class="anchor" aria-label="anchor" href="#brief-worked-example"></a>
@@ -171,7 +171,7 @@
 <p>The default plot includes data, fitted lines drawn randomly from the posterior, and change point(s) posterior density for each chain. Here we also add the 95% central interval of the fitted values (<code>interval = "fitted"</code>):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, interval <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Regression with two change points"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-plot-1.png" alt="" width="100%"></p>
+<p><img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot-1.png" alt="" width="100%"></p>
 <p>Use <code><a href="reference/summary.mcpfit.html">summary()</a></code> to summarise the posterior distribution as well as sampling diagnostics:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/summary.mcpfit.html">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
@@ -205,11 +205,11 @@
 <p><code>plot_pars(fit)</code> can be used to inspect the posteriors and convergence of all parameters. See the documentation of <code><a href="reference/plot_pars.html">plot_pars()</a></code> for many other plotting options. Here, we plot just the (population-level) change points. They often have “strange” posterior distributions, highlighting the need for a computational approach:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/plot_pars.html">plot_pars</a></span><span class="op">(</span><span class="va">fit</span>, regex_pars <span class="op">=</span> <span class="st">"cp_"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Change point posteriors"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-plot_pars-1.png" alt="" width="100%"></p>
+<p><img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot_pars-1.png" alt="" width="100%"></p>
 <p>Do a posterior predictive check to see if the model recovers the empirical distribution in the data:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/pp_check.html">pp_check</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Posterior Predictive check for change point regression"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-pp_check-1.png" alt="" width="100%"></p>
+<p><img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-pp_check-1.png" alt="" width="100%"></p>
 <p>You can expect most generics from R, <code>posterior</code>, <code>tidybayes</code> to work on mcpfits. E.g., use <code>fitted(fit)</code> and <code>predict(fit)</code> to get fits and predictions for in-sample and out-of-sample data, use <code>as_draws(fit)</code> to get draws (see <code><a href="reference/as_draws.mcpfit.html">?as_draws.mcpfit</a></code> for all formats), etc.</p>
 </div>
 <div class="section level2">

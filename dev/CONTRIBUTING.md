@@ -96,6 +96,7 @@ devtools::build_manual(path = "dev")
 Checklist before releasing to CRAN: \* Run everything above \* Rerun all
 release-stuff; data_raw/release.R. \* Push to github and pass tests. \*
 win-builder \* Check release_questions(), which covers much of above. \*
-Merge into main and check github actions, docs, etc. \* Check primary
-site and `urlchecker::url_check()` (now main site has been updated) \*
-Submit to CRAN
+Merge into main and check github actions, docs, etc. \* Re-knit README
+on main, so badgets/figures point to main. Push to main. \* Check
+primary site and `urlchecker::url_check()` (now main site has been
+updated) \* Submit to CRAN
