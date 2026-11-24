@@ -58,7 +58,7 @@ as_jags(fit)
 
 Look at the section under the comment `# Formula for mu` which is the (automatically generated) model that was discussed above. Some unnecessary stuff is added to segment 1 just because it makes the code easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value of `x` is, of course, always true).
 
-The section under `# Change points` implements the priors on the change points, explained [below](#change-point-priors).
+The section under `# Priors for change points` is explained [below](#change-point-priors).
 
 
 # Modeling changes in slope

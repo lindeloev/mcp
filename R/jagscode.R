@@ -61,7 +61,7 @@ get_jags_code = function(model_tables, prior_table, family) {
   # Change points come first and in order, from the fixed cp_0 = min(x) to cp_K = max(x).
   K = nrow(model_tables$cps) + 1
   jags_code = paste0("model {
-  # Change points
+  # Priors for change points
   cp_0 = min(", par_x, ")\n")
 
   #######################
