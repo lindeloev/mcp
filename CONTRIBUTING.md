@@ -72,5 +72,6 @@ Checklist before releasing to CRAN:
  * win-builder
  * Check release_questions(), which covers much of above.
  * Merge into main and check github actions, docs, etc.
+ * Re-knit README on main, so badgets/figures point to main. Push to main.
  * Check primary site and `urlchecker::url_check()` (now main site has been updated)
  * Submit to CRAN

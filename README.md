@@ -2,9 +2,9 @@
 # mcp: Regression with Multiple Change Points<img src="man/figures/logo_200px.png" align="right" style="padding: 20px; padding-right: 0px;"/>
 
 [![mcp Github Actions
-status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=main)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Amain)
+status](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml/badge.svg?branch=dev)](https://github.com/lindeloev/mcp/actions/workflows/check-standard.yaml?query=branch%3Adev)
 [![mcp Codecov
-status](https://codecov.io/gh/lindeloev/mcp/branch/main/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/main)
+status](https://codecov.io/gh/lindeloev/mcp/branch/dev/graph/badge.svg)](https://app.codecov.io/gh/lindeloev/mcp/branch/dev)
 [![mcp CRAN
 status](https://www.r-pkg.org/badges/version/mcp)](https://CRAN.R-project.org/package=mcp)
 [![mcp CRAN
@@ -55,11 +55,16 @@ if (!requireNamespace("remotes")) install.packages("remotes")
 remotes::install_github("lindeloev/mcp@dev")
 ```
 
-`mcp` uses JAGS through `rjags`. If installation of `rjags` reports that
-JAGS headers or libraries are missing, install [JAGS
-4.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/) and
-rerun the `mcp` installation. JAGS 5 is supported when `rjags` 5 is
-released.
+`mcp` uses JAGS through `rjags`, and their major versions must match.
+Check your `rjags` version with `packageVersion("rjags")` and install
+the matching [JAGS
+5.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/5.x/) or
+[JAGS 4.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/),
+then restart R. On Linux, `rjags` is built from source and fails to
+install until JAGS is present. Install JAGS first, e.g., JAGS 4 using
+`sudo apt install jags` followed by
+`remotes::install_version("rjags", "4-17")`, then rerun the `mcp`
+installation.
 
 # At a glance
 
@@ -87,7 +92,7 @@ segment 2+ would be `~ predictors` (more details
 You can do change point regression for a large number of models in a
 syntax that aligns with `lm()`/`glm()`/`brms`. E.g.:
 
-![](https://lindeloev.github.io/mcp/mcp_showcase_small.png)
+![](https://lindeloev.github.io/mcp/dev/mcp_showcase_small.png)
 
 # Brief worked example
 
@@ -127,7 +132,7 @@ also add the 95% central interval of the fitted values
 plot(fit, interval = "fitted") + ggtitle("Regression with two change points")
 ```
 
-<img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-plot-1.png" alt="" width="100%" />
+<img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot-1.png" alt="" width="100%" />
 
 Use `summary()` to summarise the posterior distribution as well as
 sampling diagnostics:
@@ -176,7 +181,7 @@ the need for a computational approach:
 plot_pars(fit, regex_pars = "cp_") + ggtitle("Change point posteriors")
 ```
 
-<img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-plot_pars-1.png" alt="" width="100%" />
+<img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-plot_pars-1.png" alt="" width="100%" />
 
 Do a posterior predictive check to see if the model recovers the
 empirical distribution in the data:
@@ -185,7 +190,7 @@ empirical distribution in the data:
 pp_check(fit) + ggtitle("Posterior Predictive check for change point regression")
 ```
 
-<img src="https://lindeloev.github.io/mcp/reference/figures/README-demo-pp_check-1.png" alt="" width="100%" />
+<img src="https://lindeloev.github.io/mcp/dev/reference/figures/README-demo-pp_check-1.png" alt="" width="100%" />
 
 You can expect most generics from R, `posterior`, `tidybayes` to work on
 mcpfits. E.g., use `fitted(fit)` and `predict(fit)` to get fits and

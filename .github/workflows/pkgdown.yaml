@@ -54,9 +54,10 @@ jobs:
         with:
           use-public-rspm: true
 
+      # CRAN rjags >= 5 requires JAGS 5, but apt only has JAGS 4. Pin rjags 4-x.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, any::segmented, local::.
+          extra-packages: any::pkgdown, any::segmented, local::., rjags@4-17
           needs: website
 
       - name: Render README

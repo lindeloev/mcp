@@ -69,7 +69,7 @@ if (!requireNamespace("remotes")) install.packages("remotes")
 remotes::install_github("lindeloev/mcp@dev")
 ```
 
-`mcp` uses JAGS through `rjags`. If installation of `rjags` reports that JAGS headers or libraries are missing, install [JAGS 4.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/) and rerun the `mcp` installation. JAGS 5 is supported when `rjags` 5 is released.
+`mcp` uses JAGS through `rjags`, and their major versions must match. Check your `rjags` version with `packageVersion("rjags")` and install the matching [JAGS 5.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/5.x/) or [JAGS 4.x](https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/), then restart R. On Linux, `rjags` is built from source and fails to install until JAGS is present. Install JAGS first, e.g., JAGS 4 using `sudo apt install jags` followed by `remotes::install_version("rjags", "4-17")`, then rerun the `mcp` installation.
 
 # At a glance
 
