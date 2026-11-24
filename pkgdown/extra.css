@@ -28,3 +28,44 @@ table td code {
     white-space: nowrap;
     padding: 0.5rem 0.75rem;
 }
+
+/* Callout boxes in articles: ::: tip ... ::: and ::: warning ... ::: */
+.tip,
+.warning {
+    position: relative;
+    margin: 1rem 0;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border-left: 4px solid var(--bs-info);
+    border-radius: 0.25rem;
+    background-color: rgba(var(--bs-info-rgb), 0.08);
+}
+
+.tip::before,
+.warning::before {
+    content: "i";
+    position: absolute;
+    left: 0.85rem;
+    top: 0.85rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background-color: var(--bs-info);
+    color: #fff;
+    font: bold 0.8rem/1.25rem Georgia, serif;
+    text-align: center;
+}
+
+.tip > :last-child,
+.warning > :last-child {
+    margin-bottom: 0;
+}
+
+.warning {
+    border-left-color: var(--bs-warning);
+    background-color: rgba(var(--bs-warning-rgb), 0.1);
+}
+
+.warning::before {
+    content: "!";
+    background-color: var(--bs-warning);
+}

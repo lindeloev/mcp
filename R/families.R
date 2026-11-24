@@ -122,9 +122,10 @@ as_mcpfamily = function(x) {
 #'   [prior_summary()] shows the result: try `prior_summary(demo_fit, verbose = TRUE)`, where `rule` is the default `prior`
 #'   with these filled in, and `prior` is the resolved prior.
 #' @param response Named list describing the response:
-#'   * `auxiliary`: Named list of response auxiliaries, used like `y | trials(N)`, e.g.,
+#'   * `auxiliary`: Named list of response auxiliaries. Built-in families use `trials()` and `weights()`;
+#'     custom families can define additional names, used like `y | name(column)`. For example,
 #'     `list(trials = list(required = TRUE, operations = c("epred", "log_lik", "simulate")))`.
-#'     `operations` lists where the column is needed (`"epred"`, `"log_lik"`, `"simulate"`, and `"garma"`).
+#'     `operations` lists where the column is needed; allowed values are `"epred"`, `"log_lik"`, `"simulate"`, and `"garma"`.
 #'     `weights()` is always available. Use it in `jags$likelihood` to support weights.
 #'   * `validate(y, data, data_columns)`: Function that raises an error for invalid responses.
 #'   * `is_discrete`: Logical. Integer-valued responses? Defaults to `FALSE`.

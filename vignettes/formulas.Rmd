@@ -36,6 +36,8 @@ The first segment has the format `response ~ predictor`. Later segments use the 
 - `y | weights(w) ~ ...`: Observation log-likelihood weights (multiplies each observation's log-likelihood contribution by `w > 0`; affects posterior inference and `log_lik()`, but not predictions).
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
 
+Built-in response auxiliaries are `trials()` and `weights()`; [custom families](custom_families.html) can define additional names.
+
 **2. Change-point part (`cp()`, segments 2+):**
 
 - `~ x` (i.e., `cp()` not included): Population-level change point (default). Same as `~ cp(1) + x`.

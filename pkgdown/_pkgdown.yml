@@ -113,6 +113,7 @@ articles:
       - families
       - poisson
       - binomial
+      - custom_families
   - title: Inference
     contents:
       - priors
@@ -150,6 +151,8 @@ navbar:
         href: articles/poisson.html
       - text: Binomial and Bernoulli
         href: articles/binomial.html
+      - text: Custom families
+        href: articles/custom_families.html
     - text: Inference
       menu:
       - text: Using priors

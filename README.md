@@ -272,6 +272,8 @@ in-depth with the functionality of `mcp`:
   [Binomial and
   Bernoulli](https://lindeloev.github.io/mcp/articles/binomial.html):
   worked examples, including rates via `offset()`.
+- [Custom families](https://lindeloev.github.io/mcp/articles/custom_families.html):
+  worked examples for student-t, gumbel, and meta-analysis.
 
 **Inference**
 

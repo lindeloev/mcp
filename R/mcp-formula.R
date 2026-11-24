@@ -54,6 +54,8 @@
 #'   not predictions).
 #' * `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries using `+`.
 #'
+#' Built-in response auxiliaries are `trials()` and `weights()`; custom families can define additional names via [mcpfamily()].
+#'
 #' **2. Change-point part (`cp()`, segments 2+):**
 #' * `~ x` (i.e., `cp()` not included): Population-level change point (default). Same as `~ cp(1) + x`.
 #' * `~ cp((1 | id)) + x`: Group-level change-point deviations around the population-level change point.
