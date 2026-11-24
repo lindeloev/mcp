@@ -116,6 +116,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gfortran liblapack-dev libblas-dev pkg-config
+          cd "$RUNNER_TEMP"
           curl -L --retry 3 -o jags5.tar.gz "https://sourceforge.net/projects/mcmc-jags/files/JAGS/5.x/Source/JAGS-${JAGS5_VERSION}.tar.gz/download"
           tar xzf jags5.tar.gz
           cd JAGS-${JAGS5_VERSION}
@@ -126,9 +127,10 @@ jobs:
           pkg-config --modversion jags
 
       # rjags on CRAN requires JAGS 5, so pin rjags 4-x for JAGS 4.
+      # The CRAN macOS binary is still rjags 4-x with JAGS 4 bundled, so build rjags 5-x from source.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::covr${{ matrix.config.jags == 4 && ', rjags@4-17' || '' }}
+          extra-packages: any::rcmdcheck, any::covr${{ matrix.config.jags == 4 && ', rjags@4-17' || (runner.os == 'macOS' && ', rjags?source' || '') }}
           needs: check, coverage
 
       - name: Show rjags and JAGS versions

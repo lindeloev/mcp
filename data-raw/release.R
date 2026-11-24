@@ -20,4 +20,12 @@ build_release_stuff = function() {
 
   # Build manual (to test it works)
   devtools::build_manual(path = 'dev')
+
+  # Test leftovers are .gitignore'd but not .Rbuildignore'd, so they end up in the tarball
+  leftovers = c(
+    list.files("tests", pattern = "\\.Rout\\.fail$", full.names = TRUE),
+    list.files("tests/testthat/_snaps", pattern = "\\.new\\.", recursive = TRUE, full.names = TRUE)
+  )
+  if (length(leftovers) > 0)
+    warning("Delete these test leftovers before building for CRAN: ", paste(leftovers, collapse = ", "))
 }
