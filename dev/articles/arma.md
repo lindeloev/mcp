@@ -67,22 +67,22 @@ across change points:
   uncertainty, the change point where AR/MA parameters switch varies
   conditionally across MCMC draws.
 
-GARMA currently supports only the default links for
-[`gaussian()`](https://rdrr.io/r/stats/family.html) (identity),
-[`binomial()`](https://rdrr.io/r/stats/family.html) (logit),
+AR/MA terms currently support only the default links for the built-in
+families: [`gaussian()`](https://rdrr.io/r/stats/family.html)
+(identity), [`binomial()`](https://rdrr.io/r/stats/family.html) (logit),
 [`bernoulli()`](https://lindeloev.github.io/mcp/dev/reference/bernoulli.md)
 (logit), [`poisson()`](https://rdrr.io/r/stats/family.html) (log), and
 [`negbinomial()`](https://lindeloev.github.io/mcp/dev/reference/negbinomial.md)
 (log). Non-default links are rejected for now.
 
-**Warning:** The AR and MA coefficients are modeled directly and are not
-jointly constrained to the stationary or invertible regions. With
-higher-order terms such as `ar(2)`, independently bounded coefficients
-can violate the usual root conditions. Coefficients that change across
-predictors or segments, such as `ar(1, 1 + x)` or
-`model = list(y ~ ar(1), ~ ar(1))`, instead define a time-varying
-process to which the usual constant-coefficient conditions do not
-directly apply. The same applies to `ma()`.
+The AR and MA coefficients are modeled directly and are not jointly
+constrained to the stationary or invertible regions. With higher-order
+terms such as `ar(2)`, independently bounded coefficients can violate
+the usual root conditions. Coefficients that change across predictors or
+segments, such as `ar(1, 1 + x)` or `model = list(y ~ ar(1), ~ ar(1))`,
+instead define a time-varying process to which the usual
+constant-coefficient conditions do not directly apply. The same applies
+to `ma()`.
 
 #### Observation threshold
 
@@ -189,7 +189,7 @@ close to the estimates of `arima(data, order = c(N, 0, 0))` (see below),
 so the non-perfect fits are mostly due to randomness in the simulation -
 not in the fit.
 
-For Gaussian GARMA models, `sigma` describes the *innovations*, i.e.,
+For Gaussian AR/MA models, `sigma` describes the *innovations*, i.e.,
 the part of the residuals not explained by AR and MA coefficients.
 `sd(fit$data$price)` is therefore generally higher. In this case, the SD
 of raw data in the first segment (`time < 90`) is 9.9. As always, it is
@@ -209,7 +209,7 @@ debugging](https://lindeloev.github.io/mcp/dev/articles/tips.md), you
 could combine a more informative prior with more draws
 (`mcp(..., warmup = 10000, iter = 10000)`), if this is a problem.
 
-You can do hypothesis testing with GARMA models using
+You can do hypothesis testing with AR/MA models using
 [`hypothesis()`](https://lindeloev.github.io/mcp/dev/reference/hypothesis.md).
 [Read more
 here](https://lindeloev.github.io/mcp/dev/articles/comparison.md) or
@@ -265,9 +265,9 @@ controls the innovation standard deviation:
 ``` r
 
 model = list(
-  y ~ 1 + ar(1) + ma(1) + sigma(1),    # First order ARMA
+  y ~ 1 + ar(1) + ma(1) + sigma(1),    # First order AR/MA terms
   ~ 0 + x + ar(1) + ma(0) + sigma(1),  # New AR coefficient; ma(0) states that MA is not included
-  ~ 1 + ar(0)                          # No ARMA in this segment. ~ 1 is identical but ar(0) is explicit.
+  ~ 1 + ar(0)                          # No AR/MA terms in this segment. ~ 1 is identical but ar(0) is explicit.
 )
 ```
 
@@ -574,7 +574,7 @@ hypothesis(fit, "ar1_1 - 0.3 > ar1_2")
     ## # A tibble: 1 × 7
     ##   hypothesis               mean    sd lower upper  prob    BF
     ##   <chr>                   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 ar1_1 - 0.3 - ar1_2 > 0 0.420 0.136 0.152 0.682 0.999 1490.
+    ## 1 ar1_1 - 0.3 - ar1_2 > 0 0.420 0.136 0.152 0.682 0.999 1485.
 
 ## Priors on AR and MA coefficients
 
@@ -737,11 +737,11 @@ R](https://lindeloev.github.io/mcp/dev/articles/implementation.html#the-model-in
 
 ``` r
 
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_2 = max(x)
@@ -792,3 +792,5 @@ fit$jags_code
     ##     resid_abs_[i_] = garma_link_y_[i_] - link_mu_[i_]
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags

@@ -88,6 +88,14 @@ later.
 
 fit_default = mcp(model, data = df, family = binomial(), sample = "both", iter = 6000)
 fit_info = mcp(model, data = df, prior = prior, family = binomial(), sample = "both", iter = 6000)
+```
+
+    ## Warning: Some parameters may not have converged well:
+    ##   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: cp_1
+    ## Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup`, set inits manually, or simplifying the model.
+
+``` r
+
 fit_simple = mcp(model_simple, data = df, family = binomial(), sample = "both", iter = 6000)
 ```
 
@@ -127,7 +135,7 @@ equality
 ## # A tibble: 1 × 7
 ##   hypothesis    mean    sd lower upper  prob    BF
 ##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-## 1 cp_1 - 4 = 0 0.292 0.748 -1.33  1.54    NA  3.36
+## 1 cp_1 - 4 = 0 0.316 0.750 -1.36  1.56    NA  3.48
 ```
 
 Notice that `mcp` issues a warning when computing Savage-Dickey Bayes
@@ -178,7 +186,7 @@ posterior_model_prob = equality$BF * prior_null_prob /
 posterior_model_prob
 ```
 
-    ## [1] 0.5282336
+    ## [1] 0.5372837
 
 Because point Bayes factors depend directly on the prior density, they
 require bespoke, substantively justified priors. For example, testing
@@ -193,7 +201,7 @@ hypothesis(fit_info, "cp_1 = 4")
     ## # A tibble: 1 × 7
     ##   hypothesis    mean    sd lower upper  prob    BF
     ##   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 - 4 = 0 0.181 0.627 -1.11  1.29    NA  1.30
+    ## 1 cp_1 - 4 = 0 0.216 0.628 -1.13  1.33    NA  1.30
 
 The [default prior on change
 points](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#change-points)
@@ -226,12 +234,12 @@ hypothesis(fit_info, c(
 ```
 
     ## # A tibble: 4 × 7
-    ##   hypothesis                                                      mean     sd  lower upper  prob    BF
-    ##   <chr>                                                          <dbl>  <dbl>  <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 - 3 > 0                                                    1.18  0.627 -0.107  2.29 0.962 4.69 
-    ## 2 cp_1 > 3.5 & cp_1 < 4.5                                        NA    NA     NA     NA    0.533 1.81 
-    ## 3 cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5   NA    NA     NA     NA    0.298 3.67 
-    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5 NA    NA     NA     NA    0.036 0.615
+    ##   hypothesis                                                      mean     sd  lower upper   prob    BF
+    ##   <chr>                                                          <dbl>  <dbl>  <dbl> <dbl>  <dbl> <dbl>
+    ## 1 cp_1 - 3 > 0                                                    1.22  0.628 -0.129  2.33 0.963  4.83 
+    ## 2 cp_1 > 3.5 & cp_1 < 4.5                                        NA    NA     NA     NA    0.518  1.78 
+    ## 3 cp_1 > 3.5 & cp_1 < 4.5 & items_2 < -0.4 & Intercept_1 > 2.5   NA    NA     NA     NA    0.273  3.27 
+    ## 4 (cp_1 < 3.5 | cp_1 > 4.5) & items_2 > -0.4 & Intercept_1 < 2.5 NA    NA     NA     NA    0.0411 0.672
 
 Comparing the Bayes factors shows which hypothesis received the larger
 update from prior to posterior.
@@ -261,7 +269,7 @@ hypothesis(fit_info, "cp_1 > 3.5 & cp_1 < 4.5")
     ## # A tibble: 1 × 7
     ##   hypothesis               mean    sd lower upper  prob    BF
     ##   <chr>                   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 > 3.5 & cp_1 < 4.5    NA    NA    NA    NA 0.533  1.81
+    ## 1 cp_1 > 3.5 & cp_1 < 4.5    NA    NA    NA    NA 0.518  1.78
 
 ``` r
 
@@ -279,7 +287,7 @@ print(c(post_prob = post_prob, BF = BF))
 ```
 
     ## post_prob        BF 
-    ## 0.5325556 1.8147922
+    ##  0.518500  1.777822
 
 ## Cross Validation
 
@@ -356,11 +364,11 @@ loo_info
     ## 
     ##          Estimate   SE
     ## elpd_loo   -365.7 16.5
-    ## p_loo         2.8  0.3
+    ## p_loo         2.9  0.3
     ## looic       731.4 33.1
     ## ------
     ## MCSE of elpd_loo is 0.1.
-    ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 0.9]).
+    ## MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 1.0]).
     ## 
     ## All Pareto k estimates are good (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
@@ -389,8 +397,8 @@ loo_simple = loo(fit_simple)
 loo::loo_compare(loo_default, loo_info, loo_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
-##  model1      -0.3     0.2    0.90 |elpd_diff| < 4          
-##  model3      -4.1     2.8    0.93
+##  model1      -0.3     0.2    0.92 |elpd_diff| < 4          
+##  model3      -4.0     2.8    0.93
 ## 
 ## Diagnostic flags present.
 ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
@@ -436,8 +444,8 @@ waic_simple = waic(fit_simple)
 loo::loo_compare(waic_default, waic_info, waic_simple)
 ##   model elpd_diff se_diff p_worse       diag_diff diag_elpd
 ##  model2       0.0     0.0      NA                          
-##  model1      -0.3     0.2    0.90 |elpd_diff| < 4          
-##  model3      -4.1     2.8    0.93
+##  model1      -0.3     0.2    0.92 |elpd_diff| < 4          
+##  model3      -4.0     2.8    0.93
 ## 
 ## Diagnostic flags present.
 ## See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
@@ -463,8 +471,8 @@ loo::loo_model_weights(list(
     ## Method: stacking
     ## ------
     ##         weight
-    ## default 0.111 
-    ## info    0.889 
+    ## default 0.000 
+    ## info    1.000 
     ## simple  0.000
 
 This means that once `info` (`fit_info`) has done its “predicting”, the

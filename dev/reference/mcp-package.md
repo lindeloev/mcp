@@ -27,8 +27,9 @@ with one formula per segment. At its most flexible, it aims to be
   follow the conventions of [`brms`](https://paulbuerkner.com/brms/),
   [`rstanarm`](https://mc-stan.org/rstanarm/), and
   [`posterior`](https://mc-stan.org/posterior/articles/posterior.html),
-  adapted to change point regression. Inspect the sampled JAGS model in
-  `fit$jags_code`.
+  adapted to change point regression. Inspect the sampled JAGS model
+  using
+  [`as_jags()`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md).
 
 You will find many aliases for change point regression in the
 literature, including piecewise linear, discontinuity, segmented, and
@@ -92,11 +93,13 @@ for priors.
 
 - `mcp_reparam`: Logical. `TRUE` (default) lets
   [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) sample
-  some default priors on scales that mix faster. This changes only
-  `fit$jags_code` and sampling efficiency, not the model, the priors, or
-  the posterior. `options(mcp_reparam = FALSE)` writes the plain model,
-  which is mostly useful for seeing how `mcp` works. Ignored when
-  `jags_code` is supplied. Read more in [From formulas to sampler
+  some default priors on scales that mix faster. This changes only the
+  JAGS code
+  ([`as_jags()`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md))
+  and sampling efficiency, not the model, the priors, or the posterior.
+  `options(mcp_reparam = FALSE)` writes the plain model, which is mostly
+  useful for seeing how `mcp` works. Ignored when `jags_code` is
+  supplied. Read more in [From formulas to sampler
   code](https://lindeloev.github.io/mcp/articles/implementation.html#reparameterizations).
 
 ## References

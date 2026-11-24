@@ -1,4 +1,4 @@
-# Summarise mcpfit objects
+# Summarise `mcpfit` Objects
 
 Summarise parameter estimates and model diagnostics.
 
@@ -207,16 +207,16 @@ summary(demo_fit)
 #> 
 #> Change point parameters:
 #>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
-#>  cp_1        31.6   1.7   28.2   34.9   1.00     1012      945 30.0      OK
-#>  cp_2        71.10  0.99  69.48  72.77  1.01      869      676 70.00     OK
+#>  cp_1        31.6   1.7   28.4   35.1   1.00      785      659 30.0      OK
+#>  cp_2        71.1   1.0   69.5   72.8   1.00      891      948 70.0      OK
 #> 
 #> Population-level parameters:
 #>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
-#>  Intercept_1  9.97  0.66   8.68  11.24  1.00     1032      747 10.00     OK
-#>  time_2       0.544 0.048  0.454  0.643 1.00     1087      970  0.500    OK
-#>  Intercept_3 14.0   1.4   11.1   16.6   1.00      993      823 15.0      OK
-#>  time_3      -0.206 0.084 -0.373 -0.048 1.00      900      740 -0.300    OK
-#>  sigma_1      3.86  0.29   3.34   4.54  1.00      931      921  3.50     OK
+#>  Intercept_1  9.92  0.66   8.60  11.23  1.00     1049      854 10.00     OK
+#>  time_2       0.543 0.047  0.452  0.639 1.00      860      985  0.500    OK
+#>  Intercept_3 14.0   1.3   11.4   16.7   1.00      941      832 15.0      OK
+#>  time_3      -0.207 0.079 -0.361 -0.049 1.00     1013      940 -0.300    OK
+#>  sigma_1      3.88  0.28   3.39   4.51  1.00      959      889  3.50     OK
 summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #> Family: gaussian
 #> Links: mu = identity; sigma = identity
@@ -228,21 +228,21 @@ summary(demo_fit, width = 0.8, digits = 4)  # Set interval width
 #> 
 #> Change point parameters:
 #>    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-#>  cp_1        31.637   1.691   29.440   33.777   1.00     1012      945 30.000      OK
-#>  cp_2        71.0983  0.9910  69.7097  72.4884  1.01      869      676 70.0000     OK
+#>  cp_1        31.593   1.707   29.467   33.820   1.00      785      659 30.000      OK
+#>  cp_2        71.068   1.003   69.701   72.497   1.00      891      948 70.000      OK
 #> 
 #> Population-level parameters:
 #>    parameter     mean      sd    lower    upper rhat ess_bulk ess_tail      sim match
-#>  Intercept_1  9.9675  0.6646   9.1113  10.8454  1.00     1032      747 10.0000     OK
-#>  time_2       0.54358 0.04754  0.48257  0.60258 1.00     1087      970  0.50000    OK
-#>  Intercept_3 13.966   1.386   12.242   15.727   1.00      993      823 15.000      OK
-#>  time_3      -0.20623 0.08367 -0.30784 -0.10085 1.00      900      740 -0.30000    OK
-#>  sigma_1      3.8615  0.2931   3.5054   4.2163  1.00      931      921  3.5000       
+#>  Intercept_1  9.9223  0.6577   9.0801  10.7626  1.00     1049      854 10.0000     OK
+#>  time_2       0.54311 0.04685  0.48206  0.60403 1.00      860      985  0.50000    OK
+#>  Intercept_3 13.980   1.307   12.378   15.678   1.00      941      832 15.000      OK
+#>  time_3      -0.20663 0.07868 -0.30613 -0.10981 1.00     1013      940 -0.30000    OK
+#>  sigma_1      3.8771  0.2772   3.5385   4.2338  1.00      959      889  3.5000       
 
 # Get the results as a tibble
 results = summary(demo_fit)
 results$mean
-#> [1] 31.6369306 71.0983320  9.9674657  0.5435759 13.9660544 -0.2062269  3.8615146
+#> [1] 31.5929222 71.0684940  9.9222528  0.5431116 13.9802961 -0.2066267  3.8770860
 
 # Group-level deviations (random effects)
 # ranef(my_fit)

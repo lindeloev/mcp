@@ -1,4 +1,4 @@
-# Posterior prediction draws for `mcpfit` objects
+# Posterior Prediction Draws for `mcpfit` Objects
 
 Methods for the `{rstantools}` posterior-prediction generics. They
 return a draws-by-observation matrix and enable `{tidybayes}` workflows
@@ -182,7 +182,7 @@ A numeric `N_draws` by `nrow(newdata)` matrix.
 
 ## Details
 
-For GARMA models, `posterior_predict()` conditions on the observed
+For AR/MA models, `posterior_predict()` conditions on the observed
 response history, just like
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
 Use `arma = "replicate"` in either method to generate fresh response

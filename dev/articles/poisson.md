@@ -72,16 +72,16 @@ result
     ## 
     ## Change point parameters:
     ##    parameter     mean    sd    lower    upper rhat ess_bulk ess_tail
-    ##  cp_1        1890.5   2.5   1886.1   1896.5   1.00     1944      990
+    ##  cp_1        1890.4   2.5   1886.2   1896.5   1.00     1819     1016
     ## 
     ## Population-level parameters:
     ##    parameter     mean    sd    lower    upper rhat ess_bulk ess_tail
-    ##  Intercept_1    1.131 0.094    0.944    1.313 1.00     4302     4741
-    ##  Intercept_2   -0.09  0.13    -0.35     0.15  1.00     4472     5006
+    ##  Intercept_1    1.131 0.094    0.938    1.314 1.00     3906     4964
+    ##  Intercept_2   -0.09  0.13    -0.34     0.16  1.00     4471     4711
 
 We can see that the model ran well with good convergence and large
 effective sample sizes. At a first glance, the change point is estimated
-to lie between the years 1886 and 1897 (95% interval).
+to lie between the years 1886 and 1896 (95% interval).
 
 Let us take a more direct look, using the default `mcp` plot:
 
@@ -118,7 +118,7 @@ priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.html#summary
 `link = 'log'`, meaning that we have to exponentiate the estimates to
 get the “raw” Poisson parameter \lambda. \lambda has the nice property
 of being the mean number of events. So the rate is around 3.1 disasters
-per year in segment 1 and 0.91 in segment 2. Exponentiating the
+per year in segment 1 and 0.92 in segment 2. Exponentiating the
 posterior mean of the log-rate gives approximately the posterior median
 of \lambda, not its mean. For the posterior mean, exponentiate the draws
 before averaging, e.g., `mean(exp(as_draws_df(fit)$Intercept_1))`, or
@@ -223,14 +223,13 @@ default intercept prior from centering on observed log-counts to
 observed log-rates (\log(y) - \text{offset}), keeping the minimum scale
 at 2.5.
 
-> **Note on `par_x` vs. cumulative exposure:**  
-> The offset is evaluated per row as local exposure for that
-> observation. If `par_x` represents continuous cumulative time from an
-> origin (e.g., \[0, t_i\]), using `offset(log(par_x))` does **not**
-> integrate piecewise rates across prior segments; instead, the current
-> segment’s rate is applied to the total duration. If your data consists
-> of discrete time intervals (bins) of duration \Delta t_i, using
-> `offset(log(delta_t))` is valid.
+**`par_x` vs. cumulative exposure:** The offset is evaluated per row as
+local exposure for that observation. If `par_x` represents continuous
+cumulative time from an origin (e.g., \[0, t_i\]), using
+`offset(log(par_x))` does **not** integrate piecewise rates across prior
+segments; instead, the current segment’s rate is applied to the total
+duration. If your data consists of discrete time intervals (bins) of
+duration \Delta t_i, using `offset(log(delta_t))` is valid.
 
 ## Model comparison
 
@@ -305,9 +304,9 @@ loo::loo_model_weights(loo_list, method="pseudobma")
     ## Method: pseudo-BMA+ with Bayesian bootstrap
     ## ------
     ##        weight
-    ## model1 0.794 
+    ## model1 0.796 
     ## model2 0.000 
-    ## model3 0.206
+    ## model3 0.204
 
 Again, the change point model is preferred and the weights show the same
 ranking as implied by `loo_compare`, but the decay model retains a
@@ -319,11 +318,11 @@ Here is the JAGS code for the full Poisson change-point model above.
 
 ``` r
 
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(date)
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of date
     ##   cp_2 = max(date)
@@ -348,3 +347,5 @@ fit$jags_code
     ##     n[i_] ~ dpois(mu_[i_])
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags

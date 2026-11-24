@@ -276,14 +276,14 @@ mcp::ranef(fit)
 ```
 
     ## # A tibble: 6 × 10
-    ##   parameter             mean    sd lower  upper  rhat ess_bulk ess_tail   sim match
-    ##   <chr>                <dbl> <dbl> <dbl>  <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
-    ## 1 cp_1_id[Batgirl]   -18.1    10.3 -44.5  0.388  1.00     3480     2398 -9.68 OK   
-    ## 2 cp_1_id[Batman]    -14.9    10.3 -41.0  3.72   1.00     3458     2403 -7.14 OK   
-    ## 3 cp_1_id[Clark]      13.2    10.3 -13.3 31.9    1.00     3402     2343 20.8  OK   
-    ## 4 cp_1_id[Jane]        1.04   10.3 -25.3 19.7    1.00     3477     2429  9.98 OK   
-    ## 5 cp_1_id[Louis]       9.47   10.3 -16.9 28.1    1.00     3420     2425 16.4  OK   
-    ## 6 cp_1_id[Spiderman]   0.834  10.3 -25.9 19.5    1.00     3524     2475  9.74 OK
+    ##   parameter             mean    sd lower upper  rhat ess_bulk ess_tail   sim match
+    ##   <chr>                <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
+    ## 1 cp_1_id[Batgirl]   -18.1    10.7 -45.3  2.03  1.00     3668     2458 -9.68 OK   
+    ## 2 cp_1_id[Batman]    -14.8    10.7 -42.0  5.35  1.00     3644     2499 -7.14 OK   
+    ## 3 cp_1_id[Clark]      13.2    10.7 -13.8 33.4   1.00     3635     2392 20.8  OK   
+    ## 4 cp_1_id[Jane]        1.09   10.8 -26.0 21.4   1.00     3635     2530  9.98 OK   
+    ## 5 cp_1_id[Louis]       9.55   10.7 -17.5 29.8   1.00     3635     2543 16.4  OK   
+    ## 6 cp_1_id[Spiderman]   0.896  10.7 -26.6 21.1   1.00     3617     2513  9.74 OK
 
 Inspecting the `sim` and `match` columns, we see that the simulated
 deviations lie within the intervals. However, the intervals are wide
@@ -306,12 +306,12 @@ coef(fit)
     ## # A tibble: 6 × 12
     ##   parameter group_col level      mean    sd lower upper  rhat ess_bulk ess_tail   sim match
     ##   <chr>     <chr>     <chr>     <dbl> <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl> <dbl> <chr>
-    ## 1 cp_1      id        Batgirl    40.5  1.40  37.7  43.2  1.00      777     1840  40.3 OK   
-    ## 2 cp_1      id        Batman     43.7  1.41  40.9  46.4  1.00     1013     2164  42.9 OK   
-    ## 3 cp_1      id        Clark      71.8  1.27  69.4  74.4  1.00     1512     2841  70.8 OK   
-    ## 4 cp_1      id        Jane       59.6  1.31  57.1  62.2  1.00     1603     2376  60.0 OK   
-    ## 5 cp_1      id        Louis      68.1  1.28  65.5  70.6  1.00     1672     3288  66.4 OK   
-    ## 6 cp_1      id        Spiderman  59.4  1.24  57.1  61.9  1.00     1079     2241  59.7 OK
+    ## 1 cp_1      id        Batgirl    40.4  1.40  37.6  43.1  1.01      809     1704  40.3 OK   
+    ## 2 cp_1      id        Batman     43.7  1.39  40.9  46.3  1.00     1063     2300  42.9 OK   
+    ## 3 cp_1      id        Clark      71.7  1.25  69.3  74.2  1.00     1474     3188  70.8 OK   
+    ## 4 cp_1      id        Jane       59.6  1.31  57.0  62.0  1.00     1574     3720  60.0 OK   
+    ## 5 cp_1      id        Louis      68.0  1.28  65.5  70.6  1.00     1535     3217  66.4 OK   
+    ## 6 cp_1      id        Spiderman  59.4  1.22  57.1  61.8  1.00     1284     3016  59.7 OK
 
 Because the deviations are relative to `cp_1`, they share its estimation
 error. If `cp_1` misses its simulated value, the deviations tend to miss
@@ -404,11 +404,11 @@ Here is the JAGS code for the model used in this article:
 
 ``` r
 
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_1_id_sd ~ dnorm(0, 1/(24.716320808511227)^2) T(0, )  # Group-level change-point SD before truncation
@@ -444,3 +444,5 @@ fit$jags_code
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags

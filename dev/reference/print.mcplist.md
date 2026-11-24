@@ -1,4 +1,4 @@
-# Print mcplist
+# Print an mcplist
 
 Shows a list in a more condensed format using `str(list)`.
 

@@ -2,6 +2,51 @@
 
 ## mcp (development version)
 
+### Major new features
+
+- **Custom families:** Define your own response distribution using
+  [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md),
+  e.g., a Student-t family for robust change point regression. See
+  [Custom
+  families](https://lindeloev.github.io/mcp/articles/custom_families.html).
+  The built-in families are now defined using
+  [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
+  too. `fit$family` is now an
+  [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md).
+
+- **Run the model directly in JAGS:** `as_jags(fit)` (along with above
+  [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md))
+  is now the route to run custom models, so `mcp(..., jags_code)` and
+  `fit$jags_code` are deprecated. You can then run your modified/custom
+  model mcp model using `rjags` with `as_jags(fit)` contents as
+  arguments. See
+  [`?as_jags`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md)
+  for examples and more details.
+
+### Major breaking changes
+
+None
+
+### Minor new features
+
+- [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) now
+  checks that its JAGS likelihood and the R-side
+  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  agree in a few posterior draws, and warns if they do not. This also
+  serves as a safety check for custom families.
+
+- **Better initial values for change points:** Instead of spacing inits
+  evenly, `mcp` now does a quick R-side scan and sets inits where the
+  model of `mu` fits the data best while respecting the change point
+  priors. This improves sampling when change points are “clustered”. You
+  can still manually set `inits` when needed.
+
+- [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
+  gains a `par_type` column (`"Intercept"`, `"dummy"`, or `"slope"`),
+  which selects the default prior of each parameter.
+
+### Minor breaking changes
+
 ## mcp 0.4.0
 
 CRAN release: 2026-10-26

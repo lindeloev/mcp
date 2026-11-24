@@ -19,6 +19,8 @@
   analysis](https://lindeloev.github.io/mcp/dev/articles/poisson.md):
 - [Binomial change point
   analysis](https://lindeloev.github.io/mcp/dev/articles/binomial.md):
+- [Custom
+  families](https://lindeloev.github.io/mcp/dev/articles/custom_families.md):
 
 ### Inference
 

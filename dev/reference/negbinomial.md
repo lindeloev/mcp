@@ -1,4 +1,4 @@
-# Negative Binomial for mcp
+# Negative Binomial Family for mcp
 
 Parameterized as `mu` (the conditional mean) and `shape` (the same
 quantity as `size` in

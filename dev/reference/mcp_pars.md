@@ -1,4 +1,4 @@
-# Model parameters
+# Model Parameters
 
 **\[experimental\]**
 
@@ -36,8 +36,14 @@ parameter name; `dpar` is its distributional parameter (e.g., `"mu"`,
 as accepted by the `dpar` argument of
 [`fitted.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 [`fixef.mcpfit()`](https://lindeloev.github.io/mcp/dev/reference/summary.mcpfit.md),
-etc., and `NA` for change points; `group_col` and `population_parameter`
-describe group-level effects.
+etc., and `NA` for change points; `par_type` (`"Intercept"`, `"dummy"`,
+or `"slope"`) selects its default prior together with `dpar`, e.g.,
+factor levels in `y ~ 0 + group` are intercepts (see the `default_prior`
+argument of
+[`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)).
+Group-level parameters have the `par_type` of their population-level
+parameter; `group_col` and `population_parameter` describe group-level
+effects.
 
 ## Details
 
@@ -50,16 +56,16 @@ setting priors or inits.
 ``` r
 # Show every parameter in the model
 print(mcp_pars(demo_fit), width = Inf)
-#> # A tibble: 7 × 8
-#>   parameter   part      scope      role         segment dpar  group_col population_parameter
-#>   <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
-#> 1 cp_1        cp        population change_point       2 NA    NA        NA                  
-#> 2 cp_2        cp        population change_point       3 NA    NA        NA                  
-#> 3 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
-#> 4 time_2      predictor population coefficient        2 mu    NA        NA                  
-#> 5 Intercept_3 predictor population coefficient        3 mu    NA        NA                  
-#> 6 time_3      predictor population coefficient        3 mu    NA        NA                  
-#> 7 sigma_1     predictor population coefficient        1 sigma NA        NA                  
+#> # A tibble: 7 × 9
+#>   parameter   part      scope      role         segment dpar  par_type  group_col population_parameter
+#>   <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>     <chr>               
+#> 1 cp_1        cp        population change_point       2 NA    NA        NA        NA                  
+#> 2 cp_2        cp        population change_point       3 NA    NA        NA        NA                  
+#> 3 Intercept_1 predictor population coefficient        1 mu    Intercept NA        NA                  
+#> 4 time_2      predictor population coefficient        2 mu    slope     NA        NA                  
+#> 5 Intercept_3 predictor population coefficient        3 mu    Intercept NA        NA                  
+#> 6 time_3      predictor population coefficient        3 mu    slope     NA        NA                  
+#> 7 sigma_1     predictor population coefficient        1 sigma Intercept NA        NA                  
 
 # Select population-level coefficients
 mcp_pars(demo_fit, scope = "population", role = "coefficient")$parameter

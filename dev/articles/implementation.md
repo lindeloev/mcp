@@ -4,8 +4,8 @@ The `mcp` model itself is described in [Understanding mcp
 formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.html#modeling-slope-change-points).
 The actual implementation is equivalent, but quite different in form.
 This article shows how `mcp` turns the segment formulas into code for
-the sampler, currently JAGS. You can see it as JAGS code in
-`fit$jags_code` and evaluate it in R using `fit$simulate()`
+the sampler, currently JAGS. You can see it as JAGS code using
+`as_jags(fit)` and evaluate it in R using `fit$simulate()`
 ([below](#the-model-in-r)).
 
 ## Modeling changes in intercept
@@ -48,11 +48,11 @@ indicator formulation of change points:
 library(mcp)
 model = list(y ~ 1, ~ 1)
 fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE, par_x = "x")
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_2 = max(x)
@@ -83,6 +83,8 @@ fit$jags_code
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags
 
 Look at the section under the comment `# Formula for mu` which is the
 (automatically generated) model that was discussed above. Some
@@ -90,8 +92,8 @@ unnecessary stuff is added to segment 1 just because it makes the code
 easier to generate. (`x[i_] >= cp_0` when `cp_0` is the smallest value
 of `x` is, of course, always true).
 
-The section under `# Change points` implements the priors on the change
-points, explained [below](#change-point-priors).
+The section under `# Priors for change points` is explained
+[below](#change-point-priors).
 
 ## Modeling changes in slope
 
@@ -174,11 +176,11 @@ model = list(y ~ 0 + x, ~ 0 + x)
 old = options(mcp_reparam = FALSE)  # Write the plain model
 fit = mcp(model, data = data.frame(y = 1:10, x = 1:10), sample = FALSE)
 options(old)
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dunif(cp_0, cp_2)  # Uniform within the observed range of x
     ##   cp_2 = max(x)
@@ -209,6 +211,8 @@ fit$jags_code
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags
 
 We used `options(mcp_reparam = FALSE)` to see the plain model. By
 default, `mcp` samples some parameters on other scales, which we will
@@ -260,11 +264,10 @@ goes in the same line as `step(cp_2 - cp_1 - 20)`, while the node itself
 gets the observed range of x: `cp_2 ~ dunif(cp_0, cp_3)`.
 
 `cp_order_ = 1` is also passed as data for prior sampling
-(`sample = "prior"`), so prior draws are ordered too. If you write your
-own `jags_code` based on `fit$jags_code`, `mcp` passes `cp_order_ = 1`
-whenever the code contains `cp_order_ ~`. Without it, JAGS would sample
-`cp_order_` like any other unknown, and the ordering would silently
-disappear.
+(`sample = "prior"`), so prior draws are ordered too, and it is included
+in `as_jags(fit)$data` for sampling the model directly in JAGS. Without
+it, JAGS would sample `cp_order_` like any other unknown, and the
+ordering would silently disappear.
 
 ### Dirichlet weight: `cp_weight_`
 
@@ -303,7 +306,7 @@ ordered.
 
 ## Reparameterizations
 
-By default (`options(mcp_reparam = TRUE)`), `fit$jags_code` samples some
+By default (`options(mcp_reparam = TRUE)`), the JAGS code samples some
 coefficients via auxiliary nodes, ending in `_mid_`, `_end_`, or
 `_rise_`. This is a reparameterization, not a new model: the priors, and
 hence the posteriors, are exactly those of the plain model. Only the
@@ -474,7 +477,7 @@ differ between groups.
 [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
 and
 [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-evaluate the same model in R. Internally, the formula in `fit$jags_code`
+evaluate the same model in R. Internally, the formula in the JAGS code
 and the R evaluation are written from the same table of terms, so the
 two always agree. To evaluate the model for chosen parameter values, use
 `fit$simulate()`. For the [joined slopes
@@ -491,4 +494,4 @@ all.equal(as.numeric(y_mcp), y_local)
 
 The priors and reparameterizations are not part of the R evaluation. The
 likelihood is in `fit$family$r`, e.g., `fit$family$r$log_lik` and
-`fit$family$r$rng`.
+`fit$family$r$simulate`.

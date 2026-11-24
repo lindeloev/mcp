@@ -42,15 +42,15 @@ Now we can simulate. First, let us see the model parameters.
 mcp_pars(empty)
 ```
 
-    ## # A tibble: 6 × 8
-    ##   parameter   part      scope      role         segment dpar  group_col population_parameter
-    ##   <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
-    ## 1 cp_1        cp        population change_point       2 NA    NA        NA                  
-    ## 2 cp_2        cp        population change_point       3 NA    NA        NA                  
-    ## 3 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
-    ## 4 year_2      predictor population coefficient        2 mu    NA        NA                  
-    ## 5 Intercept_3 predictor population coefficient        3 mu    NA        NA                  
-    ## 6 year_3      predictor population coefficient        3 mu    NA        NA
+    ## # A tibble: 6 × 9
+    ##   parameter   part      scope      role         segment dpar  par_type  group_col population_parameter
+    ##   <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>     <chr>               
+    ## 1 cp_1        cp        population change_point       2 NA    NA        NA        NA                  
+    ## 2 cp_2        cp        population change_point       3 NA    NA        NA        NA                  
+    ## 3 Intercept_1 predictor population coefficient        1 mu    Intercept NA        NA                  
+    ## 4 year_2      predictor population coefficient        2 mu    slope     NA        NA                  
+    ## 5 Intercept_3 predictor population coefficient        3 mu    Intercept NA        NA                  
+    ## 6 year_3      predictor population coefficient        3 mu    slope     NA        NA
 
 - It takes two intercepts (`Intercept_*`), for segments 1 and 3.
 - It takes two slopes (`year_*`), for segment 2 and 3.
@@ -125,15 +125,15 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##    parameter      mean     sd     lower     upper rhat ess_bulk ess_tail       sim match
-    ##  cp_1        1921.5    2.8    1915.6    1926.8    1.00     3888     6842 1925.0       OK
-    ##  cp_2        1974.27   0.81   1972.19   1974.98   1.00     3462     1549 1975.00      OK
+    ##  cp_1        1921.6    2.9    1915.7    1927.0    1.00     3897     6984 1925.0       OK
+    ##  cp_2        1974.2    1.2    1971.9    1975.0    1.00     2199      864 1975.0       OK
     ## 
     ## Population-level parameters:
     ##    parameter      mean     sd     lower     upper rhat ess_bulk ess_tail       sim match
-    ##  Intercept_1    2.18   0.19      1.84      2.58   1.00     4564     7680    2.00      OK
-    ##  year_2        -0.0928 0.0067   -0.1065   -0.0803 1.00     7275    11366   -0.1000    OK
-    ##  Intercept_3   -0.76   0.23     -1.26     -0.36   1.00     1665     1643   -0.50      OK
-    ##  year_3         0.110  0.010     0.091     0.131  1.01     1125     2155    0.100     OK
+    ##  Intercept_1    2.18   0.19      1.83      2.57   1.00     4498     7237    2.00      OK
+    ##  year_2        -0.0927 0.0068   -0.1068   -0.0801 1.00     7164    11861   -0.1000    OK
+    ##  Intercept_3   -0.78   0.26     -1.31     -0.38   1.00     1269      907   -0.50      OK
+    ##  year_3         0.111  0.010     0.092     0.132  1.00     1029     1837    0.100     OK
 
 `summary` uses 95% central posterior intervals by default, but you can
 change it using `summary(fit, width = 0.80)`. If you have [group-level
@@ -288,11 +288,11 @@ Here is the JAGS code for the model used in this article.
 
 ``` r
 
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(year)
     ##   cp_1 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
     ##   cp_2 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
@@ -326,3 +326,5 @@ fit$jags_code
     ##     y[i_] ~ dbin(mu_[i_], N[i_])
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags

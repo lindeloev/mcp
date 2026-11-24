@@ -1,4 +1,4 @@
-# Model formulas in mcp
+# Model Formulas in mcp
 
 The `model` argument of
 [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) is a
@@ -76,6 +76,11 @@ the change-point part of the formula and the rest is the predictor part.
 
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries
   using `+`.
+
+Built-in response auxiliaries are `trials()` and
+[`weights()`](https://rdrr.io/r/stats/weights.html); custom families can
+define additional names via
+[`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md).
 
 **2. Change-point part (`cp()`, segments 2+):**
 

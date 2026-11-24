@@ -3,6 +3,7 @@
 <url><loc>https://lindeloev.github.io/mcp/dev/articles/arma.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/articles/binomial.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/articles/comparison.html</loc></url>
+<url><loc>https://lindeloev.github.io/mcp/dev/articles/custom_families.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/articles/default_priors.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/articles/dpar.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/articles/families.html</loc></url>
@@ -20,6 +21,7 @@
 <url><loc>https://lindeloev.github.io/mcp/dev/index.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/news/index.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/as_draws.mcpfit.html</loc></url>
+<url><loc>https://lindeloev.github.io/mcp/dev/reference/as_jags.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/bernoulli.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/demo_fit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/draws-index-mcp.html</loc></url>
@@ -38,6 +40,7 @@
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp_columns.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp_example.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcp_pars.html</loc></url>
+<url><loc>https://lindeloev.github.io/mcp/dev/reference/mcpfamily.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/mcpfit-class.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/model-accessors-mcpfit.html</loc></url>
 <url><loc>https://lindeloev.github.io/mcp/dev/reference/negbinomial.html</loc></url>

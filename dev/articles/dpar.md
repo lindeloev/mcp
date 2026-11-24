@@ -244,20 +244,20 @@ summary(fit)
     ## 
     ## Change point parameters:
     ##          parameter      mean      sd     lower     upper rhat ess_bulk ess_tail       sim match
-    ##  cp_1               49.36    0.56     48.13     50.42    1.00     3290     2903  50.00       OK
-    ##  cp_2               82.6     1.6      79.3      85.7     1.00     2653     3564  80.0        OK
-    ##  cp_3              143.4     7.2     130.5     158.0     1.05       74      105 140.0        OK
+    ##  cp_1               49.33    0.56     48.11     50.26    1.00     3812     3955  50.00       OK
+    ##  cp_2               82.5     1.6      79.2      85.6     1.00     2417     3248  80.0        OK
+    ##  cp_3              142.8     6.7     129.8     156.1     1.05       53       51 140.0        OK
     ## 
     ## Population-level parameters:
     ##          parameter      mean      sd     lower     upper rhat ess_bulk ess_tail       sim match
-    ##  Intercept_1       -19.74    0.38    -20.48    -18.95    1.00     7479     7912 -20.00       OK
-    ##  Intercept_2         0.58    0.63     -0.67      1.82    1.00     4927     6198   0.00       OK
-    ##  x_3                 0.861   0.058     0.749     0.974   1.00     5747     7346   0.800      OK
-    ##  sigma_Intercept_1   0.22    0.22     -0.19      0.69    1.00     4477     4873   0.00       OK
-    ##  sigma_x_1           0.0388  0.0079    0.0234    0.0543  1.00     4101     4972   0.0462     OK
-    ##  sigma_Intercept_2   1.28    0.12      1.07      1.52    1.01     1378     3438   1.39       OK
-    ##  sigma_x_3           0.0425  0.0094    0.0222    0.0609  1.09       28       66   0.0300     OK
-    ##  sigma_xE2_3        -0.00000 0.00018  -0.00033   0.00047 1.11       25       52   0.00015    OK
+    ##  Intercept_1       -19.73    0.38    -20.47    -18.95    1.00     6605     7570 -20.00       OK
+    ##  Intercept_2         0.56    0.64     -0.72      1.80    1.00     4223     6257   0.00       OK
+    ##  x_3                 0.862   0.058     0.749     0.975   1.00     4976     6786   0.800      OK
+    ##  sigma_Intercept_1   0.22    0.22     -0.19      0.68    1.00     4760     5187   0.00       OK
+    ##  sigma_x_1           0.0386  0.0077    0.0234    0.0537  1.00     4263     4699   0.0462     OK
+    ##  sigma_Intercept_2   1.28    0.12      1.07      1.52    1.00     2021     3716   1.39       OK
+    ##  sigma_x_3           0.0414  0.0088    0.0224    0.0582  1.06       56      112   0.0300     OK
+    ##  sigma_xE2_3         0.00002 0.00017  -0.00028   0.00042 1.09       32       41   0.00015    OK
 
 ``` r
 
@@ -298,11 +298,11 @@ formulas](https://lindeloev.github.io/mcp/dev/articles/formulas.md).
 
 ``` r
 
-fit$jags_code
+as_jags(fit)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths
     ##   cp_2 ~ dunif(cp_0, cp_4)  # Flat Dirichlet on the segment lengths
@@ -315,10 +315,10 @@ fit$jags_code
     ##   Intercept_2 ~ dnorm(26.268121747257734, 1/(118.97849793160449)^2)  # Mean intercept (rstanarm default)
     ##   x_3_end_ ~ dnorm(Intercept_2, 1/(2.055635353724206*(cp_3-cp_2))^2)  # Autoscaled mean coefficient (rstanarm default); sampled as the value at the segment end
     ##   x_3 = (x_3_end_ - (Intercept_2)) / (cp_3 - cp_2)
-    ##   sigma_Intercept_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)  # Weakly regularizing modeled log-SD intercept; on the value at min(x); sampled as the value at the expected midpoint of segment 1
+    ##   sigma_Intercept_1_mid_ ~ dt(-sigma_x_1 * 1 + sigma_x_1 * (25.875), 1/(2.5)^2, 3)  # Weakly regularizing log-SD intercept; on the value at min(x); sampled as the value at the expected midpoint of segment 1
     ##   sigma_Intercept_1 = sigma_Intercept_1_mid_ - (sigma_x_1 * (25.875))
     ##   sigma_x_1 ~ dt(0, 1/(0.043193421279068007)^2, 3)  # Regularizing log-SD coefficient scaled by the predictor SD
-    ##   sigma_Intercept_2 ~ dt(0, 1/(2.5)^2, 3)  # Weakly regularizing modeled log-SD intercept
+    ##   sigma_Intercept_2 ~ dt(0, 1/(2.5)^2, 3)  # Weakly regularizing log-SD intercept
     ##   sigma_x_3_end_ ~ dt(sigma_Intercept_2, 1/(0.043193421279068007*(cp_3-cp_2))^2, 3)  # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the value at the segment end
     ##   sigma_x_3 = (sigma_x_3_end_ - (sigma_Intercept_2)) / (cp_3 - cp_2)
     ##   sigma_xE2_3_rise_ ~ dt(0, 1/(0.0002100945749551876*(cp_3-cp_2)^2)^2, 3)  # Regularizing log-SD coefficient scaled by the predictor SD; sampled as the rise over the segment
@@ -353,6 +353,8 @@ fit$jags_code
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags
 
 ## Group-level change points and standard deviation
 

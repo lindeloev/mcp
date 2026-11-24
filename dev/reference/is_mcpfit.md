@@ -1,6 +1,6 @@
-# Checks if the Argument is an `mcpfit` Object
+# Check if the Argument Is an `mcpfit` Object
 
-Checks if the Argument is an `mcpfit` Object
+Check if the Argument Is an `mcpfit` Object
 
 ## Usage
 

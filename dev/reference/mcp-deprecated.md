@@ -1,4 +1,4 @@
-# Deprecated functions in mcp
+# Deprecated Functions in mcp
 
 These functions were exported in mcp v0.3.4 and are deprecated in
 v0.4.0. They still work but warn and point to their replacements.

@@ -38,6 +38,11 @@ and the rest is the predictor part, which works like in
 - `y | trials(total) + weights(w) ~ ...`: Combine response auxiliaries
   using `+`.
 
+Built-in response auxiliaries are `trials()` and
+[`weights()`](https://rdrr.io/r/stats/weights.html); [custom
+families](https://lindeloev.github.io/mcp/dev/articles/custom_families.md)
+can define additional names.
+
 **2. Change-point part (`cp()`, segments 2+):**
 
 - `~ x` (i.e., `cp()` not included): Population-level change point
@@ -250,23 +255,23 @@ fit = mcp(model, data = mcp_example_data("multiple"), par_x = "x", sample = FALS
 mcp_pars(fit)
 ```
 
-    ## # A tibble: 14 × 8
-    ##    parameter   part      scope      role         segment dpar  group_col population_parameter
-    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
-    ##  1 cp_1        cp        population change_point       2 NA    NA        NA                  
-    ##  2 cp_2        cp        population change_point       3 NA    NA        NA                  
-    ##  3 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
-    ##  4 z_1         predictor population coefficient        1 mu    NA        NA                  
-    ##  5 x.stateA_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  6 x.stateB_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  7 x.stateC_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  8 x.stateD_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  9 Intercept_2 predictor population coefficient        2 mu    NA        NA                  
-    ## 10 x_2         predictor population coefficient        2 mu    NA        NA                  
-    ## 11 stateB_2    predictor population coefficient        2 mu    NA        NA                  
-    ## 12 stateC_2    predictor population coefficient        2 mu    NA        NA                  
-    ## 13 stateD_2    predictor population coefficient        2 mu    NA        NA                  
-    ## 14 sigma_1     predictor population coefficient        1 sigma NA        NA
+    ## # A tibble: 14 × 9
+    ##    parameter   part      scope      role         segment dpar  par_type  group_col population_parameter
+    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>     <chr>               
+    ##  1 cp_1        cp        population change_point       2 NA    NA        NA        NA                  
+    ##  2 cp_2        cp        population change_point       3 NA    NA        NA        NA                  
+    ##  3 Intercept_1 predictor population coefficient        1 mu    Intercept NA        NA                  
+    ##  4 z_1         predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  5 x.stateA_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  6 x.stateB_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  7 x.stateC_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  8 x.stateD_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  9 Intercept_2 predictor population coefficient        2 mu    Intercept NA        NA                  
+    ## 10 x_2         predictor population coefficient        2 mu    slope     NA        NA                  
+    ## 11 stateB_2    predictor population coefficient        2 mu    dummy     NA        NA                  
+    ## 12 stateC_2    predictor population coefficient        2 mu    dummy     NA        NA                  
+    ## 13 stateD_2    predictor population coefficient        2 mu    dummy     NA        NA                  
+    ## 14 sigma_1     predictor population coefficient        1 sigma Intercept NA        NA
 
 Thanks to `same()`, there is no `z_2` or `x_3`.
 
@@ -321,26 +326,26 @@ fit = mcp(model, data = ex$data, par_x = "x", sample = FALSE)
 mcp_pars(fit)
 ```
 
-    ## # A tibble: 17 × 8
-    ##    parameter   part      scope      role         segment dpar  group_col population_parameter
-    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>               
-    ##  1 cp_1        cp        population change_point       2 NA    NA        NA                  
-    ##  2 cp_2        cp        population change_point       3 NA    NA        NA                  
-    ##  3 cp_3        cp        population change_point       4 NA    NA        NA                  
-    ##  4 Intercept_1 predictor population coefficient        1 mu    NA        NA                  
-    ##  5 z_1         predictor population coefficient        1 mu    NA        NA                  
-    ##  6 x.stateA_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  7 x.stateB_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  8 x.stateC_1  predictor population coefficient        1 mu    NA        NA                  
-    ##  9 x.stateD_1  predictor population coefficient        1 mu    NA        NA                  
-    ## 10 Intercept_2 predictor population coefficient        2 mu    NA        NA                  
-    ## 11 x_2         predictor population coefficient        2 mu    NA        NA                  
-    ## 12 stateB_2    predictor population coefficient        2 mu    NA        NA                  
-    ## 13 stateC_2    predictor population coefficient        2 mu    NA        NA                  
-    ## 14 stateD_2    predictor population coefficient        2 mu    NA        NA                  
-    ## 15 xE2_3       predictor population coefficient        3 mu    NA        NA                  
-    ## 16 Intercept_4 predictor population coefficient        4 mu    NA        NA                  
-    ## 17 sigma_1     predictor population coefficient        1 sigma NA        NA
+    ## # A tibble: 17 × 9
+    ##    parameter   part      scope      role         segment dpar  par_type  group_col population_parameter
+    ##    <chr>       <chr>     <chr>      <chr>          <int> <chr> <chr>     <chr>     <chr>               
+    ##  1 cp_1        cp        population change_point       2 NA    NA        NA        NA                  
+    ##  2 cp_2        cp        population change_point       3 NA    NA        NA        NA                  
+    ##  3 cp_3        cp        population change_point       4 NA    NA        NA        NA                  
+    ##  4 Intercept_1 predictor population coefficient        1 mu    Intercept NA        NA                  
+    ##  5 z_1         predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  6 x.stateA_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  7 x.stateB_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  8 x.stateC_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ##  9 x.stateD_1  predictor population coefficient        1 mu    slope     NA        NA                  
+    ## 10 Intercept_2 predictor population coefficient        2 mu    Intercept NA        NA                  
+    ## 11 x_2         predictor population coefficient        2 mu    slope     NA        NA                  
+    ## 12 stateB_2    predictor population coefficient        2 mu    dummy     NA        NA                  
+    ## 13 stateC_2    predictor population coefficient        2 mu    dummy     NA        NA                  
+    ## 14 stateD_2    predictor population coefficient        2 mu    dummy     NA        NA                  
+    ## 15 xE2_3       predictor population coefficient        3 mu    slope     NA        NA                  
+    ## 16 Intercept_4 predictor population coefficient        4 mu    Intercept NA        NA                  
+    ## 17 sigma_1     predictor population coefficient        1 sigma Intercept NA        NA
 
 Key features of multiple regression models in `mcp`:
 
@@ -389,7 +394,7 @@ hypothesis(demo_fit, "time_3 > time_2")
     ## # A tibble: 1 × 7
     ##   hypothesis            mean     sd  lower  upper  prob    BF
     ##   <chr>                <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>
-    ## 1 time_3 - time_2 > 0 -0.750 0.0936 -0.935 -0.570     0     0
+    ## 1 time_3 - time_2 > 0 -0.750 0.0931 -0.935 -0.554     0     0
 
 The estimate reflects the difference `time_3 - time_2` (how much steeper
 or flatter the slope became in segment 3), along with its central
@@ -424,9 +429,9 @@ posterior::subset_draws(draws, variable = c("slope_change", "jump", "cp_distance
     ## # A tibble: 3 × 10
     ##   variable        mean  median     sd    mad      q5     q95  rhat ess_bulk ess_tail
     ##   <chr>          <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl> <dbl>    <dbl>    <dbl>
-    ## 1 slope_change  -0.750  -0.747 0.0936 0.0866  -0.900  -0.601 1.000    1068.     938.
-    ## 2 jump         -17.4   -17.4   2.07   2.03   -21.0   -14.0   1.00     1042.     772.
-    ## 3 cp_distance   39.5    39.4   1.97   2.08    36.4    42.8   1.01      930.     948.
+    ## 1 slope_change  -0.750  -0.747 0.0931 0.0908  -0.907  -0.606 1.00      864.     947.
+    ## 2 jump         -17.3   -17.4   1.99   2.04   -20.5   -14.0   0.999     922.    1027.
+    ## 3 cp_distance   39.5    39.5   1.98   1.97    36.1    42.6   1.00      825.     940.
 
 Because the change points differ between draws, the jump/change is
 evaluated exactly at the change point in each draw.

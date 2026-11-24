@@ -1,4 +1,4 @@
-# Posterior Predictive Checks For Mcpfit Objects
+# Posterior Predictive Checks for `mcpfit` Objects
 
 Plot posterior (default) or prior (`prior = TRUE`) predictive checks.
 This is a convenience wrapper around the `bayesplot::ppc_*()` methods.
@@ -157,7 +157,7 @@ plots.
 
 Missing responses are omitted from the observed-data check. LOO
 predictive checks use posterior draws and the original fitted data, so
-they do not support `prior = TRUE` or `newdata`. For GARMA models, they
+they do not support `prior = TRUE` or `newdata`. For AR/MA models, they
 default to `arma = TRUE` to match the one-step-ahead log-likelihood used
 for the LOO weights.
 

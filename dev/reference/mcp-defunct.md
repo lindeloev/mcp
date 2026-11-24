@@ -1,4 +1,4 @@
-# Defunct functions in mcp
+# Defunct Functions in mcp
 
 These functions were exported in mcp v0.3.4 and removed in v0.4.0. They
 now throw an error pointing to their replacements.

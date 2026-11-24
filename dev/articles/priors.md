@@ -1,8 +1,7 @@
 # Working with priors
 
-*NOTE: the JAGS-specific prior interface below is likely to be
-deprecated in the future, when additional backends are added beyond
-JAGS.*
+The JAGS-specific prior interface below is likely to be deprecated in
+the future, when additional backends are added beyond JAGS.
 
 This article is about setting your own priors.
 
@@ -58,7 +57,7 @@ JAGS code, `mcp` converts these to inverse variance for
 [`dlnorm()`](https://rdrr.io/r/stats/Lognormal.html), and inverse scale
 for `ddexp()` and [`dlogis()`](https://rdrr.io/r/stats/Logistic.html).
 You can inspect the translation by comparing `fit$prior` with
-`fit$jags_code`.
+`as_jags(fit)`.
 
 Other notes:
 
@@ -354,11 +353,11 @@ for how it implements the priors on change points.
 
 ``` r
 
-fit_manual$jags_code
+as_jags(fit_manual)
 ```
 
     ## model {
-    ##   # Change points
+    ##   # Priors for change points
     ##   cp_0 = min(x)
     ##   cp_1 ~ dnorm(30, 1/(10)^2) T(cp_0, cp_3)  # User-specified prior, truncated to the observed range of x, restricted to ordered change points
     ##   cp_2 = 80  # Fixed at 80
@@ -402,3 +401,5 @@ fit_manual$jags_code
     ##     y[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
     ##   }
     ## }
+    ## 
+    ## # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags

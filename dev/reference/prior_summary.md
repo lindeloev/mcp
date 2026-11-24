@@ -1,4 +1,4 @@
-# Summarise priors used by an mcp model
+# Summarise Priors Used by an mcp Model
 
 **\[experimental\]**
 

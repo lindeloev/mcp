@@ -1,4 +1,4 @@
-# Fit Multiple Linear Segments And Their Change Points
+# Fit Multiple Linear Segments and Their Change Points
 
 Given a model (a list of segment formulas), `mcp` infers the posterior
 distributions of the parameters of each segment as well as the change
@@ -19,7 +19,7 @@ mcp(
   iter = 3000,
   warmup = 1000,
   inits = NULL,
-  jags_code = NULL,
+  jags_code = lifecycle::deprecated(),
   seed = NULL,
   diagnostics = list(),
   quiet = getOption("mcp_quiet", FALSE),
@@ -77,6 +77,9 @@ mcp(
 
   - `negbinomial(link = "log", link_shape = "log")`
 
+  - A custom family made with
+    [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md).
+
   [Read more](https://lindeloev.github.io/mcp/articles/families.html).
 
 - par_x:
@@ -100,7 +103,9 @@ mcp(
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
     draws (an "empty fit"). This is useful if you only want to check
-    prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
+    prior strings (`fit$prior`), the JAGS model
+    ([`as_jags()`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md)),
+    etc.
 
 - chains:
 
@@ -135,25 +140,18 @@ mcp(
 
 - jags_code:
 
-  String. JAGS code to sample instead of the code that `mcp` writes.
-  This is an expert option for edits to `fit$jags_code` that keep the
-  parameters in
-  [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md),
-  the data, and the likelihood. Only the parameters in
-  [`mcp_pars()`](https://lindeloev.github.io/mcp/dev/reference/mcp_pars.md)
-  are monitored. R-side simulation and prediction methods continue to
-  use the `mcp` formulas (with warning), so
-  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  **\[deprecated\]** String. JAGS code to sample instead of the code
+  that `mcp` writes. Use
+  [`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
+  instead to continue using R-side methods
+  ([`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
   [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md),
   [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
-  etc. are wrong if the custom code changes the formula or likelihood.
-  The written JAGS code is not a stable interface and may change between
-  `mcp` versions. `jags_code` is planned for deprecation once a future
-  mcp release brings custom families and tooling to run `fit$jags_code`
-  directly in JAGS. [Read
-  more](https://lindeloev.github.io/mcp/articles/implementation.html)
-  about how `mcp` writes JAGS code.
+  etc.). Or use
+  [`as_jags()`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md)
+  to sample a modified model directly in JAGS, foregoing mcp's R-side
+  methods.
 
 - seed:
 
@@ -272,16 +270,16 @@ summary(demo_fit)
 #> 
 #> Change point parameters:
 #>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
-#>  cp_1        31.8   1.7   28.5   35.1   1.00     3249     4358 30.0      OK
-#>  cp_2        71.1   1.0   69.5   72.8   1.00     3660     6245 70.0      OK
+#>  cp_1        31.7   1.7   28.4   35.2   1.00     3537     4116 30.0      OK
+#>  cp_2        71.12  1.00  69.48  72.78  1.00     3618     6049 70.00     OK
 #> 
 #> Population-level parameters:
 #>    parameter   mean    sd  lower  upper rhat ess_bulk ess_tail    sim match
-#>  Intercept_1  9.96  0.65   8.69  11.25  1.00     4919     6791 10.00     OK
-#>  time_2       0.547 0.048  0.456  0.643 1.00     5176     6667  0.500    OK
-#>  Intercept_3 13.9   1.4   11.3   16.7   1.00     2254     4267 15.0      OK
-#>  time_3      -0.205 0.084 -0.372 -0.039 1.00     1238     2159 -0.300    OK
-#>  sigma_1      3.87  0.29   3.35   4.47  1.00     5025     5407  3.50     OK
+#>  Intercept_1  9.94  0.66   8.65  11.21  1.00     4974     6850 10.00     OK
+#>  time_2       0.546 0.047  0.456  0.641 1.00     5172     7008  0.500    OK
+#>  Intercept_3 13.9   1.3   11.3   16.6   1.00     2392     4749 15.0      OK
+#>  time_3      -0.200 0.082 -0.360 -0.041 1.00     1234     2307 -0.300    OK
+#>  sigma_1      3.86  0.29   3.34   4.48  1.00     4953     5028  3.50     OK
 
 # Visual inspection of the results
 plot(demo_fit)  # Visualization of model fit/predictions
@@ -297,36 +295,36 @@ hypothesis(demo_fit, "cp_1 > 30")
 #> # A tibble: 1 × 7
 #>   hypothesis     mean    sd lower upper  prob    BF
 #>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  1.75  1.74 -1.52  5.08 0.836  5.13
+#> 1 cp_1 - 30 > 0  1.68  1.75 -1.64  5.19 0.834  5.05
 
 # Make predictions
 head(fitted(demo_fit))
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9 1.01   10.9    14.9
+#> 1    12.2   76.3  12.9 0.992  10.9    14.8
 #> 2     6.35  83.5  11.4 0.714  10.0    12.8
-#> 3    28.0   60.2  25.5 0.897  23.7    27.2
-#> 4    15.7   74.7  13.2 1.11   11.1    15.4
-#> 5    16.2   85.9  10.9 0.708   9.54   12.3
-#> 6    22.3   40.1  14.5 0.649  13.1    15.6
+#> 3    28.0   60.2  25.4 0.875  23.7    27.2
+#> 4    15.7   74.7  13.2 1.09   11.0    15.3
+#> 5    16.2   85.9  10.9 0.710   9.56   12.4
+#> 6    22.3   40.1  14.5 0.642  13.1    15.7
 head(predict(demo_fit))
 #> # A tibble: 6 × 6
 #>   response  time .mean   .sd .lower .upper
 #>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9  4.01   5.01   20.8
-#> 2     6.35  83.5  11.4  3.94   3.67   19.2
-#> 3    28.0   60.2  25.5  3.98  17.6    33.3
-#> 4    15.7   74.7  13.2  4.03   5.29   21.1
-#> 5    16.2   85.9  10.9  3.94   3.18   18.7
-#> 6    22.3   40.1  14.5  3.93   6.73   22.2
+#> 1    12.2   76.3  12.9  4.00   5.00   20.7
+#> 2     6.35  83.5  11.4  3.94   3.68   19.2
+#> 3    28.0   60.2  25.4  3.97  17.6    33.2
+#> 4    15.7   74.7  13.2  4.02   5.27   21.1
+#> 5    16.2   85.9  10.9  3.94   3.21   18.7
+#> 6    22.3   40.1  14.5  3.93   6.75   22.2
 head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
 #> # A tibble: 3 × 5
 #>    time .mean   .sd .lower .upper
 #>   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1  55.5 22.9   3.95  15.2    30.7
+#> 1  55.5 22.9   3.94  15.2    30.7
 #> 2  80   12.1   3.96   4.35   19.9
-#> 3 132    1.48  5.58  -9.52   12.4
+#> 3 132    1.73  5.51  -9.06   12.6
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)
@@ -394,9 +392,9 @@ model_same = list(
 fit_same = mcp(model_same, data = data, sample = FALSE)
 
 # Show the JAGS model
-demo_fit$jags_code
+as_jags(demo_fit)
 #> model {
-#>   # Change points
+#>   # Priors for change points
 #>   cp_0 = min(time)
 #>   cp_1 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
 #>   cp_2 ~ dunif(cp_0, cp_3)  # Flat Dirichlet on the segment lengths
@@ -436,5 +434,7 @@ demo_fit$jags_code
 #>     response[i_] ~ dnorm(mu_[i_], 1 / sigma_[i_]^2)
 #>   }
 #> }
+#> 
+#> # Also contains $data, $inits (3 chains), $variable.names, $modules, and $levels. See ?as_jags
 # }
 ```

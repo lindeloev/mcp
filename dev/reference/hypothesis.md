@@ -150,22 +150,22 @@ hypothesis(demo_fit, "cp_1 > 30")
 #> # A tibble: 1 × 7
 #>   hypothesis     mean    sd lower upper  prob    BF
 #>   <chr>         <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  1.64  1.69 -1.77  4.88 0.836  4.74
+#> 1 cp_1 - 30 > 0  1.59  1.71 -1.56  5.13 0.824  4.36
 
 # Combine directional statements for an interval (a ROPE-style hypothesis)
 hypothesis(demo_fit, "cp_1 > 20 & cp_1 < 30")
 #> # A tibble: 1 × 7
 #>   hypothesis             mean    sd lower upper  prob    BF
 #>   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 > 20 & cp_1 < 30    NA    NA    NA    NA 0.164  1.08
+#> 1 cp_1 > 20 & cp_1 < 30    NA    NA    NA    NA 0.176  1.17
 
 # Evaluate several directional hypotheses at once
 hypothesis(demo_fit, c("cp_1 > 30", "cp_2 > 70"))
 #> # A tibble: 2 × 7
 #>   hypothesis     mean    sd  lower upper  prob    BF
 #>   <chr>         <dbl> <dbl>  <dbl> <dbl> <dbl> <dbl>
-#> 1 cp_1 - 30 > 0  1.64 1.69  -1.77   4.88 0.836  4.74
-#> 2 cp_2 - 70 > 0  1.10 0.991 -0.520  2.77 0.819  4.67
+#> 1 cp_1 - 30 > 0  1.59  1.71 -1.56   5.13 0.824  4.36
+#> 2 cp_2 - 70 > 0  1.07  1.00 -0.535  2.77 0.81   4.40
 
 # Inspect the corresponding prior probability without a Bayes factor
 hypothesis(demo_fit, "cp_1 > 30", prior = TRUE)

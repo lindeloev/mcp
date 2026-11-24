@@ -1,6 +1,6 @@
-# Run example models
+# Run Example Models
 
-Run example models
+Run Example Models
 
 ## Usage
 
@@ -30,7 +30,8 @@ mcp_example_data(name)
 
   - `"group_cp"`: Group-level change-point deviations (random effects).
 
-  - `"intercepts"`: An intercept-only change point.
+  - `"intercepts"`: Four change points between plateaus, clustered early
+    in the data.
 
   - `"missing"`: Missing data imputation (NAs in response variable y).
 
@@ -56,7 +57,9 @@ mcp_example_data(name)
 
   - `"none"` or `FALSE`: Do not sample. Returns an mcpfit object without
     draws (an "empty fit"). This is useful if you only want to check
-    prior strings (`fit$prior`), the JAGS model (`fit$jags_code`), etc.
+    prior strings (`fit$prior`), the JAGS model
+    ([`as_jags()`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md)),
+    etc.
 
 - plot:
 
@@ -184,6 +187,9 @@ print(empty$example_code)
 
 # Now sample this model
 fit2 = mcp(empty$model, empty$data, family = empty$family, seed = 42)
+#> Warning: Some parameters may not have converged well:
+#>   * rhat > 1.01 or ess_bulk < 400 or ess_tail < 400: x_2 and Intercept_3 and x_3
+#> Inspect `summary(fit)` and `plot_pars(fit)`, and consider increasing `iter`/`warmup`, set inits manually, or simplifying the model.
 plot(fit2)
 
 # }

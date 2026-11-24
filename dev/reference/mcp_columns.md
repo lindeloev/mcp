@@ -1,4 +1,4 @@
-# Model data columns
+# Model Data Columns
 
 **\[experimental\]**
 

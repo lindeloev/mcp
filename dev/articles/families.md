@@ -22,8 +22,11 @@ Currently supported families and link functions are:
 - Default: `negbinomial(link = "log", link_shape = "log")`
 
 See the “Families” menu above for more details on using GLM with `mcp`.
-The hardest part about adding new families/links is specifying default
-priors. Read more in [the article on default
+Use
+[`mcpfamily()`](https://lindeloev.github.io/mcp/dev/reference/mcpfamily.md)
+to define other families; see [Custom
+families](https://lindeloev.github.io/mcp/dev/articles/custom_families.md).
+Read about the default priors of each family in [the article on default
 priors](https://lindeloev.github.io/mcp/dev/articles/default_priors.md).
 
 ## Non-default link functions

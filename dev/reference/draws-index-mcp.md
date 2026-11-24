@@ -1,4 +1,4 @@
-# Index `mcpfit` objects
+# Index `mcpfit` Objects
 
 Index variables, iterations, chains, and draws.
 

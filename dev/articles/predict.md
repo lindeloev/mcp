@@ -86,12 +86,12 @@ head(fitted(fit))
     ## # A tibble: 6 × 6
     ##   response  time .mean   .sd .lower .upper
     ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    12.2   76.3  12.9 0.991  10.9    14.8
-    ## 2     6.35  83.5  11.4 0.711  10.0    12.8
-    ## 3    28.0   60.2  25.4 0.886  23.7    27.2
+    ## 1    12.2   76.3  12.9 0.990  10.9    14.8
+    ## 2     6.35  83.5  11.4 0.715  10.0    12.8
+    ## 3    28.0   60.2  25.5 0.887  23.7    27.2
     ## 4    15.7   74.7  13.2 1.09   11.1    15.3
-    ## 5    16.2   85.9  10.9 0.703   9.59   12.3
-    ## 6    22.3   40.1  14.5 0.647  13.1    15.7
+    ## 5    16.2   85.9  10.9 0.709   9.54   12.3
+    ## 6    22.3   40.1  14.5 0.643  13.1    15.6
 
 In general, this output contains:
 
@@ -141,10 +141,10 @@ fitted(fit, newdata = newdata)
     ## # A tibble: 4 × 5
     ##    time  .mean   .sd .lower .upper
     ##   <dbl>  <dbl> <dbl>  <dbl>  <dbl>
-    ## 1  76.3  12.9  0.991  10.9   14.8 
-    ## 2  25     9.93 0.659   8.65  11.2 
-    ## 3 -20     9.93 0.659   8.65  11.2 
-    ## 4 200   -12.1  9.29  -30.4    6.01
+    ## 1  76.3  12.9  0.990  10.9   14.8 
+    ## 2  25     9.94 0.641   8.68  11.2 
+    ## 3 -20     9.94 0.641   8.68  11.2 
+    ## 4 200   -12.4  9.30  -30.6    5.72
 
 Note that:
 
@@ -203,14 +203,13 @@ head(predict(fit, width = 0.8))
     ## # A tibble: 6 × 6
     ##   response  time .mean   .sd .lower .upper
     ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    12.2   76.3  12.9  4.00   7.76   18.0
-    ## 2     6.35  83.5  11.4  3.94   6.39   16.5
-    ## 3    28.0   60.2  25.4  3.97  20.4    30.5
-    ## 4    15.7   74.7  13.2  4.02   8.05   18.3
-    ## 5    16.2   85.9  10.9  3.94   5.92   16.0
-    ## 6    22.3   40.1  14.5  3.93   9.46   19.5
+    ## 1    12.2   76.3  12.9  4.00   7.78   18.0
+    ## 2     6.35  83.5  11.4  3.94   6.38   16.5
+    ## 3    28.0   60.2  25.5  3.98  20.4    30.5
+    ## 4    15.7   74.7  13.2  4.03   8.08   18.4
+    ## 5    16.2   85.9  10.9  3.94   5.90   16.0
+    ## 6    22.3   40.1  14.5  3.93   9.44   19.5
 
-Note that
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 uses random sampling under the hood, so these values will differ
 slightly from call to call. You can make it replicable using
@@ -239,8 +238,8 @@ predict(fit, summary = FALSE) |>
     ##   <int> <dbl>    <dbl>       <dbl>
     ## 1     1  76.3      0.1        7.80
     ## 2     1  76.3      0.5       12.9 
-    ## 3     1  76.3      0.9       18.0 
-    ## 4     2  83.5      0.1        6.47
+    ## 3     1  76.3      0.9       18.1 
+    ## 4     2  83.5      0.1        6.48
     ## 5     2  83.5      0.5       11.4 
     ## 6     2  83.5      0.9       16.5
 
@@ -310,14 +309,13 @@ fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
 options(old)
 ```
 
-*Side note on the [`options()`](https://rdrr.io/r/base/options.html)
-step: We turned off `mcp` reparameterization which usually increases
-ESS/s but in this case lowers it. One of the reparam tricks sets the
-intercept of a disjoined segment as the value at the end of that segment
-([read
+**On the [`options()`](https://rdrr.io/r/base/options.html) step:** We
+turned off `mcp` reparameterization which usually increases ESS/s but in
+this case lowers it. One of the reparam tricks sets the intercept of a
+disjoined segment as the value at the end of that segment ([read
 more](https://lindeloev.github.io/mcp/dev/articles/implementation.html#reparameterizations)).
 Here, segment 3 ends at the future `cp_3`, far from the data, so this
-sampling trick causes poor mixing.*
+sampling trick causes poor mixing.
 
 ### Step 2: predict!
 
@@ -332,7 +330,7 @@ predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
     ## # A tibble: 1 × 5
     ##    time .mean   .sd .lower .upper
     ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1   125  7.64  5.48 0.0925   14.1
+    ## 1   125  7.64  5.48 0.0953   14.2
 
 To really understand what’s going on here, it may be helpful to
 visualize the model.

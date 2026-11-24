@@ -28,8 +28,9 @@ Components:
   with posterior and prior draws, respectively. Do not access these
   directly; use as_draws(fit) or similar.
 
-- `jags_code`: A string with JAGS code; use `cat(fit$jags_code)` to show
-  it. [Read
+- `jags_code`: Deprecated. Use
+  [`as_jags()`](https://lindeloev.github.io/mcp/dev/reference/as_jags.md)
+  to get the JAGS code, data, and initial values. [Read
   more](https://lindeloev.github.io/mcp/articles/implementation.html).
 
 - `simulate`: A function to simulate data from supplied parameter

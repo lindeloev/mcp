@@ -71,8 +71,8 @@ hypothesis(fit_void, c(
     ## # A tibble: 2 × 7
     ##   hypothesis             mean    sd lower upper  prob    BF
     ##   <chr>                 <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.935  46.6
-    ## 2 cp_2 > 70 & cp_2 < 80    NA    NA    NA    NA 0.840  28.3
+    ## 1 cp_1 > 25 & cp_1 < 42    NA    NA    NA    NA 0.933  45.1
+    ## 2 cp_2 > 70 & cp_2 < 80    NA    NA    NA    NA 0.848  30.2
 
 ## Imputing missing responses
 
@@ -134,16 +134,16 @@ imputed
     ## # A tibble: 10 × 7
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.4  4.41  29.8    41.0
-    ##  2    NA    19 A      15.5  4.35   9.95   21.1
-    ##  3    NA    27 A      17.1  4.34  11.6    22.6
-    ##  4    NA    28 B      39.4  4.34  33.8    44.9
-    ##  5    NA    29 A      17.5  4.34  12.0    23.0
-    ##  6    NA    30 B      39.8  4.34  34.2    45.3
-    ##  7    NA    31 A      17.9  4.34  12.4    23.4
-    ##  8    NA    68 B      41.3  4.44  35.6    46.9
-    ##  9    NA    84 B      34.6  4.36  29.0    40.1
-    ## 10    NA    96 B      29.5  4.46  23.9    35.2
+    ##  1    NA     8 B      35.4  4.42  29.8    41.0
+    ##  2    NA    19 A      15.5  4.36   9.98   21.1
+    ##  3    NA    27 A      17.1  4.34  11.6    22.7
+    ##  4    NA    28 B      39.4  4.35  33.8    44.9
+    ##  5    NA    29 A      17.5  4.34  12.0    23.1
+    ##  6    NA    30 B      39.8  4.35  34.2    45.3
+    ##  7    NA    31 A      17.9  4.35  12.4    23.5
+    ##  8    NA    68 B      41.2  4.44  35.6    46.9
+    ##  9    NA    84 B      34.6  4.37  29.0    40.1
+    ## 10    NA    96 B      29.6  4.46  23.9    35.3
 
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 has the same syntax as
@@ -161,16 +161,16 @@ fitted(fit, width = 0.8) |>
     ## # A tibble: 10 × 7
     ##        y     x state .mean   .sd .lower .upper
     ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.4 1.08    34.0   36.8
-    ##  2    NA    19 A      15.5 0.832   14.4   16.6
-    ##  3    NA    27 A      17.1 0.761   16.1   18.1
-    ##  4    NA    28 B      39.4 0.760   38.4   40.3
-    ##  5    NA    29 A      17.5 0.761   16.5   18.5
-    ##  6    NA    30 B      39.8 0.762   38.8   40.7
-    ##  7    NA    31 A      17.9 0.768   16.9   18.9
-    ##  8    NA    68 B      41.3 1.20    39.8   42.9
-    ##  9    NA    84 B      34.6 0.890   33.4   35.7
-    ## 10    NA    96 B      29.5 1.28    27.9   31.2
+    ##  1    NA     8 B      35.4 1.10    34.0   36.8
+    ##  2    NA    19 A      15.5 0.824   14.5   16.6
+    ##  3    NA    27 A      17.1 0.757   16.2   18.1
+    ##  4    NA    28 B      39.4 0.774   38.4   40.4
+    ##  5    NA    29 A      17.5 0.758   16.6   18.5
+    ##  6    NA    30 B      39.8 0.775   38.8   40.8
+    ##  7    NA    31 A      17.9 0.767   17.0   18.9
+    ##  8    NA    68 B      41.2 1.18    39.8   42.8
+    ##  9    NA    84 B      34.6 0.885   33.4   35.7
+    ## 10    NA    96 B      29.6 1.27    27.9   31.2
 
 ### Visualizing imputations
 
@@ -249,7 +249,7 @@ missing_draws |>
     ## # A tibble: 1 × 3
     ##   p_greater p_lower p_between
     ##       <dbl>   <dbl>     <dbl>
-    ## 1     0.146   0.105     0.749
+    ## 1     0.150   0.103     0.747
 
 ### Imputations and other continuous predictors
 
@@ -301,10 +301,10 @@ you can:
   Their imputations remain on the appropriate discrete response scale;
   binomial predictions can also be returned as rates.
 
-The predictors required by the model must themselves be observed. `mcp`
-currently imputes missing responses, not missing predictor values, and
-it does not model the process that caused responses to be missing. As
-with ordinary regression using incomplete outcomes, interpretation
+However, predictors required by the model must themselves be observed.
+`mcp` currently imputes missing responses, not missing predictor values,
+and it does not model the process that caused responses to be missing.
+As with ordinary regression using incomplete outcomes, interpretation
 relies on the missing responses being reasonably explained by the
 observed predictors and model structure.
 
@@ -362,4 +362,4 @@ predict(fit, newdata = newdata, width = 0.8)
     ##       x state .mean   .sd .lower .upper
     ##   <dbl> <fct> <dbl> <dbl>  <dbl>  <dbl>
     ## 1    20 A      15.7  4.35   10.2   21.3
-    ## 2    80 B      36.3  4.36   30.7   41.8
+    ## 2    80 B      36.2  4.36   30.7   41.8
