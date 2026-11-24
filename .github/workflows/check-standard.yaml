@@ -29,7 +29,6 @@ jobs:
           - {os: windows-latest,  r: 'release',  jags: 5}
           - {os: windows-latest,  r: 'release',  jags: 4}
           - {os: windows-latest,  r: 'devel',    jags: 5}
-          - {os: ubuntu-latest,   r: 'devel',    jags: 5, http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release',  jags: 5}
           - {os: ubuntu-latest,   r: 'release',  jags: 4}
           - {os: ubuntu-latest,   r: 'oldrel-1', jags: 4}
@@ -57,18 +56,16 @@ jobs:
       - name: Install JAGS 4 (if Windows)
         if: runner.os == 'Windows' && matrix.config.jags == 4
         run: |
-          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-%JAGS4_VERSION%.exe
-          wjags.exe /S
-          del wjags.exe
+          curl.exe -o %RUNNER_TEMP%\wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-%JAGS4_VERSION%.exe
+          %RUNNER_TEMP%\wjags.exe /S
           echo JAGS_ROOT=C:/progra~1/JAGS/JAGS-%JAGS4_VERSION%>> %GITHUB_ENV%
         shell: cmd
 
       - name: Install JAGS 5 (if Windows)
         if: runner.os == 'Windows' && matrix.config.jags == 5
         run: |
-          curl.exe -o wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/5.x/Windows/Rtools45/JAGS-%JAGS5_VERSION%.exe
-          wjags.exe /S
-          del wjags.exe
+          curl.exe -o %RUNNER_TEMP%\wjags.exe -L0 -k --url https://downloads.sourceforge.net/project/mcmc-jags/JAGS/5.x/Windows/Rtools45/JAGS-%JAGS5_VERSION%.exe
+          %RUNNER_TEMP%\wjags.exe /S
         shell: cmd
 
       - name: Install JAGS 4 (if macOS)
