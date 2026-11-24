@@ -123,17 +123,14 @@ residuals(
 
 - summary:
 
-  Logical. Summarise the draws for each row in `newdata` (`TRUE`) or
-  return the draws (`FALSE`)?
+  Logical. Summarise the draws for each returned row (`TRUE`) or return
+  individual draws (`FALSE`)?
 
 - width:
 
   Width of the central interval (strictly between 0 and 1), returned in
-  the `.lower` and `.upper` columns. `FALSE` omits the interval. Only in
-  effect when `summary == TRUE`. To get custom quantiles, summarise the
-  draws from `summary = FALSE`, e.g., using
-  [`dplyr::reframe()`](https://dplyr.tidyverse.org/reference/reframe.html)
-  (see examples).
+  the `.lower` and `.upper` columns. `FALSE` omits the interval. Used
+  when `summary = TRUE`.
 
 - rate:
 
@@ -198,8 +195,8 @@ residuals(
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws to return/summarise.
-  `NULL` means "all". More draws trade speed for accuracy.
+  Integer or `NULL`. Number of draws to select at random. `NULL` uses
+  all draws.
 
 - draws_format:
 
@@ -257,7 +254,7 @@ residuals(
 ## Value
 
 - If `summary = TRUE`: A tibble with the columns of `newdata` (or
-  `fit$data` if `newdata` is `NULL`), followed by summaries for each
+  `fit$data` if `newdata` is `NULL`), `.row`, and summaries for each
   row:
 
   - `.mean`: The mean of the draws.
@@ -289,9 +286,7 @@ residuals(
 
   - Predictors from `newdata`, plus its response column when supplied.
 
-  - Draw descriptors: ".chain", ".iteration", ".draw" (see the
-    `posterior` and `tidybayes` packages), and `.row`, the row number in
-    the evaluated `newdata`.
+  - Row and draw identifiers (`.row`, `.chain`, `.iteration`, `.draw`).
 
   - Draw values: one column for each parameter in the model.
 
@@ -300,10 +295,13 @@ residuals(
     dpars (e.g., `.mu` or `.sigma`), `.prediction`, `.residual`, or
     `.loglik`.
 
-- If `summary = FALSE` and `draws_format = "matrix"`: An `N_draws` X
-  `nrows(newdata)` matrix with fitted/predicted values (depending on the
-  function). This format is used by `brms` and it's useful as `yrep` in
-  `bayesplot::ppc_*` functions.
+- If `summary = FALSE` and `draws_format = "matrix"`: A
+  draws-by-observation matrix with columns named by `.row`. This format
+  is used by `brms` and is useful as `yrep` in `bayesplot::ppc_*`
+  functions.
+
+`.row` is the row number in `newdata` (or in `fit$data`). `log_lik()`
+includes only observed responses and keeps their original row numbers.
 
 ## Details
 
@@ -335,12 +333,13 @@ or
 because estimating information criteria for reduced models requires
 refitting.
 
-Missing responses in the original data remain missing in the response
-column. `fitted()` returns their expected responses, while `predict()`
-generates fresh posterior predictive response draws (including at
-missing rows). In AR/MA models, retained JAGS imputations supply the
-history used for later fitted and predicted rows. [Read
-more](https://lindeloev.github.io/mcp/articles/missing.html).
+Use
+[`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+to extract draws of missing responses in the fitted data. `fitted()`
+gives expected responses and `predict()` gives fresh predictions,
+including at rows where the response column contains `NA`. In AR/MA
+models, imputations supply missing responses in the history for later
+rows.
 
 ## Functions
 
@@ -364,25 +363,25 @@ Jonas Kristoffer Lindeløv <jonas@lindeloev.dk>
 
 ``` r
 head(fitted(demo_fit))  # Expected response for each row of demo_fit$data
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9 0.964  11.0    14.8
-#> 2     6.35  83.5  11.4 0.700  10.1    12.8
-#> 3    28.0   60.2  25.4 0.874  23.7    27.1
-#> 4    15.7   74.7  13.2 1.06   11.1    15.3
-#> 5    16.2   85.9  10.9 0.696   9.65   12.3
-#> 6    22.3   40.1  14.5 0.639  13.2    15.6
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  12.9 0.964  11.0    14.8
+#> 2     6.35  83.5     2  11.4 0.700  10.1    12.8
+#> 3    28.0   60.2     3  25.4 0.874  23.7    27.1
+#> 4    15.7   74.7     4  13.2 1.06   11.1    15.3
+#> 5    16.2   85.9     5  10.9 0.696   9.65   12.3
+#> 6    22.3   40.1     6  14.5 0.639  13.2    15.6
 head(residuals(demo_fit))  # Residuals for each row of demo_fit$data
-#> # A tibble: 6 × 6
-#>   response  time  .mean   .sd .lower .upper
-#>      <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3 -0.655 0.964 -2.58    1.23
-#> 2     6.35  83.5 -5.06  0.700 -6.48   -3.74
-#> 3    28.0   60.2  2.64  0.874  0.971   4.39
-#> 4    15.7   74.7  2.46  1.06   0.348   4.57
-#> 5    16.2   85.9  5.29  0.696  3.88    6.56
-#> 6    22.3   40.1  7.85  0.639  6.70    9.08
+#> # A tibble: 6 × 7
+#>   response  time  .row  .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int>  <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1 -0.655 0.964 -2.58    1.23
+#> 2     6.35  83.5     2 -5.06  0.700 -6.48   -3.74
+#> 3    28.0   60.2     3  2.64  0.874  0.971   4.39
+#> 4    15.7   74.7     4  2.46  1.06   0.348   4.57
+#> 5    16.2   85.9     5  5.29  0.696  3.88    6.56
+#> 6    22.3   40.1     6  7.85  0.639  6.70    9.08
 log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 #>              1         2         3
 #> [1,] -2.503263 -2.748959 -2.493721
@@ -392,35 +391,35 @@ log_lik(demo_fit)[1:3, 1:3]  # Log-likelihood at each demo_fit$data
 # All of the above take a range of arguments. E.g.,:
 # \donttest{
 head(predict(demo_fit))  # Pointwise posterior predictive
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9  4.00   5.02   20.8
-#> 2     6.35  83.5  11.4  3.95   3.65   19.2
-#> 3    28.0   60.2  25.4  3.98  17.6    33.2
-#> 4    15.7   74.7  13.2  4.03   5.31   21.1
-#> 5    16.2   85.9  10.9  3.95   3.16   18.7
-#> 6    22.3   40.1  14.5  3.94   6.74   22.2
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  12.9  4.00   5.02   20.8
+#> 2     6.35  83.5     2  11.4  3.95   3.65   19.2
+#> 3    28.0   60.2     3  25.4  3.98  17.6    33.2
+#> 4    15.7   74.7     4  13.2  4.03   5.31   21.1
+#> 5    16.2   85.9     5  10.9  3.95   3.16   18.7
+#> 6    22.3   40.1     6  14.5  3.94   6.74   22.2
 head(predict(demo_fit, width = 0.8))  # 80% posterior predictive interval
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9  4.00   7.78   18.0
-#> 2     6.35  83.5  11.4  3.95   6.36   16.5
-#> 3    28.0   60.2  25.4  3.98  20.3    30.5
-#> 4    15.7   74.7  13.2  4.03   8.08   18.4
-#> 5    16.2   85.9  10.9  3.95   5.87   16.0
-#> 6    22.3   40.1  14.5  3.94   9.44   19.5
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  12.9  4.00   7.78   18.0
+#> 2     6.35  83.5     2  11.4  3.95   6.36   16.5
+#> 3    28.0   60.2     3  25.4  3.98  20.3    30.5
+#> 4    15.7   74.7     4  13.2  4.03   8.08   18.4
+#> 5    16.2   85.9     5  10.9  3.95   5.87   16.0
+#> 6    22.3   40.1     6  14.5  3.94   9.44   19.5
 head(predict(demo_fit, prior = TRUE))  # Prior predictive
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  13.5  29.3  -42.7   76.7
-#> 2     6.35  83.5  13.4  30.8  -46.6   81.2
-#> 3    28.0   60.2  13.5  26.4  -37.9   68.0
-#> 4    15.7   74.7  13.7  29.2  -41.0   76.2
-#> 5    16.2   85.9  13.0  31.2  -48.3   80.8
-#> 6    22.3   40.1  13.7  22.5  -31.2   55.4
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  13.5  29.3  -42.7   76.7
+#> 2     6.35  83.5     2  13.4  30.8  -46.6   81.2
+#> 3    28.0   60.2     3  13.5  26.4  -37.9   68.0
+#> 4    15.7   74.7     4  13.7  29.2  -41.0   76.2
+#> 5    16.2   85.9     5  13.0  31.2  -48.3   80.8
+#> 6    22.3   40.1     6  13.7  22.5  -31.2   55.4
 head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributions.
 #> # A tibble: 6 × 14
 #>   response  time  .row .chain .iteration .draw  cp_1  cp_2 Intercept_1 time_2 Intercept_3  time_3 sigma_1 .epred
@@ -432,15 +431,15 @@ head(fitted(demo_fit, summary = FALSE))  # Draws. Useful for plotting distributi
 #> 5     12.2  76.3     1      1          5     5  33.9  69.5       10.2   0.609        15.2 -0.276     4.16   13.3
 #> 6     12.2  76.3     1      1          6     6  30.4  70.2        9.94  0.539        15.0 -0.226     4.04   13.6
 head(fitted(demo_fit, dpar = "sigma"))  # Another model parameter
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  3.88 0.277   3.39   4.51
-#> 2     6.35  83.5  3.88 0.277   3.39   4.51
-#> 3    28.0   60.2  3.88 0.277   3.39   4.51
-#> 4    15.7   74.7  3.88 0.277   3.39   4.51
-#> 5    16.2   85.9  3.88 0.277   3.39   4.51
-#> 6    22.3   40.1  3.88 0.277   3.39   4.51
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  3.88 0.277   3.39   4.51
+#> 2     6.35  83.5     2  3.88 0.277   3.39   4.51
+#> 3    28.0   60.2     3  3.88 0.277   3.39   4.51
+#> 4    15.7   74.7     4  3.88 0.277   3.39   4.51
+#> 5    16.2   85.9     5  3.88 0.277   3.39   4.51
+#> 6    22.3   40.1     6  3.88 0.277   3.39   4.51
 
 # Custom quantiles from the draws, here for fitted().
 # Note that for predict(), this adds more Monte Carlo error than `width`.
@@ -461,45 +460,43 @@ fitted(demo_fit, summary = FALSE) |>
 # Evaluate at novel data
 novel_data = data.frame(time = c(-5, 20, 300))  # Only predictors are needed
 head(predict(demo_fit, newdata = novel_data))
-#> # A tibble: 3 × 5
-#>    time  .mean   .sd .lower .upper
-#>   <dbl>  <dbl> <dbl>  <dbl>  <dbl>
-#> 1    -5   9.92  3.94   2.18  17.7 
-#> 2    20   9.92  3.94   2.18  17.7 
-#> 3   300 -33.3  17.4  -68.1    1.75
+#> # A tibble: 3 × 6
+#>    time  .row  .mean   .sd .lower .upper
+#>   <dbl> <int>  <dbl> <dbl>  <dbl>  <dbl>
+#> 1    -5     1   9.92  3.94   2.18  17.7 
+#> 2    20     2   9.92  3.94   2.18  17.7 
+#> 3   300     3 -33.3  17.4  -68.1    1.75
 
 # Work with missing responses
 missing_fit = mcp_example("missing", plot = FALSE)
 #> NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
-fitted(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Expected responses for missing y
-#> # A tibble: 6 × 7
-#>       y     x state .mean   .sd .lower .upper
-#>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    NA     8 B      35.4 1.10    33.2   37.6
-#> 2    NA    19 A      15.5 0.824   13.9   17.2
-#> 3    NA    27 A      17.1 0.757   15.6   18.6
-#> 4    NA    28 B      39.4 0.774   37.9   40.9
-#> 5    NA    29 A      17.5 0.758   16.1   19.0
-#> 6    NA    30 B      39.8 0.775   38.3   41.3
-fitted(missing_fit, summary = FALSE) |> dplyr::filter(is.na(y)) |> head()  # Same, but draws
-#> # A tibble: 6 × 14
-#>       y     x state  .row .chain .iteration .draw  cp_1 Intercept_1   x_1 stateB_1    x_2 sigma_1 .epred
-#>   <dbl> <int> <fct> <int>  <int>      <int> <int> <dbl>       <dbl> <dbl>    <dbl>  <dbl>   <dbl>  <dbl>
-#> 1    NA     8 B         8      1          1     1  57.9        10.3 0.223     22.2 -0.419    4.33   34.4
-#> 2    NA     8 B         8      1          2     2  58.5        11.8 0.187     22.3 -0.438    4.11   35.6
-#> 3    NA     8 B         8      1          3     3  59.1        11.5 0.194     23.5 -0.473    4.53   36.5
-#> 4    NA     8 B         8      1          4     4  60.9        11.7 0.168     22.9 -0.414    3.81   35.9
-#> 5    NA     8 B         8      1          5     5  63.8        13.7 0.120     23.4 -0.463    4.53   38.0
-#> 6    NA     8 B         8      1          6     6  63.5        12.1 0.160     21.7 -0.462    4.56   35.1
-predict(missing_fit) |> dplyr::filter(is.na(y)) |> head()  # Posterior predictive for missing y
-#> # A tibble: 6 × 7
-#>       y     x state .mean   .sd .lower .upper
-#>   <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    NA     8 B      35.4  4.42  26.7    44.1
-#> 2    NA    19 A      15.5  4.36   6.98   24.1
-#> 3    NA    27 A      17.1  4.34   8.60   25.7
-#> 4    NA    28 B      39.4  4.35  30.8    47.9
-#> 5    NA    29 A      17.5  4.34   8.99   26.1
-#> 6    NA    30 B      39.8  4.35  31.2    48.3
+imputed(missing_fit)  # Impute missing y
+#> # A tibble: 10 × 8
+#>        y     x state  .row .mean   .sd .lower .upper
+#>    <dbl> <int> <fct> <int> <dbl> <dbl>  <dbl>  <dbl>
+#>  1    NA     8 B         8  35.4  4.45  26.7    44.1
+#>  2    NA    19 A        19  15.5  4.30   7.24   23.9
+#>  3    NA    27 A        27  17.2  4.34   8.70   25.7
+#>  4    NA    28 B        28  39.4  4.30  30.9    47.8
+#>  5    NA    29 A        29  17.6  4.40   9.27   26.4
+#>  6    NA    30 B        30  39.8  4.39  31.2    48.6
+#>  7    NA    31 A        31  17.9  4.43   9.25   26.6
+#>  8    NA    68 B        68  41.2  4.45  32.6    50.0
+#>  9    NA    84 B        84  34.6  4.37  25.9    43.3
+#> 10    NA    96 B        96  29.6  4.44  20.9    38.3
+fitted(missing_fit) |> dplyr::filter(is.na(y))  # Expected responses at those rows
+#> # A tibble: 10 × 8
+#>        y     x state  .row .mean   .sd .lower .upper
+#>    <dbl> <int> <fct> <int> <dbl> <dbl>  <dbl>  <dbl>
+#>  1    NA     8 B         8  35.4 1.10    33.2   37.6
+#>  2    NA    19 A        19  15.5 0.824   13.9   17.2
+#>  3    NA    27 A        27  17.1 0.757   15.6   18.6
+#>  4    NA    28 B        28  39.4 0.774   37.9   40.9
+#>  5    NA    29 A        29  17.5 0.758   16.1   19.0
+#>  6    NA    30 B        30  39.8 0.775   38.3   41.3
+#>  7    NA    31 A        31  17.9 0.767   16.4   19.4
+#>  8    NA    68 B        68  41.2 1.18    39.2   43.8
+#>  9    NA    84 B        84  34.6 0.885   32.8   36.3
+#> 10    NA    96 B        96  29.6 1.27    27.0   32.0
 # }
 ```

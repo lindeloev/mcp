@@ -81,8 +81,9 @@ for priors.
   including forecasts beyond the data. [Read
   more](https://lindeloev.github.io/mcp/articles/predict.html).
 
-- *Missing responses:* Missing values in the response are imputed
-  jointly with the parameters. [Read
+- *Missing responses:* Use
+  [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+  to inspect missing responses or complete your data. [Read
   more](https://lindeloev.github.io/mcp/articles/missing.html).
 
 ## Options

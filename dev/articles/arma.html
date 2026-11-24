@@ -709,11 +709,12 @@ over the observed range could use
 response history supplies earlier residuals, and unavailable residuals
 before the start of the series are set to zero.</p>
 <ul>
-<li>
-<code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and <code><a href="../reference/execute-mcp-model.html">predict()</a></code> use posterior
-imputations only to complete missing response histories.
-<code><a href="../reference/execute-mcp-model.html">predict()</a></code> generates fresh outcomes at all rows, even where
-the original response was missing.</li>
+<li>Use <code><a href="../reference/imputed.html">imputed()</a></code> to fill gaps. It gives draws of the
+missing responses given all the observed data. <code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and
+<code><a href="../reference/execute-mcp-model.html">predict()</a></code> use those imputations in the history of later
+rows. <code><a href="../reference/execute-mcp-model.html">predict()</a></code> generates a fresh response at each row
+which differs from <code><a href="../reference/imputed.html">imputed()</a></code> for AR/MA. See <a href="../articles/missing.html#imputations-in-time-series">imputations
+in time series</a>.</li>
 <li>
 <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code> is unavailable if the data has missingness
 before some observed data.</li>

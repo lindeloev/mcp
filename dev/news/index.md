@@ -29,6 +29,10 @@ None
 
 ### Minor new features
 
+- [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+  summarises missing responses, returns individual draws, or includes
+  observed responses to give completed datasets (`complete = TRUE`).
+
 - [`mcp()`](https://lindeloev.github.io/mcp/dev/reference/mcp.md) now
   checks that its JAGS likelihood and the R-side
   [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
@@ -46,6 +50,14 @@ None
   which selects the default prior of each parameter.
 
 ### Minor breaking changes
+
+- Summaries from
+  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  [`residuals()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
+  and
+  [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+  now include `.row`, the row number in the evaluated data.
 
 ## mcp 0.4.0
 

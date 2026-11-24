@@ -158,8 +158,8 @@ plot_dpar(
 
 - ndraws:
 
-  Integer or `NULL`. Number of posterior draws to return/summarise.
-  `NULL` means "all". More draws trade speed for accuracy.
+  Integer or `NULL`. Number of draws to select at random. `NULL` uses
+  all draws.
 
 - scale:
 

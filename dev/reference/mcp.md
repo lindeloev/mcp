@@ -43,7 +43,9 @@ mcp(
 
   Table-like data in long format (data.frame, tibble, data.table, etc.)
   with syntactic column names. The response variable can contain missing
-  values, which will be imputed jointly with the parameters. [Read
+  values, which will be imputed jointly with the parameters. Use
+  [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+  to extract them. [Read
   more](https://lindeloev.github.io/mcp/articles/missing.html).
 
 - prior:
@@ -299,32 +301,32 @@ hypothesis(demo_fit, "cp_1 > 30")
 
 # Make predictions
 head(fitted(demo_fit))
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9 0.992  10.9    14.8
-#> 2     6.35  83.5  11.4 0.714  10.0    12.8
-#> 3    28.0   60.2  25.4 0.875  23.7    27.2
-#> 4    15.7   74.7  13.2 1.09   11.0    15.3
-#> 5    16.2   85.9  10.9 0.710   9.56   12.4
-#> 6    22.3   40.1  14.5 0.642  13.1    15.7
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  12.9 0.992  10.9    14.8
+#> 2     6.35  83.5     2  11.4 0.714  10.0    12.8
+#> 3    28.0   60.2     3  25.4 0.875  23.7    27.2
+#> 4    15.7   74.7     4  13.2 1.09   11.0    15.3
+#> 5    16.2   85.9     5  10.9 0.710   9.56   12.4
+#> 6    22.3   40.1     6  14.5 0.642  13.1    15.7
 head(predict(demo_fit))
-#> # A tibble: 6 × 6
-#>   response  time .mean   .sd .lower .upper
-#>      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1    12.2   76.3  12.9  4.00   5.00   20.7
-#> 2     6.35  83.5  11.4  3.94   3.68   19.2
-#> 3    28.0   60.2  25.4  3.97  17.6    33.2
-#> 4    15.7   74.7  13.2  4.02   5.27   21.1
-#> 5    16.2   85.9  10.9  3.94   3.21   18.7
-#> 6    22.3   40.1  14.5  3.93   6.75   22.2
+#> # A tibble: 6 × 7
+#>   response  time  .row .mean   .sd .lower .upper
+#>      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1    12.2   76.3     1  12.9  4.00   5.00   20.7
+#> 2     6.35  83.5     2  11.4  3.94   3.68   19.2
+#> 3    28.0   60.2     3  25.4  3.97  17.6    33.2
+#> 4    15.7   74.7     4  13.2  4.02   5.27   21.1
+#> 5    16.2   85.9     5  10.9  3.94   3.21   18.7
+#> 6    22.3   40.1     6  14.5  3.93   6.75   22.2
 head(predict(demo_fit, newdata = data.frame(time = c(55.545, 80, 132))))
-#> # A tibble: 3 × 5
-#>    time .mean   .sd .lower .upper
-#>   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-#> 1  55.5 22.9   3.94  15.2    30.7
-#> 2  80   12.1   3.96   4.35   19.9
-#> 3 132    1.73  5.51  -9.06   12.6
+#> # A tibble: 3 × 6
+#>    time  .row .mean   .sd .lower .upper
+#>   <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+#> 1  55.5     1 22.9   3.94  15.2    30.7
+#> 2  80       2 12.1   3.96   4.35   19.9
+#> 3 132       3  1.73  5.51  -9.06   12.6
 
 # Compare to a one-intercept-only model (no change points) with default prior
 model_null = list(response ~ 1)

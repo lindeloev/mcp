@@ -80,13 +80,15 @@
 </div>
 <div class="section level3">
 <h3 id="minor-new-features-development-version">Minor new features<a class="anchor" aria-label="anchor" href="#minor-new-features-development-version"></a></h3>
-<ul><li><p><code><a href="../reference/mcp.html">mcp()</a></code> now checks that its JAGS likelihood and the R-side <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code> agree in a few posterior draws, and warns if they do not. This also serves as a safety check for custom families.</p></li>
+<ul><li><p><code><a href="../reference/imputed.html">imputed()</a></code> summarises missing responses, returns individual draws, or includes observed responses to give completed datasets (<code>complete = TRUE</code>).</p></li>
+<li><p><code><a href="../reference/mcp.html">mcp()</a></code> now checks that its JAGS likelihood and the R-side <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code> agree in a few posterior draws, and warns if they do not. This also serves as a safety check for custom families.</p></li>
 <li><p><strong>Better initial values for change points:</strong> Instead of spacing inits evenly, <code>mcp</code> now does a quick R-side scan and sets inits where the model of <code>mu</code> fits the data best while respecting the change point priors. This improves sampling when change points are “clustered”. You can still manually set <code>inits</code> when needed.</p></li>
 <li><p><code><a href="../reference/mcp_pars.html">mcp_pars()</a></code> gains a <code>par_type</code> column (<code>"Intercept"</code>, <code>"dummy"</code>, or <code>"slope"</code>), which selects the default prior of each parameter.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-breaking-changes-development-version">Minor breaking changes<a class="anchor" aria-label="anchor" href="#minor-breaking-changes-development-version"></a></h3>
-</div>
+<ul><li>Summaries from <code><a href="../reference/execute-mcp-model.html">fitted()</a></code>, <code><a href="../reference/execute-mcp-model.html">predict()</a></code>, <code><a href="../reference/execute-mcp-model.html">residuals()</a></code>, and <code><a href="../reference/execute-mcp-model.html">log_lik()</a></code> now include <code>.row</code>, the row number in the evaluated data.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="mcp-040">mcp 0.4.0<a class="anchor" aria-label="anchor" href="#mcp-040"></a></h2><p class="text-muted">CRAN release: 2026-10-26</p>

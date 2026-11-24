@@ -83,15 +83,15 @@ To get the fitted values for each data point, simply do `fitted(fit)`:
 head(fitted(fit))
 ```
 
-    ## # A tibble: 6 × 6
-    ##   response  time .mean   .sd .lower .upper
-    ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    12.2   76.3  12.9 0.990  10.9    14.8
-    ## 2     6.35  83.5  11.4 0.715  10.0    12.8
-    ## 3    28.0   60.2  25.5 0.887  23.7    27.2
-    ## 4    15.7   74.7  13.2 1.09   11.1    15.3
-    ## 5    16.2   85.9  10.9 0.709   9.54   12.3
-    ## 6    22.3   40.1  14.5 0.643  13.1    15.6
+    ## # A tibble: 6 × 7
+    ##   response  time  .row .mean   .sd .lower .upper
+    ##      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1    12.2   76.3     1  12.9 0.990  10.9    14.8
+    ## 2     6.35  83.5     2  11.4 0.715  10.0    12.8
+    ## 3    28.0   60.2     3  25.5 0.887  23.7    27.2
+    ## 4    15.7   74.7     4  13.2 1.09   11.1    15.3
+    ## 5    16.2   85.9     5  10.9 0.709   9.54   12.3
+    ## 6    22.3   40.1     6  14.5 0.643  13.1    15.6
 
 In general, this output contains:
 
@@ -102,6 +102,10 @@ In general, this output contains:
   additionally have the relevant grouping columns,
   [`binomial()`](https://rdrr.io/r/stats/family.html) models have the
   number of trials, etc.
+
+- **.row** gives the row number in `fit$data`, or in `newdata` if
+  supplied. Use it to join summaries or draws by row, even when
+  predictors repeat.
 
 - **.mean:** The fitted value (posterior mean). When `summary = FALSE`,
   you instead get one row per draw with the value in `.epred`, matching
@@ -138,13 +142,13 @@ newdata = data.frame(time = c(data$time[1], 25, -20, 200))
 fitted(fit, newdata = newdata)
 ```
 
-    ## # A tibble: 4 × 5
-    ##    time  .mean   .sd .lower .upper
-    ##   <dbl>  <dbl> <dbl>  <dbl>  <dbl>
-    ## 1  76.3  12.9  0.990  10.9   14.8 
-    ## 2  25     9.94 0.641   8.68  11.2 
-    ## 3 -20     9.94 0.641   8.68  11.2 
-    ## 4 200   -12.4  9.30  -30.6    5.72
+    ## # A tibble: 4 × 6
+    ##    time  .row  .mean   .sd .lower .upper
+    ##   <dbl> <int>  <dbl> <dbl>  <dbl>  <dbl>
+    ## 1  76.3     1  12.9  0.990  10.9   14.8 
+    ## 2  25       2   9.94 0.641   8.68  11.2 
+    ## 3 -20       3   9.94 0.641   8.68  11.2 
+    ## 4 200       4 -12.4  9.30  -30.6    5.72
 
 Note that:
 
@@ -200,15 +204,15 @@ set.seed(42)
 head(predict(fit, width = 0.8))
 ```
 
-    ## # A tibble: 6 × 6
-    ##   response  time .mean   .sd .lower .upper
-    ##      <dbl> <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    12.2   76.3  12.9  4.00   7.78   18.0
-    ## 2     6.35  83.5  11.4  3.94   6.38   16.5
-    ## 3    28.0   60.2  25.5  3.98  20.4    30.5
-    ## 4    15.7   74.7  13.2  4.03   8.08   18.4
-    ## 5    16.2   85.9  10.9  3.94   5.90   16.0
-    ## 6    22.3   40.1  14.5  3.93   9.44   19.5
+    ## # A tibble: 6 × 7
+    ##   response  time  .row .mean   .sd .lower .upper
+    ##      <dbl> <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1    12.2   76.3     1  12.9  4.00   7.78   18.0
+    ## 2     6.35  83.5     2  11.4  3.94   6.38   16.5
+    ## 3    28.0   60.2     3  25.5  3.98  20.4    30.5
+    ## 4    15.7   74.7     4  13.2  4.03   8.08   18.4
+    ## 5    16.2   85.9     5  10.9  3.94   5.90   16.0
+    ## 6    22.3   40.1     6  14.5  3.93   9.44   19.5
 
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
 uses random sampling under the hood, so these values will differ
@@ -327,10 +331,10 @@ We can now compute the 80% posterior predictive interval at
 predict(fit_forecast, newdata = data.frame(time = 125), width = 0.8)
 ```
 
-    ## # A tibble: 1 × 5
-    ##    time .mean   .sd .lower .upper
-    ##   <dbl> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1   125  7.64  5.48 0.0953   14.2
+    ## # A tibble: 1 × 6
+    ##    time  .row .mean   .sd .lower .upper
+    ##   <dbl> <int> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1   125     1  7.64  5.48 0.0953   14.2
 
 To really understand what’s going on here, it may be helpful to
 visualize the model.

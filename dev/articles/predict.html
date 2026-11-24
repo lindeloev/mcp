@@ -175,15 +175,15 @@ inferences.</p>
 <code>fitted(fit)</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
-<span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
-<span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9 0.990  10.9    14.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4 0.715  10.0    12.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5 0.887  23.7    27.2</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2 1.09   11.1    15.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9 0.709   9.54   12.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5 0.643  13.1    15.6</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 7</span></span></span>
+<span><span class="co">##   response  time  .row .mean   .sd .lower .upper</span></span>
+<span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3     1  12.9 0.990  10.9    14.8</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5     2  11.4 0.715  10.0    12.8</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2     3  25.5 0.887  23.7    27.2</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7     4  13.2 1.09   11.1    15.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9     5  10.9 0.709   9.54   12.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1     6  14.5 0.643  13.1    15.6</span></span></code></pre>
 <p>In general, this output contains:</p>
 <ul>
 <li><p>A column for each predictor column in the data. Here,
@@ -192,6 +192,9 @@ same order as in <code>data</code> (which is copied to
 <code>fit$data</code>). Models with <a href="../articles/group_effects.html">group-level effects</a>
 additionally have the relevant grouping columns, <code><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial()</a></code>
 models have the number of trials, etc.</p></li>
+<li><p><strong>.row</strong> gives the row number in
+<code>fit$data</code>, or in <code>newdata</code> if supplied. Use it to
+join summaries or draws by row, even when predictors repeat.</p></li>
 <li><p><strong>.mean:</strong> The fitted value (posterior mean). When
 <code>summary = FALSE</code>, you instead get one row per draw with the
 value in <code>.epred</code>, matching
@@ -218,13 +221,13 @@ behind the scenes.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">time</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">25</span>, <span class="op">-</span><span class="fl">20</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">newdata</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 4 × 5</span></span></span>
-<span><span class="co">##    time  .mean   .sd .lower .upper</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>  76.3  12.9  0.990  10.9   14.8 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>  25     9.94 0.641   8.68  11.2 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span> -<span style="color: #BB0000;">20</span>     9.94 0.641   8.68  11.2 </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> 200   -<span style="color: #BB0000;">12.4</span>  9.30  -<span style="color: #BB0000;">30.6</span>    5.72</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 4 × 6</span></span></span>
+<span><span class="co">##    time  .row  .mean   .sd .lower .upper</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>  76.3     1  12.9  0.990  10.9   14.8 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>  25       2   9.94 0.641   8.68  11.2 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span> -<span style="color: #BB0000;">20</span>       3   9.94 0.641   8.68  11.2 </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> 200       4 -<span style="color: #BB0000;">12.4</span>  9.30  -<span style="color: #BB0000;">30.6</span>    5.72</span></span></code></pre>
 <p>Note that:</p>
 <ul>
 <li>We get one row per value of <code>time</code>.</li>
@@ -275,15 +278,15 @@ predictive interval):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
-<span><span class="co">##   response  time .mean   .sd .lower .upper</span></span>
-<span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3  12.9  4.00   7.78   18.0</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5  11.4  3.94   6.38   16.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2  25.5  3.98  20.4    30.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7  13.2  4.03   8.08   18.4</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9  10.9  3.94   5.90   16.0</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1  14.5  3.93   9.44   19.5</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 7</span></span></span>
+<span><span class="co">##   response  time  .row .mean   .sd .lower .upper</span></span>
+<span><span class="co">##      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    12.2   76.3     1  12.9  4.00   7.78   18.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>     6.35  83.5     2  11.4  3.94   6.38   16.5</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">3</span>    28.0   60.2     3  25.5  3.98  20.4    30.5</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span>    15.7   74.7     4  13.2  4.03   8.08   18.4</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>    16.2   85.9     5  10.9  3.94   5.90   16.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">6</span>    22.3   40.1     6  14.5  3.93   9.44   19.5</span></span></code></pre>
 <div class="tip">
 <p><code><a href="../reference/execute-mcp-model.html">predict()</a></code> uses random sampling under the hood, so these
 values will differ slightly from call to call. You can make it
@@ -385,10 +388,10 @@ from the data, so this sampling trick causes poor mixing.</p>
 <code>time = 125</code>:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit_forecast</span>, newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">125</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
-<span><span class="co">##    time .mean   .sd .lower .upper</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125  7.64  5.48 0.095<span style="text-decoration: underline;">3</span>   14.2</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">##    time  .row .mean   .sd .lower .upper</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>   125     1  7.64  5.48 0.095<span style="text-decoration: underline;">3</span>   14.2</span></span></code></pre>
 <p>To really understand what’s going on here, it may be helpful to
 visualize the model. <code><a href="../reference/plot.mcpfit.html">plot()</a></code> shows only the observed range
 of <code>time</code>, so we make the plot ourselves:</p>

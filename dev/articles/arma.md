@@ -707,13 +707,19 @@ evaluate a finite, conditional recurrence: the response history supplies
 earlier residuals, and unavailable residuals before the start of the
 series are set to zero.
 
-- [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+- Use
+  [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+  to fill gaps. It gives draws of the missing responses given all the
+  observed data.
+  [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   and
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  use posterior imputations only to complete missing response histories.
+  use those imputations in the history of later rows.
   [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-  generates fresh outcomes at all rows, even where the original response
-  was missing.
+  generates a fresh response at each row which differs from
+  [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+  for AR/MA. See [imputations in time
+  series](https://lindeloev.github.io/mcp/dev/articles/missing.html#imputations-in-time-series).
 - [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
   is unavailable if the data has missingness before some observed data.
 - `predict(..., arma = "replicate")`,

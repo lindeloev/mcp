@@ -496,6 +496,9 @@ Per-observation summaries or draws
 
   Fitted and Predicted Values of `mcpfit` Objects
 
+- [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+  : Imputed Responses
+
 - [`posterior_epred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
   [`posterior_predict()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)
   [`posterior_linpred()`](https://lindeloev.github.io/mcp/dev/reference/posterior_epred.mcpfit.md)

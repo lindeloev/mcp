@@ -5,12 +5,10 @@ two consequences of that:
 
 1.  **Change points in voids:** Change points can be inferred in regions
     with no observed responses.
-2.  **Imputing missing responses:** JAGS treats the missing responses as
-    latent variables and samples them together with the model
-    parameters. You can inspect expected responses with
-    [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-    and the imputation distribution with
-    [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md).
+2.  **Imputing missing responses:**
+    [`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+    gives you the missing responses sampled jointly with the model
+    parameters. Use it to inspect a gap or complete your data.
 
 ``` r
 
@@ -76,110 +74,61 @@ hypothesis(fit_void, c(
 
 ## Imputing missing responses
 
-### An example with missing responses
-
-The built-in example has a change in slope, a strong difference between
-two states, scattered missing responses, and a short run of missing
-responses:
+The built-in example has a change in slope, a difference between two
+states, and several missing responses. Use
+[`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+to see the mean and an 80% interval for each missing response. `.row`
+gives its row number in `fit$data`.
 
 ``` r
 
+# Fits model and plots it. See code in fit$example_code.
 fit = mcp_example("missing")
 ```
 
     ## NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.
 
+``` r
+
+# Get imputations
+imputations = imputed(fit, width = 0.8)
+imputations
+```
+
+    ## # A tibble: 10 × 8
+    ##        y     x state  .row .mean   .sd .lower .upper
+    ##    <dbl> <int> <fct> <int> <dbl> <dbl>  <dbl>  <dbl>
+    ##  1    NA     8 B         8  35.4  4.45  29.7    41.2
+    ##  2    NA    19 A        19  15.5  4.30   9.99   21.0
+    ##  3    NA    27 A        27  17.2  4.34  11.6    22.7
+    ##  4    NA    28 B        28  39.4  4.30  33.9    44.7
+    ##  5    NA    29 A        29  17.6  4.40  11.9    23.3
+    ##  6    NA    30 B        30  39.8  4.39  34.2    45.3
+    ##  7    NA    31 A        31  17.9  4.43  12.3    23.6
+    ##  8    NA    68 B        68  41.2  4.45  35.6    46.9
+    ##  9    NA    84 B        84  34.6  4.37  29.0    40.2
+    ## 10    NA    96 B        96  29.6  4.44  23.9    35.3
+
 ![](missing_files/figure-html/unnamed-chunk-5-1.png)
 
-The ordinary plot shows the observed responses and model estimates but
-omits missing responses. [Below](#visualizing-imputations), we add them
-to the plot. These are the rows with missing responses in `y`:
-
-``` r
-
-fit$data |> filter(is.na(y))
-```
-
-    ##     y  x state
-    ## 1  NA  8     B
-    ## 2  NA 19     A
-    ## 3  NA 27     A
-    ## 4  NA 28     B
-    ## 5  NA 29     A
-    ## 6  NA 30     B
-    ## 7  NA 31     A
-    ## 8  NA 68     B
-    ## 9  NA 84     B
-    ## 10 NA 96     B
-
-### Expected responses and predictions
-
-[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-evaluates the posterior predictive distribution at the missing rows,
-generating fresh simulated responses that include residual variation.
-The predictions come from trends in non-missing data and what they
-imply, given the observed covariates (`state` and `x`), for the missing
-rows. Without [`ar()`](https://rdrr.io/r/stats/ar.html) or `ma()` terms,
-as here, these predictions have the same distribution as the JAGS
-imputations, so we use them as imputations below.
-
-``` r
-
-# Mean and 80% posterior predictive interval for missing data
-imputed = predict(fit, width = 0.8) |>
-  filter(is.na(y))
-imputed
-```
-
-    ## # A tibble: 10 × 7
-    ##        y     x state .mean   .sd .lower .upper
-    ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.4  4.42  29.8    41.0
-    ##  2    NA    19 A      15.5  4.36   9.98   21.1
-    ##  3    NA    27 A      17.1  4.34  11.6    22.7
-    ##  4    NA    28 B      39.4  4.35  33.8    44.9
-    ##  5    NA    29 A      17.5  4.34  12.0    23.1
-    ##  6    NA    30 B      39.8  4.35  34.2    45.3
-    ##  7    NA    31 A      17.9  4.35  12.4    23.5
-    ##  8    NA    68 B      41.2  4.44  35.6    46.9
-    ##  9    NA    84 B      34.6  4.37  29.0    40.1
-    ## 10    NA    96 B      29.6  4.46  23.9    35.3
-
+Use
 [`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-has the same syntax as
+for the expected response at each row and
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-but returns the posterior *expected* response. Its intervals are
-narrower because they do not include response variation:
-
-``` r
-
-# Mean and 80% posterior interval of the expected response at missing data
-fitted(fit, width = 0.8) |>
-  filter(is.na(y))
-```
-
-    ## # A tibble: 10 × 7
-    ##        y     x state .mean   .sd .lower .upper
-    ##    <dbl> <int> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ##  1    NA     8 B      35.4 1.10    34.0   36.8
-    ##  2    NA    19 A      15.5 0.824   14.5   16.6
-    ##  3    NA    27 A      17.1 0.757   16.2   18.1
-    ##  4    NA    28 B      39.4 0.774   38.4   40.4
-    ##  5    NA    29 A      17.5 0.758   16.6   18.5
-    ##  6    NA    30 B      39.8 0.775   38.8   40.8
-    ##  7    NA    31 A      17.9 0.767   17.0   18.9
-    ##  8    NA    68 B      41.2 1.18    39.8   42.8
-    ##  9    NA    84 B      34.6 0.885   33.4   35.7
-    ## 10    NA    96 B      29.6 1.27    27.9   31.2
+for a fresh response. Both return all rows, so you can use
+`filter(is.na(y))` to inspect the missing responses. For this model,
+predictions and imputations at the gaps have the same distribution. In a
+[time series](#imputations-in-time-series), they can differ, and
+[`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+use more available information.
 
 ### Visualizing imputations
 
-Imputations are not added to
+Add the imputation summaries to
 [`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-automatically. Since
-[`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-returns a ggplot, it is easy to extend. Here an `×` marks the posterior
-mean and a vertical line shows the central 80% imputation interval:
+with
+[`geom_linerange()`](https://ggplot2.tidyverse.org/reference/geom_linerange.html)
+for the interval and an `×` for the mean.
 
 ``` r
 
@@ -188,7 +137,7 @@ plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add imputation interval
   geom_linerange(
-    data = imputed,
+    data = imputations,
     aes(x = x, ymin = .lower, ymax = .upper),
     inherit.aes = FALSE,
     color = "black"
@@ -196,7 +145,7 @@ plot(fit, color_by = "state", interval = "predict", width = 0.8) +
 
   # Add "x" at posterior mean
   geom_point(
-    data = imputed,
+    data = imputations,
     aes(x = x, y = .mean),
     inherit.aes = FALSE,
     shape = 4,  # an "x"
@@ -204,80 +153,95 @@ plot(fit, color_by = "state", interval = "predict", width = 0.8) +
   )
 ```
 
-![](missing_files/figure-html/unnamed-chunk-9-1.png)
+![](missing_files/figure-html/unnamed-chunk-6-1.png)
 
-This deliberately distinguishes imputed values from the solid observed
-points. You can change the interval width, marker, color, or add a
-subset of the missing rows using ordinary `dplyr` and `ggplot2` code.
-
-The plot above reduces each imputation distribution to an interval. Use
-`summary = FALSE` when you need the individual draws instead. Here we
-plot the imputation distribution for each missing row:
+Use `summary = FALSE` to plot the distribution of each missing response
+from its draws, which is richer than just the interval plotted above.
 
 ``` r
 
-missing_draws = predict(fit, summary = FALSE) |>
-  filter(is.na(y))
+missing_draws = imputed(fit, summary = FALSE)
 
-ggplot(missing_draws, aes(x = .prediction)) +
-  geom_density() + 
+ggplot(missing_draws, aes(x = .imputed)) +
+  geom_density() +
   facet_wrap(~x)
 ```
 
-![](missing_files/figure-html/unnamed-chunk-10-1.png)
+![](missing_files/figure-html/unnamed-chunk-7-1.png)
 
-### Probabilistic statements about missing responses
+### Probabilities for a missing response
 
-Sometimes, the missing response is of direct interest. For example, you
-may want to know the probability that a missing response is above a
-threshold. You can use
-[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-with `summary = FALSE` to get all posterior predictive draws and then
-calculate probabilities of various statements. For example:
+To estimate the probability that the missing response at row 19 exceeded
+20, calculate the fraction of its draws above 20. Similarly for other
+probabilities:
 
 ``` r
 
 missing_draws |>
-  filter(.row == 19) |>  # Row number 19 in original data
+  filter(.row == 19) |>
   summarise(
-    p_greater = mean(.prediction > 20),
-    p_lower = mean(.prediction < 10),
-    p_between = mean(.prediction > 10 & .prediction < 20)
+    p_greater = mean(.imputed > 20),
+    p_lower = mean(.imputed < 10),
+    p_between = mean(.imputed > 10 & .imputed < 20)
   )
 ```
 
     ## # A tibble: 1 × 3
     ##   p_greater p_lower p_between
     ##       <dbl>   <dbl>     <dbl>
-    ## 1     0.150   0.103     0.747
+    ## 1     0.147   0.100     0.752
 
-### Imputations and other continuous predictors
+### Completing a dataset (multiple imputation)
 
-Plotting differs from
-[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-and
+With `complete = TRUE`, `.imputed` contains the observed responses as
+well as the imputed ones. Each `.draw` gives one joint completion of the
+data. For multiple imputation, select a few draws and make one dataset
+per draw.
+
+``` r
+
+completed = imputed(fit, complete = TRUE, summary = FALSE, ndraws = 20) |>
+  mutate(y = .imputed)
+datasets = split(select(completed, all_of(names(fit$data))), completed$.draw)
+
+# Show one completed dataset
+datasets[1]
+```
+
+    ## $`264`
+    ## # A tibble: 100 × 3
+    ##        y     x state
+    ##    <dbl> <int> <fct>
+    ##  1  15.7     1 A    
+    ##  2  30.2     2 B    
+    ##  3  12.2     3 A    
+    ##  4  35.5     4 B    
+    ##  5  12.9     5 A    
+    ##  6  33.1     6 B    
+    ##  7  17.8     7 A    
+    ##  8  29.0     8 B    
+    ##  9  20.3     9 A    
+    ## 10  34.2    10 B    
+    ## # ℹ 90 more rows
+
+### Imputations in time series
+
+Use
+[`imputed()`](https://lindeloev.github.io/mcp/dev/reference/imputed.md)
+to fill a gap in an AR/MA series. The observed responses on both sides
+can inform the imputation. For example, in a Gaussian AR(1) model with
+mean 0 and coefficient 0.8, the middle response in `c(0, NA, 10)` has an
+imputed mean of about 4.9. The fresh prediction at that row has mean 0,
+based on the preceding response.
+
+Default
 [`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-in one respect: The smooth curves in
-[`plot()`](https://lindeloev.github.io/mcp/dev/reference/plot.mcpfit.md)
-are evaluated on data made by
-[`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md),
-which keeps additional continuous predictors (i.e., predictors not
-assigned an aesthetic) at their observed means by default, or at values
-supplied through the `at`-argument. The plot caption reports these fixed
-values. See the [plotting
-article](https://lindeloev.github.io/mcp/dev/articles/plotting.md) for
-using
-[`interpolate_newdata()`](https://lindeloev.github.io/mcp/dev/reference/interpolate_newdata.md)
-to make your own plots.
-
-The imputation markers above are different: `predict(fit)` evaluates the
-original data, so every missing row uses its own predictor values. If
-another continuous predictor is especially important, an imputation may
-therefore lie away from a curve drawn at that predictor’s mean. This is
-expected, just as an observed response with unusual predictor values may
-lie away from that curve. Use `plot(fit, at = ...)` or
-`interpolate_newdata(fit, at = ...)` or make separate plots when those
-differences deserve emphasis.
+uses the history up to each row to generate a fresh response. Earlier
+imputations in that history can already contain information from later
+observations. Use `predict(fit, arma = "replicate")` to generate a fresh
+series recursively. See the [time-series
+article](https://lindeloev.github.io/mcp/dev/articles/arma.md) for
+examples.
 
 ## Supported models and limitations
 
@@ -298,8 +262,8 @@ you can:
   imputation uncertainty can vary over the predictor range.
 - Use [binomial, Bernoulli, Poisson, or negative-binomial
   responses](https://lindeloev.github.io/mcp/dev/articles/families.md).
-  Their imputations remain on the appropriate discrete response scale;
-  binomial predictions can also be returned as rates.
+  The imputation draws are discrete. Use `imputed(fit, rate = TRUE)` for
+  binomial proportions.
 
 However, predictors required by the model must themselves be observed.
 `mcp` currently imputes missing responses, not missing predictor values,
@@ -310,43 +274,27 @@ observed predictors and model structure.
 
 ### Model evaluation and time series
 
-Missing rows are not treated as observed contributions to
-[`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
-[`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
-or
-[`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md).
-For ordinary non-AR/MA models, the remaining observed rows can still be
-used for these calculations.
-
-AR/MA models need extra care because a missing response can become part
-of the history for later observations. `mcp` retains the JAGS draws so
-[`fitted()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-and
-[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
-can reconstruct that history, but it does not currently integrate over
-missing histories for pointwise likelihood calculations. Consequently,
 [`log_lik()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md),
 [`loo()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md),
 and
 [`waic()`](https://lindeloev.github.io/mcp/dev/reference/loo.mcpfit.md)
-are unavailable when a missing response precedes some observed data.
+score observed responses. In AR/MA models, these functions are
+unavailable when a missing response enters the history of a later
+observed response. Scoring that observation would require integrating
+over the missing history.
 
 The [time-series
 article](https://lindeloev.github.io/mcp/dev/articles/arma.md) discusses
 this. Use `predict(fit, arma = "replicate")` or
 `posterior_predict(fit, arma = "replicate")` to generate fresh
-replicated series recursively. Their histories are generated rather than
-taken from the observed responses. The default predictions condition on
-observed responses and retained imputations as histories, but still
-generate fresh outcomes at every row.
+replicated series recursively.
 
 ### Predictions for new data
 
-In AR/MA models, the retained JAGS draws belong to the missing rows in
-the original fitted data and supply their histories. For the non-AR/MA
-example in this article, predictions for genuinely new data are ordinary
-posterior predictions, evaluated just like predictions at the missing
-rows:
+Use
+[`predict()`](https://lindeloev.github.io/mcp/dev/reference/execute-mcp-model.md)
+with `newdata` to generate responses at new predictor values. For the
+example without AR/MA terms, supply the predictor values directly.
 
 ``` r
 
@@ -358,8 +306,8 @@ newdata = data.frame(
 predict(fit, newdata = newdata, width = 0.8)
 ```
 
-    ## # A tibble: 2 × 6
-    ##       x state .mean   .sd .lower .upper
-    ##   <dbl> <fct> <dbl> <dbl>  <dbl>  <dbl>
-    ## 1    20 A      15.7  4.35   10.2   21.3
-    ## 2    80 B      36.2  4.36   30.7   41.8
+    ## # A tibble: 2 × 7
+    ##       x state  .row .mean   .sd .lower .upper
+    ##   <dbl> <fct> <int> <dbl> <dbl>  <dbl>  <dbl>
+    ## 1    20 A         1  15.7  4.35   10.2   21.3
+    ## 2    80 B         2  36.2  4.36   30.7   41.8

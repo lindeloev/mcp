@@ -118,11 +118,9 @@ response. This article covers two consequences of that:</p>
 <strong>Change points in voids:</strong> Change points can be
 inferred in regions with no observed responses.</li>
 <li>
-<strong>Imputing missing responses:</strong> JAGS treats the missing
-responses as latent variables and samples them together with the model
-parameters. You can inspect expected responses with
-<code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and the imputation distribution with
-<code><a href="../reference/execute-mcp-model.html">predict()</a></code>.</li>
+<strong>Imputing missing responses:</strong> <code><a href="../reference/imputed.html">imputed()</a></code>
+gives you the missing responses sampled jointly with the model
+parameters. Use it to inspect a gap or complete your data.</li>
 </ol>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lindeloev.github.io/mcp/">mcp</a></span><span class="op">)</span></span>
@@ -176,97 +174,52 @@ odds of the change point being in the void:</p>
 <div class="section level2">
 <h2 id="imputing-missing-responses">Imputing missing responses<a class="anchor" aria-label="anchor" href="#imputing-missing-responses"></a>
 </h2>
-<div class="section level3">
-<h3 id="an-example-with-missing-responses">An example with missing responses<a class="anchor" aria-label="anchor" href="#an-example-with-missing-responses"></a>
-</h3>
-<p>The built-in example has a change in slope, a strong difference
-between two states, scattered missing responses, and a short run of
-missing responses:</p>
+<p>The built-in example has a change in slope, a difference between two
+states, and several missing responses. Use <code><a href="../reference/imputed.html">imputed()</a></code> to see
+the mean and an 80% interval for each missing response.
+<code>.row</code> gives its row number in <code>fit$data</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Fits model and plots it. See code in fit$example_code.</span></span>
+<span><span class="va">fit</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcp_example.html">mcp_example</a></span><span class="op">(</span><span class="st">"missing"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## NA values detected in 'y'. JAGS will treat them as latent responses and impute them during sampling.</span></span></code></pre>
-<p><img src="missing_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
-<p>The ordinary plot shows the observed responses and model estimates
-but omits missing responses. <a href="#visualizing-imputations">Below</a>, we add them to the plot.
-These are the rows with missing responses in <code>y</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##     y  x state</span></span>
-<span><span class="co">## 1  NA  8     B</span></span>
-<span><span class="co">## 2  NA 19     A</span></span>
-<span><span class="co">## 3  NA 27     A</span></span>
-<span><span class="co">## 4  NA 28     B</span></span>
-<span><span class="co">## 5  NA 29     A</span></span>
-<span><span class="co">## 6  NA 30     B</span></span>
-<span><span class="co">## 7  NA 31     A</span></span>
-<span><span class="co">## 8  NA 68     B</span></span>
-<span><span class="co">## 9  NA 84     B</span></span>
-<span><span class="co">## 10 NA 96     B</span></span></code></pre>
-</div>
-<div class="section level3">
-<h3 id="expected-responses-and-predictions">Expected responses and predictions<a class="anchor" aria-label="anchor" href="#expected-responses-and-predictions"></a>
-</h3>
-<p><code><a href="../reference/execute-mcp-model.html">predict()</a></code> evaluates the posterior predictive
-distribution at the missing rows, generating fresh simulated responses
-that include residual variation. The predictions come from trends in
-non-missing data and what they imply, given the observed covariates
-(<code>state</code> and <code>x</code>), for the missing rows. Without
-<code><a href="https://rdrr.io/r/stats/ar.html" class="external-link">ar()</a></code> or <code>ma()</code> terms, as here, these predictions
-have the same distribution as the JAGS imputations, so we use them as
-imputations below.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Mean and 80% posterior predictive interval for missing data</span></span>
-<span><span class="va">imputed</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">imputed</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 10 × 7</span></span></span>
-<span><span class="co">##        y     x state .mean   .sd .lower .upper</span></span>
-<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span>    <span style="color: #BB0000;">NA</span>     8 B      35.4  4.42  29.8    41.0</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 2</span>    <span style="color: #BB0000;">NA</span>    19 A      15.5  4.36   9.98   21.1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 3</span>    <span style="color: #BB0000;">NA</span>    27 A      17.1  4.34  11.6    22.7</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span>    <span style="color: #BB0000;">NA</span>    28 B      39.4  4.35  33.8    44.9</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span>    <span style="color: #BB0000;">NA</span>    29 A      17.5  4.34  12.0    23.1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span>    <span style="color: #BB0000;">NA</span>    30 B      39.8  4.35  34.2    45.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span>    <span style="color: #BB0000;">NA</span>    31 A      17.9  4.35  12.4    23.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span>    <span style="color: #BB0000;">NA</span>    68 B      41.2  4.44  35.6    46.9</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span>    <span style="color: #BB0000;">NA</span>    84 B      34.6  4.37  29.0    40.1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span>    <span style="color: #BB0000;">NA</span>    96 B      29.6  4.46  23.9    35.3</span></span></code></pre>
-<p><code><a href="../reference/execute-mcp-model.html">fitted()</a></code> has the same syntax as <code><a href="../reference/execute-mcp-model.html">predict()</a></code>
-but returns the posterior <em>expected</em> response. Its intervals are
-narrower because they do not include response variation:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Mean and 80% posterior interval of the expected response at missing data</span></span>
-<span><span class="fu"><a href="../reference/execute-mcp-model.html">fitted</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 10 × 7</span></span></span>
-<span><span class="co">##        y     x state .mean   .sd .lower .upper</span></span>
-<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span>    <span style="color: #BB0000;">NA</span>     8 B      35.4 1.10    34.0   36.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 2</span>    <span style="color: #BB0000;">NA</span>    19 A      15.5 0.824   14.5   16.6</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 3</span>    <span style="color: #BB0000;">NA</span>    27 A      17.1 0.757   16.2   18.1</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span>    <span style="color: #BB0000;">NA</span>    28 B      39.4 0.774   38.4   40.4</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span>    <span style="color: #BB0000;">NA</span>    29 A      17.5 0.758   16.6   18.5</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 6</span>    <span style="color: #BB0000;">NA</span>    30 B      39.8 0.775   38.8   40.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span>    <span style="color: #BB0000;">NA</span>    31 A      17.9 0.767   17.0   18.9</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 8</span>    <span style="color: #BB0000;">NA</span>    68 B      41.2 1.18    39.8   42.8</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span>    <span style="color: #BB0000;">NA</span>    84 B      34.6 0.885   33.4   35.7</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span>    <span style="color: #BB0000;">NA</span>    96 B      29.6 1.27    27.9   31.2</span></span></code></pre>
-</div>
+<code class="sourceCode R"><span><span class="co"># Get imputations</span></span>
+<span><span class="va">imputations</span> <span class="op">=</span> <span class="fu"><a href="../reference/imputed.html">imputed</a></span><span class="op">(</span><span class="va">fit</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
+<span><span class="va">imputations</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 10 × 8</span></span></span>
+<span><span class="co">##        y     x state  .row .mean   .sd .lower .upper</span></span>
+<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span>    <span style="color: #BB0000;">NA</span>     8 B         8  35.4  4.45  29.7    41.2</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 2</span>    <span style="color: #BB0000;">NA</span>    19 A        19  15.5  4.30   9.99   21.0</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 3</span>    <span style="color: #BB0000;">NA</span>    27 A        27  17.2  4.34  11.6    22.7</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span>    <span style="color: #BB0000;">NA</span>    28 B        28  39.4  4.30  33.9    44.7</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span>    <span style="color: #BB0000;">NA</span>    29 A        29  17.6  4.40  11.9    23.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span>    <span style="color: #BB0000;">NA</span>    30 B        30  39.8  4.39  34.2    45.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span>    <span style="color: #BB0000;">NA</span>    31 A        31  17.9  4.43  12.3    23.6</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span>    <span style="color: #BB0000;">NA</span>    68 B        68  41.2  4.45  35.6    46.9</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span>    <span style="color: #BB0000;">NA</span>    84 B        84  34.6  4.37  29.0    40.2</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span>    <span style="color: #BB0000;">NA</span>    96 B        96  29.6  4.44  23.9    35.3</span></span></code></pre>
+<p><img src="missing_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<p>Use <code><a href="../reference/execute-mcp-model.html">fitted()</a></code> for the expected response at each row and
+<code><a href="../reference/execute-mcp-model.html">predict()</a></code> for a fresh response. Both return all rows, so
+you can use <code>filter(is.na(y))</code> to inspect the missing
+responses. For this model, predictions and imputations at the gaps have
+the same distribution. In a <a href="#imputations-in-time-series">time
+series</a>, they can differ, and <code><a href="../reference/imputed.html">imputed()</a></code> use more
+available information.</p>
 <div class="section level3">
 <h3 id="visualizing-imputations">Visualizing imputations<a class="anchor" aria-label="anchor" href="#visualizing-imputations"></a>
 </h3>
-<p>Imputations are not added to <code><a href="../reference/plot.mcpfit.html">plot()</a></code> automatically. Since
-<code><a href="../reference/plot.mcpfit.html">plot()</a></code> returns a ggplot, it is easy to extend. Here an
-<code>×</code> marks the posterior mean and a vertical line shows the
-central 80% imputation interval:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<p>Add the imputation summaries to <code><a href="../reference/plot.mcpfit.html">plot()</a></code> with
+<code><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_linerange()</a></code> for the interval and an <code>×</code> for
+the mean.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Start with mcp plot with prediction interval</span></span>
 <span><span class="fu"><a href="../reference/plot.mcpfit.html">plot</a></span><span class="op">(</span><span class="va">fit</span>, color_by <span class="op">=</span> <span class="st">"state"</span>, interval <span class="op">=</span> <span class="st">"predict"</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
 <span></span>
 <span>  <span class="co"># Add imputation interval</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_linerange</a></span><span class="op">(</span></span>
-<span>    data <span class="op">=</span> <span class="va">imputed</span>,</span>
+<span>    data <span class="op">=</span> <span class="va">imputations</span>,</span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, ymin <span class="op">=</span> <span class="va">.lower</span>, ymax <span class="op">=</span> <span class="va">.upper</span><span class="op">)</span>,</span>
 <span>    inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>    color <span class="op">=</span> <span class="st">"black"</span></span>
@@ -274,72 +227,88 @@ central 80% imputation interval:</p>
 <span></span>
 <span>  <span class="co"># Add "x" at posterior mean</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
-<span>    data <span class="op">=</span> <span class="va">imputed</span>,</span>
+<span>    data <span class="op">=</span> <span class="va">imputations</span>,</span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">.mean</span><span class="op">)</span>,</span>
 <span>    inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>    shape <span class="op">=</span> <span class="fl">4</span>,  <span class="co"># an "x"</span></span>
 <span>    size <span class="op">=</span> <span class="fl">2</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
-<p>This deliberately distinguishes imputed values from the solid
-observed points. You can change the interval width, marker, color, or
-add a subset of the missing rows using ordinary <code>dplyr</code> and
-<code>ggplot2</code> code.</p>
-<p>The plot above reduces each imputation distribution to an interval.
-Use <code>summary = FALSE</code> when you need the individual draws
-instead. Here we plot the imputation distribution for each missing
-row:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<p><img src="missing_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+<p>Use <code>summary = FALSE</code> to plot the distribution of each
+missing response from its draws, which is richer than just the interval
+plotted above.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">=</span> <span class="fu"><a href="../reference/imputed.html">imputed</a></span><span class="op">(</span><span class="va">fit</span>, summary <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">missing_draws</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.prediction</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">missing_draws</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">.imputed</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="missing_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="missing_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
-<h3 id="probabilistic-statements-about-missing-responses">Probabilistic statements about missing responses<a class="anchor" aria-label="anchor" href="#probabilistic-statements-about-missing-responses"></a>
+<h3 id="probabilities-for-a-missing-response">Probabilities for a missing response<a class="anchor" aria-label="anchor" href="#probabilities-for-a-missing-response"></a>
 </h3>
-<p>Sometimes, the missing response is of direct interest. For example,
-you may want to know the probability that a missing response is above a
-threshold. You can use <code><a href="../reference/execute-mcp-model.html">predict()</a></code> with
-<code>summary = FALSE</code> to get all posterior predictive draws and
-then calculate probabilities of various statements. For example:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<p>To estimate the probability that the missing response at row 19
+exceeded 20, calculate the fraction of its draws above 20. Similarly for
+other probabilities:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">missing_draws</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.row</span> <span class="op">==</span> <span class="fl">19</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="co"># Row number 19 in original data</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.row</span> <span class="op">==</span> <span class="fl">19</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
-<span>    p_greater <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.prediction</span> <span class="op">&gt;</span> <span class="fl">20</span><span class="op">)</span>,</span>
-<span>    p_lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.prediction</span> <span class="op">&lt;</span> <span class="fl">10</span><span class="op">)</span>,</span>
-<span>    p_between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.prediction</span> <span class="op">&gt;</span> <span class="fl">10</span> <span class="op">&amp;</span> <span class="va">.prediction</span> <span class="op">&lt;</span> <span class="fl">20</span><span class="op">)</span></span>
+<span>    p_greater <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.imputed</span> <span class="op">&gt;</span> <span class="fl">20</span><span class="op">)</span>,</span>
+<span>    p_lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.imputed</span> <span class="op">&lt;</span> <span class="fl">10</span><span class="op">)</span>,</span>
+<span>    p_between <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.imputed</span> <span class="op">&gt;</span> <span class="fl">10</span> <span class="op">&amp;</span> <span class="va">.imputed</span> <span class="op">&lt;</span> <span class="fl">20</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
 <span><span class="co">##   p_greater p_lower p_between</span></span>
 <span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.150   0.103     0.747</span></span></code></pre>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>     0.147   0.100     0.752</span></span></code></pre>
 </div>
 <div class="section level3">
-<h3 id="imputations-and-other-continuous-predictors">Imputations and other continuous predictors<a class="anchor" aria-label="anchor" href="#imputations-and-other-continuous-predictors"></a>
+<h3 id="completing-a-dataset-multiple-imputation">Completing a dataset (multiple imputation)<a class="anchor" aria-label="anchor" href="#completing-a-dataset-multiple-imputation"></a>
 </h3>
-<p>Plotting differs from <code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and
-<code><a href="../reference/execute-mcp-model.html">predict()</a></code> in one respect: The smooth curves in
-<code><a href="../reference/plot.mcpfit.html">plot()</a></code> are evaluated on data made by
-<code><a href="../reference/interpolate_newdata.html">interpolate_newdata()</a></code>, which keeps additional continuous
-predictors (i.e., predictors not assigned an aesthetic) at their
-observed means by default, or at values supplied through the
-<code>at</code>-argument. The plot caption reports these fixed values.
-See the <a href="../articles/plotting.html">plotting article</a> for
-using <code><a href="../reference/interpolate_newdata.html">interpolate_newdata()</a></code> to make your own plots.</p>
-<p>The imputation markers above are different: <code>predict(fit)</code>
-evaluates the original data, so every missing row uses its own predictor
-values. If another continuous predictor is especially important, an
-imputation may therefore lie away from a curve drawn at that predictor’s
-mean. This is expected, just as an observed response with unusual
-predictor values may lie away from that curve. Use
-<code>plot(fit, at = ...)</code> or
-<code>interpolate_newdata(fit, at = ...)</code> or make separate plots
-when those differences deserve emphasis.</p>
+<p>With <code>complete = TRUE</code>, <code>.imputed</code> contains the
+observed responses as well as the imputed ones. Each <code>.draw</code>
+gives one joint completion of the data. For multiple imputation, select
+a few draws and make one dataset per draw.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">completed</span> <span class="op">=</span> <span class="fu"><a href="../reference/imputed.html">imputed</a></span><span class="op">(</span><span class="va">fit</span>, complete <span class="op">=</span> <span class="cn">TRUE</span>, summary <span class="op">=</span> <span class="cn">FALSE</span>, ndraws <span class="op">=</span> <span class="fl">20</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">.imputed</span><span class="op">)</span></span>
+<span><span class="va">datasets</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">completed</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/all_of.html" class="external-link">all_of</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">data</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="va">completed</span><span class="op">$</span><span class="va">.draw</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Show one completed dataset</span></span>
+<span><span class="va">datasets</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">## $`264`</span></span>
+<span><span class="co">## <span style="color: #949494;"># A tibble: 100 × 3</span></span></span>
+<span><span class="co">##        y     x state</span></span>
+<span><span class="co">##    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span>  15.7     1 A    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 2</span>  30.2     2 B    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 3</span>  12.2     3 A    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span>  35.5     4 B    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span>  12.9     5 A    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 6</span>  33.1     6 B    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span>  17.8     7 A    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 8</span>  29.0     8 B    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span>  20.3     9 A    </span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span>  34.2    10 B    </span></span>
+<span><span class="co">## <span style="color: #949494;"># ℹ 90 more rows</span></span></span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="imputations-in-time-series">Imputations in time series<a class="anchor" aria-label="anchor" href="#imputations-in-time-series"></a>
+</h3>
+<p>Use <code><a href="../reference/imputed.html">imputed()</a></code> to fill a gap in an AR/MA series. The
+observed responses on both sides can inform the imputation. For example,
+in a Gaussian AR(1) model with mean 0 and coefficient 0.8, the middle
+response in <code>c(0, NA, 10)</code> has an imputed mean of about 4.9.
+The fresh prediction at that row has mean 0, based on the preceding
+response.</p>
+<p>Default <code><a href="../reference/execute-mcp-model.html">predict()</a></code> uses the history up to each row to
+generate a fresh response. Earlier imputations in that history can
+already contain information from later observations. Use
+<code>predict(fit, arma = "replicate")</code> to generate a fresh series
+recursively. See the <a href="../articles/arma.html">time-series
+article</a> for examples.</p>
 </div>
 </div>
 <div class="section level2">
@@ -362,9 +331,9 @@ their available observations.</li>
 deviation with <code>sigma()</code></a> so imputation uncertainty can
 vary over the predictor range.</li>
 <li>Use <a href="../articles/families.html">binomial, Bernoulli,
-Poisson, or negative-binomial responses</a>. Their imputations remain on
-the appropriate discrete response scale; binomial predictions can also
-be returned as rates.</li>
+Poisson, or negative-binomial responses</a>. The imputation draws are
+discrete. Use <code>imputed(fit, rate = TRUE)</code> for binomial
+proportions.</li>
 </ul>
 <p>However, predictors required by the model must themselves be
 observed. <code>mcp</code> currently imputes missing responses, not
@@ -376,45 +345,34 @@ reasonably explained by the observed predictors and model structure.</p>
 <div class="section level3">
 <h3 id="model-evaluation-and-time-series">Model evaluation and time series<a class="anchor" aria-label="anchor" href="#model-evaluation-and-time-series"></a>
 </h3>
-<p>Missing rows are not treated as observed contributions to
-<code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, or <code><a href="../reference/loo.mcpfit.html">waic()</a></code>. For
-ordinary non-AR/MA models, the remaining observed rows can still be used
-for these calculations.</p>
-<p>AR/MA models need extra care because a missing response can become
-part of the history for later observations. <code>mcp</code> retains the
-JAGS draws so <code><a href="../reference/execute-mcp-model.html">fitted()</a></code> and <code><a href="../reference/execute-mcp-model.html">predict()</a></code> can
-reconstruct that history, but it does not currently integrate over
-missing histories for pointwise likelihood calculations. Consequently,
-<code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, and <code><a href="../reference/loo.mcpfit.html">waic()</a></code> are
-unavailable when a missing response precedes some observed data.</p>
+<p><code><a href="../reference/execute-mcp-model.html">log_lik()</a></code>, <code><a href="../reference/loo.mcpfit.html">loo()</a></code>, and <code><a href="../reference/loo.mcpfit.html">waic()</a></code>
+score observed responses. In AR/MA models, these functions are
+unavailable when a missing response enters the history of a later
+observed response. Scoring that observation would require integrating
+over the missing history.</p>
 <p>The <a href="../articles/arma.html">time-series article</a> discusses
 this. Use <code>predict(fit, arma = "replicate")</code> or
 <code>posterior_predict(fit, arma = "replicate")</code> to generate
-fresh replicated series recursively. Their histories are generated
-rather than taken from the observed responses. The default predictions
-condition on observed responses and retained imputations as histories,
-but still generate fresh outcomes at every row.</p>
+fresh replicated series recursively.</p>
 </div>
 <div class="section level3">
 <h3 id="predictions-for-new-data">Predictions for new data<a class="anchor" aria-label="anchor" href="#predictions-for-new-data"></a>
 </h3>
-<p>In AR/MA models, the retained JAGS draws belong to the missing rows
-in the original fitted data and supply their histories. For the
-non-AR/MA example in this article, predictions for genuinely new data
-are ordinary posterior predictions, evaluated just like predictions at
-the missing rows:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<p>Use <code><a href="../reference/execute-mcp-model.html">predict()</a></code> with <code>newdata</code> to generate
+responses at new predictor values. For the example without AR/MA terms,
+supply the predictor values directly.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">80</span><span class="op">)</span>,</span>
 <span>  state <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">state</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/execute-mcp-model.html">predict</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">newdata</span>, width <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
-<span><span class="co">##       x state .mean   .sd .lower .upper</span></span>
-<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span>    20 A      15.7  4.35   10.2   21.3</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">2</span>    80 B      36.2  4.36   30.7   41.8</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 2 × 7</span></span></span>
+<span><span class="co">##       x state  .row .mean   .sd .lower .upper</span></span>
+<span><span class="co">##   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span>    20 A         1  15.7  4.35   10.2   21.3</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">2</span>    80 B         2  36.2  4.36   30.7   41.8</span></span></code></pre>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
