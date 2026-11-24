@@ -71,7 +71,9 @@ where $\kappa_{ig}$ is the group-specific location. Thus `cp_i_id[g]` is the rep
 
 The hierarchy is subject to $x_{\min} < \kappa_{1g} < \cdots < \kappa_{Kg} < x_{\max}$. Thus, if adjacent change points both vary, their group-specific locations are ordered against each other—not against the adjacent population-level change point. Internally, JAGS samples $\kappa_{ig}$ directly for efficiency.
 
+::: warning
 Because of this truncation, the realized SD of the group-specific change points is smaller than `cp_i_id_sd`, and their mean is pulled away from $cp_i$ when $cp_i$ is near a boundary. When `cp_i_id_sd` is large relative to the distance between these bounds, the truncated normal approaches a uniform distribution, so the data carry little information about how large `cp_i_id_sd` is. Its posterior then has a long upper tail that mostly reflects the prior.
+:::
 
 Unlike predictor group-level effects, a change-point group-level effect applies only at the change point where it is included.
 

@@ -138,7 +138,9 @@ Because point Bayes factors depend directly on the prior density, they require b
 hypothesis(fit_info, "cp_1 = 4")
 ```
 
+::: warning
 The [default prior on change points](../articles/default_priors.html#change-points) is flat across the observed range of $x$, so it rarely represents an actual prior belief about the change point. Use an informed prior for point-null hypothesis tests.
+:::
 
 
 

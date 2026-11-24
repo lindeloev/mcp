@@ -20,7 +20,9 @@ bayesplot::bayesplot_theme_set(bayesplot::theme_default(base_size = 11, base_fam
 set.seed(42)
 ```
 
-*NOTE: the JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.*
+::: warning
+The JAGS-specific prior interface below is likely to be deprecated in the future, when additional backends are added beyond JAGS.
+:::
 
 This article is about setting your own priors.
 

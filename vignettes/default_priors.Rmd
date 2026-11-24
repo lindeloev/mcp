@@ -30,7 +30,9 @@ See [Working with priors](../articles/priors.html) for how to set your own prior
 
 `mcp` automatically assigns [weakly informative](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) default priors to the coefficients of all distributional parameters (`mu`, `sigma`, `shape`, and AR/MA). They rule out absurd values while staying wide enough that the data dominate in most applications. They are designed for stable estimation and prediction. You can inspect all resolved priors for any fitted model using `prior_summary(fit, verbose = TRUE)`.
 
+::: warning
 Priors for hypothesis tests should be informed by the problem at hand.
+:::
 
 The default priors follow three principles:
 

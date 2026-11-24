@@ -115,7 +115,9 @@ set.seed(42)
 head(predict(fit, width = 0.8))
 ```
 
-Note that `predict()` uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using `set.seed()` as above. In general, the more posterior draws, the less the call-to-call variance will be. Conversely, fewer draws means more call-to-call variation, e.g., if you do `predict(fit, ndraws = 10)`. The interval (`.lower` and `.upper`) is the exception: It is computed exactly from the posterior predictive distribution, so it is deterministic for a given set of posterior draws.
+::: tip
+`predict()` uses random sampling under the hood, so these values will differ slightly from call to call. You can make it replicable using `set.seed()` as above. In general, the more posterior draws, the less the call-to-call variance will be. Conversely, fewer draws means more call-to-call variation, e.g., if you do `predict(fit, ndraws = 10)`. The interval (`.lower` and `.upper`) is the exception: It is computed exactly from the posterior predictive distribution, so it is deterministic for a given set of posterior draws.
+:::
 
 To get custom quantiles, get the draws using `summary = FALSE` and summarise them yourself. These quantiles are computed from simulated responses, so they are subject to the call-to-call variation described above:
 
@@ -163,7 +165,9 @@ fit_forecast = mcp(model_forecast, data = data, prior = prior_forecast)
 options(old)
 ```
 
-*Side note on the `options()` step: We turned off `mcp` reparameterization which usually increases ESS/s but in this case lowers it. One of the reparam tricks sets the intercept of a disjoined segment as the value at the end of that segment ([read more](../articles/implementation.html#reparameterizations)). Here, segment 3 ends at the future `cp_3`, far from the data, so this sampling trick causes poor mixing.*
+::: tip
+**On the `options()` step:** We turned off `mcp` reparameterization which usually increases ESS/s but in this case lowers it. One of the reparam tricks sets the intercept of a disjoined segment as the value at the end of that segment ([read more](../articles/implementation.html#reparameterizations)). Here, segment 3 ends at the future `cp_3`, far from the data, so this sampling trick causes poor mixing.
+:::
 
 
 ## Step 2: predict!
